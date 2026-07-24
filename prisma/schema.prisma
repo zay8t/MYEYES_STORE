@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum FrameShape {
+  ROUND
+  AVIATOR
+  SQUARE
+  CAT_EYE
+  RECTANGLE
+}
+
+enum Material {
+  ACETATE
+  TITANIUM
+  STAINLESS_STEEL
+  WOOD
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
+
+enum Category {
+  EYEGLASSES
+  SUNGLASSES
+}
+
+model Product {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String
+  price       Float
+  stock       Int        @default(0)
+  frameShape  FrameShape
+  material    Material
+  gender      String
+  images      String
+  category    Category   @default(EYEGLASSES)
+  featured    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  orderItems OrderItem[]
+}
+
+model Prescription {
+  id        String   @id @default(uuid())
+  lensType  String
+  odSph     Float
+  odCyl     Float?
+  odAxis    Int?
+  osSph     Float
+  osCyl     Float?
+  osAxis    Int?
+  pd        Float
+  fileUrl   String?
+  createdAt DateTime @default(now())
+
+  orderItems OrderItem[]
+}
+
+model Order {
+  id                  String      @id @default(uuid())
+  customerName        String
+  customerEmail       String
+  customerPhone       String?
+  shippingAddress     String?
+  shippingCity        String?
+  paymentMethod       String?
+  transactionProofUrl String?
+  shippingFee         Float       @default(0)
+  totalAmount         Float
+  status              OrderStatus @default(PENDING)
+  stripeSessionId     String?     @unique
+  items               OrderItem[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+model OrderItem {
+  id             String        @id @default(uuid())
+  orderId        String
+  productId      String
+  prescriptionId String?
+  price          Float
+  quantity       Int
+
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product       @relation(fields: [productId], references: [id])
+  prescription Prescription? @relation(fields: [prescriptionId], references: [id])
+}
+
+model LensOption {
+  id          String   @id
+  name        String
+  coating     String
+  index       String
+  description String
+  category    String
+  basePrice   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
