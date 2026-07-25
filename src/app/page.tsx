@@ -1,17 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
-import { HERO_ANCHOR_ID } from "@/components/3D/Persistent3DViewer";
 import PrescriptionModal from "@/components/PrescriptionModal";
 import LensVisualizer from "@/components/home/LensVisualizer";
 import PrescriptionSteps from "@/components/home/PrescriptionSteps";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 import PakistanReviews from "@/components/home/PakistanReviews";
+
+const Hero3DViewer = dynamic(() => import("@/components/3D/Hero3DViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full h-[450px] md:h-[550px] bg-transparent flex items-center justify-center pointer-events-auto">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+      <span className="animate-pulse text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-2">
+        Loading 3D Frame Studio...
+      </span>
+    </div>
+  ),
+});
 
 interface Product {
   id: string;
@@ -101,14 +113,9 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Seamless 3D Model Hero Canvas Anchor */}
-          <div className="w-full h-[400px] mt-10 flex flex-col items-center justify-center relative bg-transparent">
-            <div id={HERO_ANCHOR_ID} className="w-full h-full max-w-xl relative" />
-            <div className="absolute bottom-2 flex flex-col items-center pointer-events-none z-10">
-              <span className="text-[10px] text-slate-400 tracking-widest uppercase font-bold">
-                Swipe / Drag to Inspect 360°
-              </span>
-            </div>
+          {/* Inline 3D Interactive Eyewear Viewer */}
+          <div className="w-full mt-4 max-w-4xl mx-auto relative flex items-center justify-center">
+            <Hero3DViewer />
           </div>
         </div>
       </section>

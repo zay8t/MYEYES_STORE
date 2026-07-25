@@ -1,194 +1,275 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef, type CSSProperties } from "react";
-import dynamic from "next/dynamic";
-import { Sparkles, Minimize2, Rotate3d } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { Suspense, useCallback, useMemo, useRef, useState, Component, memo, type ReactNode } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, ContactShadows, Environment, Preload, useGLTF, PerspectiveCamera } from "@react-three/drei";
+import * as THREE from "three";
+import { Sparkles, Rotate3d } from "lucide-react";
 
-const Hero3DViewerInner = dynamic(() => import("./Hero3DViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-transparent">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-      <span className="animate-pulse text-[10px] font-bold uppercase tracking-widest text-slate-400">
-        Loading 3D Frame...
-      </span>
-    </div>
-  ),
-});
+// Pre-cache GLTF model to prevent reload stuttering or disappearance
+useGLTF.preload("/models/eyewear.glb");
 
-/**
- * Drop this placeholder into the homepage Hero section, exactly where
- * the 3D viewer should visually sit. It reserves the layout space and
- * spot — the actual canvas is pinned on top of it via fixed positioning,
- * it is NOT rendered inside the hero tree itself.
- *
- *   <div id={HERO_ANCHOR_ID} className="w-full aspect-square max-w-xl" />
- */
-export const HERO_ANCHOR_ID = "hero-3d-anchor";
+/* -------------------------------------------------------------------- */
+/*  Error Boundary for WebGL safety                                      */
+/* -------------------------------------------------------------------- */
 
-const FLOATING_MARGIN = 24;
-const FLOATING_SIZE_OPEN = 288;
-const FLOATING_SIZE_MIN = 56;
+class WebGLErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
 
-type Rect = { top: number; left: number; width: number; height: number };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
 
-function rectsEqual(a: Rect | null, b: Rect) {
-  if (!a) return false;
-  return (
-    Math.round(a.top) === Math.round(b.top) &&
-    Math.round(a.left) === Math.round(b.left) &&
-    Math.round(a.width) === Math.round(b.width) &&
-    Math.round(a.height) === Math.round(b.height)
-  );
-}
+  componentDidCatch(error: unknown) {
+    console.error("Persistent3DViewer WebGL Error:", error);
+  }
 
-/**
- * Mount this ONCE, as a sibling of {children} in the root layout
- * (app/layout.tsx) — never inside a page or a route segment that can
- * unmount on navigation. The <Hero3DViewerInner /> Canvas below is
- * rendered exactly once for the entire session; everything else here
- * is CSS repositioning a fixed-position box on top of it, which is
- * what makes it survive page changes without flicker or WebGL re-init.
- */
-export default function Persistent3DViewer() {
-  const pathname = usePathname();
-  const [minimized, setMinimized] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [rect, setRect] = useState<Rect | null>(null);
-  const [isInline, setIsInline] = useState(false);
-
-  const minimizedRef = useRef(minimized);
-  const isAdmin = Boolean(pathname?.startsWith("/admin"));
-  const isAdminRef = useRef(isAdmin);
-
-  useEffect(() => {
-    minimizedRef.current = minimized;
-  }, [minimized]);
-
-  useEffect(() => {
-    isAdminRef.current = isAdmin;
-  }, [isAdmin]);
-
-  useEffect(() => {
-    setMounted(true);
-    let animationFrameId: number;
-
-    const measure = () => {
-      const anchor = !isAdminRef.current
-        ? document.getElementById(HERO_ANCHOR_ID)
-        : null;
-      const anchorBox = anchor?.getBoundingClientRect();
-      const anchorVisible =
-        !!anchorBox &&
-        anchorBox.width > 0 &&
-        anchorBox.height > 0 &&
-        anchorBox.bottom > 0 &&
-        anchorBox.top < window.innerHeight;
-
-      let target: Rect;
-      let inline: boolean;
-
-      if (isAdminRef.current) {
-        // Keep the canvas alive but fully off-screen — zero WebGL
-        // re-init cost if the user navigates back from the dashboard.
-        target = { top: -9999, left: -9999, width: 256, height: 256 };
-        inline = false;
-      } else if (anchorVisible && anchorBox) {
-        target = {
-          top: anchorBox.top,
-          left: anchorBox.left,
-          width: anchorBox.width,
-          height: anchorBox.height,
-        };
-        inline = true;
-      } else {
-        const size = minimizedRef.current ? FLOATING_SIZE_MIN : FLOATING_SIZE_OPEN;
-        target = {
-          top: window.innerHeight - FLOATING_MARGIN - size,
-          left: window.innerWidth - FLOATING_MARGIN - size,
-          width: size,
-          height: size,
-        };
-        inline = false;
-      }
-
-      setRect((prev) => (rectsEqual(prev, target) ? prev : target));
-      setIsInline((prev) => (prev === inline ? prev : inline));
-
-      animationFrameId = requestAnimationFrame(measure);
-    };
-
-    animationFrameId = requestAnimationFrame(measure);
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  if (!mounted || !rect) return null;
-
-  const style: CSSProperties = {
-    top: rect.top,
-    left: rect.left,
-    width: rect.width,
-    height: rect.height,
-  };
-
-  return (
-    <div
-      className={cn(
-        "fixed z-40 select-none transition-all duration-500 ease-in-out",
-        isInline || isAdmin
-          ? "bg-transparent"
-          : minimized
-            ? "rounded-full bg-slate-900 text-white shadow-2xl flex items-center justify-center cursor-pointer hover:scale-110 border border-slate-700"
-            : "rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-3 flex flex-col"
-      )}
-      style={style}
-      aria-hidden={isAdmin || undefined}
-    >
-      {isInline || isAdmin ? (
-        <Hero3DViewerInner />
-      ) : minimized ? (
-        <button
-          onClick={() => setMinimized(false)}
-          className="w-full h-full flex items-center justify-center relative group"
-          aria-label="Expand 3D Model"
-        >
-          <Rotate3d className="w-6 h-6 text-brand animate-spin-slow" />
-          <span className="absolute -top-8 right-0 bg-slate-900 text-white text-[9px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-            Show 3D Frame
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="relative w-full h-[450px] md:h-[550px] bg-transparent flex flex-col items-center justify-center gap-3 p-6 text-center pointer-events-auto select-none">
+          <Rotate3d className="w-10 h-10 text-brand" />
+          <span className="text-sm font-bold text-slate-700">3D Interactive Preview</span>
+          <span className="text-xs text-slate-400 max-w-xs">
+            WebGL preview unavailable on this device. Explore our full catalog below!
           </span>
-        </button>
-      ) : (
-        <>
-          <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100/80">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-brand" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-800">
-                MY EYES 3D STUDIO
-              </span>
-            </div>
-            <button
-              onClick={() => setMinimized(true)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Minimize 3D Viewer"
-            >
-              <Minimize2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
-          <div className="flex-1 w-full relative bg-transparent overflow-hidden rounded-2xl">
-            <Hero3DViewerInner />
-            <div className="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-white/80 backdrop-blur-xs px-2 py-0.5 rounded-full border border-slate-100">
-                Drag to Inspect 360°
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+/* -------------------------------------------------------------------- */
+/*  Procedural Eyewear Model (Fast fallback while GLTF loads)           */
+/* -------------------------------------------------------------------- */
+
+function ProceduralEyewearModel({ isInteracting }: { isInteracting: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const viewport = useThree((state) => state.viewport);
+
+  const responsiveScale = useMemo(() => {
+    const targetHeight = viewport.height * 0.55;
+    const maxAllowedWidth = viewport.width * 0.85;
+
+    let scale = targetHeight / 1.6;
+    if (4.2 * scale > maxAllowedWidth) {
+      scale = maxAllowedWidth / 4.2;
+    }
+    return THREE.MathUtils.clamp(scale, 0.8, 2.5);
+  }, [viewport.width, viewport.height]);
+
+  const geometries = useMemo(() => ({
+    rim: new THREE.TorusGeometry(0.75, 0.07, 16, 64),
+    lens: new THREE.CylinderGeometry(0.72, 0.72, 0.04, 32),
+    thickBridge: new THREE.CylinderGeometry(0.05, 0.05, 0.8, 16),
+    thinBridge: new THREE.CylinderGeometry(0.035, 0.035, 1.2, 16),
+    hinge: new THREE.BoxGeometry(0.15, 0.08, 0.1),
+    temple: new THREE.BoxGeometry(0.05, 0.06, 2.1),
+    nosePad: new THREE.SphereGeometry(0.07, 16, 16),
+  }), []);
+
+  const materials = useMemo(() => ({
+    frame: new THREE.MeshStandardMaterial({ color: "#1e293b", metalness: 0.9, roughness: 0.15 }),
+    hinge: new THREE.MeshStandardMaterial({ color: "#334155", metalness: 0.9, roughness: 0.12 }),
+    temple: new THREE.MeshStandardMaterial({ color: "#0f172a", metalness: 0.8, roughness: 0.22 }),
+    bridge: new THREE.MeshStandardMaterial({ color: "#475569", metalness: 0.95, roughness: 0.1 }),
+    lens: new THREE.MeshPhysicalMaterial({
+      color: "#0f172a",
+      metalness: 0.5,
+      roughness: 0.05,
+      clearcoat: 1,
+      clearcoatRoughness: 0.1,
+      transparent: true,
+      opacity: 0.88,
+    }),
+    nosePad: new THREE.MeshStandardMaterial({ color: "#cbd5e1", transparent: true, opacity: 0.8, roughness: 0.4 }),
+  }), []);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const t = state.clock.getElapsedTime();
+
+    if (!isInteracting) {
+      groupRef.current.position.y = Math.sin(t * 0.9) * 0.05;
+      groupRef.current.rotation.x = Math.sin(t * 0.5) * 0.02;
+    } else {
+      groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, 0, 4, delta);
+    }
+  });
+
+  return (
+    <group ref={groupRef} scale={responsiveScale} dispose={null}>
+      <mesh position={[-1.15, 0, 0]} geometry={geometries.rim} material={materials.frame} castShadow />
+      <mesh position={[1.15, 0, 0]} geometry={geometries.rim} material={materials.frame} castShadow />
+
+      <mesh position={[-1.15, 0, 0.02]} rotation={[Math.PI / 2, 0, 0]} geometry={geometries.lens} material={materials.lens} castShadow />
+      <mesh position={[1.15, 0, 0.02]} rotation={[Math.PI / 2, 0, 0]} geometry={geometries.lens} material={materials.lens} castShadow />
+
+      <mesh position={[0, 0.3, 0.05]} rotation={[0, 0, Math.PI / 2]} geometry={geometries.thickBridge} material={materials.bridge} castShadow />
+      <mesh position={[0, 0.52, 0.02]} rotation={[0, 0, Math.PI / 2]} geometry={geometries.thinBridge} material={materials.bridge} castShadow />
+
+      <mesh position={[-1.9, 0.28, -0.05]} geometry={geometries.hinge} material={materials.hinge} castShadow />
+      <mesh position={[1.9, 0.28, -0.05]} geometry={geometries.hinge} material={materials.hinge} castShadow />
+
+      <mesh position={[-1.95, 0.22, -1.05]} rotation={[0.04, 0.04, 0]} geometry={geometries.temple} material={materials.temple} castShadow />
+      <mesh position={[1.95, 0.22, -1.05]} rotation={[0.04, -0.04, 0]} geometry={geometries.temple} material={materials.temple} castShadow />
+
+      <mesh position={[-0.32, -0.15, -0.12]} geometry={geometries.nosePad} material={materials.nosePad} />
+      <mesh position={[0.32, -0.15, -0.12]} geometry={geometries.nosePad} material={materials.nosePad} />
+    </group>
   );
 }
+
+/* -------------------------------------------------------------------- */
+/*  High Detail GLTF Eyewear Model with Dynamic Bounding Box Scaling    */
+/* -------------------------------------------------------------------- */
+
+function EyewearGLTFModel({ isInteracting }: { isInteracting: boolean }) {
+  const { scene } = useGLTF("/models/eyewear.glb");
+  const groupRef = useRef<THREE.Group>(null);
+  const viewport = useThree((state) => state.viewport);
+
+  const { clonedScene, baseScale } = useMemo(() => {
+    const clone = scene.clone();
+
+    const box = new THREE.Box3().setFromObject(clone);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+
+    clone.position.x = -center.x;
+    clone.position.y = -center.y;
+    clone.position.z = -center.z;
+
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    const meshHeight = size.y > 0 ? size.y : 1;
+    const meshWidth = size.x > 0 ? size.x : 1;
+
+    const targetHeight = viewport.height * 0.55;
+    const maxAllowedWidth = viewport.width * 0.85;
+
+    let scale = targetHeight / meshHeight;
+    if (meshWidth * scale > maxAllowedWidth) {
+      scale = maxAllowedWidth / meshWidth;
+    }
+
+    return {
+      clonedScene: clone,
+      baseScale: scale,
+    };
+  }, [scene, viewport.height, viewport.width]);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const t = state.clock.getElapsedTime();
+
+    if (!isInteracting) {
+      groupRef.current.position.y = Math.sin(t * 0.9) * 0.05;
+      groupRef.current.rotation.x = Math.sin(t * 0.5) * 0.02;
+    } else {
+      groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, 0, 4, delta);
+    }
+  });
+
+  return (
+    <group ref={groupRef} scale={baseScale} dispose={null}>
+      <primitive object={clonedScene} />
+    </group>
+  );
+}
+
+/* -------------------------------------------------------------------- */
+/*  Unified Persistent 3D Viewer Component                               */
+/* -------------------------------------------------------------------- */
+
+function Persistent3DViewerBase() {
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  const handleStart = useCallback(() => setIsInteracting(true), []);
+  const handleEnd = useCallback(() => setIsInteracting(false), []);
+
+  return (
+    <WebGLErrorBoundary>
+      <div className="relative w-full h-[450px] md:h-[550px] bg-transparent flex items-center justify-center pointer-events-auto select-none">
+        {/* Top Studio Badge */}
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-white/40 border border-slate-200/50 text-xs font-medium tracking-wide text-slate-800 shadow-xs pointer-events-none">
+          <Sparkles className="w-3.5 h-3.5 text-brand" />
+          <span>3D INTERACTIVE STUDIO</span>
+        </div>
+
+        {/* 3D Canvas */}
+        <Canvas
+          frameloop="always"
+          dpr={[1, 2]}
+          gl={{
+            preserveDrawingBuffer: true,
+            powerPreference: "high-performance",
+            antialias: true,
+            failIfMajorPerformanceCaveat: false,
+          }}
+          className="h-full w-full cursor-grab active:cursor-grabbing"
+        >
+          {/* Camera Configuration */}
+          <PerspectiveCamera makeDefault position={[0, 0, 7.5]} fov={35} />
+
+          {/* Luxury Studio Lighting */}
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />
+          <pointLight position={[-5, 5, -5]} intensity={0.6} color="#ffffff" />
+
+          {/* Model & Environment */}
+          <Suspense fallback={<ProceduralEyewearModel isInteracting={isInteracting} />}>
+            <EyewearGLTFModel isInteracting={isInteracting} />
+            <Environment preset="studio" />
+          </Suspense>
+
+          {/* Soft Ambient Contact Shadow */}
+          <ContactShadows
+            position={[0, -1.2, 0]}
+            opacity={0.35}
+            scale={10}
+            blur={2}
+            far={4.5}
+            resolution={512}
+          />
+
+          {/* Orbit Controls with Damping & AutoRotate */}
+          <OrbitControls
+            makeDefault
+            enableDamping={true}
+            dampingFactor={0.05}
+            autoRotate={true}
+            autoRotateSpeed={1.2}
+            enableZoom={false}
+            enablePan={false}
+            minDistance={4}
+            maxDistance={12}
+            minPolarAngle={Math.PI / 3.2}
+            maxPolarAngle={Math.PI / 1.7}
+            onStart={handleStart}
+            onEnd={handleEnd}
+          />
+
+          <Preload all />
+        </Canvas>
+
+        {/* Bottom Interaction Guide */}
+        <div className="absolute bottom-4 z-10 pointer-events-none flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-md bg-white/40 border border-slate-200/50 text-xs font-medium tracking-wide text-slate-700 shadow-xs">
+          <Rotate3d className="w-3.5 h-3.5 text-slate-600 animate-spin-slow" />
+          <span>SWIPE / DRAG TO INSPECT 360°</span>
+        </div>
+      </div>
+    </WebGLErrorBoundary>
+  );
+}
+
+export const Persistent3DViewer = memo(Persistent3DViewerBase);
+export default Persistent3DViewer;
