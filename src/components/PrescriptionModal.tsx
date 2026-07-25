@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { X, Check, ChevronRight, Upload, ArrowLeft } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { X, Check, ChevronRight, Upload, ArrowLeft, Camera, ImageIcon, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { cn, formatPrice } from "@/lib/utils";
 import {
@@ -50,6 +50,10 @@ export default function PrescriptionModal({
 
   // Prescription Values
   const [uploadMode, setUploadMode] = useState<"manual" | "upload">("manual");
+  const [rxFile, setRxFile] = useState<File | null>(null);
+  const [rxPreview, setRxPreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [rx, setRx] = useState({
     odSph: "0.00",
     odCyl: "0.00",
@@ -62,6 +66,26 @@ export default function PrescriptionModal({
     rxFileUrl: "",
     notes: "",
   });
+
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    setRxFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setRxPreview(dataUrl);
+      setRx((prev) => ({ ...prev, rxFileUrl: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveFile = () => {
+    setRxFile(null);
+    setRxPreview("");
+    setRx((prev) => ({ ...prev, rxFileUrl: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
 
   // Calculate maximum SPH and CYL across both eyes for exact matrix lookup
   const parsedOdSph = parseFloat(rx.odSph) || 0;
@@ -391,21 +415,82 @@ export default function PrescriptionModal({
                 </form>
               ) : (
                 <div className="space-y-4">
-                  {/* Upload Drop Zone */}
-                  <div className="border-2 border-dashed border-brand/40 bg-brand/5 rounded-xl p-8 text-center hover:border-brand transition-colors">
-                    <div className="w-14 h-14 rounded-xl bg-brand/10 text-brand mx-auto mb-3 flex items-center justify-center">
-                      <Upload className="w-7 h-7" />
+                  {/* Hidden file inputs */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                  />
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                  />
+
+                  {/* Upload area */}
+                  {!rxPreview ? (
+                    <div className="border-2 border-dashed border-brand/40 bg-brand/5 rounded-xl p-8 text-center hover:border-brand transition-colors">
+                      <div className="w-14 h-14 rounded-xl bg-brand/10 text-brand mx-auto mb-3 flex items-center justify-center">
+                        <Upload className="w-7 h-7" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 mb-1">Upload Your Prescription</p>
+                      <p className="text-[11px] text-slate-500 mb-4">Upload a photo of your prescription report (PNG or JPG)</p>
+
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white text-xs font-bold uppercase tracking-wider hover:bg-brand-dark transition-colors cursor-pointer shadow-sm"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Choose from Gallery
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => cameraInputRef.current?.click()}
+                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors cursor-pointer shadow-sm"
+                        >
+                          <Camera className="w-4 h-4" />
+                          Take Photo
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm font-bold text-slate-900 mb-1">Upload Your Prescription</p>
-                    <p className="text-[11px] text-slate-500 mb-4">Paste a link to your Rx image, scan, or doctor&apos;s report</p>
-                    <input
-                      type="url"
-                      value={rx.rxFileUrl}
-                      onChange={(e) => setRx({ ...rx, rxFileUrl: e.target.value })}
-                      placeholder="https://example.com/my-prescription.jpg"
-                      className="w-full px-4 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-brand focus:outline-none bg-white"
-                    />
-                  </div>
+                  ) : (
+                    <div className="rounded-xl border border-brand/30 bg-brand/5 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-green-600" />
+                          Prescription uploaded
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Remove
+                        </button>
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={rxPreview}
+                        alt="Prescription preview"
+                        className="w-full max-h-48 object-contain rounded-lg border border-slate-200 bg-white"
+                      />
+                      <p className="text-[10px] text-slate-500 text-center">{rxFile?.name}</p>
+                    </div>
+                  )}
 
                   {/* Notes */}
                   <div>
@@ -432,10 +517,10 @@ export default function PrescriptionModal({
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    disabled={!rx.rxFileUrl.trim()}
+                    disabled={!rxPreview}
                     className={cn(
                       "w-full py-3.5 px-4 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md",
-                      rx.rxFileUrl.trim()
+                      rxPreview
                         ? "bg-brand hover:bg-brand-dark"
                         : "bg-slate-300 cursor-not-allowed"
                     )}

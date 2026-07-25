@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Header from "@/components/Header";
+import Persistent3DViewer from "@/components/3D/Persistent3DViewer";
 import Image from "next/image";
 import "./globals.css";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <Header />
         <main className="flex-1">{children}</main>
+        <Persistent3DViewer />
 
         {/* Minimal Footer */}
         <footer className="border-t border-slate-100 bg-gradient-to-b from-white to-slate-50/50 py-12">
