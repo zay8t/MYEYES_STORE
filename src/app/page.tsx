@@ -81,9 +81,9 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Pakistan&apos;s First
+            Pakistan Prescription Based
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Prescription Eyewear Store.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Eyewear Store.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
@@ -280,6 +280,7 @@ export default function HomePage() {
               name: `${selectedProduct.name} (${details.lensUsage})`,
               price: totalPrice,
               image: parseImages(selectedProduct.images)[0] || "",
+              prescription: details,
             });
             setRxModalOpen(false);
             setSelectedProduct(null);

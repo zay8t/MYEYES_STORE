@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 
 interface OrderDetail {
   id: string;
+  orderNumber?: string | null;
   customerName: string;
   customerEmail: string;
   totalAmount: number;
@@ -24,9 +25,6 @@ function SuccessContent() {
   useEffect(() => {
     if (!orderId) return;
 
-    // Fetch order detail from public admin orders endpoint or create a public endpoint if needed.
-    // For local simplicity, we can fetch all admin orders and find the matching one, 
-    // or just simulate/render the page gracefully.
     fetch("/api/admin/orders")
       .then((r) => r.json())
       .then((data: OrderDetail[]) => {
@@ -73,7 +71,7 @@ function SuccessContent() {
         <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
           <Check className="w-6 h-6 stroke-[3]" />
         </div>
-        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Order Placed!</h1>
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Order Placed Successfully</h1>
         <p className="text-xs text-slate-400">
           Thank you for choosing My Eyes. Your order has been placed and is pending verification.
         </p>
@@ -85,10 +83,19 @@ function SuccessContent() {
         </div>
       ) : order ? (
         <div className="space-y-4">
-          {/* Order ID Tag */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Order ID</span>
-            <span className="font-mono font-bold text-slate-900 select-all">{order.id}</span>
+          {/* Order No Tag */}
+          <div className="p-4 bg-slate-900 text-white rounded-xl flex items-center justify-between shadow-md">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                Permanent Customer Order Number
+              </span>
+              <span className="text-lg font-mono font-extrabold text-white tracking-widest">
+                Order No: {order.orderNumber || "Processing"}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">
+              Ref: {order.id.slice(0, 8)}
+            </span>
           </div>
 
           {/* Receipt summary */}
@@ -117,7 +124,7 @@ function SuccessContent() {
         </div>
       ) : (
         <div className="text-center py-6 text-xs text-slate-400 font-medium">
-          Order saved successfully. ID: <span className="font-mono font-bold text-slate-900">{orderId}</span>
+          Order saved successfully. Reference ID: <span className="font-mono font-bold text-slate-900">{orderId}</span>
         </div>
       )}
 

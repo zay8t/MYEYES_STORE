@@ -16,9 +16,13 @@ import {
   MapPin,
   CreditCard,
   User,
+  FileText,
+  Printer,
+  Download,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import AdminAuthGuard from "@/components/AdminAuthGuard";
+import A4ReceiptModal from "@/components/A4ReceiptModal";
 
 interface Prescription {
   id: string;
@@ -54,6 +58,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  orderNumber?: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone?: string | null;
@@ -86,6 +91,7 @@ export default function AdminOrdersPage() {
   } | null>(null);
 
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [copiedLabel, setCopiedLabel] = useState("");
 
   const copyDetail = (text: string, label: string) => {
@@ -157,7 +163,8 @@ export default function AdminOrdersPage() {
       const matchName = order.customerName.toLowerCase().includes(q);
       const matchEmail = order.customerEmail.toLowerCase().includes(q);
       const matchId = order.id.toLowerCase().includes(q);
-      return matchName || matchEmail || matchId;
+      const matchOrderNo = order.orderNumber ? order.orderNumber.toLowerCase().includes(q) : false;
+      return matchName || matchEmail || matchId || matchOrderNo;
     }
     return true;
   });
@@ -321,6 +328,10 @@ export default function AdminOrdersPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-3 flex-wrap">
+                          {/* Permanent 8-digit order number badge */}
+                          <span className="px-2.5 py-1 rounded-md bg-slate-900 text-white font-mono font-extrabold text-xs shadow-xs tracking-wider">
+                            {order.orderNumber || "00000000"}
+                          </span>
                           <span className="font-extrabold text-sm text-slate-900">{order.customerName}</span>
                           <span className="text-slate-300">·</span>
                           <span className="text-slate-600 font-medium">{order.customerEmail}</span>
@@ -332,12 +343,39 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                         <p className="text-[11px] text-slate-400 font-mono">
-                          Order #{order.id} · {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          Ref #{order.id} · {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {/* Receipt Action Buttons */}
+                        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                          <button
+                            onClick={() => setReceiptOrder(order)}
+                            className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 text-slate-900 text-[11px] font-bold border border-slate-200 flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                            title="View A4 Receipt Preview"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-slate-700" /> View Receipt
+                          </button>
+                          <a
+                            href={`/api/admin/orders/${order.id}/pdf`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-black text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                            title="Download Official A4 PDF"
+                          >
+                            <Download className="w-3.5 h-3.5" /> PDF
+                          </a>
+                          <button
+                            onClick={() => setReceiptOrder(order)}
+                            className="p-1 rounded-lg hover:bg-slate-200 text-slate-700 cursor-pointer transition-colors"
+                            title="Print A4 Receipt"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="text-right pl-2 border-l border-slate-200">
                           <span className="font-extrabold text-base text-slate-900 block">
                             {formatPrice(order.totalAmount)}
                           </span>
@@ -715,11 +753,19 @@ export default function AdminOrdersPage() {
                   onClick={() => setLightboxImage(null)}
                   className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider transition-colors cursor-pointer shadow-sm"
                 >
-                  Close Receipt
+                  Close Screenshot
                 </button>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Official A4 Receipt Modal */}
+        {receiptOrder && (
+          <A4ReceiptModal
+            order={receiptOrder}
+            onClose={() => setReceiptOrder(null)}
+          />
         )}
       </div>
     </AdminAuthGuard>

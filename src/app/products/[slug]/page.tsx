@@ -101,6 +101,7 @@ export default function ProductDetailPage({
       name: `${product.name} (${details.lensUsage})`,
       price: totalPrice,
       image: currentImage || "",
+      prescription: details,
     });
   };
 

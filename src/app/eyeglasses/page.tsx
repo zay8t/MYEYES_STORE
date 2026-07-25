@@ -81,6 +81,7 @@ export default function EyeglassesPage() {
       name: `${selectedProduct.name} (${details.lensUsage})`,
       price: totalPrice,
       image: imagesList[0] || "",
+      prescription: details,
     });
   };
 

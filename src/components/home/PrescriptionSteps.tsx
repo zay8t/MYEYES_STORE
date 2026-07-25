@@ -39,7 +39,7 @@ export default function PrescriptionSteps() {
             HOW IT WORKS
           </span>
           <h2 className="text-3xl font-extrabold text-slate-900">
-            Prescription In 4 Steps
+            Order in Four Steps
           </h2>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
             From frame selection to doorstep delivery — our precision engine handles it all.

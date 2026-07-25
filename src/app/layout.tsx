@@ -11,9 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "My Eyes — Pakistan's First Prescription Eyewear Store",
+  title: "My Eyes — Pakistan Prescription Based Eyewear Store",
   description:
-    "Order premium prescription eyeglasses & sunglasses online. Pakistan's first prescription-based eyewear store with lab-precision fitting, delivering all across Pakistan.",
+    "Order premium prescription eyeglasses & sunglasses online. Pakistan prescription based eyewear store with lab-precision fitting, delivering all across Pakistan.",
   keywords: ["eyewear", "glasses", "optical", "sunglasses", "prescription lenses", "Pakistan", "online eyewear store", "My Eyes"],
   icons: {
     icon: "/logo.svg",
@@ -51,7 +51,7 @@ export default function RootLayout({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                Pakistan&apos;s First Prescription Eyewear Store · Delivering All Across Pakistan 🇵🇰
+                Pakistan Prescription Based Eyewear Store · Delivering All Across Pakistan 🇵🇰
               </p>
             </div>
           </div>

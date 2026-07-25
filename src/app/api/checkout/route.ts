@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateNextOrderNumber } from "@/lib/order-number";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -18,38 +19,11 @@ export async function POST(request: NextRequest) {
     }
 
     let totalAmount = 0;
-    const orderItemsData = [];
     const stripeLineItems = [];
 
     for (const item of items) {
       const itemTotal = (parseFloat(item.price) || 0) * (item.quantity || 1);
       totalAmount += itemTotal;
-
-      // Check if item has prescription
-      let prescriptionId: string | undefined;
-      if (item.prescription && (item.prescription.odSph !== undefined || item.prescription.lensUsage)) {
-        const rxRecord = await prisma.prescription.create({
-          data: {
-            lensType: item.prescription.lensUsage || item.prescription.lensMaterial || "Prescription Lenses",
-            odSph: parseFloat(item.prescription.odSph) || 0,
-            odCyl: item.prescription.odCyl !== null ? parseFloat(item.prescription.odCyl) : null,
-            odAxis: item.prescription.odAxis ? parseInt(item.prescription.odAxis, 10) : null,
-            osSph: parseFloat(item.prescription.osSph) || 0,
-            osCyl: item.prescription.osCyl !== null ? parseFloat(item.prescription.osCyl) : null,
-            osAxis: item.prescription.osAxis ? parseInt(item.prescription.osAxis, 10) : null,
-            pd: parseFloat(item.prescription.pd) || 63,
-            fileUrl: item.prescription.rxFileUrl || null,
-          },
-        });
-        prescriptionId = rxRecord.id;
-      }
-
-      orderItemsData.push({
-        productId: item.productId,
-        prescriptionId: prescriptionId || null,
-        price: parseFloat(item.price) || 0,
-        quantity: item.quantity || 1,
-      });
 
       stripeLineItems.push({
         price_data: {
@@ -69,26 +43,61 @@ export async function POST(request: NextRequest) {
 
     const stripeSessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // Create Order in DB
-    const order = await prisma.order.create({
-      data: {
-        customerName,
-        customerEmail,
-        totalAmount,
-        status: "PENDING",
-        stripeSessionId,
-        items: {
-          create: orderItemsData,
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
-            prescription: true,
+    // Create Order with permanent 8-digit orderNumber inside Prisma transaction
+    const order = await prisma.$transaction(async (tx) => {
+      const orderItemsData = [];
+
+      for (const item of items) {
+        let prescriptionId: string | undefined;
+
+        if (item.prescription && (item.prescription.odSph !== undefined || item.prescription.lensUsage)) {
+          const rxRecord = await tx.prescription.create({
+            data: {
+              lensType: item.prescription.lensUsage || item.prescription.lensMaterial || "Prescription Lenses",
+              odSph: parseFloat(item.prescription.odSph) || 0,
+              odCyl: item.prescription.odCyl !== null ? parseFloat(item.prescription.odCyl) : null,
+              odAxis: item.prescription.odAxis ? parseInt(item.prescription.odAxis, 10) : null,
+              osSph: parseFloat(item.prescription.osSph) || 0,
+              osCyl: item.prescription.osCyl !== null ? parseFloat(item.prescription.osCyl) : null,
+              osAxis: item.prescription.osAxis ? parseInt(item.prescription.osAxis, 10) : null,
+              pd: parseFloat(item.prescription.pd) || 63,
+              fileUrl: item.prescription.rxFileUrl || null,
+            },
+          });
+          prescriptionId = rxRecord.id;
+        }
+
+        orderItemsData.push({
+          productId: item.productId,
+          prescriptionId: prescriptionId || null,
+          price: parseFloat(item.price) || 0,
+          quantity: item.quantity || 1,
+        });
+      }
+
+      const orderNumber = await generateNextOrderNumber(tx);
+
+      return await tx.order.create({
+        data: {
+          orderNumber,
+          customerName,
+          customerEmail,
+          totalAmount,
+          status: "PENDING",
+          stripeSessionId,
+          items: {
+            create: orderItemsData,
           },
         },
-      },
+        include: {
+          items: {
+            include: {
+              product: true,
+              prescription: true,
+            },
+          },
+        },
+      });
     });
 
     // If Stripe client is configured, create real Stripe Checkout Session
@@ -97,24 +106,26 @@ export async function POST(request: NextRequest) {
         payment_method_types: ["card"],
         line_items: stripeLineItems,
         mode: "payment",
-        success_url: `${request.headers.get("origin") || "http://localhost:3000"}/admin/orders?success=true`,
+        success_url: `${request.headers.get("origin") || "http://localhost:3000"}/checkout/success?orderId=${order.id}`,
         cancel_url: `${request.headers.get("origin") || "http://localhost:3000"}?canceled=true`,
         customer_email: customerEmail,
         metadata: {
           orderId: order.id,
+          orderNumber: order.orderNumber,
           rxSummary: JSON.stringify(
             items.map((i: Record<string, unknown>) => ({ name: i.name, rx: i.prescription }))
           ),
         },
       });
 
-      return NextResponse.json({ url: session.url, orderId: order.id });
+      return NextResponse.json({ url: session.url, orderId: order.id, orderNumber: order.orderNumber });
     }
 
     // Direct return for instant order completion in demo/local mode
     return NextResponse.json({
       success: true,
       orderId: order.id,
+      orderNumber: order.orderNumber,
       totalAmount: order.totalAmount,
     });
   } catch (error) {

@@ -74,6 +74,7 @@ model Prescription {
 
 model Order {
   id                  String      @id @default(uuid())
+  orderNumber         String?     @unique
   customerName        String
   customerEmail       String
   customerPhone       String?
@@ -88,6 +89,11 @@ model Order {
   items               OrderItem[]
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
+}
+
+model OrderSequence {
+  id  Int @id @default(1)
+  seq Int @default(0)
 }
 
 model OrderItem {
