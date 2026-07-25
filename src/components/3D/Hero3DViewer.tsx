@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
   ContactShadows,
@@ -9,8 +9,6 @@ import {
   Preload,
   Html,
   PerformanceMonitor,
-  useGLTF,
-  Center,
 } from "@react-three/drei";
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import * as THREE from "three";
@@ -20,6 +18,13 @@ import * as THREE from "three";
 /* -------------------------------------------------------------------- */
 
 const CONFIG = {
+  frameColor: "#334155",
+  hingeColor: "#334155",
+  templeColor: "#1e293b",
+  bridgeColor: "#475569",
+  lensColor: "#0f172a",
+  nosePadColor: "#e2e8f0",
+
   bobAmplitude: 0.08,
   bobSpeed: 0.7,
   tiltAmplitude: 0.03,
@@ -33,6 +38,69 @@ const CONFIG = {
   idleSpinSpeed: 0.22, // rad/s at full ramp
   idleRampDamp: 2.5, // how quickly the spin fades in/out (lower = softer)
 };
+
+/* -------------------------------------------------------------------- */
+/*  Shared geometries & materials — created ONCE, reused across meshes. */
+/*  This is the single biggest win for smoothness: no per-render        */
+/*  allocation, no duplicate GPU buffers for symmetric parts.           */
+/* -------------------------------------------------------------------- */
+
+function useAssets() {
+  return useMemo(() => {
+    const geometries = {
+      rim: new THREE.TorusGeometry(0.75, 0.07, 16, 64),
+      lens: new THREE.CylinderGeometry(0.72, 0.72, 0.04, 32),
+      thickBridge: new THREE.CylinderGeometry(0.05, 0.05, 0.8, 16),
+      thinBridge: new THREE.CylinderGeometry(0.035, 0.035, 1.2, 16),
+      hinge: new THREE.BoxGeometry(0.15, 0.08, 0.1),
+      temple: new THREE.BoxGeometry(0.05, 0.06, 2.1),
+      nosePad: new THREE.SphereGeometry(0.07, 16, 16),
+    };
+
+    const materials = {
+      frame: new THREE.MeshStandardMaterial({
+        color: CONFIG.frameColor,
+        metalness: 0.9,
+        roughness: 0.15,
+      }),
+      hinge: new THREE.MeshStandardMaterial({
+        color: CONFIG.hingeColor,
+        metalness: 0.9,
+        roughness: 0.12,
+      }),
+      temple: new THREE.MeshStandardMaterial({
+        color: CONFIG.templeColor,
+        metalness: 0.8,
+        roughness: 0.22,
+      }),
+      bridge: new THREE.MeshStandardMaterial({
+        color: CONFIG.bridgeColor,
+        metalness: 0.95,
+        roughness: 0.1,
+      }),
+      // Clearcoat only (no transmission) — gives glassy depth without
+      // the extra transmission render pass, which is the #1 hidden
+      // frame-rate killer in three.js hero scenes.
+      lens: new THREE.MeshPhysicalMaterial({
+        color: CONFIG.lensColor,
+        metalness: 0.5,
+        roughness: 0.05,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        transparent: true,
+        opacity: 0.92,
+      }),
+      nosePad: new THREE.MeshStandardMaterial({
+        color: CONFIG.nosePadColor,
+        transparent: true,
+        opacity: 0.8,
+        roughness: 0.4,
+      }),
+    };
+
+    return { geometries, materials };
+  }, []);
+}
 
 /* -------------------------------------------------------------------- */
 /*  Model                                                                */
@@ -53,9 +121,7 @@ function SunglassesModel({
   const idleInfluence = useRef(0);
 
   const { scrollYProgress } = useScroll();
-  
-  // Load local model from public/models/eyewear.glb
-  const { scene } = useGLTF("/models/eyewear.glb");
+  const { geometries: g, materials: m } = useAssets();
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     scrollTarget.current = latest * CONFIG.scrollRotationRange;
@@ -96,16 +162,102 @@ function SunglassesModel({
       Math.sin(t * CONFIG.tiltSpeed) * CONFIG.tiltAmplitude * bobInfluence;
   });
 
+  const { size } = useThree();
+  const responsiveScale = useMemo(() => {
+    if (size.width < 640) {
+      return 2.55; // Mobile: reduced from 3.0 (-15%)
+    } else if (size.width < 1024) {
+      return 2.04; // Tablet: reduced from 2.4 (-15%)
+    } else {
+      return 1.66; // Desktop: reduced from 1.95 (-15%)
+    }
+  }, [size.width]);
+
   return (
-    <group ref={groupRef}>
-      <Center>
-        <primitive
-          object={scene}
-          scale={2.2}
-          dispose={null}
-        />
-      </Center>
+    <group ref={groupRef} scale={responsiveScale} dispose={null}>
+      <mesh position={[-1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+      <mesh position={[1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+
+      <mesh
+        position={[-1.15, 0, 0.02]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={g.lens}
+        material={m.lens}
+        castShadow
+      />
+      <mesh
+        position={[1.15, 0, 0.02]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={g.lens}
+        material={m.lens}
+        castShadow
+      />
+
+      <mesh
+        position={[0, 0.3, 0.05]}
+        rotation={[0, 0, Math.PI / 2]}
+        geometry={g.thickBridge}
+        material={m.bridge}
+        castShadow
+      />
+      <mesh
+        position={[0, 0.52, 0.02]}
+        rotation={[0, 0, Math.PI / 2]}
+        geometry={g.thinBridge}
+        material={m.bridge}
+        castShadow
+      />
+
+      <mesh position={[-1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+      <mesh position={[1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+
+      <mesh
+        position={[-1.95, 0.22, -1.05]}
+        rotation={[0.04, 0.04, 0]}
+        geometry={g.temple}
+        material={m.temple}
+        castShadow
+      />
+      <mesh
+        position={[1.95, 0.22, -1.05]}
+        rotation={[0.04, -0.04, 0]}
+        geometry={g.temple}
+        material={m.temple}
+        castShadow
+      />
+
+      <mesh position={[-0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
+      <mesh position={[0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
     </group>
+  );
+}
+
+/* -------------------------------------------------------------------- */
+/*  Responsive Contact Shadows                                          */
+/* -------------------------------------------------------------------- */
+
+function ResponsiveContactShadows() {
+  const { size } = useThree();
+  const { yPos, shadowScale } = useMemo(() => {
+    if (size.width < 640) {
+      return { yPos: -2.17, shadowScale: 12 }; // Mobile: reduced (-15%)
+    } else if (size.width < 1024) {
+      return { yPos: -1.73, shadowScale: 10 }; // Tablet: reduced (-15%)
+    } else {
+      return { yPos: -1.41, shadowScale: 8.5 }; // Desktop: reduced (-15%)
+    }
+  }, [size.width]);
+
+  return (
+    <ContactShadows
+      position={[0, yPos, 0]}
+      opacity={0.4}
+      scale={shadowScale}
+      blur={2.2}
+      far={3.5}
+      resolution={256}
+      frames={1}
+    />
   );
 }
 
@@ -182,15 +334,7 @@ export default function Hero3DViewer() {
 
           <SunglassesModel isInteracting={isInteracting} isIdle={isIdle} />
 
-          <ContactShadows
-            position={[0, -1.5, 0]}
-            opacity={0.4}
-            scale={8}
-            blur={2.2}
-            far={3.5}
-            resolution={256}
-            frames={1} // bake once — the shadow shape barely changes, no need to re-render every frame
-          />
+          <ResponsiveContactShadows />
 
           <Preload all />
         </Suspense>
@@ -210,5 +354,3 @@ export default function Hero3DViewer() {
     </div>
   );
 }
-
-useGLTF.preload("/models/eyewear.glb");

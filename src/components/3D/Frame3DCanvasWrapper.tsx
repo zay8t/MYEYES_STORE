@@ -34,107 +34,6 @@ function ViewerFallback() {
 /*  blank the whole hero section. Fails down to a static state instead. */
 /* -------------------------------------------------------------------- */
 
-function HighResFallbackImage() {
-  return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50/20 rounded-3xl p-6 relative overflow-hidden border border-slate-100/50 animate-fade-in">
-      <div className="relative z-10 w-[300px] max-w-full aspect-[2/1] flex items-center justify-center select-none pointer-events-none filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.06)] transform hover:scale-[1.03] transition-transform duration-300">
-        <svg
-          viewBox="0 0 400 180"
-          className="w-full h-auto"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Bridge */}
-          <path
-            d="M188 80 Q200 65 212 80"
-            fill="none"
-            stroke="#1e293b"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          {/* Left Temple */}
-          <line
-            x1="52"
-            y1="70"
-            x2="6"
-            y2="55"
-            stroke="#0f172a"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          {/* Right Temple */}
-          <line
-            x1="348"
-            y1="70"
-            x2="394"
-            y2="55"
-            stroke="#0f172a"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          {/* Left Rim */}
-          <ellipse
-            cx="120"
-            cy="90"
-            rx="68"
-            ry="60"
-            fill="none"
-            stroke="#1e293b"
-            strokeWidth="6"
-          />
-          {/* Left Lens with reflection */}
-          <ellipse
-            cx="120"
-            cy="90"
-            rx="64"
-            ry="56"
-            fill="rgba(255,122,0,0.06)"
-          />
-          <ellipse
-            cx="100"
-            cy="75"
-            rx="22"
-            ry="12"
-            fill="rgba(255,255,255,0.22)"
-            transform="rotate(-15 100 75)"
-          />
-          {/* Right Rim */}
-          <ellipse
-            cx="280"
-            cy="90"
-            rx="68"
-            ry="60"
-            fill="none"
-            stroke="#1e293b"
-            strokeWidth="6"
-          />
-          {/* Right Lens with reflection */}
-          <ellipse
-            cx="280"
-            cy="90"
-            rx="64"
-            ry="56"
-            fill="rgba(255,122,0,0.06)"
-          />
-          <ellipse
-            cx="260"
-            cy="75"
-            rx="22"
-            ry="12"
-            fill="rgba(255,255,255,0.22)"
-            transform="rotate(-15 260 75)"
-          />
-          {/* Nose pads */}
-          <circle cx="178" cy="105" r="5.5" fill="#cbd5e1" />
-          <circle cx="222" cy="105" r="5.5" fill="#cbd5e1" />
-        </svg>
-      </div>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 relative z-10">
-        Premium Japanese Acetate Frame Preview
-      </span>
-    </div>
-  );
-}
-
 class ViewerErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean }
@@ -152,7 +51,13 @@ class ViewerErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
-      return <HighResFallbackImage />;
+      return (
+        <div className="flex h-full w-full items-center justify-center bg-transparent">
+          <span className="text-xs text-slate-400">
+            3D preview unavailable
+          </span>
+        </div>
+      );
     }
     return this.props.children;
   }

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingBag, Menu, X, Home, Tag, Glasses, Sun } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
@@ -18,9 +18,11 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [navigating, setNavigating] = useState<string | null>(null);
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -38,6 +40,7 @@ export default function Header() {
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
+    setNavigating(null);
   }, [pathname]);
 
   // Close mobile menu on outside click
@@ -52,6 +55,14 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mobileOpen]);
 
+  const handleNavClick = useCallback((href: string) => {
+    setNavigating(href);
+    setMobileOpen(false);
+    // Smooth scroll to top on navigation
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    router.push(href);
+  }, [router]);
+
   return (
     <>
       <header
@@ -65,7 +76,7 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[72px]">
             {/* Brand Logo & Title */}
-            <Link href="/" className="flex items-center gap-2.5 group relative z-10">
+            <Link href="/" onClick={() => handleNavClick("/")} className="flex items-center gap-2.5 group relative z-10">
               <div className="relative w-8 h-8 flex items-center justify-center">
                 <Image
                   src="/logo.svg"
@@ -90,16 +101,22 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
+                const isNavigating = navigating === link.href;
                 const IconComponent = link.icon;
                 return (
                   <Link
                     key={link.label}
                     href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavClick(link.href);
+                    }}
                     className={cn(
                       "relative text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-2 py-2 px-4 rounded-xl",
                       isActive
                         ? "text-brand bg-brand/8"
-                        : "text-slate-650 hover:text-brand hover:bg-brand/5"
+                        : "text-slate-600 hover:text-brand hover:bg-brand/5",
+                      isNavigating && "scale-95 opacity-70"
                     )}
                   >
                     <IconComponent
@@ -171,7 +188,10 @@ export default function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(link.href);
+                  }}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.98]",
                     isActive
