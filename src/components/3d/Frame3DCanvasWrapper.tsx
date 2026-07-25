@@ -53,7 +53,7 @@ export default function Frame3DCanvasWrapper() {
     <div className="relative w-full h-full flex flex-col items-center justify-between bg-transparent border-0 shadow-none p-1 sm:p-3 overflow-visible group">
       
       {/* 3D Canvas Container */}
-      <div className="w-full flex-1 relative flex items-center justify-center my-1 min-h-[280px]">
+      <div className="w-full flex-1 relative flex items-center justify-center my-1 min-h-[300px] sm:min-h-[340px]">
         <Hero3DViewerInner
           frameShape={shape}
           frameFinish={finish}

@@ -435,7 +435,7 @@ export default function Hero3DViewerInner({
       }}
       style={{ width: '100%', height: '100%', background: 'transparent' }}
     >
-      <PerspectiveCamera makeDefault position={[0, 0, 8.2]} fov={32} />
+      <PerspectiveCamera makeDefault position={[0, 0, 6.6]} fov={34} />
 
       <LocalEnvironment />
 
@@ -455,9 +455,9 @@ export default function Hero3DViewerInner({
 
       {/* Dynamic Soft Studio Drop Shadow */}
       <ContactShadows
-        position={[0, -1.48, 0]}
+        position={[0, -1.52, 0]}
         opacity={0.4}
-        scale={8.5}
+        scale={9.2}
         blur={2.4}
         far={4}
         resolution={512}
