@@ -10,6 +10,7 @@ import {
   Html,
   PerformanceMonitor,
   useGLTF,
+  Center,
 } from "@react-three/drei";
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import * as THREE from "three";
@@ -96,13 +97,15 @@ function SunglassesModel({
   });
 
   return (
-    <primitive
-      object={scene}
-      ref={groupRef}
-      scale={1.2}
-      position={[0, -0.2, 0]}
-      dispose={null}
-    />
+    <group ref={groupRef}>
+      <Center>
+        <primitive
+          object={scene}
+          scale={1.3}
+          dispose={null}
+        />
+      </Center>
+    </group>
   );
 }
 
