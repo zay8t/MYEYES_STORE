@@ -73,13 +73,13 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Pakistan&apos;s First
+            Minimalist Eyewear.
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Prescription Eyewear Store.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Precision Vision Engine.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Order premium prescription eyeglasses &amp; sunglasses online with exact SPH, CYL &amp; PD fitting — crafted at lab-precision rates and delivered to your doorstep anywhere in Pakistan.
+            Pakistan&apos;s first prescription-based eyewear store. Order premium prescription eyeglasses &amp; sunglasses online with exact SPH, CYL &amp; PD fitting.
           </p>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
