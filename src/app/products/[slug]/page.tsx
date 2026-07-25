@@ -42,8 +42,12 @@ export default function ProductDetailPage({
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data: Product[]) => {
-        const found = data.find((p) => p.slug === resolvedParams.slug);
-        setProduct(found || null);
+        if (Array.isArray(data)) {
+          const found = data.find((p) => p.slug === resolvedParams.slug);
+          setProduct(found || null);
+        } else {
+          setProduct(null);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));

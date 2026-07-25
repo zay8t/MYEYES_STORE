@@ -42,10 +42,17 @@ export default function EyeglassesPage() {
     fetch("/api/admin/products?category=EYEGLASSES")
       .then((r) => r.json())
       .then((data) => {
-        setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setProducts([]);
+        setLoading(false);
+      });
   }, []);
 
   const parseImages = (imagesStr: string): string[] => {

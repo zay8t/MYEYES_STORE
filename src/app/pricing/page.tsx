@@ -15,7 +15,9 @@ export default function PricingPage() {
         const res = await fetch("/api/admin/lens-prices");
         if (res.ok) {
           const data = await res.json();
-          setLensOptions(data);
+          if (Array.isArray(data)) {
+            setLensOptions(data);
+          }
         }
       } catch (error) {
         console.error("Failed to load lens options:", error);

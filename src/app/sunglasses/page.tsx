@@ -39,10 +39,17 @@ export default function SunglassesPage() {
     fetch("/api/admin/products?category=SUNGLASSES")
       .then((r) => r.json())
       .then((data) => {
-        setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setProducts([]);
+        setLoading(false);
+      });
   }, []);
 
   const parseImages = (imagesStr: string): string[] => {

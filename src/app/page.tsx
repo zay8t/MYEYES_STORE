@@ -1,29 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
+
 import PrescriptionModal from "@/components/PrescriptionModal";
 import LensVisualizer from "@/components/home/LensVisualizer";
 import PrescriptionSteps from "@/components/home/PrescriptionSteps";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 import PakistanReviews from "@/components/home/PakistanReviews";
-
-const Hero3DViewer = dynamic(() => import("@/components/3D/Hero3DViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="relative w-full h-[450px] md:h-[550px] bg-transparent flex items-center justify-center pointer-events-auto">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-      <span className="animate-pulse text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-2">
-        Loading 3D Frame Studio...
-      </span>
-    </div>
-  ),
-});
+import Frame3DCanvasWrapper from "@/components/3d/Frame3DCanvasWrapper";
 
 interface Product {
   id: string;
@@ -54,10 +43,17 @@ export default function HomePage() {
     fetch("/api/admin/products")
       .then((res) => res.json())
       .then((data) => {
-        setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setProducts([]);
+        setLoading(false);
+      });
   }, []);
 
   const parseImages = (imagesStr: string): string[] => {
@@ -113,9 +109,9 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Inline 3D Interactive Eyewear Viewer */}
-          <div className="w-full mt-4 max-w-4xl mx-auto relative flex items-center justify-center">
-            <Hero3DViewer />
+          {/* 3D Eyewear Studio Canvas */}
+          <div className="relative w-full max-w-4xl mx-auto h-[400px] md:h-[520px] mt-6 flex items-center justify-center bg-transparent z-10">
+            <Frame3DCanvasWrapper />
           </div>
         </div>
       </section>
