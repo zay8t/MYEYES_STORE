@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -282,6 +282,8 @@ function HighDetailModel({
   onLoad: () => void;
 }) {
   const { scene } = useGLTF("/models/eyewear.glb");
+  // Clone the scene so React re-renders never dispose the cached original
+  const clonedScene = useMemo(() => scene.clone(), [scene]);
   const groupRef = useRef<THREE.Group>(null);
 
   const scrollTarget = useRef(0);
@@ -309,7 +311,7 @@ function HighDetailModel({
 
   const materials = useMemo(() => {
     const mats: THREE.MeshStandardMaterial[] = [];
-    scene.traverse((child) => {
+    clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
@@ -323,7 +325,7 @@ function HighDetailModel({
       }
     });
     return mats;
-  }, [scene]);
+  }, [clonedScene]);
 
   const opacityRef = useRef(0);
 
@@ -381,8 +383,8 @@ function HighDetailModel({
   });
 
   return (
-    <group ref={groupRef} scale={responsiveScale}>
-      <primitive object={scene} />
+    <group ref={groupRef} scale={responsiveScale} dispose={null}>
+      <primitive object={clonedScene} />
     </group>
   );
 }
@@ -393,13 +395,12 @@ function HighDetailModel({
 /*  Public component                                                     */
 /* -------------------------------------------------------------------- */
 
-export default function Hero3DViewer() {
+function Hero3DViewerInner() {
   const [isInteracting, setIsInteracting] = useState(false);
-  const [isIdle, setIsIdle] = useState(true); // auto-rotate from first paint
+  const [isIdle, setIsIdle] = useState(true);
   const [dpr, setDpr] = useState(1.5);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Performance Optimization: Disable shadows on mobile portrait for massive FPS boost
   const [shadowsEnabled, setShadowsEnabled] = useState(true);
   const [gltfLoaded, setGltfLoaded] = useState(false);
 
@@ -409,27 +410,32 @@ export default function Hero3DViewer() {
     }
   }, []);
 
-  const handleInteractionStart = () => {
+  const handleInteractionStart = useCallback(() => {
     setIsInteracting(true);
     setIsIdle(false);
     if (idleTimer.current) clearTimeout(idleTimer.current);
-  };
+  }, []);
 
-  const handleInteractionEnd = () => {
+  const handleInteractionEnd = useCallback(() => {
     setIsInteracting(false);
     if (idleTimer.current) clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => setIsIdle(true), CONFIG.idleDelayMs);
-  };
+  }, []);
+
+  const handleGltfLoaded = useCallback(() => setGltfLoaded(true), []);
 
   return (
     <div className="relative h-full w-full select-none bg-transparent">
       <Canvas
         shadows={shadowsEnabled ? "soft" : false}
         dpr={dpr}
+        frameloop="always"
         gl={{
           alpha: true,
           antialias: true,
           powerPreference: "high-performance",
+          preserveDrawingBuffer: true,
+          failIfMajorPerformanceCaveat: false,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.1,
         }}
@@ -453,14 +459,14 @@ export default function Hero3DViewer() {
         <directionalLight position={[-6, 6, -5]} intensity={0.35} />
         <spotLight position={[0, 8, 2]} angle={0.3} penumbra={1} intensity={0.8} />
 
-        {/* Instant procedural fallback starts rendering immediately */}
+        {/* Instant procedural fallback — renders immediately */}
         <SunglassesModel
           isInteracting={isInteracting}
           isIdle={isIdle}
           gltfLoaded={gltfLoaded}
         />
 
-        {/* Silent background loading for high detail GLTF model */}
+        {/* Background GLTF streaming with smooth cross-fade */}
         <Suspense fallback={null}>
           <Environment preset="studio" resolution={256} />
 
@@ -468,7 +474,7 @@ export default function Hero3DViewer() {
             isInteracting={isInteracting}
             isIdle={isIdle}
             gltfLoaded={gltfLoaded}
-            onLoad={() => setGltfLoaded(true)}
+            onLoad={handleGltfLoaded}
           />
 
           <ContactShadows
@@ -499,5 +505,8 @@ export default function Hero3DViewer() {
     </div>
   );
 }
+
+// React.memo prevents parent re-renders (cart, forms) from unmounting the canvas
+export default React.memo(Hero3DViewerInner);
 
 useGLTF.preload("/models/eyewear.glb");
