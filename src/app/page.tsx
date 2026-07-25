@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
-import { Hero3DViewer } from "@/components/3D/Frame3DCanvasWrapper";
+import { HERO_ANCHOR_ID } from "@/components/3D/Persistent3DViewer";
 import PrescriptionModal from "@/components/PrescriptionModal";
 import LensVisualizer from "@/components/home/LensVisualizer";
 import PrescriptionSteps from "@/components/home/PrescriptionSteps";
@@ -101,10 +101,10 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Seamless 3D Model Hero Canvas */}
+          {/* Seamless 3D Model Hero Canvas Anchor */}
           <div className="w-full h-[400px] mt-10 flex flex-col items-center justify-center relative bg-transparent">
-            <Hero3DViewer />
-            <div className="absolute bottom-2 flex flex-col items-center pointer-events-none">
+            <div id={HERO_ANCHOR_ID} className="w-full h-full max-w-xl relative" />
+            <div className="absolute bottom-2 flex flex-col items-center pointer-events-none z-10">
               <span className="text-[10px] text-slate-400 tracking-widest uppercase font-bold">
                 Swipe / Drag to Inspect 360°
               </span>
