@@ -26,6 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preload" href="/models/eyewear.glb" as="fetch" crossOrigin="anonymous" />
+      </head>
       <body
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >

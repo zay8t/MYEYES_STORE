@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
   ContactShadows,
   Environment,
   Preload,
-  Html,
   PerformanceMonitor,
+  useGLTF,
 } from "@react-three/drei";
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import * as THREE from "three";
@@ -37,6 +37,17 @@ const CONFIG = {
   idleDelayMs: 2500, // how long to wait after interaction before spinning again
   idleSpinSpeed: 0.22, // rad/s at full ramp
   idleRampDamp: 2.5, // how quickly the spin fades in/out (lower = softer)
+
+  // Responsive sizing — the model scales itself to fill a target
+  // fraction of whatever viewport (container) it's given, instead of
+  // using one fixed scale that reads huge on desktop and tiny on
+  // mobile. This is computed from three.js viewport units, so it
+  // reacts correctly to ANY container size/aspect the page wraps it in.
+  targetCoverage: 0.64, // model fills ~64% of the smaller viewport dimension
+  modelBaseWidth: 4.0, // approx unscaled model width (X extent, temple tip to temple tip)
+  modelBaseHeight: 2.0, // approx unscaled model height (Y extent)
+  minScale: 1.3,
+  maxScale: 3.4,
 };
 
 /* -------------------------------------------------------------------- */
@@ -109,9 +120,11 @@ function useAssets() {
 function SunglassesModel({
   isInteracting,
   isIdle,
+  gltfLoaded,
 }: {
   isInteracting: boolean;
   isIdle: boolean;
+  gltfLoaded: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -123,9 +136,23 @@ function SunglassesModel({
   const { scrollYProgress } = useScroll();
   const { geometries: g, materials: m } = useAssets();
 
+  const viewportWidth = useThree((state) => state.viewport.width);
+  const viewportHeight = useThree((state) => state.viewport.height);
+
+  const responsiveScale = useMemo(() => {
+    const byWidth =
+      (CONFIG.targetCoverage * viewportWidth) / CONFIG.modelBaseWidth;
+    const byHeight =
+      (CONFIG.targetCoverage * viewportHeight) / CONFIG.modelBaseHeight;
+    const raw = Math.min(byWidth, byHeight);
+    return THREE.MathUtils.clamp(raw, CONFIG.minScale, CONFIG.maxScale);
+  }, [viewportWidth, viewportHeight]);
+
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     scrollTarget.current = latest * CONFIG.scrollRotationRange;
   });
+
+  const opacityRef = useRef(1);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
@@ -160,118 +187,207 @@ function SunglassesModel({
       Math.sin(t * CONFIG.bobSpeed) * CONFIG.bobAmplitude * bobInfluence;
     groupRef.current.rotation.x =
       Math.sin(t * CONFIG.tiltSpeed) * CONFIG.tiltAmplitude * bobInfluence;
-  });
 
-  const { size } = useThree();
-  const responsiveScale = useMemo(() => {
-    if (size.width < 640) {
-      return 2.55; // Mobile: reduced from 3.0 (-15%)
-    } else if (size.width < 1024) {
-      return 2.04; // Tablet: reduced from 2.4 (-15%)
-    } else {
-      return 1.66; // Desktop: reduced from 1.95 (-15%)
-    }
-  }, [size.width]);
+    // Smoothly transition opacity from 1 to 0 once gltf has loaded
+    const targetOpacity = gltfLoaded ? 0 : 1;
+    opacityRef.current = THREE.MathUtils.damp(
+      opacityRef.current,
+      targetOpacity,
+      5,
+      delta
+    );
+
+    // Apply visibility directly on the group to satisfy react-hooks/refs ESLint checks
+    groupRef.current.visible = opacityRef.current > 0.01;
+
+    // Apply computed opacity directly to materials for optimal performance
+    Object.values(m).forEach((mat) => {
+      mat.transparent = true;
+      mat.opacity = (mat === m.lens) ? 0.92 * opacityRef.current : opacityRef.current;
+    });
+  });
 
   return (
     <group ref={groupRef} scale={responsiveScale} dispose={null}>
-      <mesh position={[-1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
-      <mesh position={[1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+          <mesh position={[-1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+          <mesh position={[1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
 
-      <mesh
-        position={[-1.15, 0, 0.02]}
-        rotation={[Math.PI / 2, 0, 0]}
-        geometry={g.lens}
-        material={m.lens}
-        castShadow
-      />
-      <mesh
-        position={[1.15, 0, 0.02]}
-        rotation={[Math.PI / 2, 0, 0]}
-        geometry={g.lens}
-        material={m.lens}
-        castShadow
-      />
+          <mesh
+            position={[-1.15, 0, 0.02]}
+            rotation={[Math.PI / 2, 0, 0]}
+            geometry={g.lens}
+            material={m.lens}
+            castShadow
+          />
+          <mesh
+            position={[1.15, 0, 0.02]}
+            rotation={[Math.PI / 2, 0, 0]}
+            geometry={g.lens}
+            material={m.lens}
+            castShadow
+          />
 
-      <mesh
-        position={[0, 0.3, 0.05]}
-        rotation={[0, 0, Math.PI / 2]}
-        geometry={g.thickBridge}
-        material={m.bridge}
-        castShadow
-      />
-      <mesh
-        position={[0, 0.52, 0.02]}
-        rotation={[0, 0, Math.PI / 2]}
-        geometry={g.thinBridge}
-        material={m.bridge}
-        castShadow
-      />
+          <mesh
+            position={[0, 0.3, 0.05]}
+            rotation={[0, 0, Math.PI / 2]}
+            geometry={g.thickBridge}
+            material={m.bridge}
+            castShadow
+          />
+          <mesh
+            position={[0, 0.52, 0.02]}
+            rotation={[0, 0, Math.PI / 2]}
+            geometry={g.thinBridge}
+            material={m.bridge}
+            castShadow
+          />
 
-      <mesh position={[-1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
-      <mesh position={[1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+          <mesh position={[-1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+          <mesh position={[1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
 
-      <mesh
-        position={[-1.95, 0.22, -1.05]}
-        rotation={[0.04, 0.04, 0]}
-        geometry={g.temple}
-        material={m.temple}
-        castShadow
-      />
-      <mesh
-        position={[1.95, 0.22, -1.05]}
-        rotation={[0.04, -0.04, 0]}
-        geometry={g.temple}
-        material={m.temple}
-        castShadow
-      />
+          <mesh
+            position={[-1.95, 0.22, -1.05]}
+            rotation={[0.04, 0.04, 0]}
+            geometry={g.temple}
+            material={m.temple}
+            castShadow
+          />
+          <mesh
+            position={[1.95, 0.22, -1.05]}
+            rotation={[0.04, -0.04, 0]}
+            geometry={g.temple}
+            material={m.temple}
+            castShadow
+          />
 
-      <mesh position={[-0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
-      <mesh position={[0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
+          <mesh position={[-0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
+          <mesh position={[0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
     </group>
   );
 }
 
 /* -------------------------------------------------------------------- */
-/*  Responsive Contact Shadows                                          */
+/*  High Detail GLTF Model                                              */
 /* -------------------------------------------------------------------- */
 
-function ResponsiveContactShadows() {
-  const { size } = useThree();
-  const { yPos, shadowScale } = useMemo(() => {
-    if (size.width < 640) {
-      return { yPos: -2.17, shadowScale: 12 }; // Mobile: reduced (-15%)
-    } else if (size.width < 1024) {
-      return { yPos: -1.73, shadowScale: 10 }; // Tablet: reduced (-15%)
-    } else {
-      return { yPos: -1.41, shadowScale: 8.5 }; // Desktop: reduced (-15%)
-    }
-  }, [size.width]);
+function HighDetailModel({
+  isInteracting,
+  isIdle,
+  gltfLoaded,
+  onLoad,
+}: {
+  isInteracting: boolean;
+  isIdle: boolean;
+  gltfLoaded: boolean;
+  onLoad: () => void;
+}) {
+  const { scene } = useGLTF("/models/eyewear.glb");
+  const groupRef = useRef<THREE.Group>(null);
+
+  const scrollTarget = useRef(0);
+  const scrollRotation = useRef(0);
+  const idleRotation = useRef(0);
+  const idleInfluence = useRef(0);
+
+  const { scrollYProgress } = useScroll();
+  const viewportWidth = useThree((state) => state.viewport.width);
+  const viewportHeight = useThree((state) => state.viewport.height);
+
+  const responsiveScale = useMemo(() => {
+    const byWidth =
+      (CONFIG.targetCoverage * viewportWidth) / CONFIG.modelBaseWidth;
+    const byHeight =
+      (CONFIG.targetCoverage * viewportHeight) / CONFIG.modelBaseHeight;
+    const raw = Math.min(byWidth, byHeight);
+    // Align GLTF scale to match procedural model
+    return THREE.MathUtils.clamp(raw * 1.55, CONFIG.minScale, CONFIG.maxScale);
+  }, [viewportWidth, viewportHeight]);
+
+  useEffect(() => {
+    onLoad();
+  }, [onLoad]);
+
+  const materials = useMemo(() => {
+    const mats: THREE.MeshStandardMaterial[] = [];
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        const mesh = child as THREE.Mesh;
+        if (mesh.material) {
+          const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial;
+          mat.transparent = true;
+          mat.opacity = 0; // Start invisible
+          mats.push(mat);
+        }
+      }
+    });
+    return mats;
+  }, [scene]);
+
+  const opacityRef = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const t = state.clock.getElapsedTime();
+
+    // Scroll tracking
+    scrollRotation.current = THREE.MathUtils.damp(
+      scrollRotation.current,
+      scrollTarget.current,
+      CONFIG.scrollDamp,
+      delta
+    );
+
+    // Idle auto-rotate
+    idleInfluence.current = THREE.MathUtils.damp(
+      idleInfluence.current,
+      isIdle ? 1 : 0,
+      CONFIG.idleRampDamp,
+      delta
+    );
+    idleRotation.current +=
+      CONFIG.idleSpinSpeed * idleInfluence.current * delta;
+
+    groupRef.current.rotation.y =
+      scrollRotation.current + idleRotation.current;
+
+    // Idle bob/tilt
+    const bobInfluence = isInteracting ? 0.25 : 1;
+    groupRef.current.position.y =
+      Math.sin(t * CONFIG.bobSpeed) * CONFIG.bobAmplitude * bobInfluence;
+    groupRef.current.rotation.x =
+      Math.sin(t * CONFIG.tiltSpeed) * CONFIG.tiltAmplitude * bobInfluence;
+
+    // Smoothly fade in opacity when loaded
+    const targetOpacity = gltfLoaded ? 1 : 0;
+    opacityRef.current = THREE.MathUtils.damp(
+      opacityRef.current,
+      targetOpacity,
+      5,
+      delta
+    );
+
+    // Control visibility via useFrame to avoid accessing refs during render
+    groupRef.current.visible = opacityRef.current > 0.01;
+
+    materials.forEach((mat) => {
+      mat.opacity = opacityRef.current;
+    });
+  });
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    scrollTarget.current = latest * CONFIG.scrollRotationRange;
+  });
 
   return (
-    <ContactShadows
-      position={[0, yPos, 0]}
-      opacity={0.4}
-      scale={shadowScale}
-      blur={2.2}
-      far={3.5}
-      resolution={256}
-      frames={1}
-    />
+    <group ref={groupRef} scale={responsiveScale}>
+      <primitive object={scene} />
+    </group>
   );
 }
 
-/* -------------------------------------------------------------------- */
-/*  Loading fallback                                                     */
-/* -------------------------------------------------------------------- */
 
-function ViewerLoader() {
-  return (
-    <Html center>
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
-    </Html>
-  );
-}
 
 /* -------------------------------------------------------------------- */
 /*  Public component                                                     */
@@ -282,6 +398,16 @@ export default function Hero3DViewer() {
   const [isIdle, setIsIdle] = useState(true); // auto-rotate from first paint
   const [dpr, setDpr] = useState(1.5);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Performance Optimization: Disable shadows on mobile portrait for massive FPS boost
+  const [shadowsEnabled, setShadowsEnabled] = useState(true);
+  const [gltfLoaded, setGltfLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setShadowsEnabled(false);
+    }
+  }, []);
 
   const handleInteractionStart = () => {
     setIsInteracting(true);
@@ -298,7 +424,7 @@ export default function Hero3DViewer() {
   return (
     <div className="relative h-full w-full select-none bg-transparent">
       <Canvas
-        shadows="soft"
+        shadows={shadowsEnabled ? "soft" : false}
         dpr={dpr}
         gl={{
           alpha: true,
@@ -310,8 +436,6 @@ export default function Hero3DViewer() {
         camera={{ position: [0, 0, 5.2], fov: 45 }}
         className="h-full w-full"
       >
-        {/* Watches real frame timing and backs off pixel ratio on
-            weaker devices instead of letting the whole scene stutter. */}
         <PerformanceMonitor
           onIncline={() => setDpr(2)}
           onDecline={() => setDpr(1)}
@@ -322,19 +446,40 @@ export default function Hero3DViewer() {
         <directionalLight
           position={[5, 12, 6]}
           intensity={1.6}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
+          castShadow={shadowsEnabled}
+          shadow-mapSize={shadowsEnabled ? [1024, 1024] : [256, 256]}
           shadow-bias={-0.0001}
         />
         <directionalLight position={[-6, 6, -5]} intensity={0.35} />
         <spotLight position={[0, 8, 2]} angle={0.3} penumbra={1} intensity={0.8} />
 
-        <Suspense fallback={<ViewerLoader />}>
+        {/* Instant procedural fallback starts rendering immediately */}
+        <SunglassesModel
+          isInteracting={isInteracting}
+          isIdle={isIdle}
+          gltfLoaded={gltfLoaded}
+        />
+
+        {/* Silent background loading for high detail GLTF model */}
+        <Suspense fallback={null}>
           <Environment preset="studio" resolution={256} />
+          
+          <HighDetailModel
+            isInteracting={isInteracting}
+            isIdle={isIdle}
+            gltfLoaded={gltfLoaded}
+            onLoad={() => setGltfLoaded(true)}
+          />
 
-          <SunglassesModel isInteracting={isInteracting} isIdle={isIdle} />
-
-          <ResponsiveContactShadows />
+          <ContactShadows
+            position={[0, -1.5, 0]}
+            opacity={shadowsEnabled ? 0.4 : 0.15}
+            scale={8}
+            blur={2.2}
+            far={3.5}
+            resolution={128}
+            frames={1}
+          />
 
           <Preload all />
         </Suspense>
@@ -354,3 +499,5 @@ export default function Hero3DViewer() {
     </div>
   );
 }
+
+useGLTF.preload("/models/eyewear.glb");
