@@ -110,7 +110,7 @@ export default function HomePage() {
           </div>
 
           {/* 3D Eyewear Studio Canvas */}
-          <div className="relative w-full max-w-4xl mx-auto h-[400px] md:h-[520px] mt-6 flex items-center justify-center bg-transparent z-10">
+          <div className="relative w-full max-w-4xl mx-auto min-h-[480px] sm:min-h-[520px] mt-6 mb-12 sm:mb-16 flex items-center justify-center bg-transparent z-10">
             <Frame3DCanvasWrapper />
           </div>
         </div>
