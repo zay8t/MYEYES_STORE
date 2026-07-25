@@ -73,7 +73,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
-      <section className="relative pt-24 pb-12 bg-white">
+      <section className="relative pt-24 pb-16 sm:pb-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand/10 to-brand/5 border border-brand/20 text-[11px] font-bold uppercase tracking-widest text-brand-dark shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-brand animate-pulse" />
@@ -110,7 +110,7 @@ export default function HomePage() {
           </div>
 
           {/* 3D Eyewear Studio Canvas */}
-          <div className="relative w-full max-w-4xl mx-auto min-h-[480px] sm:min-h-[520px] mt-6 mb-12 sm:mb-16 flex items-center justify-center bg-transparent z-10">
+          <div className="relative w-full max-w-4xl mx-auto min-h-[460px] sm:min-h-[500px] md:h-[520px] mt-6 sm:mt-8 flex items-center justify-center bg-transparent z-10">
             <Frame3DCanvasWrapper />
           </div>
         </div>

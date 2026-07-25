@@ -66,21 +66,21 @@ export default function Frame3DCanvasWrapper() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full z-20 flex flex-col gap-2.5 sm:gap-3 bg-white/80 backdrop-blur-xl rounded-2xl p-2.5 sm:p-4 shadow-sm border border-slate-100/50"
+        className="w-full z-20 flex flex-col gap-3 pt-3 bg-white/70 backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100/50"
       >
         {/* Row 1: Frame Shape Selector Tabs with Motion Pill */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
             Frame Model:
           </span>
-          <div className="relative grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl w-full sm:w-auto">
+          <div className="relative flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl">
             {SHAPE_OPTIONS.map((opt) => {
               const active = shape === opt.id;
               return (
                 <button
                   key={opt.id}
                   onClick={() => setShape(opt.id)}
-                  className={`relative px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold tracking-wide transition-colors duration-200 flex items-center justify-center gap-1.5 z-10 ${
+                  className={`relative px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wide transition-colors duration-200 flex items-center gap-1.5 z-10 ${
                     active ? 'text-white' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -92,7 +92,7 @@ export default function Frame3DCanvasWrapper() {
                     />
                   )}
                   <span className="text-xs">{opt.icon}</span>
-                  <span className="truncate">{opt.label}</span>
+                  <span>{opt.label}</span>
                 </button>
               );
             })}
@@ -100,14 +100,14 @@ export default function Frame3DCanvasWrapper() {
         </div>
 
         {/* Row 2: Material Finish Swatches & Lens Tint Selector */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 pt-2 border-t border-slate-100/60">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1 border-t border-slate-100/60">
           
           {/* Finish Swatches */}
           <div className="flex items-center justify-between sm:justify-start gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 shrink-0">
               Material:
             </span>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               {FINISH_OPTIONS.map((f) => {
                 const active = finish === f.id;
                 return (
@@ -121,26 +121,26 @@ export default function Frame3DCanvasWrapper() {
                     }`}
                     title={f.label}
                   >
-                    <span className={`block w-5 h-5 rounded-full border border-black/10 shadow-sm ${f.colorClass}`} />
+                    <span className={`block w-4.5 h-4.5 rounded-full border border-black/10 shadow-sm ${f.colorClass}`} />
                   </motion.button>
                 );
               })}
             </div>
           </div>
 
-          {/* Lens Tint Swatches */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+          {/* Lens Tint Swatches - Mobile Phone Optimized Grid */}
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1.5 sm:gap-2 w-full sm:w-auto">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 shrink-0">
               Lens Filter:
             </span>
-            <div className="grid grid-cols-4 sm:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl w-full sm:w-auto">
+            <div className="grid grid-cols-4 sm:flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl w-full sm:w-auto">
               {LENS_OPTIONS.map((l) => {
                 const active = lens === l.id;
                 return (
                   <button
                     key={l.id}
                     onClick={() => setLens(l.id)}
-                    className={`relative px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-200 flex items-center justify-center gap-1 z-10 w-full sm:w-auto text-center truncate ${
+                    className={`relative px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-200 flex items-center justify-center gap-1 z-10 w-full ${
                       active ? 'text-white' : 'text-slate-600 hover:text-slate-900'
                     }`}
                     title={l.label}
@@ -152,7 +152,7 @@ export default function Frame3DCanvasWrapper() {
                         transition={{ type: 'spring', stiffness: 450, damping: 30 }}
                       />
                     )}
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${l.bgClass}`} />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${l.bgClass}`} />
                     <span className="truncate">{l.label.split(' ')[0]}</span>
                   </button>
                 );
