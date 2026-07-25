@@ -26,7 +26,7 @@ export default function Frame3DCanvasWrapper() {
   const [shape, setShape] = useState<FrameShape>('round');
   const [finish, setFinish] = useState<FrameFinish>('onyx');
   const [lens, setLens] = useState<LensTint>('blue');
-  const [autoRotate, setAutoRotate] = useState(true);
+  const [autoRotate] = useState(true);
 
   const SHAPE_OPTIONS: { id: FrameShape; label: string; icon: string }[] = [
     { id: 'round', label: 'Classic Round', icon: '◯' },
@@ -42,7 +42,7 @@ export default function Frame3DCanvasWrapper() {
     { id: 'rosegold', label: 'Rose Gold', colorClass: 'bg-rose-400 border-rose-300 ring-rose-400' },
   ];
 
-  const LENS_OPTIONS: { id: LensTint; label: string; bgClass: string; icon: any }[] = [
+  const LENS_OPTIONS: { id: LensTint; label: string; bgClass: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'blue', label: 'Anti-Blue Light', bgClass: 'bg-sky-400', icon: ShieldCheck },
     { id: 'amber', label: 'Sun Amber', bgClass: 'bg-amber-500', icon: Sun },
     { id: 'emerald', label: 'Emerald Tint', bgClass: 'bg-emerald-500', icon: Sparkles },
