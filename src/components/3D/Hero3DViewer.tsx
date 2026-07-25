@@ -209,59 +209,59 @@ function SunglassesModel({
 
   return (
     <group ref={groupRef} scale={responsiveScale} dispose={null}>
-          <mesh position={[-1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
-          <mesh position={[1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+      <mesh position={[-1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
+      <mesh position={[1.15, 0, 0]} geometry={g.rim} material={m.frame} castShadow />
 
-          <mesh
-            position={[-1.15, 0, 0.02]}
-            rotation={[Math.PI / 2, 0, 0]}
-            geometry={g.lens}
-            material={m.lens}
-            castShadow
-          />
-          <mesh
-            position={[1.15, 0, 0.02]}
-            rotation={[Math.PI / 2, 0, 0]}
-            geometry={g.lens}
-            material={m.lens}
-            castShadow
-          />
+      <mesh
+        position={[-1.15, 0, 0.02]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={g.lens}
+        material={m.lens}
+        castShadow
+      />
+      <mesh
+        position={[1.15, 0, 0.02]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={g.lens}
+        material={m.lens}
+        castShadow
+      />
 
-          <mesh
-            position={[0, 0.3, 0.05]}
-            rotation={[0, 0, Math.PI / 2]}
-            geometry={g.thickBridge}
-            material={m.bridge}
-            castShadow
-          />
-          <mesh
-            position={[0, 0.52, 0.02]}
-            rotation={[0, 0, Math.PI / 2]}
-            geometry={g.thinBridge}
-            material={m.bridge}
-            castShadow
-          />
+      <mesh
+        position={[0, 0.3, 0.05]}
+        rotation={[0, 0, Math.PI / 2]}
+        geometry={g.thickBridge}
+        material={m.bridge}
+        castShadow
+      />
+      <mesh
+        position={[0, 0.52, 0.02]}
+        rotation={[0, 0, Math.PI / 2]}
+        geometry={g.thinBridge}
+        material={m.bridge}
+        castShadow
+      />
 
-          <mesh position={[-1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
-          <mesh position={[1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+      <mesh position={[-1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
+      <mesh position={[1.9, 0.28, -0.05]} geometry={g.hinge} material={m.hinge} castShadow />
 
-          <mesh
-            position={[-1.95, 0.22, -1.05]}
-            rotation={[0.04, 0.04, 0]}
-            geometry={g.temple}
-            material={m.temple}
-            castShadow
-          />
-          <mesh
-            position={[1.95, 0.22, -1.05]}
-            rotation={[0.04, -0.04, 0]}
-            geometry={g.temple}
-            material={m.temple}
-            castShadow
-          />
+      <mesh
+        position={[-1.95, 0.22, -1.05]}
+        rotation={[0.04, 0.04, 0]}
+        geometry={g.temple}
+        material={m.temple}
+        castShadow
+      />
+      <mesh
+        position={[1.95, 0.22, -1.05]}
+        rotation={[0.04, -0.04, 0]}
+        geometry={g.temple}
+        material={m.temple}
+        castShadow
+      />
 
-          <mesh position={[-0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
-          <mesh position={[0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
+      <mesh position={[-0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
+      <mesh position={[0.32, -0.15, -0.12]} geometry={g.nosePad} material={m.nosePad} />
     </group>
   );
 }
@@ -463,7 +463,7 @@ export default function Hero3DViewer() {
         {/* Silent background loading for high detail GLTF model */}
         <Suspense fallback={null}>
           <Environment preset="studio" resolution={256} />
-          
+
           <HighDetailModel
             isInteracting={isInteracting}
             isIdle={isIdle}
