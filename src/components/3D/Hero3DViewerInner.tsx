@@ -80,13 +80,18 @@ function LocalEnvironment() {
 
 // ─── Shared Frame Sub-Components ────────────────────────────────────────────
 
-function NosePads({ frameMatRef }: { frameMatRef: React.RefObject<THREE.MeshStandardMaterial | null> }) {
+interface MaterialProps {
+  frameMat: THREE.MeshStandardMaterial;
+  lensMat?: THREE.MeshPhysicalMaterial;
+}
+
+function NosePads({ frameMat }: MaterialProps) {
   return (
     <group>
       {/* Left Nose Pad & Stem */}
       <mesh position={[-0.32, -0.22, 0.12]} rotation={[0.2, 0.3, -0.2]}>
         <cylinderGeometry args={[0.02, 0.02, 0.18, 12]} />
-        <primitive object={frameMatRef.current || new THREE.MeshStandardMaterial()} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       <mesh position={[-0.35, -0.28, 0.16]} rotation={[0.2, 0.4, 0]}>
         <boxGeometry args={[0.04, 0.14, 0.08]} />
@@ -96,7 +101,7 @@ function NosePads({ frameMatRef }: { frameMatRef: React.RefObject<THREE.MeshStan
       {/* Right Nose Pad & Stem */}
       <mesh position={[0.32, -0.22, 0.12]} rotation={[0.2, -0.3, 0.2]}>
         <cylinderGeometry args={[0.02, 0.02, 0.18, 12]} />
-        <primitive object={frameMatRef.current || new THREE.MeshStandardMaterial()} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       <mesh position={[0.35, -0.28, 0.16]} rotation={[0.2, -0.4, 0]}>
         <boxGeometry args={[0.04, 0.14, 0.08]} />
@@ -109,29 +114,28 @@ function NosePads({ frameMatRef }: { frameMatRef: React.RefObject<THREE.MeshStan
 function TempleArm({
   position,
   rotation,
-  frameMatRef,
+  frameMat,
 }: {
   position: [number, number, number];
   rotation: [number, number, number];
-  frameMatRef: React.RefObject<THREE.MeshStandardMaterial | null>;
+  frameMat: THREE.MeshStandardMaterial;
 }) {
-  const dummyMat = frameMatRef.current || new THREE.MeshStandardMaterial();
   return (
     <group position={position} rotation={rotation}>
       {/* Hinge Joint */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.08, 0.12, 0.08]} />
-        <primitive object={dummyMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       {/* Straight Arm */}
       <mesh position={[0, 0, -1.1]}>
         <boxGeometry args={[0.05, 0.07, 2.2]} />
-        <primitive object={dummyMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       {/* Ear Curve */}
       <mesh position={[0, -0.16, -2.25]} rotation={[0.4, 0, 0]}>
         <cylinderGeometry args={[0.025, 0.025, 0.4, 12]} />
-        <primitive object={dummyMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
     </group>
   );
@@ -139,73 +143,67 @@ function TempleArm({
 
 // ─── 1. Classic Round Frame ──────────────────────────────────────────────
 
-function RoundFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef: any }) {
-  const fMat = frameMatRef.current || new THREE.MeshStandardMaterial();
-  const lMat = lensMatRef.current || new THREE.MeshPhysicalMaterial();
-
+function RoundFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMaterial; lensMat: THREE.MeshPhysicalMaterial }) {
   return (
     <group>
       {/* Bridge */}
       <mesh position={[0, 0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
         <torusGeometry args={[0.3, 0.04, 16, 32, Math.PI]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Rims */}
       <mesh position={[-1.15, 0, 0]}>
         <torusGeometry args={[0.85, 0.07, 24, 64]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       <mesh position={[1.15, 0, 0]}>
         <torusGeometry args={[0.85, 0.07, 24, 64]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Lenses */}
       <mesh position={[-1.15, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.82, 0.82, 0.04, 32]} />
-        <primitive object={lMat} attach="material" />
+        <primitive object={lensMat} attach="material" />
       </mesh>
       <mesh position={[1.15, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.82, 0.82, 0.04, 32]} />
-        <primitive object={lMat} attach="material" />
+        <primitive object={lensMat} attach="material" />
       </mesh>
 
-      <NosePads frameMatRef={frameMatRef} />
-      <TempleArm position={[-2.0, 0.05, -0.05]} rotation={[0, -0.1, 0]} frameMatRef={frameMatRef} />
-      <TempleArm position={[2.0, 0.05, -0.05]} rotation={[0, 0.1, 0]} frameMatRef={frameMatRef} />
+      <NosePads frameMat={frameMat} />
+      <TempleArm position={[-2.0, 0.05, -0.05]} rotation={[0, -0.1, 0]} frameMat={frameMat} />
+      <TempleArm position={[2.0, 0.05, -0.05]} rotation={[0, 0.1, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
 // ─── 2. Titanium Aviator Frame ──────────────────────────────────────────
 
-function AviatorFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef: any }) {
-  const fMat = frameMatRef.current || new THREE.MeshStandardMaterial();
-  const lMat = lensMatRef.current || new THREE.MeshPhysicalMaterial();
-
+function AviatorFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMaterial; lensMat: THREE.MeshPhysicalMaterial }) {
   return (
     <group>
       {/* Top Brow Bar */}
       <mesh position={[0, 0.42, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.03, 0.03, 1.2, 16]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
       {/* Curved Lower Bridge */}
       <mesh position={[0, 0.12, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.035, 0.035, 0.5, 16]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Left Teardrop Rim */}
       <group position={[-1.2, -0.08, 0]} scale={[1.0, 1.15, 1.0]}>
         <mesh>
           <torusGeometry args={[0.85, 0.045, 24, 64]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.83, 0.83, 0.03, 32]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
@@ -213,50 +211,47 @@ function AviatorFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRe
       <group position={[1.2, -0.08, 0]} scale={[1.0, 1.15, 1.0]}>
         <mesh>
           <torusGeometry args={[0.85, 0.045, 24, 64]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.83, 0.83, 0.03, 32]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      <NosePads frameMatRef={frameMatRef} />
-      <TempleArm position={[-2.1, 0.1, -0.05]} rotation={[0, -0.12, 0]} frameMatRef={frameMatRef} />
-      <TempleArm position={[2.1, 0.1, -0.05]} rotation={[0, 0.12, 0]} frameMatRef={frameMatRef} />
+      <NosePads frameMat={frameMat} />
+      <TempleArm position={[-2.1, 0.1, -0.05]} rotation={[0, -0.12, 0]} frameMat={frameMat} />
+      <TempleArm position={[2.1, 0.1, -0.05]} rotation={[0, 0.12, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
 // ─── 3. Modern Square Browline Frame ────────────────────────────────────
 
-function SquareFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef: any }) {
-  const fMat = frameMatRef.current || new THREE.MeshStandardMaterial();
-  const lMat = lensMatRef.current || new THREE.MeshPhysicalMaterial();
-
+function SquareFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMaterial; lensMat: THREE.MeshPhysicalMaterial }) {
   return (
     <group>
       {/* Upper Thick Browline Bar */}
       <mesh position={[0, 0.4, 0]}>
         <boxGeometry args={[4.4, 0.18, 0.14]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Center Bridge */}
       <mesh position={[0, 0.15, 0]}>
         <boxGeometry args={[0.45, 0.1, 0.08]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Left Square Rim & Lens */}
       <group position={[-1.2, -0.1, 0]}>
         <mesh>
           <boxGeometry args={[1.7, 1.3, 0.08]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh position={[0, 0, 0.01]}>
           <boxGeometry args={[1.54, 1.14, 0.09]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
@@ -264,48 +259,45 @@ function SquareFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef
       <group position={[1.2, -0.1, 0]}>
         <mesh>
           <boxGeometry args={[1.7, 1.3, 0.08]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh position={[0, 0, 0.01]}>
           <boxGeometry args={[1.54, 1.14, 0.09]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      <NosePads frameMatRef={frameMatRef} />
-      <TempleArm position={[-2.15, 0.35, -0.05]} rotation={[0, -0.1, 0]} frameMatRef={frameMatRef} />
-      <TempleArm position={[2.15, 0.35, -0.05]} rotation={[0, 0.1, 0]} frameMatRef={frameMatRef} />
+      <NosePads frameMat={frameMat} />
+      <TempleArm position={[-2.15, 0.35, -0.05]} rotation={[0, -0.1, 0]} frameMat={frameMat} />
+      <TempleArm position={[2.15, 0.35, -0.05]} rotation={[0, 0.1, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
 // ─── 4. Cat-Eye Luxe Frame ──────────────────────────────────────────────
 
-function CatEyeFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef: any }) {
-  const fMat = frameMatRef.current || new THREE.MeshStandardMaterial();
-  const lMat = lensMatRef.current || new THREE.MeshPhysicalMaterial();
-
+function CatEyeFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMaterial; lensMat: THREE.MeshPhysicalMaterial }) {
   return (
     <group>
       {/* High Arched Bridge */}
       <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.04, 0.04, 0.45, 16]} />
-        <primitive object={fMat} attach="material" />
+        <primitive object={frameMat} attach="material" />
       </mesh>
 
       {/* Left Upswept Cat-Eye Rim */}
       <group position={[-1.25, 0.05, 0]} rotation={[0, 0, 0.18]}>
         <mesh>
           <torusGeometry args={[0.88, 0.075, 24, 64]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh position={[-0.8, 0.6, 0]} rotation={[0, 0, 0.6]}>
           <coneGeometry args={[0.18, 0.5, 16]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.85, 0.85, 0.04, 32]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
@@ -313,21 +305,21 @@ function CatEyeFrame({ frameMatRef, lensMatRef }: { frameMatRef: any; lensMatRef
       <group position={[1.25, 0.05, 0]} rotation={[0, 0, -0.18]}>
         <mesh>
           <torusGeometry args={[0.88, 0.075, 24, 64]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh position={[0.8, 0.6, 0]} rotation={[0, 0, -0.6]}>
           <coneGeometry args={[0.18, 0.5, 16]} />
-          <primitive object={fMat} attach="material" />
+          <primitive object={frameMat} attach="material" />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.85, 0.85, 0.04, 32]} />
-          <primitive object={lMat} attach="material" />
+          <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      <NosePads frameMatRef={frameMatRef} />
-      <TempleArm position={[-2.2, 0.25, -0.05]} rotation={[0, -0.14, 0]} frameMatRef={frameMatRef} />
-      <TempleArm position={[2.2, 0.25, -0.05]} rotation={[0, 0.14, 0]} frameMatRef={frameMatRef} />
+      <NosePads frameMat={frameMat} />
+      <TempleArm position={[-2.2, 0.25, -0.05]} rotation={[0, -0.14, 0]} frameMat={frameMat} />
+      <TempleArm position={[2.2, 0.25, -0.05]} rotation={[0, 0.14, 0]} frameMat={frameMat} />
     </group>
   );
 }
@@ -350,27 +342,29 @@ function EyewearStudioModel({
   const frameColorTarget = useRef(new THREE.Color());
   const lensColorTarget = useRef(new THREE.Color());
 
-  // Persisted materials to allow 60fps color & roughness lerping
-  const frameMatRef = useRef<THREE.MeshStandardMaterial>(
-    new THREE.MeshStandardMaterial({
-      color: FINISH_MATERIALS.onyx.color,
-      metalness: FINISH_MATERIALS.onyx.metalness,
-      roughness: FINISH_MATERIALS.onyx.roughness,
-    })
+  // Persisted materials initialized in component state for zero render ref-access errors
+  const [frameMaterial] = useState(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: FINISH_MATERIALS.onyx.color,
+        metalness: FINISH_MATERIALS.onyx.metalness,
+        roughness: FINISH_MATERIALS.onyx.roughness,
+      })
   );
 
-  const lensMatRef = useRef<THREE.MeshPhysicalMaterial>(
-    new THREE.MeshPhysicalMaterial({
-      color: LENS_MATERIALS.blue.color,
-      transmission: LENS_MATERIALS.blue.transmission,
-      opacity: LENS_MATERIALS.blue.opacity,
-      roughness: LENS_MATERIALS.blue.roughness,
-      transparent: true,
-      reflectivity: 0.95,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.04,
-      ior: 1.52,
-    })
+  const [lensMaterial] = useState(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: LENS_MATERIALS.blue.color,
+        transmission: LENS_MATERIALS.blue.transmission,
+        opacity: LENS_MATERIALS.blue.opacity,
+        roughness: LENS_MATERIALS.blue.roughness,
+        transparent: true,
+        reflectivity: 0.95,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.04,
+        ior: 1.52,
+      })
   );
 
   // Trigger brief elastic scale pop on shape change
@@ -397,22 +391,22 @@ function EyewearStudioModel({
     const targetLens = LENS_MATERIALS[lens] || LENS_MATERIALS.blue;
 
     frameColorTarget.current.set(targetFinish.color);
-    frameMatRef.current.color.lerp(frameColorTarget.current, delta * 7);
-    frameMatRef.current.metalness = THREE.MathUtils.damp(frameMatRef.current.metalness, targetFinish.metalness, 8, delta);
-    frameMatRef.current.roughness = THREE.MathUtils.damp(frameMatRef.current.roughness, targetFinish.roughness, 8, delta);
+    frameMaterial.color.lerp(frameColorTarget.current, delta * 7);
+    frameMaterial.metalness = THREE.MathUtils.damp(frameMaterial.metalness, targetFinish.metalness, 8, delta);
+    frameMaterial.roughness = THREE.MathUtils.damp(frameMaterial.roughness, targetFinish.roughness, 8, delta);
 
     lensColorTarget.current.set(targetLens.color);
-    lensMatRef.current.color.lerp(lensColorTarget.current, delta * 7);
-    lensMatRef.current.transmission = THREE.MathUtils.damp(lensMatRef.current.transmission, targetLens.transmission, 8, delta);
-    lensMatRef.current.opacity = THREE.MathUtils.damp(lensMatRef.current.opacity, targetLens.opacity, 8, delta);
+    lensMaterial.color.lerp(lensColorTarget.current, delta * 7);
+    lensMaterial.transmission = THREE.MathUtils.damp(lensMaterial.transmission, targetLens.transmission, 8, delta);
+    lensMaterial.opacity = THREE.MathUtils.damp(lensMaterial.opacity, targetLens.opacity, 8, delta);
   });
 
   return (
     <group ref={groupRef}>
-      {shape === 'round' && <RoundFrame frameMatRef={frameMatRef} lensMatRef={lensMatRef} />}
-      {shape === 'aviator' && <AviatorFrame frameMatRef={frameMatRef} lensMatRef={lensMatRef} />}
-      {shape === 'square' && <SquareFrame frameMatRef={frameMatRef} lensMatRef={lensMatRef} />}
-      {shape === 'cateye' && <CatEyeFrame frameMatRef={frameMatRef} lensMatRef={lensMatRef} />}
+      {shape === 'round' && <RoundFrame frameMat={frameMaterial} lensMat={lensMaterial} />}
+      {shape === 'aviator' && <AviatorFrame frameMat={frameMaterial} lensMat={lensMaterial} />}
+      {shape === 'square' && <SquareFrame frameMat={frameMaterial} lensMat={lensMaterial} />}
+      {shape === 'cateye' && <CatEyeFrame frameMat={frameMaterial} lensMat={lensMaterial} />}
     </group>
   );
 }
