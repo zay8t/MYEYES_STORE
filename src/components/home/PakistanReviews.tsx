@@ -59,7 +59,7 @@ export default function PakistanReviews() {
           {REVIEWS.map((r, i) => (
             <div
               key={i}
-              className="group rounded-2xl border border-slate-200/80 bg-white p-6 transition-all duration-300 hover:border-slate-300 hover:shadow-sm flex flex-col justify-between"
+              className="card-hover group rounded-2xl border border-slate-200/80 bg-white p-6 transition-all duration-300 hover:border-slate-300 flex flex-col justify-between"
             >
               {/* Stars */}
               <div className="flex gap-0.5 mb-4">
@@ -103,8 +103,7 @@ export default function PakistanReviews() {
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-50 border border-slate-200/60">
             <MapPin className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Delivering across Karachi, Lahore, Islamabad, Rawalpindi,
-              Peshawar &amp; 100+ cities in Pakistan
+              Delivering All Across Pakistan 🇵🇰
             </span>
           </div>
         </div>

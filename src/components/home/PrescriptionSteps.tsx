@@ -51,7 +51,7 @@ export default function PrescriptionSteps() {
           {STEPS.map((s, i) => (
             <div
               key={i}
-              className="group rounded-2xl border border-slate-200/80 bg-white p-6 transition-all duration-300 hover:border-slate-300 hover:shadow-sm relative"
+              className="card-hover group rounded-2xl border border-slate-200/80 bg-white p-6 transition-all duration-300 hover:border-brand/20 relative"
             >
               {/* Step number */}
               <span className="text-[10px] font-extrabold text-brand uppercase tracking-widest">

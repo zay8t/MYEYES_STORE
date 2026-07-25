@@ -13,7 +13,7 @@ export default function CartDrawer() {
   if (!isOpen) return null;
 
   const subtotal = subtotalPrice();
-  const shipping = subtotal > 0 && subtotal < 150 ? 15 : 0;
+  const shipping = subtotal > 0 ? 250 : 0;
   const grandTotal = subtotal + shipping;
 
   const handleCheckout = () => {

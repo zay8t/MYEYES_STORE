@@ -49,7 +49,7 @@ export default function CategorySpotlight() {
             {/* Eyeglasses Banner */}
             <Link
               href="/eyeglasses"
-              className="group relative rounded-2xl border border-slate-200/80 bg-white p-8 transition-all duration-300 hover:border-slate-300 hover:shadow-sm flex flex-col justify-between min-h-[220px]"
+              className="card-hover group relative rounded-2xl border border-slate-200/80 bg-white p-8 transition-all duration-300 hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 flex flex-col justify-between min-h-[220px]"
             >
               <div>
                 <div className="w-12 h-12 rounded-xl bg-brand text-white flex items-center justify-center mb-4">
@@ -64,16 +64,16 @@ export default function CategorySpotlight() {
                   & blue-light coatings available.
                 </p>
               </div>
-              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-brand-dark group-hover:gap-3 transition-all">
+              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-brand-dark group-hover:gap-3.5 transition-all duration-300">
                 Browse Eyeglasses
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </div>
             </Link>
 
             {/* Sunglasses Banner */}
             <Link
               href="/sunglasses"
-              className="group relative rounded-2xl border border-slate-200/80 bg-slate-900 p-8 transition-all duration-300 hover:bg-black hover:shadow-sm flex flex-col justify-between min-h-[220px]"
+              className="card-hover group relative rounded-2xl border border-slate-200/80 bg-slate-900 p-8 transition-all duration-300 hover:bg-black hover:shadow-xl hover:shadow-slate-900/20 flex flex-col justify-between min-h-[220px]"
             >
               <div>
                 <div className="w-12 h-12 rounded-xl bg-brand text-white flex items-center justify-center mb-4">
@@ -88,9 +88,9 @@ export default function CategorySpotlight() {
                   Gray, brown, and mirror finishes.
                 </p>
               </div>
-              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-white group-hover:gap-3 transition-all">
+              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-white group-hover:gap-3.5 transition-all duration-300">
                 Browse Sunglasses
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </div>
             </Link>
           </div>

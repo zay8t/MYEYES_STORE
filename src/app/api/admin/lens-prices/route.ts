@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SOLEX_LENS_OPTIONS } from "@/lib/solex-lens-pricing";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const count = await prisma.lensOption.count();

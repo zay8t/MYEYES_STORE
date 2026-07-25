@@ -67,25 +67,25 @@ export default function HomePage() {
       {/* ============================================================ */}
       <section className="relative pt-24 pb-12 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand/5 border border-brand/20 text-[11px] font-bold uppercase tracking-widest text-brand-dark">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand/10 to-brand/5 border border-brand/20 text-[11px] font-bold uppercase tracking-widest text-brand-dark shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-brand animate-pulse" />
-            Handcrafted Optical Studio
+            Pakistan&apos;s #1 Online Eyewear Store
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Minimalist Eyewear.
+            Pakistan&apos;s First
             <br />
-            <span className="text-brand font-semibold">Precision Vision Engine.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Prescription Eyewear Store.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Discover lightweight Japanese titanium and bio-acetate frames designed for effortless daily style. Custom prescription fitting with anti-reflective optical clarity.
+            Order premium prescription eyeglasses &amp; sunglasses online with exact SPH, CYL &amp; PD fitting — crafted at lab-precision rates and delivered to your doorstep anywhere in Pakistan.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/eyeglasses"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/20 hover:scale-[1.02] flex items-center justify-center gap-2.5"
             >
               <Glasses className="w-4 h-4" />
               Explore Eyeglasses
@@ -94,7 +94,7 @@ export default function HomePage() {
 
             <Link
               href="/sunglasses"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-slate-200 hover:border-brand hover:bg-brand/5 text-slate-900 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-brand/10 flex items-center justify-center gap-2.5"
             >
               <Sun className="w-4 h-4" />
               Explore Sunglasses
@@ -116,7 +116,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  EDITORIAL VALUE STRIP                                       */}
       {/* ============================================================ */}
-      <section className="py-10 border-t border-b border-slate-100 bg-slate-50/50">
+      <section className="py-12 border-t border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="space-y-1">
@@ -194,7 +194,7 @@ export default function HomePage() {
               return (
                 <div
                   key={product.id}
-                  className="group relative rounded-2xl border border-slate-200/80 hover:border-slate-300 bg-white p-5 transition-all duration-300 flex flex-col justify-between"
+                  className="card-hover group relative rounded-2xl border border-slate-200/80 hover:border-slate-300 bg-white p-5 transition-all duration-300 flex flex-col justify-between"
                 >
                   <Link href={`/products/${product.slug}`} className="block space-y-4">
                     <div className="aspect-square bg-slate-50/50 rounded-xl overflow-hidden flex items-center justify-center p-4 border border-slate-100 relative">
