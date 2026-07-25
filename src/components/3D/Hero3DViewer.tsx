@@ -101,7 +101,7 @@ function SunglassesModel({
       <Center>
         <primitive
           object={scene}
-          scale={1.3}
+          scale={2.2}
           dispose={null}
         />
       </Center>
