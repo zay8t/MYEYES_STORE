@@ -26,7 +26,22 @@ export async function GET() {
       orderBy: { type: "asc" },
     });
 
-    return NextResponse.json(lensOptions);
+    // Map Prisma fields back to the SolexLensOption shape expected by the frontend
+    const mapped = lensOptions.map((lens) => {
+      // Find the matching static option to pull coating (not stored in DB)
+      const staticMatch = SOLEX_LENS_OPTIONS.find((s) => s.id === lens.id);
+      return {
+        id: lens.id,
+        name: lens.name,
+        basePrice: lens.price,
+        category: lens.type ?? staticMatch?.category ?? "single_vision",
+        index: lens.index ?? staticMatch?.index ?? "1.56",
+        description: lens.description ?? staticMatch?.description ?? "",
+        coating: staticMatch?.coating ?? "Standard",
+      };
+    });
+
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error("Failed to fetch lens options:", error);
     return NextResponse.json(
