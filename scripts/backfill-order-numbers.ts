@@ -38,8 +38,8 @@ async function main() {
   // Update or create OrderSequence with highest assigned sequence
   await prisma.orderSequence.upsert({
     where: { id: 1 },
-    update: { seq: maxSeq },
-    create: { id: 1, seq: maxSeq },
+    update: { lastValue: maxSeq },
+    create: { id: 1, lastValue: maxSeq },
   });
 
   console.log(`Backfill complete! Assigned ${assignedCount} order numbers. High water mark: ${maxSeq}`);
