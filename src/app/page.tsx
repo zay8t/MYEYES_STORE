@@ -13,7 +13,7 @@ import PrescriptionModal from "@/components/PrescriptionModal";
 import LensVisualizer from "@/components/home/LensVisualizer";
 import PrescriptionSteps from "@/components/home/PrescriptionSteps";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
-import PakistanReviews from "@/components/home/PakistanReviews";
+
 
 const Frame3DCanvasWrapper = dynamic(
   () => import("@/components/3d/Frame3DCanvasWrapper"),
@@ -269,10 +269,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       <CategorySpotlight />
 
-      {/* ============================================================ */}
-      {/*  PAKISTAN-BASED CUSTOMER REVIEWS                              */}
-      {/* ============================================================ */}
-      <PakistanReviews />
+
 
       {/* Prescription Modal for Eyeglasses */}
       {rxModalOpen && selectedProduct && (

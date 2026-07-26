@@ -482,7 +482,6 @@ export default function PrescriptionModal({
                           Remove
                         </button>
                       </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={rxPreview}
                         alt="Prescription preview"
