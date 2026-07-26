@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Upload, Trash2, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/nativeStorage";
 
 export interface ImageUploaderProps {
   images: string[];
@@ -69,37 +70,52 @@ export default function ImageUploader({ images, onChange }: ImageUploaderProps) 
       return updated;
     });
 
-    // 2. ASYNCHRONOUS BACKGROUND FILE CONVERSION (Non-blocking UI Thread)
+    // 2. ASYNCHRONOUS BACKGROUND FILE CONVERSION WITH CANVAS COMPRESSION (Non-blocking UI Thread)
     fileArray.forEach((file, index) => {
       const targetId = newItems[index].id;
 
       setTimeout(() => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const resultStr = e.target?.result as string;
-          setItems((prev) => {
-            const updated = prev.map((item) =>
-              item.id === targetId
-                ? { ...item, dataUrl: resultStr, isUploading: false }
-                : item
-            );
-            notifyChange(updated);
-            return updated;
+        compressImage(file, 800, 800, 0.75)
+          .then((compressedBase64) => {
+            setItems((prev) => {
+              const updated = prev.map((item) =>
+                item.id === targetId
+                  ? { ...item, dataUrl: compressedBase64, isUploading: false }
+                  : item
+              );
+              notifyChange(updated);
+              return updated;
+            });
+          })
+          .catch((err) => {
+            console.error("Image compression failed, falling back to raw reader:", err);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const resultStr = e.target?.result as string;
+              setItems((prev) => {
+                const updated = prev.map((item) =>
+                  item.id === targetId
+                    ? { ...item, dataUrl: resultStr, isUploading: false }
+                    : item
+                );
+                notifyChange(updated);
+                return updated;
+              });
+            };
+            reader.onerror = (readerErr) => {
+              console.error("FileReader failed for image file:", readerErr);
+              setItems((prev) => {
+                const updated = prev.map((item) =>
+                  item.id === targetId
+                    ? { ...item, isUploading: false }
+                    : item
+                );
+                notifyChange(updated);
+                return updated;
+              });
+            };
+            reader.readAsDataURL(file);
           });
-        };
-        reader.onerror = (err) => {
-          console.error("FileReader failed for image file:", err);
-          setItems((prev) => {
-            const updated = prev.map((item) =>
-              item.id === targetId
-                ? { ...item, isUploading: false }
-                : item
-            );
-            notifyChange(updated);
-            return updated;
-          });
-        };
-        reader.readAsDataURL(file);
       }, 10 * index);
     });
   }, [notifyChange]);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,14 @@ export async function PATCH(
       data: updateData,
     });
 
+    revalidatePath("/");
+    revalidatePath("/products");
+    revalidatePath("/eyeglasses");
+    revalidatePath("/sunglasses");
+    revalidatePath("/men");
+    revalidatePath("/women");
+    revalidatePath("/kids");
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Failed to update product:", error);
@@ -60,6 +69,15 @@ export async function DELETE(
     });
 
     await prisma.product.delete({ where: { id } });
+
+    revalidatePath("/");
+    revalidatePath("/products");
+    revalidatePath("/eyeglasses");
+    revalidatePath("/sunglasses");
+    revalidatePath("/men");
+    revalidatePath("/women");
+    revalidatePath("/kids");
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete product:", error);

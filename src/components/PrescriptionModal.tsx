@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { X, Check, ChevronRight, Upload, ArrowLeft, Camera, ImageIcon, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { cn, formatPrice } from "@/lib/utils";
+import { compressImage } from "@/lib/nativeStorage";
 import {
   SOLEX_LENS_OPTIONS,
   calculateSolexLensPrice,
@@ -70,13 +71,21 @@ export default function PrescriptionModal({
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith("image/")) return;
     setRxFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setRxPreview(dataUrl);
-      setRx((prev) => ({ ...prev, rxFileUrl: dataUrl }));
-    };
-    reader.readAsDataURL(file);
+    compressImage(file, 900, 900, 0.7)
+      .then((compressedBase64) => {
+        setRxPreview(compressedBase64);
+        setRx((prev) => ({ ...prev, rxFileUrl: compressedBase64 }));
+      })
+      .catch((err) => {
+        console.error("Prescription image compression failed, falling back to original:", err);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          setRxPreview(dataUrl);
+          setRx((prev) => ({ ...prev, rxFileUrl: dataUrl }));
+        };
+        reader.readAsDataURL(file);
+      });
   };
 
   const handleRemoveFile = () => {
