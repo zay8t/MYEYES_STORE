@@ -20,6 +20,7 @@ export default async function AdminOrdersPage() {
 
   const orders: OrderReceiptData[] = rawOrders.map((ord) => ({
     ...ord,
+    shippingFee: ord.shippingFee ?? undefined,
     status: ord.status as OrderReceiptData["status"],
     createdAt: ord.createdAt.toISOString(),
     updatedAt: ord.updatedAt.toISOString(),
