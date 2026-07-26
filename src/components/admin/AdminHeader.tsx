@@ -21,7 +21,7 @@ export default function AdminHeader() {
         <Link href="/admin" className="text-slate-900 font-bold text-base tracking-wide flex items-center gap-3 select-none">
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 p-1.5 flex items-center justify-center border border-amber-300/40 shadow-3xs flex-shrink-0">
             <Image
-              src="/logo.png"
+              src="/logo.svg"
               alt="My Eyes Logo"
               width={24}
               height={24}

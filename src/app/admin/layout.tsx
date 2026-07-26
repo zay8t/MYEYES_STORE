@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+
 import AdminAuthGuard from "@/components/AdminAuthGuard";
 import AdminSidebarNav from "@/components/admin/AdminSidebarNav";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -25,21 +25,9 @@ export default function AdminLayout({
         <div className="flex-1 flex relative">
           {/* Desktop Sidebar (Fixed Left - Sits below top-16 header) */}
           <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed top-16 bottom-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
-            {/* Brand Header */}
-            <div className="flex items-center gap-3 p-4 border-b border-slate-100 select-none overflow-hidden">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center relative">
-                <Image
-                  src="/images/logo.png"
-                  alt="MY EYES"
-                  fill
-                  className="w-full h-full object-contain"
-                  priority
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 text-sm tracking-wide">MY EYES</span>
-                <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-semibold px-2 py-0.5 rounded-full">ADMIN</span>
-              </div>
+            {/* Section Label */}
+            <div className="px-5 py-3.5 border-b border-slate-100 select-none">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Navigation</span>
             </div>
 
             {/* Navigation Links */}
