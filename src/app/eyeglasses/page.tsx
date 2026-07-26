@@ -4,26 +4,11 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Glasses, SlidersHorizontal, ArrowRight, X } from "lucide-react";
-import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
-import { safeProductList } from "@/lib/data-guards";
+import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 import ProductCard from "@/components/products/ProductCard";
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  stock: number;
-  frameShape: string;
-  material: string;
-  gender: string;
-  images: string;
-  featured: boolean;
-  category: string;
-}
 
 const FRAME_SHAPES = ["All", "ROUND", "AVIATOR", "SQUARE", "CAT_EYE", "RECTANGLE"];
 const MATERIALS = ["All", "ACETATE", "TITANIUM", "STAINLESS_STEEL", "WOOD"];
@@ -32,7 +17,7 @@ function EyeglassesCatalog() {
   const searchParams = useSearchParams();
   const genderParam = searchParams.get("gender") || "All";
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<SafeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterShape, setFilterShape] = useState("All");
   const [filterMaterial, setFilterMaterial] = useState("All");
@@ -40,7 +25,7 @@ function EyeglassesCatalog() {
 
   // Modal state
   const [rxModalOpen, setRxModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<SafeProduct | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -49,7 +34,7 @@ function EyeglassesCatalog() {
       fetch("/api/admin/products?category=EYEGLASSES")
         .then((r) => r.json())
         .then((data) => {
-          setProducts(safeProductList(data) as unknown as Product[]);
+          setProducts(safeProductList(data));
           setLoading(false);
         })
         .catch(() => {
@@ -62,17 +47,7 @@ function EyeglassesCatalog() {
     }
   }, []);
 
-  const parseImages = (imagesStr: string): string[] => {
-    if (!imagesStr) return [];
-    try {
-      if (imagesStr.startsWith("[")) {
-        return JSON.parse(imagesStr);
-      }
-      return imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
-    } catch {
-      return [imagesStr];
-    }
-  };
+
 
   const filtered = products.filter((p) => {
     if (filterShape !== "All" && p.frameShape !== filterShape) return false;
@@ -83,12 +58,11 @@ function EyeglassesCatalog() {
 
   const handleRxSubmit = (details: PrescriptionDetails, totalPrice: number) => {
     if (!selectedProduct) return;
-    const imagesList = parseImages(selectedProduct.images);
     addItem({
       productId: selectedProduct.id,
       name: `${selectedProduct.name} (${details.lensUsage})`,
       price: totalPrice,
-      image: imagesList[0] || "",
+      image: selectedProduct.images[0] || "",
       prescription: details,
     });
   };
@@ -229,18 +203,17 @@ function EyeglassesCatalog() {
             {filtered.map((product) => (
               <ProductCard
                 key={product.id}
-                product={product as any}
+                product={product}
                 onAddLenses={(p) => {
-                  setSelectedProduct(p as any);
+                  setSelectedProduct(p as unknown as SafeProduct);
                   setRxModalOpen(true);
                 }}
                 onAddToCart={(p) => {
-                  const imgList = parseImages(p.images);
                   addItem({
                     productId: p.id,
                     name: `${p.name} (Standard Sun Lenses)`,
                     price: p.price,
-                    image: imgList[0] || "",
+                    image: p.images[0] || "",
                   });
                 }}
               />

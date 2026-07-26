@@ -31,7 +31,6 @@ const COLLECTIONS_DROPDOWN = [
 
 export default function Header() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -71,6 +70,8 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mobileOpen]);
+
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <>

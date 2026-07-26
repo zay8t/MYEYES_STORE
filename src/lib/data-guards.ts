@@ -109,7 +109,7 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
                product.category === "CONTACT_LENSES" || 
                product.category === "ACCESSORIES" || 
                product.category === "NILL") 
-              ? (product.category as any) 
+              ? (product.category as SafeProduct["category"]) 
               : "EYEGLASSES",
     featured: Boolean(product.featured),
     createdAt:

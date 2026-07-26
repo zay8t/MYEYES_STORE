@@ -4,25 +4,10 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Sun, SlidersHorizontal, ArrowRight, X } from "lucide-react";
-import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
-import { safeProductList } from "@/lib/data-guards";
+import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import ProductCard from "@/components/products/ProductCard";
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  stock: number;
-  frameShape: string;
-  material: string;
-  gender: string;
-  images: string;
-  featured: boolean;
-  category: string;
-}
 
 const LENS_TINTS = ["All", "Dark Gray", "Amber", "Mirror", "Polarized"];
 const FRAME_SHAPES = ["All", "ROUND", "AVIATOR", "SQUARE", "CAT_EYE", "RECTANGLE"];
@@ -31,7 +16,7 @@ function SunglassesCatalog() {
   const searchParams = useSearchParams();
   const genderParam = searchParams.get("gender") || "All";
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<SafeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTint, setFilterTint] = useState("All");
   const [filterShape, setFilterShape] = useState("All");
@@ -44,7 +29,7 @@ function SunglassesCatalog() {
       fetch("/api/admin/products?category=SUNGLASSES")
         .then((r) => r.json())
         .then((data) => {
-          setProducts(safeProductList(data) as unknown as Product[]);
+          setProducts(safeProductList(data));
           setLoading(false);
         })
         .catch(() => {
@@ -56,18 +41,6 @@ function SunglassesCatalog() {
       setLoading(false);
     }
   }, []);
-
-  const parseImages = (imagesStr: string): string[] => {
-    if (!imagesStr) return [];
-    try {
-      if (imagesStr.startsWith("[")) {
-        return JSON.parse(imagesStr);
-      }
-      return imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
-    } catch {
-      return [imagesStr];
-    }
-  };
 
   const filtered = products.filter((p) => {
     if (filterShape !== "All" && p.frameShape !== filterShape) return false;
@@ -213,17 +186,16 @@ function SunglassesCatalog() {
             {filtered.map((product) => (
               <ProductCard
                 key={product.id}
-                product={product as any}
+                product={product}
                 onAddLenses={(p) => {
                   // Sunglasses do not have prescription lenses modal unless customized
                 }}
                 onAddToCart={(p) => {
-                  const imgList = parseImages(p.images);
                   addItem({
                     productId: p.id,
                     name: `${p.name} (Standard Sun Lenses)`,
                     price: p.price,
-                    image: imgList[0] || "",
+                    image: p.images[0] || "",
                   });
                 }}
               />

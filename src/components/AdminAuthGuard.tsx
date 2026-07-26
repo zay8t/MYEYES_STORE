@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock, KeyRound, ArrowRight, LogOut, ShieldAlert } from "lucide-react";
+import { Lock, KeyRound, ArrowRight, ShieldAlert } from "lucide-react";
 
 const ADMIN_PASSWORD = "admin@123";
 const AUTH_STORAGE_KEY = "my_eyes_admin_auth_v1";
@@ -29,12 +29,6 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
     } else {
       setErrorMsg("Invalid Admin Password. Access Denied.");
     }
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    setIsAuthenticated(false);
-    setPasswordInput("");
   };
 
   if (!mounted) return null;
@@ -97,23 +91,5 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
     );
   }
 
-  return (
-    <div className="relative min-h-screen">
-      {/* Global Admin Logout Bar */}
-      <div className="bg-slate-900 text-white px-4 text-xs fixed top-0 left-0 w-full z-[100] h-16 flex items-center">
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
-          <span className="font-bold tracking-wide">
-            🔒 MY EYES — ADMIN MODE ACTIVE
-          </span>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" /> Logout Admin Session
-          </button>
-        </div>
-      </div>
-      {children}
-    </div>
-  );
+  return children;
 }

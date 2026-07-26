@@ -10,7 +10,6 @@ import {
   Users,
   Clock,
   ArrowUpRight,
-  Plus,
 } from "lucide-react";
 import { Product } from "@prisma/client";
 
@@ -101,34 +100,52 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Dashboard Top Hero Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200/80">
         <div>
           <span className="badge">PRESCRIPTION OPTICAL MANAGEMENT</span>
-          <h1 className="text-2xl font-bold text-slate-900">Optical Retail Performance & Analytics</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mt-1">Optical Retail Performance & Analytics</h1>
           <p className="text-sm text-slate-500">Real-time metrics, prescription order pipeline, and frame inventory stats</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="status-pill">SQLite DB Online</span>
-          <Link href="/" className="btn-secondary">Storefront</Link>
-          <Link href="/admin/products" className="btn-primary">+ Add Eyewear Frame</Link>
-          <Link href="/admin/orders" className="btn-dark">Lab Orders ({metrics.pendingLabCount})</Link>
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <Link
+            href="/"
+            target="_blank"
+            className="bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border border-slate-200/45 flex items-center justify-center gap-1.5"
+          >
+            Storefront
+          </Link>
+          <Link
+            href="/admin/orders"
+            className="bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border border-slate-200/45 flex items-center justify-center gap-2"
+          >
+            <span>Lab Orders</span>
+            <span className="bg-slate-200 text-slate-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">
+              {metrics.pendingLabCount}
+            </span>
+          </Link>
+          <Link
+            href="/admin/products"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-1.5 shadow-xs border border-amber-600/10"
+          >
+            + Add Eyewear Frame
+          </Link>
         </div>
       </div>
 
       {/* KPI Key Performance Indicator Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Revenue Card */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
               Total Revenue
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-extrabold">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/30">
               <Banknote className="w-5 h-5" />
             </div>
           </div>
           <div>
-            <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+            <p className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               {formatPrice(metrics.totalRevenue)}
             </p>
             <div className="flex items-center gap-1 mt-1 text-[11px] font-bold text-emerald-600">
@@ -139,17 +156,17 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Prescription Ratio Card */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
               Prescription Ratio
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-extrabold">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/30">
               <Glasses className="w-5 h-5" />
             </div>
           </div>
           <div>
-            <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+            <p className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               {metrics.rxRatio}% <span className="text-xs font-normal text-slate-400">Rx Orders</span>
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">
@@ -159,17 +176,17 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Active Orders / Pending Lab Card */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
               Pending Lab Queue
             </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-extrabold">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/30">
               <Clock className="w-5 h-5" />
             </div>
           </div>
           <div>
-            <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+            <p className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               {metrics.pendingLabCount} <span className="text-xs font-normal text-slate-400">Orders</span>
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">
@@ -179,17 +196,17 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Customer Base Card */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
               Active Customers
             </span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-extrabold">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200/30">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <div>
-            <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+            <p className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               {metrics.totalCustomersCount}
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">

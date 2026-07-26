@@ -16,7 +16,7 @@ export interface Product {
   frameShape: string;
   material: string;
   gender: string;
-  images: any; // Can be string, string[], or JSON string
+  images: string | string[]; // Can be string, string[], or JSON string
   image?: string; // fallback field if defined
   featured: boolean;
   category: string;
