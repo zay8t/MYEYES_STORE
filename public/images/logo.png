@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <!-- Left Gradient -->
+    <linearGradient id="leftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFBD00" />
+      <stop offset="50%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#FF4800" />
+    </linearGradient>
+
+    <!-- Right Gradient -->
+    <linearGradient id="rightGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF4800" />
+      <stop offset="50%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#FFBD00" />
+    </linearGradient>
+  </defs>
+
+  <g id="logo-eyes">
+    <!-- Left Eye Ring -->
+    <path d="M 120 160 A 45 45 0 1 1 170 110" 
+          fill="none" 
+          stroke="url(#leftGrad)" 
+          stroke-width="22" 
+          stroke-linecap="round" />
+    <!-- Left Top Extension / Antenna -->
+    <line x1="110" y1="85" x2="92" y2="68" 
+          stroke="url(#leftGrad)" 
+          stroke-width="20" 
+          stroke-linecap="round" />
+    <!-- Left Pupil -->
+    <circle cx="150" cy="115" r="18" fill="#000000" />
+
+    <!-- Right Eye Ring -->
+    <path d="M 280 160 A 45 45 0 1 0 230 110" 
+          fill="none" 
+          stroke="url(#rightGrad)" 
+          stroke-width="22" 
+          stroke-linecap="round" />
+    <!-- Right Top Extension / Antenna -->
+    <line x1="290" y1="85" x2="308" y2="68" 
+          stroke="url(#rightGrad)" 
+          stroke-width="20" 
+          stroke-linecap="round" />
+    <!-- Right Pupil -->
+    <circle cx="250" cy="115" r="18" fill="#000000" />
+  </g>
+</svg>
