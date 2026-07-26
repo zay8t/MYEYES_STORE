@@ -34,7 +34,7 @@ export default function AdminMobileNav() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+        className="md:hidden p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Open mobile navigation menu"
       >
         <Menu className="w-5 h-5" />
