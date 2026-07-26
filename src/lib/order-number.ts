@@ -30,16 +30,16 @@ export async function generateNextOrderNumber(
     }
 
     seqRecord = await tx.orderSequence.create({
-      data: { id: 1, seq: maxVal },
+      data: { id: 1, lastValue: maxVal },
     });
   }
 
-  const nextSeq = seqRecord.seq + 1;
+  const nextSeq = seqRecord.lastValue + 1;
 
   // 2. Update sequence record
   await tx.orderSequence.update({
     where: { id: 1 },
-    data: { seq: nextSeq },
+    data: { lastValue: nextSeq },
   });
 
   // 3. Format as strictly 8 digits padded with zeros (e.g., "00000001")
