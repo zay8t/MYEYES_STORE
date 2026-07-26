@@ -15,41 +15,35 @@ export interface SafeProduct {
   gender: string;
   images: string[];
   firstImage: string;
-  category: "EYEGLASSES" | "SUNGLASSES";
+  category: "EYEGLASSES" | "SUNGLASSES" | "CONTACT_LENSES" | "ACCESSORIES" | "NILL";
   featured: boolean;
   createdAt: string;
 }
 
 function cleanImageString(img: string): string {
   const trimmed = img.trim();
-  if (
-    !trimmed ||
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.includes("unsplash") ||
-    trimmed.includes("pexels")
-  ) {
-    return "/logo.png";
+  if (!trimmed || trimmed === "/logo.png") {
+    return "/placeholder-frame.png";
   }
   return trimmed;
 }
 
 export function parseProductImages(imagesData: unknown): string[] {
-  if (!imagesData) return ["/logo.png"];
+  if (!imagesData) return ["/placeholder-frame.png"];
 
   let list: string[] = [];
 
   if (Array.isArray(imagesData)) {
-    list = imagesData.map((img) => (typeof img === "string" ? cleanImageString(img) : "/logo.png"));
+    list = imagesData.map((img) => (typeof img === "string" ? cleanImageString(img) : "/placeholder-frame.png"));
   } else if (typeof imagesData === "string") {
     const trimmed = imagesData.trim();
-    if (!trimmed) return ["/logo.png"];
+    if (!trimmed) return ["/placeholder-frame.png"];
 
     if (trimmed.startsWith("[")) {
       try {
         const parsed = JSON.parse(trimmed);
         if (Array.isArray(parsed)) {
-          list = parsed.map((img) => (typeof img === "string" ? cleanImageString(img) : "/logo.png"));
+          list = parsed.map((img) => (typeof img === "string" ? cleanImageString(img) : "/placeholder-frame.png"));
         }
       } catch {
         list = trimmed.split(",").map((s) => cleanImageString(s));
@@ -60,7 +54,7 @@ export function parseProductImages(imagesData: unknown): string[] {
   }
 
   const sanitized = list.filter((img) => img && img.trim() !== "");
-  return sanitized.length > 0 ? sanitized : ["/logo.png"];
+  return sanitized.length > 0 ? sanitized : ["/placeholder-frame.png"];
 }
 
 export function safeFormatPrice(price: unknown): string {
@@ -84,8 +78,8 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
       material: "NILL",
       formattedMaterial: "Standard Alloy",
       gender: "Unspecified",
-      images: ["/logo.png"],
-      firstImage: "/logo.png",
+      images: ["/placeholder-frame.png"],
+      firstImage: "/placeholder-frame.png",
       category: "EYEGLASSES",
       featured: false,
       createdAt: new Date().toISOString(),
@@ -110,8 +104,13 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
     formattedMaterial: formatMaterial(typeof product.material === "string" ? product.material : null),
     gender: String(product.gender || "Unspecified"),
     images,
-    firstImage: images[0] || "/logo.png",
-    category: product.category === "SUNGLASSES" ? "SUNGLASSES" : "EYEGLASSES",
+    firstImage: images[0] || "/placeholder-frame.png",
+    category: (product.category === "SUNGLASSES" || 
+               product.category === "CONTACT_LENSES" || 
+               product.category === "ACCESSORIES" || 
+               product.category === "NILL") 
+              ? (product.category as any) 
+              : "EYEGLASSES",
     featured: Boolean(product.featured),
     createdAt:
       product.createdAt && (typeof product.createdAt === "string" || typeof product.createdAt === "number" || product.createdAt instanceof Date)

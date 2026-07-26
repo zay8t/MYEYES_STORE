@@ -112,30 +112,31 @@ export default function ProductsCatalogClient({ initialProducts }: ProductsCatal
   }, [optimisticProducts, selectedCategory, selectedMaterial, debouncedQuery]);
 
   const getFirstImage = (imgData: string): string => {
-    if (!imgData) return "/logo.png";
+    if (!imgData) return "/placeholder-frame.png";
 
-    const isExternal = (url: string) =>
-      url.startsWith("http://") ||
-      url.startsWith("https://") ||
-      url.includes("unsplash") ||
-      url.includes("pexels");
-
+    let first = "";
     if (imgData.startsWith("[")) {
       try {
         const parsed = JSON.parse(imgData);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const first = String(parsed[0]).trim();
-          return isExternal(first) ? "/logo.png" : first;
+          first = String(parsed[0]).trim();
         }
       } catch {
-        return "/logo.png";
+        // ignore
       }
     }
-    const split = imgData.split(",").map((s) => s.trim()).filter(Boolean);
-    if (split.length > 0) {
-      return isExternal(split[0]) ? "/logo.png" : split[0];
+    
+    if (!first) {
+      const split = imgData.split(",").map((s) => s.trim()).filter(Boolean);
+      if (split.length > 0) {
+        first = split[0];
+      }
     }
-    return "/logo.png";
+
+    if (!first || first === "/logo.png") {
+      return "/placeholder-frame.png";
+    }
+    return first;
   };
 
   const getMaterialLabel = (val: string) => {

@@ -7,6 +7,7 @@ import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box
 import { formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
 import { safeProductList } from "@/lib/data-guards";
 import { useCartStore } from "@/lib/cart-store";
+import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
 import PrescriptionModal from "@/components/PrescriptionModal";
@@ -202,64 +203,25 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {products.slice(0, 6).map((product) => {
-              const productImages = parseImages(product.images);
-              return (
-                <div
-                  key={product.id}
-                  className="card-hover group relative rounded-2xl border border-slate-200/80 hover:border-slate-300 bg-white p-5 transition-all duration-300 flex flex-col justify-between"
-                >
-                  <Link href={`/products/${product.slug}`} className="block space-y-4">
-                    <div className="aspect-square bg-slate-50/50 rounded-xl overflow-hidden flex items-center justify-center p-4 border border-slate-100 relative">
-                      {productImages[0] ? (
-                        <img
-                          src={productImages[0]}
-                          alt={product.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <Glasses className="w-12 h-12 text-slate-300" />
-                      )}
-                      <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded bg-slate-900 text-white text-[9px] font-bold uppercase tracking-wider">
-                        {product.category}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
-                      <p className="text-[11px] text-slate-500 font-medium">{formatMaterial(product.material)} · {formatFrameShape(product.frameShape)}</p>
-                    </div>
-                  </Link>
-
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-                    <span className="font-extrabold text-slate-900 text-sm">{formatPrice(product.price)}</span>
-                    {product.category === "EYEGLASSES" ? (
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setRxModalOpen(true);
-                        }}
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Image src="/logo.svg" alt="My Eyes Logo" width={12} height={12} className="object-contain brightness-0 invert" />
-                        My Eyes Configurator
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => addItem({
-                          productId: product.id,
-                          name: `${product.name} (Standard Sun Lenses)`,
-                          price: product.price,
-                          image: productImages[0] || "",
-                        })}
-                        className="px-3.5 py-1.5 border border-slate-200 hover:border-slate-800 text-slate-800 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer bg-white"
-                      >
-                        Add to Bag
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {products.slice(0, 6).map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product as any}
+                onAddLenses={(p) => {
+                  setSelectedProduct(p as any);
+                  setRxModalOpen(true);
+                }}
+                onAddToCart={(p) => {
+                  const imgList = parseImages(p.images);
+                  addItem({
+                    productId: p.id,
+                    name: `${p.name} (Standard Sun Lenses)`,
+                    price: p.price,
+                    image: imgList[0] || "",
+                  });
+                }}
+              />
+            ))}
           </div>
         )}
       </section>

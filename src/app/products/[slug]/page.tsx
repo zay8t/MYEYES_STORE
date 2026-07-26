@@ -81,14 +81,19 @@ export default function ProductDetailPage({
   }
 
   const parseImages = (imagesStr: string): string[] => {
-    if (!imagesStr) return [];
+    if (!imagesStr) return ["/placeholder-frame.png"];
     try {
+      let parsed: string[] = [];
       if (imagesStr.startsWith("[")) {
-        return JSON.parse(imagesStr);
+        parsed = JSON.parse(imagesStr);
+      } else {
+        parsed = imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
       }
-      return imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
+      const sanitized = parsed.map((img) => (img === "/logo.png" || !img ? "/placeholder-frame.png" : img));
+      return sanitized.length > 0 ? sanitized : ["/placeholder-frame.png"];
     } catch {
-      return [imagesStr];
+      const fallbackVal = imagesStr === "/logo.png" || !imagesStr ? "/placeholder-frame.png" : imagesStr;
+      return [fallbackVal];
     }
   };
 

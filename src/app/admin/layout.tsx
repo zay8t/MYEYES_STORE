@@ -18,27 +18,25 @@ export default function AdminLayout({
 }) {
   return (
     <AdminAuthGuard>
-      <div className="min-h-screen bg-slate-50/60 flex pt-16 md:pt-20">
+      <div className="min-h-screen bg-slate-50/60 flex">
         {/* Desktop Sidebar (Fixed Left - Minimal Light Aesthetic) */}
-        <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed top-16 md:top-20 bottom-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
+        <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed top-0 bottom-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
           {/* Logo & Header */}
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 p-1.5 flex items-center justify-center border border-amber-300/50 shadow-2xs">
-                <Image
-                  src="/logo.png"
-                  alt="My Eyes Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <h1 className="font-extrabold text-base tracking-tight text-slate-900">MY EYES</h1>
-                <span className="text-[10px] text-amber-600 font-extrabold uppercase tracking-widest flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-amber-500" /> ADMIN SUITE
-                </span>
-              </div>
+          <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 p-1.5 flex items-center justify-center border border-amber-300/50 shadow-2xs flex-shrink-0">
+              <Image
+                src="/logo.png"
+                alt="My Eyes Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-extrabold text-base tracking-tight text-slate-900 whitespace-nowrap">MY EYES</h1>
+              <span className="text-[10px] text-amber-600 font-extrabold uppercase tracking-widest flex items-center gap-1 whitespace-nowrap">
+                <ShieldCheck className="w-3 h-3 text-amber-500 flex-shrink-0" /> ADMIN SUITE
+              </span>
             </div>
           </div>
 
@@ -74,7 +72,7 @@ export default function AdminLayout({
         {/* Main Content Workspace */}
         <div className="flex-1 lg:pl-64 flex flex-col min-w-0 w-full overflow-x-hidden">
           {/* Top Sticky App Bar */}
-          <header className="sticky top-16 md:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs gap-2">
+          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <AdminMobileNav />
               <div className="min-w-0">
@@ -105,7 +103,7 @@ export default function AdminLayout({
           </header>
 
           {/* Main Page Slot */}
-          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-w-0">
+          <main className="flex-1 w-full p-6 md:p-8 space-y-6 pt-4 max-w-7xl mx-auto min-w-0">
             {children}
           </main>
         </div>

@@ -41,20 +41,24 @@ export const MATERIALS_OPTIONS = [
   { label: "Hybrid / Combination", value: "HYBRID" },
 ];
 
+export const FORM_CATEGORY_OPTIONS = [
+  { label: "None / Other (Nill)", value: "NILL" },
+  { label: "Men's Eyeglasses", value: "MENS_EYEGLASSES" },
+  { label: "Women's Eyeglasses", value: "WOMENS_EYEGLASSES" },
+  { label: "Kids' Eyeglasses", value: "KIDS_EYEGLASSES" },
+  { label: "Men's Sunglasses", value: "MENS_SUNGLASSES" },
+  { label: "Women's Sunglasses", value: "WOMENS_SUNGLASSES" },
+  { label: "Kids' Sunglasses", value: "KIDS_SUNGLASSES" },
+  { label: "Contact Lenses", value: "CONTACT_LENSES" },
+  { label: "Accessories", value: "ACCESSORIES" },
+];
+
 export const CATEGORIES_OPTIONS = [
   { label: "None / Other (Nill)", value: "NILL" },
   { label: "Eyeglasses", value: "EYEGLASSES" },
   { label: "Sunglasses", value: "SUNGLASSES" },
   { label: "Contact Lenses", value: "CONTACT_LENSES" },
   { label: "Accessories", value: "ACCESSORIES" },
-];
-
-export const GENDERS_OPTIONS = [
-  { label: "None / Other (Nill)", value: "NILL" },
-  { label: "Men", value: "Men" },
-  { label: "Women", value: "Women" },
-  { label: "Kids", value: "Kids" },
-  { label: "Unisex", value: "Unisex" },
 ];
 
 export default function ProductModal({
@@ -85,6 +89,29 @@ export default function ProductModal({
   const [material, setMaterial] = useState<Material>(product?.material || "NILL");
   const [gender, setGender] = useState(product?.gender || "Unspecified");
   const [featured, setFeatured] = useState<boolean>(product?.featured ?? false);
+
+  const getInitialFormCategory = (): string => {
+    if (!product) return "MENS_EYEGLASSES";
+    const cat = product.category;
+    const gen = product.gender?.toLowerCase() || "";
+    if (cat === "EYEGLASSES") {
+      if (gen === "men") return "MENS_EYEGLASSES";
+      if (gen === "women") return "WOMENS_EYEGLASSES";
+      if (gen === "kids") return "KIDS_EYEGLASSES";
+      return "MENS_EYEGLASSES";
+    }
+    if (cat === "SUNGLASSES") {
+      if (gen === "men") return "MENS_SUNGLASSES";
+      if (gen === "women") return "WOMENS_SUNGLASSES";
+      if (gen === "kids") return "KIDS_SUNGLASSES";
+      return "MENS_SUNGLASSES";
+    }
+    if (cat === "CONTACT_LENSES") return "CONTACT_LENSES";
+    if (cat === "ACCESSORIES") return "ACCESSORIES";
+    return "NILL";
+  };
+
+  const [formCategory, setFormCategory] = useState<string>(getInitialFormCategory());
 
   const [images, setImages] = useState<string[]>(parseExistingImages(product?.images));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -266,18 +293,49 @@ export default function ProductModal({
               <Tag className="w-4 h-4 text-amber-600" /> Frame Variants & Optical Specs
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Category
+                  Category / Subcategory *
                 </label>
                 <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
+                  value={formCategory}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormCategory(val);
+                    if (val === "MENS_EYEGLASSES") {
+                      setCategory("EYEGLASSES");
+                      setGender("Men");
+                    } else if (val === "WOMENS_EYEGLASSES") {
+                      setCategory("EYEGLASSES");
+                      setGender("Women");
+                    } else if (val === "KIDS_EYEGLASSES") {
+                      setCategory("EYEGLASSES");
+                      setGender("Kids");
+                    } else if (val === "MENS_SUNGLASSES") {
+                      setCategory("SUNGLASSES");
+                      setGender("Men");
+                    } else if (val === "WOMENS_SUNGLASSES") {
+                      setCategory("SUNGLASSES");
+                      setGender("Women");
+                    } else if (val === "KIDS_SUNGLASSES") {
+                      setCategory("SUNGLASSES");
+                      setGender("Kids");
+                    } else if (val === "CONTACT_LENSES") {
+                      setCategory("CONTACT_LENSES");
+                      setGender("Unisex");
+                    } else if (val === "ACCESSORIES") {
+                      setCategory("ACCESSORIES");
+                      setGender("Unisex");
+                    } else {
+                      setCategory("NILL");
+                      setGender("NILL");
+                    }
+                  }}
                   className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
-                  {CATEGORIES_OPTIONS.map((opt) => (
-                    <option key={opt.value + opt.label} value={opt.value}>
+                  {FORM_CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
                   ))}
@@ -311,23 +369,6 @@ export default function ProductModal({
                   className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
                   {MATERIALS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Gender Target
-                </label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
-                >
-                  {GENDERS_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>

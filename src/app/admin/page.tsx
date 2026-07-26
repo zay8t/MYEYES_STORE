@@ -101,35 +101,17 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Dashboard Top Hero Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200/80 mt-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60 inline-block mb-1">
-            EXECUTIVE CONTROL CENTER
-          </span>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Optical Retail Performance & Analytics
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Real-time metrics, prescription order pipeline, and frame inventory stats
-          </p>
+          <span className="badge">PRESCRIPTION OPTICAL MANAGEMENT</span>
+          <h1 className="text-2xl font-bold text-slate-900">Optical Retail Performance & Analytics</h1>
+          <p className="text-sm text-slate-500">Real-time metrics, prescription order pipeline, and frame inventory stats</p>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href="/admin/products"
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md transition-all cursor-pointer whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Eyewear Frame</span>
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-          >
-            <ShoppingBag className="w-4 h-4 text-amber-400" />
-            <span>Lab Orders ({metrics.pendingLabCount})</span>
-          </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="status-pill">SQLite DB Online</span>
+          <Link href="/" className="btn-secondary">Storefront</Link>
+          <Link href="/admin/products" className="btn-primary">+ Add Eyewear Frame</Link>
+          <Link href="/admin/orders" className="btn-dark">Lab Orders ({metrics.pendingLabCount})</Link>
         </div>
       </div>
 

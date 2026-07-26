@@ -7,6 +7,7 @@ import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import { safeProductList } from "@/lib/data-guards";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
+import ProductCard from "@/components/products/ProductCard";
 
 interface Product {
   id: string;
@@ -228,85 +229,25 @@ export default function WomenCollectionPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filtered.map((product) => {
-              const imagesList = parseImages(product.images);
-              const mainImg = imagesList[0] || "";
-
-              return (
-                <div
-                  key={product.id}
-                  className="group rounded-2xl border border-slate-200/80 bg-white overflow-hidden hover:border-slate-400 transition-all duration-200 flex flex-col justify-between"
-                >
-                  <Link href={`/products/${product.slug}`} className="block relative aspect-[4/3] bg-slate-50 p-6 overflow-hidden">
-                    {mainImg ? (
-                      <img
-                        src={mainImg}
-                        alt={product.name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        {product.category === "SUNGLASSES" ? (
-                          <Sun className="w-16 h-16 stroke-[1.25]" />
-                        ) : (
-                          <Glasses className="w-16 h-16 stroke-[1.25]" />
-                        )}
-                      </div>
-                    )}
-                  </Link>
-
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold mb-1">
-                        <span>{formatFrameShape(product.frameShape)}</span>
-                        <span>{formatMaterial(product.material)}</span>
-                      </div>
-                      <Link href={`/products/${product.slug}`}>
-                        <h3 className="text-base font-bold text-slate-900 group-hover:underline">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                        {product.description}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-base font-extrabold text-slate-900">
-                        {formatPrice(product.price)}
-                      </span>
-
-                      {product.category === "EYEGLASSES" ? (
-                        <button
-                          onClick={() => {
-                            setSelectedProduct(product);
-                            setRxModalOpen(true);
-                          }}
-                          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                        >
-                          Add Lenses
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            const imagesList = parseImages(product.images);
-                            addItem({
-                              productId: product.id,
-                              name: `${product.name} (Standard Sun Lenses)`,
-                              price: product.price,
-                              image: imagesList[0] || "",
-                            });
-                          }}
-                          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                        >
-                          Add to Bag
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filtered.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product as any}
+                onAddLenses={(p) => {
+                  setSelectedProduct(p as any);
+                  setRxModalOpen(true);
+                }}
+                onAddToCart={(p) => {
+                  const imgList = parseImages(p.images);
+                  addItem({
+                    productId: p.id,
+                    name: `${p.name} (Standard Sun Lenses)`,
+                    price: p.price,
+                    image: imgList[0] || "",
+                  });
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
