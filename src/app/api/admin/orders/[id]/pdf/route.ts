@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-// @ts-expect-error PDFKit standalone import for Next.js bundle compatibility
 import PDFDocument from "pdfkit/js/pdfkit.standalone";
 
 export const dynamic = "force-dynamic";
