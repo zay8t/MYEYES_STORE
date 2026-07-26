@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
       category,
     } = body;
 
+    if (!name || !price || !description) {
+      return NextResponse.json(
+        { error: "Name, price, and description are required fields." },
+        { status: 400 }
+      );
+    }
+
     // Handle array or comma-separated string for multi-image
     let formattedImages = "";
     if (Array.isArray(images)) {
@@ -63,13 +70,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum)) {
+      return NextResponse.json(
+        { error: "Invalid price value provided." },
+        { status: 400 }
+      );
+    }
+
+    const stockNum = parseInt(stock, 10);
+    const finalStock = isNaN(stockNum) ? 0 : stockNum;
+
     const product = await prisma.product.create({
       data: {
         name,
         slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         description,
-        price: parseFloat(price),
-        stock: parseInt(stock, 10),
+        price: priceNum,
+        stock: finalStock,
         frameShape: frameShape || "NILL",
         material: material || "NILL",
         gender: gender || "Unspecified",
