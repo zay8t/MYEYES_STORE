@@ -41,8 +41,14 @@ export default function ImageUploader({ images, onChange }: ImageUploaderProps) 
   }, [onChange]);
 
   const processFiles = useCallback((files: FileList | File[]) => {
+    const MAX_SIZE = 8 * 1024 * 1024; // 8MB
+    const oversize = Array.from(files).filter((file) => file.size > MAX_SIZE);
+    if (oversize.length > 0) {
+      alert("Some files exceed the 8MB size limit and were skipped.");
+    }
+
     const fileArray = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
+      file.type.startsWith("image/") && file.size <= MAX_SIZE
     );
 
     if (fileArray.length === 0) return;
@@ -75,6 +81,18 @@ export default function ImageUploader({ images, onChange }: ImageUploaderProps) 
             const updated = prev.map((item) =>
               item.id === targetId
                 ? { ...item, dataUrl: resultStr, isUploading: false }
+                : item
+            );
+            notifyChange(updated);
+            return updated;
+          });
+        };
+        reader.onerror = (err) => {
+          console.error("FileReader failed for image file:", err);
+          setItems((prev) => {
+            const updated = prev.map((item) =>
+              item.id === targetId
+                ? { ...item, isUploading: false }
                 : item
             );
             notifyChange(updated);

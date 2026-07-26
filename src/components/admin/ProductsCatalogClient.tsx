@@ -82,6 +82,20 @@ export default function ProductsCatalogClient({ initialProducts }: ProductsCatal
     await updateProductStockAction(productId, val);
   };
 
+  const refreshProducts = async () => {
+    try {
+      const res = await fetch("/api/admin/products");
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data);
+      } else {
+        console.error("Failed to fetch fresh products catalog list");
+      }
+    } catch (err) {
+      console.error("Error refreshing products catalog list:", err);
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     return optimisticProducts.filter((product) => {
       if (selectedCategory !== "ALL" && product.category !== selectedCategory) return false;
@@ -395,10 +409,11 @@ export default function ProductsCatalogClient({ initialProducts }: ProductsCatal
             setIsModalOpen(false);
             setEditingProduct(null);
           }}
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsModalOpen(false);
             setEditingProduct(null);
             setToast({ message: "Product saved successfully", type: "success" });
+            await refreshProducts();
           }}
         />
       )}

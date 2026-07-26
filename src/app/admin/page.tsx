@@ -101,7 +101,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Dashboard Top Hero Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200/80 mt-4">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60 inline-block mb-1">
             EXECUTIVE CONTROL CENTER

@@ -23,13 +23,19 @@ const SUNGLASSES_DROPDOWN = [
   { label: "Kids' Sunglasses", href: "/sunglasses?gender=Kids" },
 ];
 
+const COLLECTIONS_DROPDOWN = [
+  { label: "Men's Collection", href: "/men" },
+  { label: "Women's Collection", href: "/women" },
+  { label: "Kids' Collection", href: "/kids" },
+];
+
 export default function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<"eyeglasses" | "sunglasses" | null>(null);
-  const [mobileExpanded, setMobileExpanded] = useState<"eyeglasses" | "sunglasses" | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<"eyeglasses" | "sunglasses" | "collections" | null>(null);
+  const [mobileExpanded, setMobileExpanded] = useState<"eyeglasses" | "sunglasses" | "collections" | null>(null);
 
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -189,6 +195,43 @@ export default function Header() {
                 )}
               </div>
 
+              {/* Collections Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown("collections")}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <div
+                  className={cn(
+                    "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl cursor-pointer select-none",
+                    pathname.startsWith("/men") || pathname.startsWith("/women") || pathname.startsWith("/kids")
+                      ? "text-amber-600 bg-amber-50 font-bold"
+                      : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                  )}
+                >
+                  <Tag className="w-4 h-4 text-slate-400" />
+                  <span>Collections</span>
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", activeDropdown === "collections" && "rotate-180")} />
+                </div>
+
+                {activeDropdown === "collections" && (
+                  <div className="absolute top-full left-0 w-52 pt-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    <div className="p-2 rounded-2xl bg-white border border-slate-200/80 shadow-xl space-y-1">
+                      {COLLECTIONS_DROPDOWN.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setActiveDropdown(null)}
+                          className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Lens Pricing */}
               <Link
                 href="/pricing"
@@ -304,6 +347,35 @@ export default function Header() {
               {mobileExpanded === "sunglasses" && (
                 <div className="pl-11 pr-4 py-1 space-y-1 bg-slate-50/60 rounded-xl my-1">
                   {SUNGLASSES_DROPDOWN.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="block py-2 text-xs font-bold text-slate-700 hover:text-amber-600"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Collections Accordion */}
+            <div>
+              <button
+                onClick={() => setMobileExpanded(mobileExpanded === "collections" ? null : "collections")}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-slate-800 hover:bg-slate-50 min-h-[44px]"
+              >
+                <div className="flex items-center gap-3">
+                  <Tag className="w-4 h-4 text-slate-400" />
+                  <span>Collections</span>
+                </div>
+                <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", mobileExpanded === "collections" && "rotate-180")} />
+              </button>
+
+              {mobileExpanded === "collections" && (
+                <div className="pl-11 pr-4 py-1 space-y-1 bg-slate-50/60 rounded-xl my-1">
+                  {COLLECTIONS_DROPDOWN.map((sub) => (
                     <Link
                       key={sub.href}
                       href={sub.href}

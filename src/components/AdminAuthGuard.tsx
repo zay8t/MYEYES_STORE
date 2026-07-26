@@ -100,8 +100,8 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
   return (
     <div className="relative min-h-screen">
       {/* Global Admin Logout Bar */}
-      <div className="bg-slate-900 text-white py-2 px-4 text-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="bg-slate-900 text-white px-4 text-xs fixed top-0 left-0 w-full z-[100] h-16 flex items-center">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           <span className="font-bold tracking-wide">
             🔒 MY EYES — ADMIN MODE ACTIVE
           </span>

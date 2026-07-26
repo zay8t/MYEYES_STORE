@@ -8,7 +8,6 @@ import {
   Tag,
 } from "lucide-react";
 import { Category, FrameShape, Material, Product } from "@prisma/client";
-import { createProductAction, updateProductAction } from "@/app/actions/admin";
 import ImageUploader from "./ImageUploader";
 
 export interface ProductModalProps {
@@ -103,6 +102,11 @@ export default function ProductModal({
       return;
     }
 
+    if (images.some((url) => url.startsWith("blob:"))) {
+      setErrorMsg("Please wait for all image uploads to complete processing.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg("");
 
@@ -119,19 +123,38 @@ export default function ProductModal({
       featured,
     };
 
-    let result;
-    if (isEditing && product) {
-      result = await updateProductAction(product.id, inputData);
-    } else {
-      result = await createProductAction(inputData);
-    }
+    try {
+      let res;
+      if (isEditing && product) {
+        res = await fetch(`/api/admin/products/${product.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(inputData),
+        });
+      } else {
+        res = await fetch("/api/admin/products", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(inputData),
+        });
+      }
 
-    setIsSubmitting(false);
-
-    if (result.success) {
-      onSuccess();
-    } else {
-      setErrorMsg(result.error || "Failed to save product.");
+      if (res.ok) {
+        onSuccess();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setErrorMsg(errorData.error || "Failed to save product.");
+      }
+    } catch (err: unknown) {
+      console.error("Error submitting frame:", err);
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred while saving the frame.";
+      setErrorMsg(msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

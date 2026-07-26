@@ -18,9 +18,9 @@ export default function AdminLayout({
 }) {
   return (
     <AdminAuthGuard>
-      <div className="min-h-screen bg-slate-50/60 flex">
+      <div className="min-h-screen bg-slate-50/60 flex pt-16 md:pt-20">
         {/* Desktop Sidebar (Fixed Left - Minimal Light Aesthetic) */}
-        <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed inset-y-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
+        <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed top-16 md:top-20 bottom-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
           {/* Logo & Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -74,7 +74,7 @@ export default function AdminLayout({
         {/* Main Content Workspace */}
         <div className="flex-1 lg:pl-64 flex flex-col min-w-0 w-full overflow-x-hidden">
           {/* Top Sticky App Bar */}
-          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs gap-2">
+          <header className="sticky top-16 md:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <AdminMobileNav />
               <div className="min-w-0">

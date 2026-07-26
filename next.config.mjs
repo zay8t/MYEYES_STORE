@@ -2,6 +2,11 @@ const nextConfig = {
   output: "standalone",
   transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
   reactStrictMode: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

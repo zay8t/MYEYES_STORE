@@ -20,6 +20,9 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.featured !== undefined) updateData.featured = body.featured;
     if (body.category !== undefined) updateData.category = body.category;
+    if (body.frameShape !== undefined) updateData.frameShape = body.frameShape;
+    if (body.material !== undefined) updateData.material = body.material;
+    if (body.gender !== undefined) updateData.gender = body.gender;
     if (body.images !== undefined) {
       if (Array.isArray(body.images)) {
         updateData.images = JSON.stringify(body.images);
@@ -50,6 +53,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    
+    // Delete associated OrderItem records first to avoid foreign key constraint errors
+    await prisma.orderItem.deleteMany({
+      where: { productId: id },
+    });
+
     await prisma.product.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

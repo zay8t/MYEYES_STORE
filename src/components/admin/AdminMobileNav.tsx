@@ -43,7 +43,7 @@ export default function AdminMobileNav() {
       {/* Overlay Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 top-16 md:top-0 z-[105] md:z-50 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -51,8 +51,12 @@ export default function AdminMobileNav() {
       {/* Slide-out Sheet Drawer (Light Minimal) */}
       <div
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 w-72 bg-white text-slate-900 shadow-2xl transition-transform duration-300 ease-out lg:hidden flex flex-col border-r border-slate-200/80",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed bg-white text-slate-900 shadow-2xl transition-transform duration-300 ease-out flex flex-col lg:hidden",
+          "inset-y-0 right-0 top-16 w-full max-w-sm h-screen z-[110] border-l border-slate-200/80",
+          "md:left-0 md:right-auto md:top-0 md:bottom-0 md:w-72 md:h-auto md:border-r md:border-l-0 md:z-50",
+          isOpen
+            ? "translate-x-0"
+            : "translate-x-full md:-translate-x-full"
         )}
       >
         {/* Drawer Header */}

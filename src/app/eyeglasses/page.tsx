@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Glasses, SlidersHorizontal, ArrowRight, X } from "lucide-react";
 import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
@@ -26,7 +27,10 @@ interface Product {
 const FRAME_SHAPES = ["All", "ROUND", "AVIATOR", "SQUARE", "CAT_EYE", "RECTANGLE"];
 const MATERIALS = ["All", "ACETATE", "TITANIUM", "STAINLESS_STEEL", "WOOD"];
 
-export default function EyeglassesPage() {
+function EyeglassesCatalog() {
+  const searchParams = useSearchParams();
+  const genderParam = searchParams.get("gender") || "All";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterShape, setFilterShape] = useState("All");
@@ -72,6 +76,7 @@ export default function EyeglassesPage() {
   const filtered = products.filter((p) => {
     if (filterShape !== "All" && p.frameShape !== filterShape) return false;
     if (filterMaterial !== "All" && p.material !== filterMaterial) return false;
+    if (genderParam !== "All" && p.gender.toLowerCase() !== genderParam.toLowerCase()) return false;
     return true;
   });
 
@@ -87,6 +92,20 @@ export default function EyeglassesPage() {
     });
   };
 
+  const getHeaderTitle = () => {
+    if (genderParam === "Men") return "Men's Prescription Eyeglasses";
+    if (genderParam === "Women") return "Women's Prescription Eyeglasses";
+    if (genderParam === "Kids") return "Kids' Prescription Eyeglasses";
+    return "Prescription Eyeglasses";
+  };
+
+  const getHeaderDesc = () => {
+    if (genderParam === "Men") return "Precision optical frames engineered with ultra-light materials for men.";
+    if (genderParam === "Women") return "Precision optical frames engineered with ultra-light materials for women.";
+    if (genderParam === "Kids") return "Precision optical frames engineered with ultra-light materials for kids.";
+    return "Precision optical frames engineered with ultra-light materials for weightless daily wear.";
+  };
+
   return (
     <div className="min-h-screen bg-white py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -97,10 +116,10 @@ export default function EyeglassesPage() {
               OPTICAL COLLECTION
             </span>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-              Prescription Eyeglasses
+              {getHeaderTitle()}
             </h1>
             <p className="text-sm text-slate-500 mt-1 max-w-xl">
-              Precision optical frames engineered with ultra-light materials for weightless daily wear.
+              {getHeaderDesc()}
             </p>
           </div>
 
@@ -282,5 +301,13 @@ export default function EyeglassesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function EyeglassesPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20 font-medium text-slate-500">Loading catalog...</div>}>
+      <EyeglassesCatalog />
+    </Suspense>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Sun, SlidersHorizontal, ArrowRight, X } from "lucide-react";
+import { Glasses, Sun, SlidersHorizontal, ArrowRight, X } from "lucide-react";
 import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import { safeProductList } from "@/lib/data-guards";
+import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 
 interface Product {
   id: string;
@@ -23,25 +23,28 @@ interface Product {
   category: string;
 }
 
-const LENS_TINTS = ["All", "Dark Gray", "Amber", "Mirror", "Polarized"];
+const CATEGORIES = ["All", "EYEGLASSES", "SUNGLASSES"];
 const FRAME_SHAPES = ["All", "ROUND", "AVIATOR", "SQUARE", "CAT_EYE", "RECTANGLE"];
+const MATERIALS = ["All", "ACETATE", "TITANIUM", "STAINLESS_STEEL", "WOOD"];
 
-function SunglassesCatalog() {
-  const searchParams = useSearchParams();
-  const genderParam = searchParams.get("gender") || "All";
-
+export default function MenCollectionPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTint, setFilterTint] = useState("All");
+  const [filterCategory, setFilterCategory] = useState("All");
   const [filterShape, setFilterShape] = useState("All");
+  const [filterMaterial, setFilterMaterial] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Modal state
+  const [rxModalOpen, setRxModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
     try {
-      fetch("/api/admin/products?category=SUNGLASSES")
-        .then((r) => r.json())
+      fetch("/api/admin/products")
+        .then((res) => res.json())
         .then((data) => {
           setProducts(safeProductList(data) as unknown as Product[]);
           setLoading(false);
@@ -69,26 +72,27 @@ function SunglassesCatalog() {
   };
 
   const filtered = products.filter((p) => {
+    // Only Men and Unisex
+    const genderMatch = p.gender.toLowerCase() === "men" || p.gender.toLowerCase() === "unisex";
+    if (!genderMatch) return false;
+
+    if (filterCategory !== "All" && p.category !== filterCategory) return false;
     if (filterShape !== "All" && p.frameShape !== filterShape) return false;
-    if (genderParam !== "All" && p.gender.toLowerCase() !== genderParam.toLowerCase()) return false;
+    if (filterMaterial !== "All" && p.material !== filterMaterial) return false;
     return true;
   });
 
-  const getHeaderTitle = () => {
-    if (genderParam === "Men") return "Men's Designer Sunglasses";
-    if (genderParam === "Women") return "Women's Designer Sunglasses";
-    if (genderParam === "Kids") return "Kids' Designer Sunglasses";
-    return "Designer Sunglasses";
+  const handleRxSubmit = (details: PrescriptionDetails, totalPrice: number) => {
+    if (!selectedProduct) return;
+    const imagesList = parseImages(selectedProduct.images);
+    addItem({
+      productId: selectedProduct.id,
+      name: `${selectedProduct.name} (${details.lensUsage})`,
+      price: totalPrice,
+      image: imagesList[0] || "",
+      prescription: details,
+    });
   };
-
-  const getHeaderDesc = () => {
-    if (genderParam === "Men") return "100% UV400 protection with precision polarized & tinted sun optics for men.";
-    if (genderParam === "Women") return "100% UV400 protection with precision polarized & tinted sun optics for women.";
-    if (genderParam === "Kids") return "100% UV400 protection with precision polarized & tinted sun optics for kids.";
-    return "100% UV400 protection with precision polarized & tinted sun optics.";
-  };
-
-
 
   return (
     <div className="min-h-screen bg-white py-10">
@@ -96,23 +100,24 @@ function SunglassesCatalog() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-100 pb-8 mb-8 gap-4">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              SUN COLLECTION
+            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60 inline-block mb-1">
+              GENTLEMEN&apos;S EDITION
             </span>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-              {getHeaderTitle()}
+              Men&apos;s Eyewear Collection
             </h1>
             <p className="text-sm text-slate-500 mt-1 max-w-xl">
-              {getHeaderDesc()}
+              Engineered with clean architectural lines, durable titanium, and custom prescription lenses designed for the modern man.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {(filterTint !== "All" || filterShape !== "All") && (
+            {(filterCategory !== "All" || filterShape !== "All" || filterMaterial !== "All") && (
               <button
                 onClick={() => {
-                  setFilterTint("All");
+                  setFilterCategory("All");
                   setFilterShape("All");
+                  setFilterMaterial("All");
                 }}
                 className="text-xs font-semibold text-slate-500 hover:text-slate-900 inline-flex items-center gap-1"
               >
@@ -134,21 +139,21 @@ function SunglassesCatalog() {
           <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 mb-8 space-y-4 animate-fade-in-up">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">
-                Sun Lens Tint
+                Product Category
               </span>
               <div className="flex flex-wrap gap-2">
-                {LENS_TINTS.map((tint) => (
+                {CATEGORIES.map((cat) => (
                   <button
-                    key={tint}
-                    onClick={() => setFilterTint(tint)}
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
                     className={cn(
                       "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                      filterTint === tint
+                      filterCategory === cat
                         ? "bg-slate-900 text-white"
                         : "bg-white text-slate-600 border border-slate-200 hover:border-slate-400"
                     )}
                   >
-                    {tint === "All" ? "All Tints" : tint}
+                    {cat === "All" ? "All Collections" : cat}
                   </button>
                 ))}
               </div>
@@ -175,10 +180,32 @@ function SunglassesCatalog() {
                 ))}
               </div>
             </div>
+
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">
+                Material
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {MATERIALS.map((mat) => (
+                  <button
+                    key={mat}
+                    onClick={() => setFilterMaterial(mat)}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                      filterMaterial === mat
+                        ? "bg-slate-900 text-white"
+                        : "bg-white text-slate-600 border border-slate-200 hover:border-slate-400"
+                    )}
+                  >
+                    {mat === "All" ? "All Materials" : mat.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Product Catalog Grid */}
+        {/* Product Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
@@ -190,22 +217,14 @@ function SunglassesCatalog() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          /* Empty State as specified: "No frames published yet. Add your inventory in the Admin Portal." */
           <div className="text-center py-20 bg-slate-50/50 rounded-2xl border border-slate-100">
-            <Sun className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <Glasses className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <h3 className="text-base font-bold text-slate-900">
-              No frames published yet. Add your inventory in the Admin Portal.
+              No products found in Men&apos;s Collection.
             </h3>
             <p className="text-xs text-slate-400 mt-1 mb-6">
-              Use the admin portal to manage catalog items for the Sunglasses tab.
+              Use the admin portal to manage catalog items.
             </p>
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition-colors"
-            >
-              Open Admin Portal
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -227,7 +246,11 @@ function SunglassesCatalog() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <Sun className="w-16 h-16 stroke-[1.25]" />
+                        {product.category === "SUNGLASSES" ? (
+                          <Sun className="w-16 h-16 stroke-[1.25]" />
+                        ) : (
+                          <Glasses className="w-16 h-16 stroke-[1.25]" />
+                        )}
                       </div>
                     )}
                   </Link>
@@ -253,20 +276,32 @@ function SunglassesCatalog() {
                         {formatPrice(product.price)}
                       </span>
 
-                      <button
-                        onClick={() => {
-                          const imagesList = parseImages(product.images);
-                          addItem({
-                            productId: product.id,
-                            name: `${product.name} (Standard Sun Lenses)`,
-                            price: product.price,
-                            image: imagesList[0] || "",
-                          });
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                      >
-                        Add to Bag
-                      </button>
+                      {product.category === "EYEGLASSES" ? (
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setRxModalOpen(true);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                        >
+                          Add Lenses
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const imagesList = parseImages(product.images);
+                            addItem({
+                              productId: product.id,
+                              name: `${product.name} (Standard Sun Lenses)`,
+                              price: product.price,
+                              image: imagesList[0] || "",
+                            });
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                        >
+                          Add to Bag
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -276,15 +311,19 @@ function SunglassesCatalog() {
         )}
       </div>
 
-
+      {/* Prescription Modal */}
+      {selectedProduct && (
+        <PrescriptionModal
+          isOpen={rxModalOpen}
+          onClose={() => {
+            setRxModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          productName={selectedProduct.name}
+          productPrice={selectedProduct.price}
+          onSubmit={handleRxSubmit}
+        />
+      )}
     </div>
-  );
-}
-
-export default function SunglassesPage() {
-  return (
-    <Suspense fallback={<div className="text-center py-20 font-medium text-slate-500">Loading catalog...</div>}>
-      <SunglassesCatalog />
-    </Suspense>
   );
 }
