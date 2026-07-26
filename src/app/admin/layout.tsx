@@ -20,7 +20,7 @@ export default function AdminLayout({
     <AdminAuthGuard>
       <div className="min-h-screen bg-slate-50/60 flex">
         {/* Desktop Sidebar (Fixed Left - Minimal Light Aesthetic) */}
-        <aside className="hidden md:flex flex-col w-64 bg-white text-slate-900 fixed inset-y-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
+        <aside className="hidden lg:flex flex-col w-64 bg-white text-slate-900 fixed inset-y-0 left-0 z-30 border-r border-slate-200/80 shadow-2xs">
           {/* Logo & Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -72,22 +72,22 @@ export default function AdminLayout({
         </aside>
 
         {/* Main Content Workspace */}
-        <div className="flex-1 md:pl-64 flex flex-col min-w-0">
+        <div className="flex-1 lg:pl-64 flex flex-col min-w-0 w-full overflow-x-hidden">
           {/* Top Sticky App Bar */}
-          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-3">
+          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <AdminMobileNav />
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block sm:hidden">
+              <div className="min-w-0">
+                <span className="text-xs font-extrabold tracking-tight text-slate-900 block lg:hidden truncate">
                   MY EYES ADMIN
                 </span>
-                <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-widest text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60">
+                <span className="hidden lg:inline-block text-[10px] font-extrabold uppercase tracking-widest text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60">
                   PRESCRIPTION OPTICAL MANAGEMENT
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 font-bold px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200/80">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span>SQLite DB Online</span>
@@ -96,7 +96,7 @@ export default function AdminLayout({
               <Link
                 href="/"
                 target="_blank"
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition-colors"
+                className="px-3 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition-colors whitespace-nowrap"
               >
                 <span>Storefront</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -105,7 +105,7 @@ export default function AdminLayout({
           </header>
 
           {/* Main Page Slot */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-w-0">
             {children}
           </main>
         </div>

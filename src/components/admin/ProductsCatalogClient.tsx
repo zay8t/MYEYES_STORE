@@ -204,178 +204,187 @@ export default function ProductsCatalogClient({ initialProducts }: ProductsCatal
         </div>
       </div>
 
-      {/* Desktop Dense Sortable Data Table (md and above) */}
-      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-100/80 text-slate-700 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4">Frame Image & Name</th>
-              <th className="px-6 py-4">Category & Shape</th>
-              <th className="px-6 py-4">Material / Gender</th>
-              <th className="px-6 py-4">Price (PKR)</th>
-              <th className="px-6 py-4">Inventory Stock</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredProducts.length === 0 ? (
+      {/* Desktop Dense Sortable Data Table (lg and above) */}
+      <div className="hidden lg:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-100/80 text-slate-700 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <td colSpan={6} className="p-12 text-center text-slate-400 font-medium">
-                  No frame products found matching search filter.
-                </td>
+                <th className="px-6 py-4">Frame Image & Name</th>
+                <th className="px-6 py-4">Category & Shape</th>
+                <th className="px-6 py-4">Material / Gender</th>
+                <th className="px-6 py-4">Price (PKR)</th>
+                <th className="px-6 py-4">Inventory Stock</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
-            ) : (
-              filteredProducts.map((product) => {
-                const imgUrl = getFirstImage(product.images);
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-slate-400 font-medium">
+                    No frame products found matching search filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map((product) => {
+                  const imgUrl = getFirstImage(product.images);
 
-                return (
-                  <tr key={product.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
-                          <Image
-                            src={imgUrl}
-                            alt={product.name}
-                            fill
-                            sizes="48px"
-                            unoptimized
-                            className="object-cover"
+                  return (
+                    <tr key={product.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={imgUrl}
+                              alt={product.name}
+                              fill
+                              sizes="48px"
+                              unoptimized
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900 text-xs">{product.name}</p>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              Slug: {product.slug}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-900 font-bold text-[10px] uppercase block w-max mb-1">
+                          {product.category}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Shape: {getShapeLabel(product.frameShape)}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-slate-800">{getMaterialLabel(product.material)}</p>
+                        <p className="text-[11px] text-slate-400">{product.gender}</p>
+                      </td>
+
+                      <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
+                        {formatPrice(product.price)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            value={product.stock}
+                            onChange={(e) => handleStockChange(product.id, parseInt(e.target.value, 10) || 0)}
+                            className={cn(
+                              "w-16 px-2.5 py-1 text-xs font-mono font-extrabold rounded-lg border focus:outline-none",
+                              product.stock < 5
+                                ? "bg-rose-50 text-rose-900 border-rose-300"
+                                : "bg-slate-50 text-slate-900 border-slate-200"
+                            )}
                           />
+                          <span className="text-[10px] text-slate-400 font-bold">Units</span>
                         </div>
-                        <div>
-                          <p className="font-extrabold text-slate-900 text-xs">{product.name}</p>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            Slug: {product.slug}
-                          </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => {
+                              setEditingProduct(product);
+                              setIsModalOpen(true);
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                            title="Edit Product"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-900 font-bold text-[10px] uppercase block w-max mb-1">
-                        {product.category}
-                      </span>
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        Shape: {getShapeLabel(product.frameShape)}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800">{getMaterialLabel(product.material)}</p>
-                      <p className="text-[11px] text-slate-400">{product.gender}</p>
-                    </td>
-
-                    <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
-                      {formatPrice(product.price)}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          value={product.stock}
-                          onChange={(e) => handleStockChange(product.id, parseInt(e.target.value, 10) || 0)}
-                          className={cn(
-                            "w-16 px-2.5 py-1 text-xs font-mono font-extrabold rounded-lg border focus:outline-none",
-                            product.stock < 5
-                              ? "bg-rose-50 text-rose-900 border-rose-300"
-                              : "bg-slate-50 text-slate-900 border-slate-200"
-                          )}
-                        />
-                        <span className="text-[10px] text-slate-400 font-bold">Units</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingProduct(product);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
-                          title="Edit Product"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Mobile/Tablet Touch Cards (< md) */}
-      <div className="md:hidden space-y-3">
-        {filteredProducts.map((product) => {
-          const imgUrl = getFirstImage(product.images);
+      {/* Mobile/Tablet Touch Cards (< lg) */}
+      <div className="lg:hidden space-y-3.5">
+        {filteredProducts.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-xs font-medium bg-white rounded-2xl border border-slate-200">
+            No frame products found matching search filter.
+          </div>
+        ) : (
+          filteredProducts.map((product) => {
+            const imgUrl = getFirstImage(product.images);
 
-          return (
-            <div key={product.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="relative w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
-                  <Image
-                    src={imgUrl}
-                    alt={product.name}
-                    fill
-                    sizes="56px"
-                    unoptimized
-                    className="object-cover"
-                  />
+            return (
+              <div key={product.id} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                    <Image
+                      src={imgUrl}
+                      alt={product.name}
+                      fill
+                      sizes="56px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold text-slate-900 text-sm truncate">{product.name}</p>
+                    <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+                      {product.category} · {getMaterialLabel(product.material)}
+                    </p>
+                    <p className="text-xs font-mono font-extrabold text-slate-900 mt-1">
+                      {formatPrice(product.price)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-extrabold text-slate-900 text-xs">{product.name}</p>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    {product.category} · {getMaterialLabel(product.material)}
-                  </p>
-                  <p className="text-xs font-mono font-extrabold text-slate-900 mt-1">
-                    {formatPrice(product.price)}
-                  </p>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500 font-bold">Stock:</span>
+                    <input
+                      type="number"
+                      value={product.stock}
+                      onChange={(e) => handleStockChange(product.id, parseInt(e.target.value, 10) || 0)}
+                      className="w-16 px-2 py-1.5 text-xs font-mono font-extrabold rounded-xl border border-slate-300 bg-white focus:outline-none focus:border-slate-900 text-center"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setIsModalOpen(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Edit Frame
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-slate-500 font-bold">Stock:</span>
-                  <input
-                    type="number"
-                    value={product.stock}
-                    onChange={(e) => handleStockChange(product.id, parseInt(e.target.value, 10) || 0)}
-                    className="w-14 px-2 py-1 text-xs font-mono font-bold rounded-lg border bg-slate-50"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingProduct(product);
-                      setIsModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                    className="p-1.5 rounded-xl bg-rose-50 text-rose-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Frame Create / Edit Modal */}

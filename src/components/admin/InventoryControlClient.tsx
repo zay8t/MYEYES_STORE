@@ -164,100 +164,178 @@ export default function InventoryControlClient({ initialProducts }: InventoryCon
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-100/80 text-slate-700 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4">Frame Model</th>
-              <th className="px-6 py-4">Category / Material</th>
-              <th className="px-6 py-4">Price</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Instant Stock Adjuster</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredProducts.length === 0 ? (
+      {/* Inventory Table (Desktop/Laptop >= lg) */}
+      <div className="hidden lg:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-100/80 text-slate-700 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <td colSpan={5} className="p-12 text-center text-slate-400 font-medium">
-                  No frames match inventory search filter.
-                </td>
+                <th className="px-6 py-4">Frame Model</th>
+                <th className="px-6 py-4">Category / Material</th>
+                <th className="px-6 py-4">Price</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Instant Stock Adjuster</th>
               </tr>
-            ) : (
-              filteredProducts.map((p) => {
-                const imgUrl = getFirstImage(p.images);
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-slate-400 font-medium">
+                    No frames match inventory search filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map((p) => {
+                  const imgUrl = getFirstImage(p.images);
 
-                return (
-                  <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
-                          <Image src={imgUrl} alt={p.name} fill sizes="40px" unoptimized className="object-cover" />
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                            <Image src={imgUrl} alt={p.name} fill sizes="40px" unoptimized className="object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900">{p.name}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">ID: #{p.id.slice(0, 8)}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-extrabold text-slate-900">{p.name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">ID: #{p.id.slice(0, 8)}</p>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-slate-800">{p.category}</p>
+                        <p className="text-[11px] text-slate-400">{p.material}</p>
+                      </td>
+
+                      <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
+                        {formatPrice(p.price)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {p.stock === 0 ? (
+                          <span className="px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-900 font-extrabold text-[10px] uppercase">
+                            Out of Stock
+                          </span>
+                        ) : p.stock < 5 ? (
+                          <span className="px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[10px] uppercase">
+                            Low Stock ({p.stock})
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 font-extrabold text-[10px] uppercase">
+                            In Stock ({p.stock})
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleAdjustDelta(p.id, -1)}
+                            className="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
+                            title="Decrease Stock (-1)"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+
+                          <input
+                            type="number"
+                            value={p.stock}
+                            onChange={(e) => handleDirectInput(p.id, e.target.value)}
+                            className="w-16 px-2 py-1 text-center font-mono font-extrabold text-xs rounded-xl border border-slate-300 bg-white"
+                          />
+
+                          <button
+                            onClick={() => handleAdjustDelta(p.id, 1)}
+                            className="p-1.5 rounded-xl bg-slate-900 hover:bg-black text-white transition-colors cursor-pointer"
+                            title="Increase Stock (+1)"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                    </td>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800">{p.category}</p>
-                      <p className="text-[11px] text-slate-400">{p.material}</p>
-                    </td>
+      {/* Mobile/Tablet Card View (< lg) */}
+      <div className="lg:hidden space-y-3.5">
+        {filteredProducts.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-xs font-medium bg-white rounded-2xl border border-slate-200">
+            No frames match inventory search filter.
+          </div>
+        ) : (
+          filteredProducts.map((p) => {
+            const imgUrl = getFirstImage(p.images);
 
-                    <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
-                      {formatPrice(p.price)}
-                    </td>
+            return (
+              <div key={p.id} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                      <Image src={imgUrl} alt={p.name} fill sizes="48px" unoptimized className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-slate-900 text-sm truncate">{p.name}</p>
+                      <p className="text-xs font-bold text-slate-700 mt-0.5">{p.category} · <span className="font-medium text-slate-500">{p.material}</span></p>
+                      <span className="font-mono font-black text-slate-900 text-xs mt-1 block">
+                        {formatPrice(p.price)}
+                      </span>
+                    </div>
+                  </div>
 
-                    <td className="px-6 py-4">
-                      {p.stock === 0 ? (
-                        <span className="px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-900 font-extrabold text-[10px] uppercase">
-                          Out of Stock
-                        </span>
-                      ) : p.stock < 5 ? (
-                        <span className="px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[10px] uppercase">
-                          Low Stock ({p.stock})
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 font-extrabold text-[10px] uppercase">
-                          In Stock ({p.stock})
-                        </span>
-                      )}
-                    </td>
+                  <div className="flex-shrink-0">
+                    {p.stock === 0 ? (
+                      <span className="px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-900 font-extrabold text-[10px] uppercase block text-center">
+                        Out of Stock
+                      </span>
+                    ) : p.stock < 5 ? (
+                      <span className="px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[10px] uppercase block text-center">
+                        Low Stock ({p.stock})
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 font-extrabold text-[10px] uppercase block text-center">
+                        In Stock ({p.stock})
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleAdjustDelta(p.id, -1)}
-                          className="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-                          title="Decrease Stock (-1)"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700">Quick Adjust:</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleAdjustDelta(p.id, -1)}
+                      className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      title="Decrease Stock (-1)"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
 
-                        <input
-                          type="number"
-                          value={p.stock}
-                          onChange={(e) => handleDirectInput(p.id, e.target.value)}
-                          className="w-16 px-2 py-1 text-center font-mono font-extrabold text-xs rounded-xl border border-slate-300 bg-white"
-                        />
+                    <input
+                      type="number"
+                      value={p.stock}
+                      onChange={(e) => handleDirectInput(p.id, e.target.value)}
+                      className="w-16 px-2 py-1.5 text-center font-mono font-extrabold text-xs rounded-xl border border-slate-300 bg-white"
+                    />
 
-                        <button
-                          onClick={() => handleAdjustDelta(p.id, 1)}
-                          className="p-1.5 rounded-xl bg-slate-900 hover:bg-black text-white transition-colors cursor-pointer"
-                          title="Increase Stock (+1)"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                    <button
+                      onClick={() => handleAdjustDelta(p.id, 1)}
+                      className="p-2 rounded-xl bg-slate-900 hover:bg-black text-white transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      title="Increase Stock (+1)"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ export default function AdminMobileNav() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="lg:hidden p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
         aria-label="Open mobile navigation menu"
       >
         <Menu className="w-5 h-5" />
@@ -43,7 +43,7 @@ export default function AdminMobileNav() {
       {/* Overlay Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs md:hidden transition-opacity"
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -51,7 +51,7 @@ export default function AdminMobileNav() {
       {/* Slide-out Sheet Drawer (Light Minimal) */}
       <div
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 w-72 bg-white text-slate-900 shadow-2xl transition-transform duration-300 ease-out md:hidden flex flex-col border-r border-slate-200/80",
+          "fixed top-0 bottom-0 left-0 z-50 w-72 bg-white text-slate-900 shadow-2xl transition-transform duration-300 ease-out lg:hidden flex flex-col border-r border-slate-200/80",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
