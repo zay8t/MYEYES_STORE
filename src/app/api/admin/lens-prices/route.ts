@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
 
     const updated = await prisma.lensOption.update({
       where: { id },
-      data: { basePrice: parseFloat(basePrice) },
+      data: { price: parseFloat(basePrice) },
     });
 
     return NextResponse.json(updated);
