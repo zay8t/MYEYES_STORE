@@ -14,17 +14,16 @@ export async function GET() {
         data: SOLEX_LENS_OPTIONS.map((lens) => ({
           id: lens.id,
           name: lens.name,
-          coating: lens.coating,
+          price: lens.basePrice,
+          type: lens.category,
           index: lens.index,
           description: lens.description,
-          category: lens.category,
-          basePrice: lens.basePrice,
         })),
       });
     }
 
     const lensOptions = await prisma.lensOption.findMany({
-      orderBy: { category: "asc" },
+      orderBy: { type: "asc" },
     });
 
     return NextResponse.json(lensOptions);
