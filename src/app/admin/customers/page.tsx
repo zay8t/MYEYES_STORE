@@ -38,6 +38,7 @@ export default async function AdminCustomersPage() {
 
     const serializedOrder: OrderReceiptData = {
       ...ord,
+      shippingFee: ord.shippingFee ?? undefined,
       status: ord.status as OrderReceiptData["status"],
       createdAt: ord.createdAt.toISOString(),
       items: ord.items.map((item) => ({
