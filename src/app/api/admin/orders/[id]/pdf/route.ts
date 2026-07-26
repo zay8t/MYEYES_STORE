@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import PDFDocument from "pdfkit";
+// @ts-expect-error PDFKit standalone import for Next.js bundle compatibility
+import PDFDocument from "pdfkit/js/pdfkit.standalone";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export async function GET(
       .fontSize(8)
       .font("Helvetica")
       .fillColor("#94a3b8")
-      .text("Website: www.myeyes.pk  |  Email: support@myeyes.pk", 40, 78);
+      .text("Website: www.myeyes.pk  |  Email: myeyes2026@gmail.com  |  Phone: +92 300 6694928", 40, 78);
 
     // Right Header - Title & Order No
     doc
@@ -133,8 +134,8 @@ export async function GET(
       .fontSize(8)
       .font("Helvetica")
       .fillColor("#334155")
-      .text(`Name: ${order.customerName}`, 300, y + 22)
-      .text(`Email: ${order.customerEmail}`, 300, y + 34)
+      .text(`Name: ${order.customerName || "Customer"}`, 300, y + 22)
+      .text(`Email: ${order.customerEmail || "N/A"}`, 300, y + 34)
       .text(`Phone: ${order.customerPhone || "N/A"}`, 300, y + 46)
       .text(`Address: ${order.shippingAddress || "N/A"}`, 300, y + 58)
       .text(`City: ${order.shippingCity || "N/A"} - ${postalCode}`, 300, y + 68);
@@ -159,7 +160,10 @@ export async function GET(
 
     // Items Rows
     for (const item of order.items) {
-      const itemTotal = item.price * item.quantity;
+      const price = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
+      const qty = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
+      const itemTotal = price * qty;
+
       doc
         .fontSize(8)
         .font("Helvetica-Bold")
@@ -170,10 +174,10 @@ export async function GET(
         .fontSize(8)
         .font("Helvetica")
         .fillColor("#475569")
-        .text(item.prescription ? item.prescription.lensType : "Frame Only", 220, y + 6);
+        .text(item.prescription ? item.prescription.lensType || "Standard Lens" : "Frame Only", 220, y + 6);
 
-      doc.text(String(item.quantity), 380, y + 6, { width: 30, align: "center" });
-      doc.text(`Rs. ${item.price.toLocaleString()}`, 420, y + 6, { width: 60, align: "right" });
+      doc.text(String(qty), 380, y + 6, { width: 30, align: "center" });
+      doc.text(`Rs. ${price.toLocaleString()}`, 420, y + 6, { width: 60, align: "right" });
       doc
         .font("Helvetica-Bold")
         .text(`Rs. ${itemTotal.toLocaleString()}`, 490, y + 6, { width: 55, align: "right" });
@@ -200,6 +204,13 @@ export async function GET(
       y += 15;
       for (const item of rxItems) {
         const rx = item.prescription!;
+        const odSph = rx.odSph != null ? Number(rx.odSph).toFixed(2) : "0.00";
+        const odCyl = rx.odCyl != null ? Number(rx.odCyl).toFixed(2) : "0.00";
+        const odAxis = rx.odAxis ? rx.odAxis + "°" : "-";
+        const osSph = rx.osSph != null ? Number(rx.osSph).toFixed(2) : "0.00";
+        const osCyl = rx.osCyl != null ? Number(rx.osCyl).toFixed(2) : "0.00";
+        const osAxis = rx.osAxis ? rx.osAxis + "°" : "-";
+
         doc
           .rect(40, y, 515, 55)
           .fillAndStroke("#f8fafc", "#cbd5e1");
@@ -208,14 +219,14 @@ export async function GET(
           .fontSize(8)
           .font("Helvetica-Bold")
           .fillColor("#0f172a")
-          .text(`Lens Package: ${rx.lensType}`, 50, y + 8)
-          .text(`Pupillary Distance (PD): ${rx.pd} mm`, 350, y + 8, { align: "right" });
+          .text(`Lens Package: ${rx.lensType || "Standard"}`, 50, y + 8)
+          .text(`Pupillary Distance (PD): ${rx.pd || "63"} mm`, 350, y + 8, { align: "right" });
 
         doc
           .font("Helvetica")
           .fillColor("#334155")
-          .text(`OD (Right Eye):  SPH: ${rx.odSph.toFixed(2)}  |  CYL: ${rx.odCyl !== null ? rx.odCyl.toFixed(2) : "0.00"}  |  AXIS: ${rx.odAxis ? rx.odAxis + "°" : "-"}`, 50, y + 24)
-          .text(`OS (Left Eye):   SPH: ${rx.osSph.toFixed(2)}  |  CYL: ${rx.osCyl !== null ? rx.osCyl.toFixed(2) : "0.00"}  |  AXIS: ${rx.osAxis ? rx.osAxis + "°" : "-"}`, 50, y + 38);
+          .text(`OD (Right Eye):  SPH: ${odSph}  |  CYL: ${odCyl}  |  AXIS: ${odAxis}`, 50, y + 24)
+          .text(`OS (Left Eye):   SPH: ${osSph}  |  CYL: ${osCyl}  |  AXIS: ${osAxis}`, 50, y + 38);
 
         y += 65;
       }
@@ -223,7 +234,13 @@ export async function GET(
 
     // Totals Summary
     y += 10;
-    const subtotal = order.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const subtotal = order.items.reduce((sum, i) => {
+      const p = typeof i.price === "number" ? i.price : parseFloat(String(i.price || 0)) || 0;
+      const q = typeof i.quantity === "number" ? i.quantity : parseInt(String(i.quantity || 1), 10) || 1;
+      return sum + p * q;
+    }, 0);
+
+    const totalAmount = typeof order.totalAmount === "number" ? order.totalAmount : subtotal + (order.shippingFee || 250);
 
     doc
       .fontSize(8)
@@ -243,7 +260,7 @@ export async function GET(
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
       .text("Grand Total:", 380, y, { width: 80, align: "right" })
-      .text(`Rs. ${order.totalAmount.toLocaleString()}`, 470, y, { width: 75, align: "right" });
+      .text(`Rs. ${totalAmount.toLocaleString()}`, 470, y, { width: 75, align: "right" });
 
     // Footer
     doc

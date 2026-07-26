@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Glasses, SlidersHorizontal, ArrowRight, X } from "lucide-react";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
+import { safeProductList } from "@/lib/data-guards";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 
 interface Product {
@@ -39,20 +40,21 @@ export default function EyeglassesPage() {
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    fetch("/api/admin/products?category=EYEGLASSES")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
+    try {
+      fetch("/api/admin/products?category=EYEGLASSES")
+        .then((r) => r.json())
+        .then((data) => {
+          setProducts(safeProductList(data) as unknown as Product[]);
+          setLoading(false);
+        })
+        .catch(() => {
           setProducts([]);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setProducts([]);
-        setLoading(false);
-      });
+          setLoading(false);
+        });
+    } catch {
+      setProducts([]);
+      setLoading(false);
+    }
   }, []);
 
   const parseImages = (imagesStr: string): string[] => {
@@ -230,8 +232,8 @@ export default function EyeglassesPage() {
                   <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold mb-1">
-                        <span>{product.frameShape.replace("_", " ")}</span>
-                        <span>{product.material.replace("_", " ")}</span>
+                        <span>{formatFrameShape(product.frameShape)}</span>
+                        <span>{formatMaterial(product.material)}</span>
                       </div>
                       <Link href={`/products/${product.slug}`}>
                         <h3 className="text-base font-bold text-slate-900 group-hover:underline">

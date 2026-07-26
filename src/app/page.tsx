@@ -4,15 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
+import { safeProductList } from "@/lib/data-guards";
 import { useCartStore } from "@/lib/cart-store";
 
+import dynamic from "next/dynamic";
 import PrescriptionModal from "@/components/PrescriptionModal";
 import LensVisualizer from "@/components/home/LensVisualizer";
 import PrescriptionSteps from "@/components/home/PrescriptionSteps";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 import PakistanReviews from "@/components/home/PakistanReviews";
-import Frame3DCanvasWrapper from "@/components/3d/Frame3DCanvasWrapper";
+
+const Frame3DCanvasWrapper = dynamic(
+  () => import("@/components/3d/Frame3DCanvasWrapper"),
+  { ssr: false }
+);
 
 interface Product {
   id: string;
@@ -40,20 +46,22 @@ export default function HomePage() {
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    fetch("/api/admin/products")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
+    try {
+      fetch("/api/admin/products")
+        .then((res) => res.json())
+        .then((data) => {
+          setProducts(safeProductList(data) as unknown as Product[]);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load products for homepage:", err);
           setProducts([]);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setProducts([]);
-        setLoading(false);
-      });
+          setLoading(false);
+        });
+    } catch {
+      setProducts([]);
+      setLoading(false);
+    }
   }, []);
 
   const parseImages = (imagesStr: string): string[] => {
@@ -216,7 +224,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
-                      <p className="text-[11px] text-slate-500 font-medium">{product.material} · {product.frameShape}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formatMaterial(product.material)} · {formatFrameShape(product.frameShape)}</p>
                     </div>
                   </Link>
 

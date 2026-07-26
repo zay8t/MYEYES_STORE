@@ -5,7 +5,7 @@ import { Star, BadgeCheck, MapPin } from "lucide-react";
 const REVIEWS = [
   {
     name: "Zayd Ali",
-    city: "Lahore",
+    city: "Islamabad",
     initials: "ZA",
     review:
       "Ordered my custom prescription eyeglasses with blue-light coating. Delivered to Gulberg in 3 days. Lens clarity is 10/10!",

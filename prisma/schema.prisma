@@ -11,18 +11,28 @@ datasource db {
 }
 
 enum FrameShape {
-  ROUND
+  NILL
+  WAYFARER
   AVIATOR
+  RECTANGLE
+  ROUND
+  OVAL
   SQUARE
   CAT_EYE
-  RECTANGLE
+  GEOMETRIC
+  RIMLESS
+  SEMI_RIMLESS
 }
 
 enum Material {
+  NILL
   ACETATE
+  METAL
   TITANIUM
+  TR90
   STAINLESS_STEEL
   WOOD
+  HYBRID
 }
 
 enum OrderStatus {

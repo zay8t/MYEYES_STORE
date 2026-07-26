@@ -177,7 +177,7 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                     </div>
                   </div>
                   <p className="text-[10px] text-slate-500 pt-1">
-                    Website: www.myeyes.pk · Email: support@myeyes.pk
+                    Website: www.myeyes.pk · Email: myeyes2026@gmail.com · Phone: +92 300 6694928
                   </p>
                 </div>
 
@@ -370,21 +370,44 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
       {/* Global CSS for Clean A4 Printing */}
       <style jsx global>{`
         @media print {
-          body * {
-            visibility: hidden;
+          /* Hide app navigation, header buttons, and modal overlays */
+          body > *:not(.printable-modal-wrapper),
+          header, nav, aside, button, .no-print {
+            display: none !important;
           }
-          #printable-receipt-canvas,
-          #printable-receipt-canvas * {
-            visibility: visible;
+
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          #printable-receipt-canvas {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 20mm !important;
+
+          /* Ensure modal backdrop doesn't obscure or hide print area */
+          .fixed.inset-0 {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
             box-shadow: none !important;
+          }
+
+          #printable-receipt-canvas {
+            display: block !important;
+            visibility: visible !important;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+
+          #printable-receipt-canvas * {
+            visibility: visible !important;
           }
         }
       `}</style>
