@@ -301,7 +301,7 @@ export default function PrescriptionModal({
                           required
                           value={rx.odSph}
                           onChange={(e) => setRx({ ...rx, odSph: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
                           placeholder="0.00"
                         />
                       </div>
@@ -312,7 +312,7 @@ export default function PrescriptionModal({
                           step="0.25"
                           value={rx.odCyl}
                           onChange={(e) => setRx({ ...rx, odCyl: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
                           placeholder="0.00"
                         />
                       </div>
@@ -324,7 +324,7 @@ export default function PrescriptionModal({
                           max="180"
                           value={rx.odAxis}
                           onChange={(e) => setRx({ ...rx, odAxis: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
                           placeholder="90"
                         />
                       </div>
@@ -345,7 +345,7 @@ export default function PrescriptionModal({
                           required
                           value={rx.osSph}
                           onChange={(e) => setRx({ ...rx, osSph: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
                           placeholder="0.00"
                         />
                       </div>
@@ -356,7 +356,7 @@ export default function PrescriptionModal({
                           step="0.25"
                           value={rx.osCyl}
                           onChange={(e) => setRx({ ...rx, osCyl: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
                           placeholder="0.00"
                         />
                       </div>
@@ -368,8 +368,8 @@ export default function PrescriptionModal({
                           max="180"
                           value={rx.osAxis}
                           onChange={(e) => setRx({ ...rx, osAxis: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-900 text-xs font-medium focus:border-brand focus:outline-none bg-white"
-                          placeholder="180"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-sm font-semibold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none bg-white min-h-[44px]"
+                          placeholder="90"
                         />
                       </div>
                     </div>

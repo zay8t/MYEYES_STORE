@@ -43,8 +43,11 @@ enum OrderStatus {
 }
 
 enum Category {
+  NILL
   EYEGLASSES
   SUNGLASSES
+  CONTACT_LENSES
+  ACCESSORIES
 }
 
 model Product {
@@ -54,32 +57,15 @@ model Product {
   description String
   price       Float
   stock       Int        @default(0)
-  frameShape  FrameShape
-  material    Material
-  gender      String
+  frameShape  FrameShape @default(NILL)
+  material    Material   @default(NILL)
+  gender      String     @default("NILL")
   images      String
   category    Category   @default(EYEGLASSES)
   featured    Boolean    @default(false)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-
-  orderItems OrderItem[]
-}
-
-model Prescription {
-  id        String   @id @default(uuid())
-  lensType  String
-  odSph     Float
-  odCyl     Float?
-  odAxis    Int?
-  osSph     Float
-  osCyl     Float?
-  osAxis    Int?
-  pd        Float
-  fileUrl   String?
-  createdAt DateTime @default(now())
-
-  orderItems OrderItem[]
+  items       OrderItem[]
 }
 
 model Order {
@@ -92,18 +78,29 @@ model Order {
   shippingCity        String?
   paymentMethod       String?
   transactionProofUrl String?
-  shippingFee         Float       @default(0)
+  shippingFee         Float?      @default(250)
+  stripeSessionId     String?
   totalAmount         Float
   status              OrderStatus @default(PENDING)
-  stripeSessionId     String?     @unique
-  items               OrderItem[]
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
+  items               OrderItem[]
+}
+
+model LensOption {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  type        String
+  index       String?
+  createdAt   DateTime @default(now())
 }
 
 model OrderSequence {
-  id  Int @id @default(1)
-  seq Int @default(0)
+  id        Int      @id @default(1)
+  lastValue Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 model OrderItem {
@@ -112,21 +109,36 @@ model OrderItem {
   productId      String
   prescriptionId String?
   price          Float
-  quantity       Int
-
-  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product       @relation(fields: [productId], references: [id])
-  prescription Prescription? @relation(fields: [prescriptionId], references: [id])
+  quantity       Int           @default(1)
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
 }
 
-model LensOption {
-  id          String   @id
-  name        String
-  coating     String
-  index       String
-  description String
-  category    String
-  basePrice   Float
+model Prescription {
+  id        String      @id @default(uuid())
+  lensType  String
+  odSph     Float
+  odCyl     Float?
+  odAxis    Int?
+  osSph     Float
+  osCyl     Float?
+  osAxis    Int?
+  pd        Float
+  fileUrl   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt @default(now())
+  OrderItem OrderItem[]
+}
+
+model LensPrice {
+  id          String   @id @default(uuid())
+  category    String   // "SINGLE_VISION", "BIFOCAL", "PROGRESSIVE"
+  name        String   // "Anti-Glare Standard", "Blue Light Shield", "Photogray Transition"
+  price       Float
+  description String?
+  index       String?  // "1.56", "1.61", "1.67"
+  isPopular   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

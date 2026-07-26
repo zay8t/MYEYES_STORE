@@ -43,16 +43,19 @@ export const MATERIALS_OPTIONS = [
 ];
 
 export const CATEGORIES_OPTIONS = [
-  { label: "None / Other (Nill)", value: "EYEGLASSES" }, // Valid fallback
+  { label: "None / Other (Nill)", value: "NILL" },
   { label: "Eyeglasses", value: "EYEGLASSES" },
   { label: "Sunglasses", value: "SUNGLASSES" },
+  { label: "Contact Lenses", value: "CONTACT_LENSES" },
+  { label: "Accessories", value: "ACCESSORIES" },
 ];
 
 export const GENDERS_OPTIONS = [
-  { label: "None / Other (Nill)", value: "Unspecified" },
-  { label: "Unisex", value: "Unisex" },
+  { label: "None / Other (Nill)", value: "NILL" },
   { label: "Men", value: "Men" },
   { label: "Women", value: "Women" },
+  { label: "Kids", value: "Kids" },
+  { label: "Unisex", value: "Unisex" },
 ];
 
 export default function ProductModal({

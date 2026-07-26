@@ -88,20 +88,22 @@ export default function HomePage() {
             Pakistan&apos;s #1 Online Eyewear Store
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Pakistan Prescription Based
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
+            Pakistan&apos;s First
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-dark">Eyewear Store.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
+              Prescription Based Eyewear Store
+            </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Order premium prescription eyeglasses &amp; sunglasses online with exact SPH, CYL &amp; PD fitting — crafted at lab-precision rates and delivered to your doorstep anywhere in Pakistan.
+          <p className="text-base sm:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
+            Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
           </p>
 
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/eyeglasses"
-              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/20 hover:scale-[1.02] flex items-center justify-center gap-2.5"
+              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold uppercase tracking-wider transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/20 hover:scale-[1.02] flex items-center justify-center gap-2.5 shadow-md"
             >
               <Glasses className="w-4 h-4" />
               Explore Eyeglasses
@@ -110,11 +112,106 @@ export default function HomePage() {
 
             <Link
               href="/sunglasses"
-              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-slate-200 hover:border-brand hover:bg-brand/5 text-slate-900 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-brand/10 flex items-center justify-center gap-2.5"
+              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-slate-200/80 hover:border-amber-500 bg-white hover:bg-amber-50/50 text-slate-900 text-xs font-extrabold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2.5"
             >
-              <Sun className="w-4 h-4" />
+              <Sun className="w-4 h-4 text-amber-600" />
               Explore Sunglasses
             </Link>
+          </div>
+
+          {/* Subcategories Grid (Light/Brand Theme - No Dark Borders) */}
+          <div className="pt-8 max-w-4xl mx-auto">
+            <div className="text-center mb-4">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200/60 inline-block">
+                Curated Optical Collections
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* Eyeglasses Men */}
+              <Link
+                href="/eyeglasses?gender=Men"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Men
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Men&apos;s Eyeglasses
+                </span>
+                <Glasses className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+              </Link>
+
+              {/* Eyeglasses Women */}
+              <Link
+                href="/eyeglasses?gender=Women"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-rose-50 text-rose-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Women
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Women&apos;s Eyeglasses
+                </span>
+                <Glasses className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+              </Link>
+
+              {/* Eyeglasses Kids */}
+              <Link
+                href="/eyeglasses?gender=Kids"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-50 text-blue-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Kids
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Kids&apos; Eyeglasses
+                </span>
+                <Glasses className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+              </Link>
+
+              {/* Sunglasses Men */}
+              <Link
+                href="/sunglasses?gender=Men"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Men
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Men&apos;s Sunglasses
+                </span>
+                <Sun className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              </Link>
+
+              {/* Sunglasses Women */}
+              <Link
+                href="/sunglasses?gender=Women"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-rose-50 text-rose-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Women
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Women&apos;s Sunglasses
+                </span>
+                <Sun className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              </Link>
+
+              {/* Sunglasses Kids */}
+              <Link
+                href="/sunglasses?gender=Kids"
+                className="group p-3.5 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/80 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-between min-h-[110px]"
+              >
+                <span className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-50 text-blue-700 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
+                  Kids
+                </span>
+                <span className="text-xs font-black text-slate-900 group-hover:text-amber-600 transition-colors my-1">
+                  Kids&apos; Sunglasses
+                </span>
+                <Sun className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              </Link>
+            </div>
           </div>
 
           {/* 3D Eyewear Studio Canvas */}
