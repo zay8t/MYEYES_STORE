@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node --max-old-space-size=4096 node_modules/next/dist/bin/next dev",
-    "build": "prisma generate && prisma db push && node scripts/inject-test-product.js && next build",
+    "build": "prisma generate && (prisma db push || echo DB_OFFLINE) && (node scripts/inject-test-product.js || echo DB_OFFLINE) && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -16,7 +16,6 @@
     "@tailwindcss/postcss": "^4.0.0",
     "@types/multer": "^2.2.0",
     "@types/pdfkit": "^0.17.6",
-    "@types/pg": "^8.20.0",
     "@types/three": "^0.185.1",
     "autoprefixer": "^10.4.18",
     "cloudinary": "^1.41.3",
@@ -26,10 +25,10 @@
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
     "next": "^15.2.0",
+    "next-cloudinary": "^6.17.5",
     "pdfkit": "^0.19.1",
     "pg": "^8.22.0",
     "postcss": "^8.4.35",
-    "prisma": "^6.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^22.3.2",
@@ -40,10 +39,12 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
+    "prisma": "^6.4.0",
     "typescript": "^5"
   }
 }
