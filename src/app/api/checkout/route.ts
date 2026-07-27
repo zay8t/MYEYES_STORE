@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateNextOrderNumber } from "@/lib/order-number";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,19 @@ export async function POST(request: NextRequest) {
         let prescriptionId: string | undefined;
 
         if (item.prescription && (item.prescription.odSph !== undefined || item.prescription.lensUsage)) {
+          let rxUrl = item.prescription.rxFileUrl || null;
+          let rxPublicId = null;
+
+          if (rxUrl && rxUrl.startsWith("data:image/")) {
+            try {
+              const uploadRes = await uploadToCloudinary(rxUrl, "myeyes_prescriptions");
+              rxUrl = uploadRes.secure_url;
+              rxPublicId = uploadRes.public_id;
+            } catch (err) {
+              console.error("Prescription upload to Cloudinary failed:", err);
+            }
+          }
+
           const rxRecord = await tx.prescription.create({
             data: {
               lensType: item.prescription.lensUsage || item.prescription.lensMaterial || "Prescription Lenses",
@@ -61,7 +75,9 @@ export async function POST(request: NextRequest) {
               osCyl: item.prescription.osCyl !== null ? parseFloat(item.prescription.osCyl) : null,
               osAxis: item.prescription.osAxis ? parseInt(item.prescription.osAxis, 10) : null,
               pd: parseFloat(item.prescription.pd) || 63,
-              fileUrl: item.prescription.rxFileUrl || null,
+              fileUrl: rxUrl,
+              prescription_url: rxUrl,
+              prescription_public_id: rxPublicId,
             },
           });
           prescriptionId = rxRecord.id;

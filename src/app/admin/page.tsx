@@ -22,76 +22,92 @@ interface ProductSalesItem {
 }
 
 async function getDashboardMetrics() {
-  const [products, orders, totalCustomersCount] = await Promise.all([
-    prisma.product.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.order.findMany({
-      include: {
-        items: {
-          include: {
-            product: true,
-            prescription: true,
+  try {
+    const [products, orders, totalCustomersCount] = await Promise.all([
+      prisma.product.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.order.findMany({
+        include: {
+          items: {
+            include: {
+              product: true,
+              prescription: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.order.groupBy({
-      by: ["customerEmail"],
-      _count: { customerEmail: true },
-    }),
-  ]);
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.order.groupBy({
+        by: ["customerEmail"],
+        _count: { customerEmail: true },
+      }),
+    ]);
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const totalOrdersCount = orders.length;
+    const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const totalOrdersCount = orders.length;
 
-  // Prescription vs Non-Prescription Sales Ratio
-  let rxOrdersCount = 0;
-  orders.forEach((o) => {
-    const hasRx = o.items.some((i) => i.prescription);
-    if (hasRx) rxOrdersCount++;
-  });
-  const rxRatio = totalOrdersCount > 0 ? Math.round((rxOrdersCount / totalOrdersCount) * 100) : 0;
-
-  // Pending Lab Queue
-  const pendingLabCount = orders.filter(
-    (o) => o.status === "PENDING" || o.status === "PROCESSING"
-  ).length;
-
-  // Total In-Stock Frames
-  const totalStockCount = products.reduce((sum, p) => sum + p.stock, 0);
-  const lowStockProductsCount = products.filter((p) => p.stock < 5).length;
-
-  // Top Selling Frames Calculation
-  const productSalesMap: Record<string, ProductSalesItem> = {};
-  orders.forEach((o) => {
-    o.items.forEach((item) => {
-      if (item.product) {
-        const pId = item.product.id;
-        if (!productSalesMap[pId]) {
-          productSalesMap[pId] = { product: item.product, qty: 0, revenue: 0 };
-        }
-        productSalesMap[pId].qty += item.quantity;
-        productSalesMap[pId].revenue += item.price * item.quantity;
-      }
+    // Prescription vs Non-Prescription Sales Ratio
+    let rxOrdersCount = 0;
+    orders.forEach((o) => {
+      const hasRx = o.items.some((i) => i.prescription);
+      if (hasRx) rxOrdersCount++;
     });
-  });
+    const rxRatio = totalOrdersCount > 0 ? Math.round((rxOrdersCount / totalOrdersCount) * 100) : 0;
 
-  const topSellingFrames = Object.values(productSalesMap)
-    .sort((a, b) => b.qty - a.qty)
-    .slice(0, 5);
+    // Pending Lab Queue
+    const pendingLabCount = orders.filter(
+      (o) => o.status === "PENDING" || o.status === "PROCESSING"
+    ).length;
 
-  return {
-    products,
-    orders: orders.slice(0, 8), // Recent 8 orders
-    totalRevenue,
-    totalOrdersCount,
-    totalCustomersCount: totalCustomersCount.length,
-    rxRatio,
-    pendingLabCount,
-    totalStockCount,
-    lowStockProductsCount,
-    topSellingFrames,
-  };
+    // Total In-Stock Frames
+    const totalStockCount = products.reduce((sum, p) => sum + p.stock, 0);
+    const lowStockProductsCount = products.filter((p) => p.stock < 5).length;
+
+    // Top Selling Frames Calculation
+    const productSalesMap: Record<string, ProductSalesItem> = {};
+    orders.forEach((o) => {
+      o.items.forEach((item) => {
+        if (item.product) {
+          const pId = item.product.id;
+          if (!productSalesMap[pId]) {
+            productSalesMap[pId] = { product: item.product, qty: 0, revenue: 0 };
+          }
+          productSalesMap[pId].qty += item.quantity;
+          productSalesMap[pId].revenue += item.price * item.quantity;
+        }
+      });
+    });
+
+    const topSellingFrames = Object.values(productSalesMap)
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    return {
+      products,
+      orders: orders.slice(0, 8), // Recent 8 orders
+      totalRevenue,
+      totalOrdersCount,
+      totalCustomersCount: totalCustomersCount.length,
+      rxRatio,
+      pendingLabCount,
+      totalStockCount,
+      lowStockProductsCount,
+      topSellingFrames,
+    };
+  } catch (error) {
+    console.error("Dashboard query error:", error);
+    return {
+      products: [],
+      orders: [],
+      totalRevenue: 0,
+      totalOrdersCount: 0,
+      totalCustomersCount: 0,
+      rxRatio: 0,
+      pendingLabCount: 0,
+      totalStockCount: 0,
+      lowStockProductsCount: 0,
+      topSellingFrames: [],
+    };
+  }
 }
 
 export default async function AdminDashboardPage() {

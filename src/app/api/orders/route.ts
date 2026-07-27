@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateNextOrderNumber } from "@/lib/order-number";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -98,6 +99,19 @@ export async function POST(request: NextRequest) {
           item.prescription &&
           (item.prescription.odSph !== undefined || item.prescription.lensUsage)
         ) {
+          let rxUrl = item.prescription.rxFileUrl || null;
+          let rxPublicId = null;
+
+          if (rxUrl && rxUrl.startsWith("data:image/")) {
+            try {
+              const uploadRes = await uploadToCloudinary(rxUrl, "myeyes_prescriptions");
+              rxUrl = uploadRes.secure_url;
+              rxPublicId = uploadRes.public_id;
+            } catch (err) {
+              console.error("Prescription upload to Cloudinary failed:", err);
+            }
+          }
+
           const rxRecord = await tx.prescription.create({
             data: {
               lensType:
@@ -121,7 +135,9 @@ export async function POST(request: NextRequest) {
                 ? parseInt(String(item.prescription.osAxis), 10)
                 : null,
               pd: parseFloat(String(item.prescription.pd)) || 63,
-              fileUrl: item.prescription.rxFileUrl || null,
+              fileUrl: rxUrl,
+              prescription_url: rxUrl,
+              prescription_public_id: rxPublicId,
             },
           });
           prescriptionId = rxRecord.id;

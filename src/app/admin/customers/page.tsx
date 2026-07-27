@@ -1,22 +1,39 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import CustomersCRMClient, { CustomerData } from "@/components/admin/CustomersCRMClient";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
 
 export const revalidate = 0; // Fresh data per request
 
+type CustomerOrder = Prisma.OrderGetPayload<{
+  include: {
+    items: {
+      include: {
+        product: true;
+        prescription: true;
+      };
+    };
+  };
+}>;
+
 export default async function AdminCustomersPage() {
-  const orders = await prisma.order.findMany({
-    include: {
-      items: {
-        include: {
-          product: true,
-          prescription: true,
+  let orders: CustomerOrder[] = [];
+  try {
+    orders = await prisma.order.findMany({
+      include: {
+        items: {
+          include: {
+            product: true,
+            prescription: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Admin customers page database error:", error);
+  }
 
   // Group orders by customer email to compile customer CRM profiles
   const customerMap: Record<string, CustomerData> = {};

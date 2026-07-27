@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -40,12 +41,12 @@ export async function POST(request: NextRequest) {
       description,
       price,
       stock,
-      frameShape,
-      material,
-      gender,
       images,
       featured,
       category,
+      frameShape,
+      material,
+      gender,
     } = body;
 
     if (!name || !price || !description) {
@@ -56,20 +57,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle array or comma-separated string for multi-image
-    let formattedImages = "";
-    if (Array.isArray(images)) {
-      formattedImages = JSON.stringify(images.filter((img: string) => img.trim() !== ""));
-    } else if (typeof images === "string") {
-      if (images.startsWith("[")) {
-        formattedImages = images;
+    const imageList: string[] = Array.isArray(images)
+      ? images.filter((img: string) => img.trim() !== "")
+      : typeof images === "string" && images.startsWith("[")
+        ? JSON.parse(images)
+        : typeof images === "string"
+          ? images.split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [];
+
+    const uploadedUrls: string[] = [];
+    let firstPublicId: string | null = null;
+    let firstUrl: string | null = null;
+
+    for (const img of imageList) {
+      if (img.startsWith("data:image/")) {
+        const uploadRes = await uploadToCloudinary(img);
+        uploadedUrls.push(uploadRes.secure_url);
+        if (!firstPublicId) {
+          firstPublicId = uploadRes.public_id;
+          firstUrl = uploadRes.secure_url;
+        }
       } else {
-        const splitUrls = images
-          .split(",")
-          .map((url: string) => url.trim())
-          .filter((url: string) => url.length > 0);
-        formattedImages = JSON.stringify(splitUrls);
+        uploadedUrls.push(img);
+        if (!firstUrl && img.startsWith("http")) {
+          firstUrl = img;
+        }
       }
     }
+
+    const formattedImages = JSON.stringify(uploadedUrls);
 
     const priceNum = parseFloat(price);
     if (isNaN(priceNum)) {
@@ -95,6 +111,8 @@ export async function POST(request: NextRequest) {
         images: formattedImages,
         featured: featured ?? false,
         category: category || "EYEGLASSES",
+        image_url: firstUrl || (uploadedUrls[0] || null),
+        image_public_id: firstPublicId || null,
       },
     });
 
