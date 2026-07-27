@@ -211,14 +211,13 @@ export async function POST(request: NextRequest) {
           .map((l) => l.id);
 
         if (matchingLeadIds.length > 0) {
-          await prisma.lead.updateMany({
+          await prisma.lead.deleteMany({
             where: { id: { in: matchingLeadIds } },
-            data: { status: "CONVERTED" },
           });
-          console.log(`[Lead Deduplication] Converted ${matchingLeadIds.length} matching lead(s) for Order #${order.orderNumber}`);
+          console.log(`[Lead Deduplication] Automatically deleted ${matchingLeadIds.length} matching lead(s) for Order #${order.orderNumber}`);
         }
       } catch (leadErr) {
-        console.error("Lead deduplication failed:", leadErr);
+        console.error("Lead deduplication auto-delete failed:", leadErr);
       }
     }
 

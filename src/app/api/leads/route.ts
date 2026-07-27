@@ -62,3 +62,20 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "ID parameter is required" }, { status: 400 });
+    }
+    await prisma.lead.delete({
+      where: { id },
+    });
+    return NextResponse.json({ success: true, id });
+  } catch (error: unknown) {
+    console.error("Failed to delete lead:", error);
+    return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
+  }
+}

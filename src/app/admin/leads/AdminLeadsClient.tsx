@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ClipboardList, MessageCircle, User, Calendar, Phone, CheckCircle2, AlertCircle } from "lucide-react";
+import { ClipboardList, MessageCircle, User, Calendar, Phone, CheckCircle2, AlertCircle, Trash2, Loader2 } from "lucide-react";
 
 interface LeadItem {
   id: string;
@@ -33,17 +33,36 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadItem[] }) {
+  const [leads, setLeads] = useState<LeadItem[]>(initialLeads);
   const [filter, setFilter] = useState<"ACTIVE" | "CONVERTED" | "ALL">("ACTIVE");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const total = initialLeads.length;
-  const converted = initialLeads.filter(l => l.status.toUpperCase() === "CONVERTED").length;
+  const total = leads.length;
+  const converted = leads.filter(l => l.status.toUpperCase() === "CONVERTED").length;
   const active = total - converted;
 
-  const filteredLeads = initialLeads.filter(l => {
+  const filteredLeads = leads.filter(l => {
     if (filter === "ACTIVE") return l.status.toUpperCase() !== "CONVERTED";
     if (filter === "CONVERTED") return l.status.toUpperCase() === "CONVERTED";
     return true;
   });
+
+  const handleDeleteLead = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this lead from the queue?")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/leads?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setLeads(prev => prev.filter(l => l.id !== id));
+      } else {
+        alert("Failed to delete lead from server.");
+      }
+    } catch {
+      alert("Error deleting lead.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -56,7 +75,7 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
             </div>
             <h1 className="text-xl font-bold text-slate-900">MY EYES Lead Management CRM</h1>
           </div>
-          <p className="text-sm text-slate-500">Automated lead tracking & deduplication engine. Active partial leads auto-convert when orders are completed.</p>
+          <p className="text-sm text-slate-500">Automated lead tracking & deduplication engine. Matching phone numbers are auto-deleted when orders are completed.</p>
         </div>
       </div>
 
@@ -116,7 +135,7 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
               <ClipboardList className="w-6 h-6 text-slate-400" />
             </div>
             <p className="text-sm font-semibold text-slate-700">No leads found in this view</p>
-            <p className="text-xs text-slate-500 mt-1">Leads will automatically auto-convert as customers place orders.</p>
+            <p className="text-xs text-slate-500 mt-1">Leads with matching phone numbers automatically auto-delete when customers place orders.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -128,13 +147,15 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
                   <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">WhatsApp</th>
                   <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">CRM Status</th>
                   <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Captured Date</th>
-                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredLeads.map(lead => {
                   const waNumber = lead.whatsapp.replace(/\D/g, "");
                   const waHref = `https://wa.me/92${waNumber.startsWith("92") ? waNumber.slice(2) : waNumber}`;
+                  const isDeleting = deletingId === lead.id;
+
                   return (
                     <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-3.5">
@@ -162,15 +183,26 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <a
-                          href={waHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/80 transition-colors font-semibold text-[11px]"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          WhatsApp
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/80 transition-colors font-semibold text-[11px]"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            WhatsApp
+                          </a>
+
+                          <button
+                            onClick={() => handleDeleteLead(lead.id)}
+                            disabled={isDeleting}
+                            title="Delete lead from queue"
+                            className="inline-flex items-center gap-1 p-1.5 rounded-lg border border-red-200 text-red-600 bg-red-50/50 hover:bg-red-100 transition-colors font-semibold text-[11px] cursor-pointer"
+                          >
+                            {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
