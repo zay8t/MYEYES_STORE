@@ -15,11 +15,17 @@
     "@react-three/postprocessing": "^3.0.4",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/multer": "^2.2.0",
+    "@types/node": "^20",
     "@types/pdfkit": "^0.17.6",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/three": "^0.185.1",
     "autoprefixer": "^10.4.18",
     "cloudinary": "^1.41.3",
     "clsx": "^2.1.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.11",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.26.0",
     "multer": "^2.2.0",
@@ -29,22 +35,15 @@
     "pdfkit": "^0.19.1",
     "pg": "^8.22.0",
     "postcss": "^8.4.35",
+    "prisma": "^6.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^22.3.2",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.0.0",
     "three": "^0.185.1",
+    "typescript": "^5",
     "zustand": "^5.0.14"
   },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/pg": "^8.20.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.11",
-    "prisma": "^6.4.0",
-    "typescript": "^5"
-  }
+  "devDependencies": {}
 }
