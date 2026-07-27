@@ -42,6 +42,7 @@
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.0.0",
     "three": "^0.185.1",
+    "tesseract.js": "^6.0.0",
     "typescript": "^5",
     "zustand": "^5.0.14"
   },
