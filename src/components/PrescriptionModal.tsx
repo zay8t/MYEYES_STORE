@@ -54,14 +54,14 @@ const PRUNED_LENS_IDS = new Set([
 ]);
 
 // Consumer-friendly display names
-const CONSUMER_NAMES: Record<string, { name: string; badge: string; icon: string }> = {
-  "sv-156-hc":               { name: "MY EYES Single Vision Standard", badge: "Everyday",      icon: "👓" },
-  "sv-156-bluecut":          { name: "MY EYES Anti-Blue Light Shield",  badge: "Digital Guard",  icon: "🛡️" },
-  "sv-156-photogrey":        { name: "MY EYES Sun-Adaptive Photochromic",badge: "Smart Tint",    icon: "☀️" },
-  "sv-156-photogrey-bluecut":{ name: "MY EYES Dual Shield — Blue + Photochromic",badge: "Premium", icon: "✨" },
-  "sv-159-pc-bluecut":       { name: "MY EYES Polycarbonate Blue Cut Shield", badge: "Impact-Safe", icon: "🔒" },
-  "sv-167-shmc":             { name: "MY EYES Ultra-Thin High Index",    badge: "Strong Rx",     icon: "💎" },
-  "progressive-freeform":    { name: "MY EYES Progressive Free Form",    badge: "+40 Premium",   icon: "💎" },
+const CONSUMER_NAMES: Record<string, { name: string; badge: string }> = {
+  "sv-156-hc":               { name: "MY EYES Single Vision Standard", badge: "Everyday" },
+  "sv-156-bluecut":          { name: "MY EYES Anti-Blue Light Shield",  badge: "Digital Guard" },
+  "sv-156-photogrey":        { name: "MY EYES Sun-Adaptive Photochromic",badge: "Smart Tint" },
+  "sv-156-photogrey-bluecut":{ name: "MY EYES Dual Shield — Blue + Photochromic",badge: "Premium" },
+  "sv-159-pc-bluecut":       { name: "MY EYES Polycarbonate Blue Cut Shield", badge: "Impact-Safe" },
+  "sv-167-shmc":             { name: "MY EYES Ultra-Thin High Index",    badge: "Strong Rx" },
+  "progressive-freeform":    { name: "MY EYES Progressive Free Form",    badge: "+40 Premium" },
 };
 
 function StepDot({ n, current, label }: { n: number; current: number; label: string }) {
@@ -87,6 +87,7 @@ export default function PrescriptionModal({
 }: PrescriptionModalProps) {
   // Step: 1=Contact, 2=Presbyopia (+40), 3=Prescription, 4=Lens+Review
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [logoError, setLogoError] = useState(false);
 
   // Step 1: Lead capture
   const [lead, setLead] = useState({ name: "", age: "", whatsapp: "" });
@@ -140,6 +141,7 @@ export default function PrescriptionModal({
       setExtractedValues(null);
       setRx({ odSph: "0.00", odCyl: "0.00", odAxis: "", osSph: "0.00", osCyl: "0.00", osAxis: "", pd: "63", add: "+1.50", rxFileUrl: "", notes: "" });
       setSelectedLensId("sv-156-bluecut");
+      setLogoError(false);
     }
   }, [isOpen]);
 
@@ -338,9 +340,11 @@ export default function PrescriptionModal({
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-7 h-7 relative flex-shrink-0 overflow-hidden">
-                <Image alt="MY EYES" className="object-contain" fill src="/images/logo.png" />
+                {!logoError && (
+                  <Image alt="MY EYES" className="object-contain" fill src="/images/logo.png" onError={() => setLogoError(true)} />
+                )}
               </div>
-              <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full uppercase whitespace-nowrap">
+              <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full uppercase">
                 MY EYES CONFIGURATOR
               </span>
             </div>
@@ -416,7 +420,7 @@ export default function PrescriptionModal({
                   <div className="flex gap-2">
                     <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 flex-shrink-0">
                       <Phone className="w-3.5 h-3.5 text-slate-400" />
-                      🇵🇰 +92
+                      +92
                     </div>
                     <input
                       type="tel"
@@ -497,8 +501,8 @@ export default function PrescriptionModal({
                   <p className="text-xs font-bold text-slate-800">Are your distance and reading powers in separate glasses or one frame?</p>
                   <div className="grid grid-cols-1 gap-2.5">
                     {[
-                      { val: "separate" as const, title: "2 Separate Frames", desc: "One for distance, one for reading. We'll suggest adding 2 items.", icon: "👓👓" },
-                      { val: "combined" as const, title: "1 Combined Frame (Progressive Free Form)", desc: "Distance, mid & reading seamlessly combined with line-free transition.", icon: "🔮" },
+                      { val: "separate" as const, title: "2 Separate Frames", desc: "One for distance, one for reading. We'll suggest adding 2 items." },
+                      { val: "combined" as const, title: "1 Combined Frame (Progressive Free Form)", desc: "Distance, mid & reading seamlessly combined with line-free transition." },
                     ].map(opt => (
                       <button
                         key={opt.val}
@@ -509,7 +513,6 @@ export default function PrescriptionModal({
                         )}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-xl">{opt.icon}</span>
                           <div>
                             <p className="text-xs font-bold text-slate-900">{opt.title}</p>
                             <p className="text-[11px] text-slate-500 mt-0.5">{opt.desc}</p>
@@ -533,7 +536,7 @@ export default function PrescriptionModal({
 
               {frameSetup === "separate" && (
                 <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200/60 text-xs text-blue-800">
-                  <strong>💡 Tip:</strong> Consider adding this frame twice to your bag — once configured for distance lenses, once for reading lenses.
+                  <strong>Tip:</strong> Consider adding this frame twice to your bag — once configured for distance lenses, once for reading lenses.
                 </div>
               )}
 
@@ -640,7 +643,7 @@ export default function PrescriptionModal({
                   onClick={() => setUploadMode(prev => prev === "manual" ? "upload" : "manual")}
                   className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap"
                 >
-                  {uploadMode === "manual" ? "↑ Hide manual entry" : "✏️ Enter manually instead"}
+                  {uploadMode === "manual" ? "Hide manual entry" : "Enter manually instead"}
                 </button>
                 <div className="flex-1 h-px bg-slate-200" />
               </div>
@@ -799,7 +802,6 @@ export default function PrescriptionModal({
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0">
-                          <span className="text-lg flex-shrink-0 mt-0.5">{display?.icon || "👓"}</span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs font-bold text-slate-900">{display?.name || lens.name}</span>
