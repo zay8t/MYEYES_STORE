@@ -6,127 +6,138 @@ export interface SolexLensOption {
   description: string;
   category: "single_vision" | "bifocal" | "progressive";
   basePrice: number;
+  pricePlus40?: number;
 }
 
 export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
   {
     id: "sv-156-hc",
-    name: "S.V 1.56 Diamond Hard Coat",
+    name: "MY EYES 1.56 Diamond Hard Coat",
     coating: "Univex Green / Scratch Resistant",
     index: "1.56",
     description: "Standard scratch-resistant clear lenses for everyday wear",
     category: "single_vision",
     basePrice: 300,
+    pricePlus40: 700,
   },
   {
     id: "sv-156-hmc",
-    name: "S.V 1.56 HMC Anti-Reflective",
+    name: "MY EYES 1.56 HMC Anti-Reflective",
     coating: "Univex Green Anti-Reflective",
     index: "1.56",
     description: "Anti-reflective coating reduces glare & reflections",
     category: "single_vision",
     basePrice: 480,
+    pricePlus40: 880,
   },
   {
     id: "sv-156-bluecut",
-    name: "S.V 1.56 HMC UV420 Blue Cut",
+    name: "MY EYES 1.56 HMC UV420 Blue Cut",
     coating: "Univex Blue Cut UV420",
     index: "1.56",
     description: "Digital protection blocking harmful screen blue light",
     category: "single_vision",
     basePrice: 550,
+    pricePlus40: 950,
   },
   {
     id: "sv-156-photogrey",
-    name: "S.V 1.56 Photo Grey SHMC",
+    name: "MY EYES 1.56 Photo Grey SHMC",
     coating: "Univex Light Intelligent Photochromic",
     index: "1.56",
     description: "Darkens outdoors in sunlight and clears indoors",
     category: "single_vision",
     basePrice: 800,
+    pricePlus40: 1200,
   },
   {
     id: "sv-156-photogrey-bluecut",
-    name: "S.V 1.56 Photo Grey SHMC + Blue Cut (Ice Vision)",
+    name: "MY EYES 1.56 Photo Grey SHMC + Blue Cut (Ice Vision)",
     coating: "Super Flat Blue Coating + Photochromic",
     index: "1.56",
     description: "Ultimate dual protection: Photochromic + Screen Blue Light filter",
     category: "single_vision",
     basePrice: 1600,
+    pricePlus40: 2000,
   },
   {
     id: "sv-159-pc",
-    name: "S.V 1.59 Polycarbonate SHMC",
+    name: "MY EYES 1.59 Polycarbonate SHMC",
     coating: "Graphene Material Impact Resistant",
     index: "1.59",
     description: "Impact-resistant shatterproof lenses for rimless & sports frames",
     category: "single_vision",
     basePrice: 700,
+    pricePlus40: 1100,
   },
   {
     id: "sv-159-pc-bluecut",
-    name: "S.V 1.59 Polycarbonate SHMC + Blue Cut",
+    name: "MY EYES 1.59 Polycarbonate SHMC + Blue Cut",
     coating: "Univex Blue Coating + Polycarbonate",
     index: "1.59",
     description: "Shatterproof polycarbonate with digital blue cut protection",
     category: "single_vision",
     basePrice: 1200,
+    pricePlus40: 1600,
   },
   {
     id: "sv-167-shmc",
-    name: "S.V 1.67 Ultra Thin High Index SHMC",
+    name: "MY EYES 1.67 Ultra Thin High Index SHMC",
     coating: "Super Hydrophobic HMC",
     index: "1.67",
     description: "Ultra thin & lightweight design for strong prescriptions",
     category: "single_vision",
     basePrice: 1200,
-  },
-  {
-    id: "bifocal-round-top",
-    name: "Round Top Bifocal 1.56 HMC",
-    coating: "Univex Ready Stock HMC",
-    index: "1.56",
-    description: "Round segment dual-focus lenses for distance & reading",
-    category: "bifocal",
-    basePrice: 450,
-  },
-  {
-    id: "bifocal-flat-top",
-    name: "Flat Top Bifocal 1.56 HMC",
-    coating: "Univex Ready Stock HMC",
-    index: "1.56",
-    description: "Flat-top segment dual-focus lenses for wide reading area",
-    category: "bifocal",
-    basePrice: 600,
+    pricePlus40: 1600,
   },
   {
     id: "progressive-freeform",
-    name: "Progressive Free Form 1.56 HMC",
+    name: "MY EYES Progressive Free Form 1.56 HMC",
     coating: "Univex Free Form HMC",
     index: "1.56",
     description: "No-line seamless transition between distance, mid & reading",
     category: "progressive",
     basePrice: 650,
+    pricePlus40: 1050,
   },
 ];
 
 /**
- * Calculates the exact SOLEX HD prescription lens price based on:
+ * Calculates the exact MY EYES Precision prescription lens price based on:
  * - Lens Type ID
  * - OD/OS Sphere (SPH)
  * - OD/OS Cylinder (CYL)
- * - Near Addition (ADD for bifocals/progressives)
+ * - Near Addition (ADD for progressives) or +40 Presbyopia Tier
+ * - Custom Base Price (Standard vs +40)
  */
 export function calculateSolexLensPrice(
   lensTypeId: string,
   sph: number = 0,
   cyl: number = 0,
   add: number = 0,
-  customBasePrice?: number
+  customBasePrice?: number,
+  isPresbyopiaTier: boolean = false,
+  customPricePlus40?: number
 ): number {
-  const originalBase = SOLEX_LENS_OPTIONS.find((l) => l.id === lensTypeId)?.basePrice || 0;
-  const priceDiff = customBasePrice !== undefined ? (customBasePrice - originalBase) : 0;
-  return getRawSolexLensPrice(lensTypeId, sph, cyl, add) + priceDiff;
+  const match = SOLEX_LENS_OPTIONS.find((l) => l.id === lensTypeId);
+  const isPresbyopia = isPresbyopiaTier || add > 0;
+
+  const targetBase = isPresbyopia
+    ? (customPricePlus40 && customPricePlus40 > 0 ? customPricePlus40 : (customBasePrice !== undefined ? customBasePrice + 400 : (match?.pricePlus40 || (match?.basePrice ? match.basePrice + 400 : 0))))
+    : (customBasePrice !== undefined ? customBasePrice : (match?.basePrice || 0));
+
+  const originalBase = isPresbyopia
+    ? (match?.pricePlus40 || (match?.basePrice ? match.basePrice + 400 : 0))
+    : (match?.basePrice || 0);
+
+  const priceDiff = targetBase - originalBase;
+  let rawPrice = getRawSolexLensPrice(lensTypeId, sph, cyl, add);
+
+  if (isPresbyopia && !lensTypeId.includes("progressive")) {
+    rawPrice += 400; // Presbyopia +40 addition standard step
+  }
+
+  return Math.max(0, rawPrice + priceDiff);
 }
 
 function getRawSolexLensPrice(

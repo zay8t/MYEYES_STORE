@@ -26,6 +26,17 @@ interface OrderItemInput {
   prescription?: PrescriptionInput;
 }
 
+function normalizePhoneNumber(phone: string): string {
+  if (!phone) return "";
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("03")) {
+    digits = "923" + digits.slice(2);
+  } else if (digits.length === 10 && digits.startsWith("3")) {
+    digits = "92" + digits;
+  }
+  return digits;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -40,7 +51,6 @@ export async function POST(request: NextRequest) {
       items,
     } = body;
 
-    // Validate customer details
     if (
       !customerName ||
       !customerEmail ||
@@ -55,7 +65,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate payment proof if local manual payment is chosen
     if (
       (paymentMethod === "EASYPAISA" || paymentMethod === "ALFALAH") &&
       !transactionProofUrl
@@ -81,13 +90,10 @@ export async function POST(request: NextRequest) {
       itemsWithPrescription.push({ item });
     }
 
-    const shippingFee = 250; // Fixed 250 PKR
+    const shippingFee = 250;
     const totalAmount = subtotal + shippingFee;
-
-    // Create unique random placeholder for stripeSessionId to satisfy unique db constraint if set
     const mockSessionId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // Create Order and assign permanent sequential 8-digit orderNumber inside a Prisma transaction
     const order = await prisma.$transaction(async (tx) => {
       const orderItemsData = [];
 
@@ -181,6 +187,40 @@ export async function POST(request: NextRequest) {
         },
       });
     });
+
+    // CRM Lead Deduplication Algorithm
+    const normalizedPhone = normalizePhoneNumber(customerPhone);
+    if (normalizedPhone || customerName) {
+      try {
+        const allUnconvertedLeads = await prisma.lead.findMany({
+          where: { status: { notIn: ["CONVERTED", "converted"] } },
+        });
+
+        const matchingLeadIds = allUnconvertedLeads
+          .filter((l) => {
+            const leadPhoneNorm = normalizePhoneNumber(l.whatsapp);
+            const isPhoneMatch = normalizedPhone && leadPhoneNorm && (
+              normalizedPhone === leadPhoneNorm ||
+              normalizedPhone.endsWith(leadPhoneNorm.slice(-10)) ||
+              leadPhoneNorm.endsWith(normalizedPhone.slice(-10))
+            );
+            const isNameMatch = customerName && l.name &&
+              l.name.trim().toLowerCase() === customerName.trim().toLowerCase();
+            return isPhoneMatch || isNameMatch;
+          })
+          .map((l) => l.id);
+
+        if (matchingLeadIds.length > 0) {
+          await prisma.lead.updateMany({
+            where: { id: { in: matchingLeadIds } },
+            data: { status: "CONVERTED" },
+          });
+          console.log(`[Lead Deduplication] Converted ${matchingLeadIds.length} matching lead(s) for Order #${order.orderNumber}`);
+        }
+      } catch (leadErr) {
+        console.error("Lead deduplication failed:", leadErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

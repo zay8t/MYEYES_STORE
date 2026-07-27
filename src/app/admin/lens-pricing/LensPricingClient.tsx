@@ -8,6 +8,7 @@ interface LensOption {
   id: string;
   name: string;
   price: number;
+  pricePlus40: number;
   type: string;
   index: string | null;
   description: string;
@@ -15,17 +16,18 @@ interface LensOption {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  single_vision: "Single Vision",
-  bifocal: "Bifocal",
-  progressive: "Progressive",
+  single_vision: "Single Vision Lenses",
+  bifocal: "Bifocal Lenses",
+  progressive: "Progressive Free Form Lenses",
 };
 
-const PRUNED_IDS = new Set(["bifocal-round-top", "bifocal-flat-top", "progressive-freeform", "sv-159-pc", "sv-156-hmc"]);
+const PRUNED_IDS = new Set(["bifocal-round-top", "bifocal-flat-top", "sv-159-pc", "sv-156-hmc"]);
 
 export default function LensPricingClient({ initialOptions }: { initialOptions: LensOption[] }) {
   const [options, setOptions] = useState<LensOption[]>(initialOptions);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
+  const [editPricePlus40, setEditPricePlus40] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -33,22 +35,27 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
   const handleEdit = (lens: LensOption) => {
     setEditingId(lens.id);
     setEditPrice(String(lens.price));
+    setEditPricePlus40(String(lens.pricePlus40 || (lens.price + 400)));
     setError("");
   };
 
   const handleSave = async (id: string) => {
     const price = parseFloat(editPrice);
-    if (isNaN(price) || price < 0) { setError("Enter a valid price"); return; }
+    const pricePlus40 = parseFloat(editPricePlus40);
+    if (isNaN(price) || price < 0 || isNaN(pricePlus40) || pricePlus40 < 0) {
+      setError("Enter valid standard and +40 prices");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       const res = await fetch("/api/admin/lens-prices", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, basePrice: price }),
+        body: JSON.stringify({ id, basePrice: price, pricePlus40 }),
       });
       if (!res.ok) throw new Error("Save failed");
-      setOptions(prev => prev.map(l => l.id === id ? { ...l, price } : l));
+      setOptions(prev => prev.map(l => l.id === id ? { ...l, price, pricePlus40 } : l));
       setEditingId(null);
       setSavedId(id);
       setTimeout(() => setSavedId(null), 2000);
@@ -70,9 +77,9 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
             <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center">
               <Tag className="w-4 h-4 text-amber-600" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900">MY EYES Lens Pricing Master</h1>
+            <h1 className="text-xl font-bold text-slate-900">MY EYES Precision Lenses — Pricing Master</h1>
           </div>
-          <p className="text-sm text-slate-500">Update base prices here — changes reflect immediately in the customer configurator.</p>
+          <p className="text-sm text-slate-500">Update Standard and +40 Presbyopia prices here — changes reflect immediately in the customer configurator & catalog.</p>
         </div>
       </div>
 
@@ -95,11 +102,12 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-slate-100">
+                  <tr className="border-b border-slate-100 bg-slate-50/30">
                     <th className="px-5 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Lens Name</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Index</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Visibility</th>
-                    <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Base Price (Rs.)</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider">Standard Price (No ADD)</th>
+                    <th className="px-4 py-3 text-left font-bold text-amber-700 uppercase tracking-wider">+40 / Presbyopia Price (With ADD)</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
@@ -126,31 +134,53 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                             </span>
                           )}
                         </td>
+
+                        {/* Standard Price Column */}
                         <td className="px-4 py-3.5">
                           {isEditing ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-500 font-semibold">Rs.</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-500 font-semibold text-[11px]">Rs.</span>
                               <input
                                 type="number"
                                 min="0"
                                 step="50"
                                 value={editPrice}
                                 onChange={e => setEditPrice(e.target.value)}
-                                className="w-24 px-2.5 py-1.5 rounded-lg border border-amber-400 text-slate-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs"
+                                className="w-20 px-2 py-1 rounded-lg border border-amber-400 text-slate-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs"
                                 autoFocus
-                                onKeyDown={e => { if (e.key === "Enter") handleSave(lens.id); if (e.key === "Escape") setEditingId(null); }}
                               />
                             </div>
                           ) : (
-                            <span className={cn("font-bold", isSaved ? "text-emerald-700" : "text-slate-900")}>
-                              {isSaved && <Check className="w-3 h-3 inline mr-1 text-emerald-600" />}
-                              Rs. {lens.price.toLocaleString()}/-
+                            <span className={cn("font-bold text-slate-900", isSaved && "text-emerald-700")}>
+                              Rs. {(lens.price || 0).toLocaleString()}/-
+                            </span>
+                          )}
+                        </td>
+
+                        {/* +40 Presbyopia Price Column */}
+                        <td className="px-4 py-3.5">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-amber-700 font-semibold text-[11px]">Rs.</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="50"
+                                value={editPricePlus40}
+                                onChange={e => setEditPricePlus40(e.target.value)}
+                                className="w-20 px-2 py-1 rounded-lg border border-amber-500 text-amber-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs bg-amber-50/50"
+                              />
+                            </div>
+                          ) : (
+                            <span className="font-extrabold text-amber-800 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200/60">
+                              Rs. {(lens.pricePlus40 || (lens.price + 400)).toLocaleString()}/-
                             </span>
                           )}
                           {isEditing && error && (
                             <p className="text-[10px] text-red-600 mt-1">{error}</p>
                           )}
                         </td>
+
                         <td className="px-4 py-3.5">
                           {isEditing ? (
                             <div className="flex items-center gap-1.5">
@@ -164,7 +194,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-100 transition-colors cursor-pointer"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -174,7 +204,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                               onClick={() => handleEdit(lens)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer"
                             >
-                              <Pencil className="w-3 h-3" /> Edit Price
+                              <Pencil className="w-3 h-3" /> Edit Prices
                             </button>
                           )}
                         </td>
@@ -188,9 +218,8 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
         );
       })}
 
-      {/* Note */}
       <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60 text-xs text-amber-800">
-        <strong>💡 Note:</strong> Prices marked <strong>Lab only</strong> are hidden from the customer configurator but remain editable here for internal lab costing purposes. Changes to visible lens prices reflect immediately in real-time for customers.
+        <strong>💡 Note:</strong> Updates to <strong>Standard Price</strong> or <strong>+40 / Presbyopia Price</strong> update the database in real-time and reflect instantly on storefront pricing tables and the customer configurator.
       </div>
     </div>
   );

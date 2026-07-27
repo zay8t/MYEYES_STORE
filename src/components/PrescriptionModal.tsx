@@ -13,6 +13,11 @@ import {
   calculateSolexLensPrice,
   SolexLensOption,
 } from "@/lib/solex-lens-pricing";
+import {
+  preprocessPrescriptionImage,
+  parseOpticalPrescription,
+  ExtractedPrescription,
+} from "@/lib/ocrScanner";
 
 export interface PrescriptionDetails {
   lensUsage: string;
@@ -44,19 +49,19 @@ interface PrescriptionModalProps {
 const PRUNED_LENS_IDS = new Set([
   "bifocal-round-top",
   "bifocal-flat-top",
-  "progressive-freeform",
   "sv-159-pc",
   "sv-156-hmc",
 ]);
 
 // Consumer-friendly display names
 const CONSUMER_NAMES: Record<string, { name: string; badge: string; icon: string }> = {
-  "sv-156-hc":               { name: "Single Vision Standard",         badge: "Everyday",      icon: "👓" },
-  "sv-156-bluecut":          { name: "Anti-Blue Light Shield",          badge: "Digital Guard",  icon: "🛡️" },
-  "sv-156-photogrey":        { name: "Sun-Adaptive Photochromic",       badge: "Smart Tint",    icon: "☀️" },
-  "sv-156-photogrey-bluecut":{ name: "Dual Shield — Blue + Photochromic",badge: "Premium",      icon: "✨" },
-  "sv-159-pc-bluecut":       { name: "Polycarbonate Blue Cut Shield",   badge: "Impact-Safe",   icon: "🔒" },
-  "sv-167-shmc":             { name: "Ultra-Thin High Index",           badge: "Strong Rx",     icon: "💎" },
+  "sv-156-hc":               { name: "MY EYES Single Vision Standard", badge: "Everyday",      icon: "👓" },
+  "sv-156-bluecut":          { name: "MY EYES Anti-Blue Light Shield",  badge: "Digital Guard",  icon: "🛡️" },
+  "sv-156-photogrey":        { name: "MY EYES Sun-Adaptive Photochromic",badge: "Smart Tint",    icon: "☀️" },
+  "sv-156-photogrey-bluecut":{ name: "MY EYES Dual Shield — Blue + Photochromic",badge: "Premium", icon: "✨" },
+  "sv-159-pc-bluecut":       { name: "MY EYES Polycarbonate Blue Cut Shield", badge: "Impact-Safe", icon: "🔒" },
+  "sv-167-shmc":             { name: "MY EYES Ultra-Thin High Index",    badge: "Strong Rx",     icon: "💎" },
+  "progressive-freeform":    { name: "MY EYES Progressive Free Form",    badge: "+40 Premium",   icon: "💎" },
 };
 
 function StepDot({ n, current, label }: { n: number; current: number; label: string }) {
@@ -92,17 +97,21 @@ export default function PrescriptionModal({
   const [hasAdd, setHasAdd] = useState<boolean | null>(null);
   const [addPower, setAddPower] = useState("+1.50");
   const [frameSetup, setFrameSetup] = useState<"separate" | "combined" | null>(null);
-  const [combinedType, setCombinedType] = useState<"progressive" | "kryptok" | null>(null);
+  const [combinedType, setCombinedType] = useState<"progressive" | null>("progressive");
 
-  // Step 3: Prescription
+  // Step 3: Prescription & OCR
   const [uploadMode, setUploadMode] = useState<"manual" | "upload">("upload");
   const [, setRxFile] = useState<File | null>(null);
   const [rxPreview, setRxPreview] = useState("");
   const [ocrScanning, setOcrScanning] = useState(false);
   const [ocrExtracted, setOcrExtracted] = useState(false);
   const [ocrError, setOcrError] = useState("");
+  const [ocrSanityOpen, setOcrSanityOpen] = useState(false);
+  const [extractedValues, setExtractedValues] = useState<ExtractedPrescription | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
   const [rx, setRx] = useState({
     odSph: "0.00", odCyl: "0.00", odAxis: "",
     osSph: "0.00", osCyl: "0.00", osAxis: "",
@@ -123,12 +132,14 @@ export default function PrescriptionModal({
       setHasAdd(null);
       setAddPower("+1.50");
       setFrameSetup(null);
-      setCombinedType(null);
+      setCombinedType("progressive");
       setUploadMode("upload");
       setRxFile(null);
       setRxPreview("");
       setOcrExtracted(false);
       setOcrError("");
+      setOcrSanityOpen(false);
+      setExtractedValues(null);
       setRx({ odSph: "0.00", odCyl: "0.00", odAxis: "", osSph: "0.00", osCyl: "0.00", osAxis: "", pd: "63", add: "+1.50", rxFileUrl: "", notes: "" });
       setSelectedLensId("sv-156-bluecut");
     }
@@ -158,14 +169,26 @@ export default function PrescriptionModal({
   const maxSph = Math.abs(parsedOdSph) > Math.abs(parsedOsSph) ? parsedOdSph : parsedOsSph;
   const maxCyl = Math.abs(parsedOdCyl) > Math.abs(parsedOsCyl) ? parsedOdCyl : parsedOsCyl;
 
+  const isPresbyopiaActive = useMemo(() => {
+    return parsedAdd > 0 || hasAdd === true || (parseInt(lead.age) >= 40 && hasAdd !== false);
+  }, [parsedAdd, hasAdd, lead.age]);
+
   const currentLensObj = useMemo(() =>
     lensOptions.find(l => l.id === selectedLensId) || lensOptions[0] || SOLEX_LENS_OPTIONS[0],
     [lensOptions, selectedLensId]
   );
 
   const exactCalculatedLensPrice = useMemo(() =>
-    calculateSolexLensPrice(selectedLensId, maxSph, maxCyl, parsedAdd, currentLensObj?.basePrice),
-    [selectedLensId, maxSph, maxCyl, parsedAdd, currentLensObj]
+    calculateSolexLensPrice(
+      selectedLensId,
+      maxSph,
+      maxCyl,
+      parsedAdd,
+      currentLensObj?.basePrice,
+      isPresbyopiaActive,
+      currentLensObj?.pricePlus40
+    ),
+    [selectedLensId, maxSph, maxCyl, parsedAdd, currentLensObj, isPresbyopiaActive]
   );
 
   const totalPrice = productPrice + exactCalculatedLensPrice;
@@ -197,57 +220,70 @@ export default function PrescriptionModal({
     setRxPreview("");
     setOcrExtracted(false);
     setOcrError("");
+    setOcrSanityOpen(false);
+    setExtractedValues(null);
     setRx(prev => ({ ...prev, rxFileUrl: "" }));
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
-  // OCR scanning using Tesseract.js
+  // High-Precision Preprocessed OCR scan using Tesseract.js & Domain Parser
   const handleOcrScan = useCallback(async () => {
     if (!rxPreview) return;
     setOcrScanning(true);
     setOcrError("");
     try {
+      // 1. Contrast enhancement & adaptive binarization thresholding
+      const sharpenedImage = await preprocessPrescriptionImage(rxPreview);
+
+      // 2. Execute Tesseract OCR
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker("eng");
-      const { data: { text } } = await worker.recognize(rxPreview);
+      const { data: { text } } = await worker.recognize(sharpenedImage);
       await worker.terminate();
 
-      // Parse prescription values from OCR text
-      const extractValue = (patterns: RegExp[]): string => {
-        for (const pat of patterns) {
-          const m = text.match(pat);
-          if (m?.[1]) return m[1].trim();
-        }
-        return "";
-      };
+      // 3. Domain Optical Regex Extraction
+      const parsed = parseOpticalPrescription(text);
 
-      const sphVal = extractValue([/SPH[:\s]+([+-]?\d+\.?\d*)/i, /sphere[:\s]+([+-]?\d+\.?\d*)/i]);
-      const cylVal = extractValue([/CYL[:\s]+([+-]?\d+\.?\d*)/i, /cylinder[:\s]+([+-]?\d+\.?\d*)/i]);
-      const axisVal = extractValue([/AXIS[:\s]+(\d+)/i, /AX[:\s]+(\d+)/i]);
-      const pdVal = extractValue([/PD[:\s]+(\d+\.?\d*)/i, /pupillary[:\s]+(\d+\.?\d*)/i]);
-
-      const updates: Partial<typeof rx> = {};
-      if (sphVal) { updates.odSph = sphVal; updates.osSph = sphVal; }
-      if (cylVal) { updates.odCyl = cylVal; updates.osCyl = cylVal; }
-      if (axisVal) { updates.odAxis = axisVal; updates.osAxis = axisVal; }
-      if (pdVal) updates.pd = pdVal;
-
-      if (Object.keys(updates).length > 0) {
-        setRx(prev => ({ ...prev, ...updates }));
-        setOcrExtracted(true);
-        setUploadMode("manual"); // show the populated fields
+      if (parsed.odSph || parsed.osSph || parsed.odCyl || parsed.osCyl || parsed.pd || parsed.add) {
+        setExtractedValues(parsed);
+        setOcrSanityOpen(true);
       } else {
-        setOcrError("Could not extract values. Please fill manually below.");
+        setOcrError("Could not extract values cleanly. Please review or fill manually below.");
         setUploadMode("manual");
       }
-    } catch {
+    } catch (err) {
+      console.error("OCR scan error:", err);
       setOcrError("OCR scan failed. Please enter values manually.");
       setUploadMode("manual");
     } finally {
       setOcrScanning(false);
     }
   }, [rxPreview]);
+
+  // Apply OCR values from Sanity Check Modal
+  const handleApplyExtractedValues = () => {
+    if (extractedValues) {
+      const updates: Partial<typeof rx> = {};
+      if (extractedValues.odSph) updates.odSph = extractedValues.odSph;
+      if (extractedValues.osSph) updates.osSph = extractedValues.osSph;
+      if (extractedValues.odCyl) updates.odCyl = extractedValues.odCyl;
+      if (extractedValues.osCyl) updates.osCyl = extractedValues.osCyl;
+      if (extractedValues.odAxis) updates.odAxis = extractedValues.odAxis;
+      if (extractedValues.osAxis) updates.osAxis = extractedValues.osAxis;
+      if (extractedValues.pd) updates.pd = extractedValues.pd;
+      if (extractedValues.add) {
+        updates.add = extractedValues.add;
+        setAddPower(extractedValues.add);
+        setHasAdd(true);
+      }
+
+      setRx(prev => ({ ...prev, ...updates }));
+      setOcrExtracted(true);
+      setUploadMode("manual");
+    }
+    setOcrSanityOpen(false);
+  };
 
   // Step 1 → submit lead, advance
   const handleProceedFromStep1 = async () => {
@@ -303,7 +339,7 @@ export default function PrescriptionModal({
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white sticky top-0 z-10">
           <div>
             <div className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="My Eyes" width={14} height={14} className="object-contain" onError={() => {}} />
+              <Image src="/logo.png" alt="MY EYES" width={14} height={14} className="object-contain" onError={() => {}} />
               <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-md">
                 MY EYES CONFIGURATOR
               </span>
@@ -333,9 +369,7 @@ export default function PrescriptionModal({
         {/* Body */}
         <div className="p-5 overflow-y-auto flex-1 space-y-5">
 
-          {/* ═══════════════════════════════════════════ */}
-          {/* STEP 1: CUSTOMER INFO (LEAD CAPTURE)        */}
-          {/* ═══════════════════════════════════════════ */}
+          {/* STEP 1: CUSTOMER INFO (LEAD CAPTURE) */}
           {step === 1 && (
             <div className="space-y-5">
               <div>
@@ -344,7 +378,6 @@ export default function PrescriptionModal({
               </div>
 
               <div className="space-y-3.5">
-                {/* Full Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name</label>
                   <div className="relative">
@@ -359,7 +392,6 @@ export default function PrescriptionModal({
                   </div>
                 </div>
 
-                {/* Age */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">Age <span className="text-slate-400 font-normal">(Helps us recommend the right lenses)</span></label>
                   <input
@@ -368,7 +400,7 @@ export default function PrescriptionModal({
                     max="120"
                     value={lead.age}
                     onChange={e => setLead({ ...lead, age: e.target.value })}
-                    placeholder="e.g. 35"
+                    placeholder="e.g. 42"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
                   />
                   {parseInt(lead.age) >= 40 && (
@@ -379,7 +411,6 @@ export default function PrescriptionModal({
                   )}
                 </div>
 
-                {/* WhatsApp */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number</label>
                   <div className="flex gap-2">
@@ -415,9 +446,7 @@ export default function PrescriptionModal({
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════ */}
-          {/* STEP 2: +40 PRESBYOPIA ASSISTANT           */}
-          {/* ═══════════════════════════════════════════ */}
+          {/* STEP 2: +40 PRESBYOPIA ASSISTANT */}
           {step === 2 && (
             <div className="space-y-5">
               <button onClick={() => setStep(1)} className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-900 cursor-pointer transition-colors">
@@ -429,10 +458,9 @@ export default function PrescriptionModal({
                   <Sparkles className="w-4 h-4 text-amber-600" />
                   <h4 className="text-sm font-bold text-slate-900">+40 Presbyopia Assistant</h4>
                 </div>
-                <p className="text-xs text-slate-600">Since you&apos;re {lead.age} years old, you may need bifocal or progressive lenses. Let us guide you.</p>
+                <p className="text-xs text-slate-600">Since you&apos;re {lead.age} years old, you may need progressive reading lenses. Let us guide you.</p>
               </div>
 
-              {/* Q1: Has ADD? */}
               <div className="space-y-2.5">
                 <p className="text-xs font-bold text-slate-800">Do you have an Addition (ADD) value on your prescription?</p>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -451,7 +479,6 @@ export default function PrescriptionModal({
                 </div>
               </div>
 
-              {/* ADD Power input */}
               {hasAdd === true && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">ADD Power <span className="text-slate-400 font-normal">(e.g. +1.00 to +3.50)</span></label>
@@ -465,18 +492,20 @@ export default function PrescriptionModal({
                 </div>
               )}
 
-              {/* Q2: Frame setup */}
               {hasAdd !== null && (
                 <div className="space-y-2.5">
                   <p className="text-xs font-bold text-slate-800">Are your distance and reading powers in separate glasses or one frame?</p>
                   <div className="grid grid-cols-1 gap-2.5">
                     {[
                       { val: "separate" as const, title: "2 Separate Frames", desc: "One for distance, one for reading. We'll suggest adding 2 items.", icon: "👓👓" },
-                      { val: "combined" as const, title: "1 Combined Frame (Bifocal / Progressive)", desc: "Both powers in a single pair of glasses.", icon: "🔮" },
+                      { val: "combined" as const, title: "1 Combined Frame (Progressive Free Form)", desc: "Distance, mid & reading seamlessly combined with line-free transition.", icon: "🔮" },
                     ].map(opt => (
                       <button
                         key={opt.val}
-                        onClick={() => setFrameSetup(opt.val)}
+                        onClick={() => {
+                          setFrameSetup(opt.val);
+                          if (opt.val === "combined") setCombinedType("progressive");
+                        }}
                         className={cn(
                           "p-4 rounded-xl border-2 text-left transition-all cursor-pointer",
                           frameSetup === opt.val ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white hover:border-slate-300"
@@ -496,36 +525,12 @@ export default function PrescriptionModal({
                 </div>
               )}
 
-              {/* Q3: Combined lens type */}
               {frameSetup === "combined" && (
-                <div className="space-y-2.5">
-                  <p className="text-xs font-bold text-slate-800">Which dual-power lens type do you prefer?</p>
-                  <div className="grid grid-cols-1 gap-2.5">
-                    {[
-                      { val: "progressive" as const, title: "Progressive (Free Form)", desc: "No visible line — seamless transition from distance to reading. Modern & cosmetically superior.", badge: "Most Popular" },
-                      { val: "kryptok" as const, title: "Kryptok / KT Segment", desc: "Classic bifocal with a visible reading segment at the bottom.", badge: "Traditional" },
-                    ].map(opt => (
-                      <button
-                        key={opt.val}
-                        onClick={() => setCombinedType(opt.val)}
-                        className={cn(
-                          "p-4 rounded-xl border-2 text-left transition-all cursor-pointer",
-                          combinedType === opt.val ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white hover:border-slate-300"
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <p className="text-xs font-bold text-slate-900">{opt.title}</p>
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wider">{opt.badge}</span>
-                            </div>
-                            <p className="text-[11px] text-slate-500">{opt.desc}</p>
-                          </div>
-                          {combinedType === opt.val && <Check className="w-4 h-4 text-amber-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    ))}
+                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                    <Sparkles className="w-4 h-4 text-amber-600" /> Defaulted to MY EYES Progressive Free Form
                   </div>
+                  <p className="text-[11px] text-amber-700">Line-free seamless transition between distance and reading vision for superior aesthetic comfort.</p>
                 </div>
               )}
 
@@ -537,7 +542,7 @@ export default function PrescriptionModal({
 
               <button
                 onClick={() => setStep(3)}
-                disabled={hasAdd === null || (frameSetup === null && hasAdd !== false) || (frameSetup === "combined" && combinedType === null)}
+                disabled={hasAdd === null || (frameSetup === null && hasAdd !== false)}
                 className={cn(
                   "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer",
                   hasAdd !== null
@@ -550,9 +555,7 @@ export default function PrescriptionModal({
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════ */}
           {/* STEP 3: PRESCRIPTION ENTRY (OCR or MANUAL) */}
-          {/* ═══════════════════════════════════════════ */}
           {step === 3 && (
             <div className="space-y-5">
               <button
@@ -564,16 +567,14 @@ export default function PrescriptionModal({
 
               <div>
                 <h4 className="text-sm font-bold text-slate-900">Enter Your Prescription</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Scan your prescription card or enter values manually.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Scan your prescription card with high precision or enter values manually.</p>
               </div>
 
-              {/* Hidden file inputs */}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
               <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
 
-              {/* OCR Banner / Upload Zone */}
               {!rxPreview ? (
                 <div
                   className="border-2 border-dashed border-slate-300 bg-slate-50/50 hover:bg-slate-100/50 rounded-2xl p-7 text-center transition-all cursor-pointer"
@@ -585,7 +586,7 @@ export default function PrescriptionModal({
                     <Scan className="w-6 h-6" />
                   </div>
                   <p className="text-sm font-bold text-slate-900 mb-1">Scan Prescription Card</p>
-                  <p className="text-[11px] text-slate-500 mb-4">Drag & drop or tap to upload — our AI scanner auto-extracts your values</p>
+                  <p className="text-[11px] text-slate-500 mb-4">Drag & drop or tap to upload — AI canvas contrast sharpening auto-extracts your values</p>
                   <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
                     <button type="button" onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
                       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition-colors cursor-pointer shadow-sm">
@@ -612,18 +613,18 @@ export default function PrescriptionModal({
 
                   {!ocrExtracted && !ocrScanning && (
                     <button onClick={handleOcrScan}
-                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer">
-                      <Scan className="w-4 h-4" /> Auto-Extract Values with AI Scanner
+                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm">
+                      <Scan className="w-4 h-4" /> High-Precision AI Prescription Scanner
                     </button>
                   )}
                   {ocrScanning && (
                     <div className="flex items-center justify-center gap-2 py-2.5 text-xs text-amber-700 font-semibold">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Scanning prescription...
+                      <Loader2 className="w-4 h-4 animate-spin" /> Sharpening image & extracting optical parameters...
                     </div>
                   )}
                   {ocrExtracted && (
                     <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 rounded-xl px-3 py-2">
-                      <Sparkles className="w-3.5 h-3.5" /> Values auto-extracted! Review and adjust below if needed.
+                      <Sparkles className="w-3.5 h-3.5" /> Prescription parameters verified! Review and adjust below if needed.
                     </div>
                   )}
                   {ocrError && (
@@ -647,7 +648,6 @@ export default function PrescriptionModal({
                 <div className="flex-1 h-px bg-slate-200" />
               </div>
 
-              {/* Manual Entry Form */}
               {uploadMode === "manual" && (
                 <div className="space-y-3">
                   {/* OD */}
@@ -708,7 +708,6 @@ export default function PrescriptionModal({
                     </div>
                   </div>
 
-                  {/* PD & ADD */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">PD (mm)</label>
@@ -728,11 +727,10 @@ export default function PrescriptionModal({
                     )}
                   </div>
 
-                  {/* Notes */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">Special Instructions <span className="text-slate-400 font-normal">(optional)</span></label>
                     <textarea rows={2} value={rx.notes} onChange={e => setRx({ ...rx, notes: e.target.value })}
-                      placeholder="e.g. Prism, bifocal, reading only..."
+                      placeholder="e.g. Reading distance focus, progressive customization..."
                       className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none resize-none" />
                   </div>
                 </div>
@@ -754,9 +752,7 @@ export default function PrescriptionModal({
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════ */}
-          {/* STEP 4: LENS SELECTION + REVIEW            */}
-          {/* ═══════════════════════════════════════════ */}
+          {/* STEP 4: LENS SELECTION + REVIEW */}
           {step === 4 && (
             <div className="space-y-5">
               <button
@@ -768,13 +764,31 @@ export default function PrescriptionModal({
 
               <div>
                 <h4 className="text-sm font-bold text-slate-900">Choose Your Lens</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Pricing calculated from your prescription values.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isPresbyopiaActive
+                    ? "Pricing calculated from +40 Presbyopia Precision Lens Matrix."
+                    : "Pricing calculated from Standard Precision Lens Matrix."}
+                </p>
               </div>
 
-              {/* Lens cards */}
+              {isPresbyopiaActive && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center gap-2 text-xs font-bold text-amber-800">
+                  <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  +40 Presbyopia Pricing Tier Applied
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {lensOptions.map(lens => {
-                  const calcPrice = calculateSolexLensPrice(lens.id, maxSph, maxCyl, parsedAdd, lens.basePrice);
+                  const calcPrice = calculateSolexLensPrice(
+                    lens.id,
+                    maxSph,
+                    maxCyl,
+                    parsedAdd,
+                    lens.basePrice,
+                    isPresbyopiaActive,
+                    lens.pricePlus40
+                  );
                   const display = CONSUMER_NAMES[lens.id];
                   const isSelected = selectedLensId === lens.id;
                   return (
@@ -851,6 +865,62 @@ export default function PrescriptionModal({
 
         </div>
       </div>
+
+      {/* OCR SANITY CHECK VERIFICATION MODAL */}
+      {ocrSanityOpen && extractedValues && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-bold text-slate-900">Verify AI Extracted Values</h3>
+              </div>
+              <button onClick={() => setOcrSanityOpen(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Our high-precision optical scanner recognized the following values from your prescription card. Please confirm before applying.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="space-y-1">
+                <span className="font-bold text-slate-900 block">Right Eye (OD)</span>
+                <p>SPH: <strong className="text-amber-700">{extractedValues.odSph || "0.00"}</strong></p>
+                <p>CYL: <strong className="text-amber-700">{extractedValues.odCyl || "0.00"}</strong></p>
+                <p>AXIS: <strong className="text-amber-700">{extractedValues.odAxis || "—"}°</strong></p>
+              </div>
+              <div className="space-y-1">
+                <span className="font-bold text-slate-900 block">Left Eye (OS)</span>
+                <p>SPH: <strong className="text-amber-700">{extractedValues.osSph || "0.00"}</strong></p>
+                <p>CYL: <strong className="text-amber-700">{extractedValues.osCyl || "0.00"}</strong></p>
+                <p>AXIS: <strong className="text-amber-700">{extractedValues.osAxis || "—"}°</strong></p>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-200 flex justify-between text-slate-700 font-semibold">
+                <span>PD: <strong className="text-amber-700">{extractedValues.pd || "63"} mm</strong></span>
+                {extractedValues.add && <span>ADD: <strong className="text-amber-700">{extractedValues.add}</strong></span>}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setOcrSanityOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Adjust Manually
+              </button>
+              <button
+                onClick={handleApplyExtractedValues}
+                className="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                Confirm Extracted Values
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

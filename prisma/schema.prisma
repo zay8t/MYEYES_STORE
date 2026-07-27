@@ -94,6 +94,7 @@ model LensOption {
   name                   String
   description            String
   price                  Float
+  pricePlus40            Float    @default(0)
   type                   String
   index                  String?
   isConfiguratorVisible  Boolean  @default(true)
@@ -141,6 +142,7 @@ model LensPrice {
   category    String   // "SINGLE_VISION", "BIFOCAL", "PROGRESSIVE"
   name        String   // "Anti-Glare Standard", "Blue Light Shield", "Photogray Transition"
   price       Float
+  pricePlus40 Float    @default(0)
   description String?
   index       String?  // "1.56", "1.61", "1.67"
   isPopular   Boolean  @default(false)
