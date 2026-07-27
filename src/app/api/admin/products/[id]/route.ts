@@ -86,10 +86,11 @@ export async function PATCH(
     revalidatePath("/kids");
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to update product:", error);
+    const msg = error instanceof Error ? error.message : "Failed to update product";
     return NextResponse.json(
-      { error: "Failed to update product" },
+      { error: msg },
       { status: 500 }
     );
   }
@@ -129,10 +130,11 @@ export async function DELETE(
     revalidatePath("/kids");
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to delete product:", error);
+    const msg = error instanceof Error ? error.message : "Failed to delete product";
     return NextResponse.json(
-      { error: "Failed to delete product" },
+      { error: msg },
       { status: 500 }
     );
   }

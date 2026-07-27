@@ -125,10 +125,11 @@ export async function POST(request: NextRequest) {
     revalidatePath("/kids");
 
     return NextResponse.json(product, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to create product:", error);
+    const msg = error instanceof Error ? error.message : "Failed to create product";
     return NextResponse.json(
-      { error: "Failed to create product" },
+      { error: msg },
       { status: 500 }
     );
   }
