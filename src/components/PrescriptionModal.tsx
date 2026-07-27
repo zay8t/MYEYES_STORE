@@ -131,7 +131,6 @@ export default function PrescriptionModal({
       setHasAdd(null);
       setAddPower("+1.50");
       setFrameSetup(null);
-      setCombinedType("progressive");
       setUploadMode("upload");
       setRxFile(null);
       setRxPreview("");
