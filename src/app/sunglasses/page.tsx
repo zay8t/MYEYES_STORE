@@ -187,7 +187,7 @@ function SunglassesCatalog() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddLenses={(p) => {
+                onAddLenses={() => {
                   // Sunglasses do not have prescription lenses modal unless customized
                 }}
                 onAddToCart={(p) => {

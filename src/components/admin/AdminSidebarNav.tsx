@@ -10,6 +10,8 @@ import {
   Boxes,
   Users,
   ChevronRight,
+  ClipboardList,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,8 @@ const NAV_ITEMS = [
   { name: "Frames Catalog", href: "/admin/products", icon: Glasses },
   { name: "Inventory Control", href: "/admin/inventory", icon: Boxes },
   { name: "Customer CRM", href: "/admin/customers", icon: Users },
+  { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
+  { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
 ];
 
 export default function AdminSidebarNav() {

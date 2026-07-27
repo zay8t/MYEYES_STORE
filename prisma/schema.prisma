@@ -90,13 +90,14 @@ model Order {
 }
 
 model LensOption {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  type        String
-  index       String?
-  createdAt   DateTime @default(now())
+  id                     String   @id @default(uuid())
+  name                   String
+  description            String
+  price                  Float
+  type                   String
+  index                  String?
+  isConfiguratorVisible  Boolean  @default(true)
+  createdAt              DateTime @default(now())
 }
 
 model OrderSequence {
@@ -145,4 +146,14 @@ model LensPrice {
   isPopular   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  age       Int
+  whatsapp  String
+  frameId   String?
+  status    String   @default("abandoned")
+  createdAt DateTime @default(now())
 }
