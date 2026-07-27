@@ -48,12 +48,18 @@ export default function CheckoutPage() {
   const deliveryFee = 250; // Fixed 250 PKR
   const grandTotal = subtotal + deliveryFee;
 
-  // Redirect if cart is empty and page is loaded on client
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    if (items.length === 0 && !submitting) {
+    setMounted(true);
+  }, []);
+
+  // Redirect if cart is empty after client hydration
+  useEffect(() => {
+    if (mounted && items.length === 0 && !submitting) {
       router.push("/");
     }
-  }, [items, router, submitting]);
+  }, [mounted, items, router, submitting]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -129,7 +135,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (items.length === 0 && !submitting) {
+  if (!mounted || (items.length === 0 && !submitting)) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
