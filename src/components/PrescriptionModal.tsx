@@ -87,7 +87,6 @@ export default function PrescriptionModal({
 }: PrescriptionModalProps) {
   // Step: 1=Contact, 2=Presbyopia (+40), 3=Prescription, 4=Lens+Review
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [logoError, setLogoError] = useState(false);
 
   // Step 1: Lead capture
   const [lead, setLead] = useState({ name: "", age: "", whatsapp: "" });
@@ -141,7 +140,6 @@ export default function PrescriptionModal({
       setExtractedValues(null);
       setRx({ odSph: "0.00", odCyl: "0.00", odAxis: "", osSph: "0.00", osCyl: "0.00", osAxis: "", pd: "63", add: "", rxFileUrl: "", notes: "" });
       setSelectedLensId("sv-156-bluecut");
-      setLogoError(false);
     }
   }, [isOpen]);
 
