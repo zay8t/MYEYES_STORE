@@ -500,10 +500,7 @@ export default function PrescriptionModal({
                     ].map(opt => (
                       <button
                         key={opt.val}
-                        onClick={() => {
-                          setFrameSetup(opt.val);
-                          if (opt.val === "combined") setCombinedType("progressive");
-                        }}
+                        onClick={() => setFrameSetup(opt.val)}
                         className={cn(
                           "p-4 rounded-xl border-2 text-left transition-all cursor-pointer",
                           frameSetup === opt.val ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white hover:border-slate-300"
