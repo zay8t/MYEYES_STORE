@@ -97,7 +97,6 @@ export default function PrescriptionModal({
   const [hasAdd, setHasAdd] = useState<boolean | null>(null);
   const [addPower, setAddPower] = useState("+1.50");
   const [frameSetup, setFrameSetup] = useState<"separate" | "combined" | null>(null);
-  const [combinedType, setCombinedType] = useState<"progressive" | null>("progressive");
 
   // Step 3: Prescription & OCR
   const [uploadMode, setUploadMode] = useState<"manual" | "upload">("upload");

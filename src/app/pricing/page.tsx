@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { Tag, ArrowRight, Sparkles } from "lucide-react";
+import { Tag, ArrowRight } from "lucide-react";
 import { SOLEX_LENS_OPTIONS, calculateSolexLensPrice, SolexLensOption } from "@/lib/solex-lens-pricing";
 
 export default function PricingPage() {
