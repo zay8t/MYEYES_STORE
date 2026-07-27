@@ -341,19 +341,29 @@ export default function PrescriptionModal({
       <div className="relative w-full max-w-xl bg-white border border-slate-200/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[93vh] animate-fade-in-up">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white sticky top-0 z-10">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-7 h-7 relative flex-shrink-0 overflow-hidden">
-                {!logoError && (
-                  <Image alt="MY EYES" className="object-contain" fill src="/images/logo.png" onError={() => setLogoError(true)} />
-                )}
-              </div>
-              <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-full uppercase">
-                MY EYES CONFIGURATOR
-              </span>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-50 border border-amber-200/60 p-1">
+              <Image
+                src="/logo.svg"
+                alt="MY EYES Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+                priority
+              />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 leading-tight mt-1">{productName}</h3>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-extrabold tracking-wider text-amber-600 uppercase">
+                  MY EYES
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded">
+                  CONFIGURATOR
+                </span>
+              </div>
+              <h3 className="text-xs font-semibold text-slate-500 mt-0.5 leading-tight">{productName}</h3>
+            </div>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer">
             <X className="w-5 h-5" />
