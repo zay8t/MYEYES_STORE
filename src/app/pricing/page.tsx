@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { Tag, ArrowRight } from "lucide-react";
+import { Tag, ArrowRight, Check, Sparkles } from "lucide-react";
 import { SOLEX_LENS_OPTIONS, calculateSolexLensPrice, SolexLensOption } from "@/lib/solex-lens-pricing";
 
 export default function PricingPage() {
   const [lensOptions, setLensOptions] = useState<SolexLensOption[]>(SOLEX_LENS_OPTIONS);
+  const [activeTier, setActiveTier] = useState<"standard" | "presbyopia">("standard");
 
   useEffect(() => {
     async function loadLensOptions() {
@@ -29,11 +30,22 @@ export default function PricingPage() {
   const [testLensId, setTestLensId] = useState("sv-156-bluecut");
   const [testSph, setTestSph] = useState("-2.00");
   const [testCyl, setTestCyl] = useState("-0.50");
-  const [testAdd, setTestAdd] = useState("+1.50");
+  const [testAdd, setTestAdd] = useState("");
 
   const parsedSph = parseFloat(testSph) || 0;
   const parsedCyl = parseFloat(testCyl) || 0;
   const parsedAdd = parseFloat(testAdd) || 0;
+
+  const handleTierSwitch = (tier: "standard" | "presbyopia") => {
+    setActiveTier(tier);
+    if (tier === "presbyopia" && !testAdd) {
+      setTestAdd("+1.50");
+    } else if (tier === "standard") {
+      setTestAdd("");
+    }
+  };
+
+  const isPresbyopiaActive = activeTier === "presbyopia" || parsedAdd > 0;
 
   const testLensObj = useMemo(() => {
     return lensOptions.find((l) => l.id === testLensId) || lensOptions[0] || SOLEX_LENS_OPTIONS[0];
@@ -46,14 +58,14 @@ export default function PricingPage() {
       parsedCyl,
       parsedAdd,
       testLensObj?.basePrice,
-      parsedAdd > 0,
+      isPresbyopiaActive,
       testLensObj?.pricePlus40
     );
-  }, [testLensId, parsedSph, parsedCyl, parsedAdd, testLensObj]);
+  }, [testLensId, parsedSph, parsedCyl, parsedAdd, testLensObj, isPresbyopiaActive]);
 
   return (
     <div className="min-h-screen bg-white py-12 text-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Page Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-slate-100 pb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 text-[11px] font-bold uppercase tracking-widest text-amber-800 border border-amber-200/60">
@@ -66,8 +78,50 @@ export default function PricingPage() {
           </h1>
 
           <p className="text-sm text-slate-500 leading-relaxed">
-            Transparent pricing direct from MY EYES Precision Labs. Featuring dual pricing matrices for Standard Vision and +40 Presbyopia lenses calculated precisely according to your SPH, CYL, and ADD specifications.
+            Transparent pricing direct from MY EYES Precision Labs. Choose your age tier below to inspect Standard Vision (Age &lt; 40) or +40 Presbyopia (With ADD) pricing lists.
           </p>
+        </div>
+
+        {/* Pricing Matrix Tier Selector */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-2xl mx-auto">
+          <button
+            onClick={() => handleTierSwitch("standard")}
+            className={`w-full sm:w-1/2 p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+              activeTier === "standard"
+                ? "border-slate-900 bg-slate-900 text-white shadow-md"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Category 1</span>
+                <h3 className="text-sm font-extrabold">Standard Pricing (Age &lt; 40)</h3>
+                <p className="text-[11px] opacity-70 mt-0.5">Single Vision distance or reading lenses</p>
+              </div>
+              {activeTier === "standard" && <Check className="w-5 h-5 text-amber-400" />}
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleTierSwitch("presbyopia")}
+            className={`w-full sm:w-1/2 p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+              activeTier === "presbyopia"
+                ? "border-amber-500 bg-amber-50 text-amber-900 shadow-md"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider block text-amber-700">Category 2</span>
+                  <Sparkles className="w-3 h-3 text-amber-600" />
+                </div>
+                <h3 className="text-sm font-extrabold">+40 Presbyopia (With ADD)</h3>
+                <p className="text-[11px] text-amber-800/80 mt-0.5">Progressive Free Form &amp; dual addition</p>
+              </div>
+              {activeTier === "presbyopia" && <Check className="w-5 h-5 text-amber-600" />}
+            </div>
+          </button>
         </div>
 
         {/* Interactive Price Test Calculator Widget */}
@@ -82,7 +136,7 @@ export default function PricingPage() {
               </h2>
             </div>
             <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg uppercase tracking-wider shadow-sm">
-              MY EYES Lab Rate
+              {isPresbyopiaActive ? "+40 Presbyopia Rate" : "Standard Rate"}
             </span>
           </div>
 
@@ -139,9 +193,14 @@ export default function PricingPage() {
               <input
                 type="text"
                 value={testAdd}
-                onChange={(e) => setTestAdd(e.target.value)}
+                onChange={(e) => {
+                  setTestAdd(e.target.value);
+                  if (parseFloat(e.target.value) > 0) {
+                    setActiveTier("presbyopia");
+                  }
+                }}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-semibold"
-                placeholder="+1.50"
+                placeholder="e.g. +1.50"
               />
             </div>
           </div>
@@ -156,7 +215,7 @@ export default function PricingPage() {
                 Rs. {testCalculatedPrice}/-
               </span>
               <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">
-                {parsedAdd > 0 ? "+40 Presbyopia Tier" : "Standard Tier"}
+                {isPresbyopiaActive ? "+40 Presbyopia Tier" : "Standard Tier"}
               </span>
             </div>
           </div>
@@ -165,7 +224,14 @@ export default function PricingPage() {
         {/* MY EYES Precision Lens Catalog */}
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-bold text-slate-900">MY EYES Precision Lenses Catalog</h2>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                {activeTier === "standard" ? "Standard Lens Catalog (Age < 40)" : "+40 Presbyopia Lens Catalog (With ADD)"}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeTier === "standard" ? "Base lab prices for single vision distance and reading frames." : "+40 age guided rates with progressive free form addition options."}
+              </p>
+            </div>
             <Link
               href="/eyeglasses"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-black"
@@ -176,50 +242,61 @@ export default function PricingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {lensOptions.map((lens) => (
-              <div
-                key={lens.id}
-                className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-amber-400 transition-all space-y-3 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-bold uppercase tracking-wider">
-                        {lens.category.replace("_", " ")} · {lens.index} Index
-                      </span>
-                      <h3 className="text-base font-bold text-slate-900 mt-1.5">
-                        {lens.name}
-                      </h3>
+            {lensOptions.map((lens) => {
+              const displayPrice = activeTier === "standard"
+                ? lens.basePrice
+                : (lens.pricePlus40 || (lens.basePrice + 400));
+              return (
+                <div
+                  key={lens.id}
+                  className={`p-6 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${
+                    activeTier === "presbyopia"
+                      ? "border-amber-200 bg-amber-50/30 hover:border-amber-400"
+                      : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                          {lens.category.replace("_", " ")} · {lens.index} Index
+                        </span>
+                        <h3 className="text-base font-bold text-slate-900 mt-1.5">
+                          {lens.name}
+                        </h3>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-lg font-extrabold text-slate-900 block">
+                          Rs. {displayPrice}/-
+                        </span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                          activeTier === "presbyopia" ? "text-amber-700" : "text-slate-500"
+                        }`}>
+                          {activeTier === "presbyopia" ? "+40 Presbyopia Rate" : "Standard Rate"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-extrabold text-slate-900 block">
-                        Std: Rs. {lens.basePrice}/-
-                      </span>
-                      <span className="text-xs font-bold text-amber-800 block">
-                        +40: Rs. {lens.pricePlus40 || (lens.basePrice + 400)}/-
-                      </span>
-                    </div>
+
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                      {lens.description}
+                    </p>
                   </div>
 
-                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                    {lens.description}
-                  </p>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-400 font-semibold">Coating: {lens.coating}</span>
+                    <button
+                      onClick={() => {
+                        setTestLensId(lens.id);
+                        window.scrollTo({ top: 300, behavior: "smooth" });
+                      }}
+                      className="text-amber-700 hover:underline font-bold"
+                    >
+                      Test Price →
+                    </button>
+                  </div>
                 </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-semibold">Coating: {lens.coating}</span>
-                  <button
-                    onClick={() => {
-                      setTestLensId(lens.id);
-                      window.scrollTo({ top: 300, behavior: "smooth" });
-                    }}
-                    className="text-amber-700 hover:underline font-bold"
-                  >
-                    Test Price →
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

@@ -115,7 +115,7 @@ export default function PrescriptionModal({
   const [rx, setRx] = useState({
     odSph: "0.00", odCyl: "0.00", odAxis: "",
     osSph: "0.00", osCyl: "0.00", osAxis: "",
-    pd: "63", add: "+1.50", rxFileUrl: "", notes: "",
+    pd: "63", add: "", rxFileUrl: "", notes: "",
   });
 
   // Step 4: Lens selection
@@ -139,7 +139,7 @@ export default function PrescriptionModal({
       setOcrError("");
       setOcrSanityOpen(false);
       setExtractedValues(null);
-      setRx({ odSph: "0.00", odCyl: "0.00", odAxis: "", osSph: "0.00", osCyl: "0.00", osAxis: "", pd: "63", add: "+1.50", rxFileUrl: "", notes: "" });
+      setRx({ odSph: "0.00", odCyl: "0.00", odAxis: "", osSph: "0.00", osCyl: "0.00", osAxis: "", pd: "63", add: "", rxFileUrl: "", notes: "" });
       setSelectedLensId("sv-156-bluecut");
       setLogoError(false);
     }
@@ -170,7 +170,12 @@ export default function PrescriptionModal({
   const maxCyl = Math.abs(parsedOdCyl) > Math.abs(parsedOsCyl) ? parsedOdCyl : parsedOsCyl;
 
   const isPresbyopiaActive = useMemo(() => {
-    return parsedAdd > 0 || hasAdd === true || (parseInt(lead.age) >= 40 && hasAdd !== false);
+    const ageNum = parseInt(lead.age, 10) || 0;
+    if (hasAdd === true) return true;
+    if (hasAdd === false) return false;
+    if (ageNum >= 40) return true;
+    if (parsedAdd > 0) return true;
+    return false;
   }, [parsedAdd, hasAdd, lead.age]);
 
   const currentLensObj = useMemo(() =>
