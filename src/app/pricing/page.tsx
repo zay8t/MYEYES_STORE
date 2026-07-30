@@ -88,7 +88,7 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Page Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-slate-100 pb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-[11px] font-bold uppercase tracking-widest text-white">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/60 text-[11px] font-bold uppercase tracking-widest text-amber-700">
             <Tag className="w-3.5 h-3.5" />
             Official MY EYES Precision Lens Catalog
           </div>
@@ -109,7 +109,7 @@ export default function PricingPage() {
             {CORE_LENSES.map((lens) => (
               <div key={lens.id} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-900 transition-colors flex flex-col justify-between">
                 <div className="space-y-3">
-                  <div className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-700">
+                  <div className="inline-flex px-2 py-0.5 rounded-full border border-amber-200/60 text-[10px] font-bold uppercase tracking-widest bg-amber-50 text-amber-800 w-fit">
                     Base: {lens.baseKey}
                   </div>
                   <h3 className="text-sm font-extrabold text-slate-900 leading-tight">
@@ -132,8 +132,7 @@ export default function PricingPage() {
 
         {/* Interactive Matrix Calculator */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-slate-900 rounded-3xl p-1 overflow-hidden shadow-2xl">
-            <div className="bg-white rounded-[22px] p-6 sm:p-8 lg:p-10">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10">
               
               <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-5">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -285,13 +284,12 @@ export default function PricingPage() {
                 <div className="pt-6 text-center">
                   <Link 
                     href="/eyeglasses"
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider transition-colors shadow-lg shadow-amber-500/20"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-medium shadow-sm transition-all"
                   >
                     Shop Eyeglasses Now <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
-            </div>
           </div>
         </div>
 

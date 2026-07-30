@@ -185,7 +185,7 @@ function StepDot({ n, current, label }: { n: number; current: number; label: str
     <div className="flex items-center gap-1.5 min-w-0">
       <span className={cn(
         "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 transition-all duration-200",
-        done ? "bg-amber-500 text-white" : active ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"
+        done ? "bg-amber-500 text-white" : active ? "bg-amber-50 text-amber-800 border border-amber-200/60" : "bg-slate-200 text-slate-500"
       )}>
         {done ? <Check className="w-3 h-3" /> : n}
       </span>
@@ -590,7 +590,7 @@ export default function PrescriptionModal({
                 className={cn(
                   "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer",
                   leadValid && !leadSaving
-                    ? "bg-slate-900 hover:bg-black text-white shadow-sm"
+                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed"
                 )}
               >
@@ -687,7 +687,7 @@ export default function PrescriptionModal({
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 Proceed to Prescription & Review <ChevronRight className="w-4 h-4" />
               </button>
@@ -733,7 +733,7 @@ export default function PrescriptionModal({
                     <p className="text-[10px] text-slate-500 mb-3">Upload photo or card — AI contrast sharpening auto-extracts your powers</p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <button type="button" onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition-colors cursor-pointer shadow-xs">
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition-colors cursor-pointer shadow-xs">
                         <ImageIcon className="w-3.5 h-3.5" /> Gallery
                       </button>
                       <button type="button" onClick={e => { e.stopPropagation(); cameraInputRef.current?.click(); }}

@@ -94,7 +94,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
 
       {/* Legend */}
       <div className="flex items-center gap-5 text-xs font-semibold text-slate-500">
-        <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-emerald-500" /> 5 Core Customer Lenses (B1–B5)</span>
+        <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-amber-500" /> 5 Core Customer Lenses (B1–B5)</span>
       </div>
 
       {/* Core Lenses Table */}
@@ -125,7 +125,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                       <p className="font-semibold text-slate-900">{lens.name}</p>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-full px-2.5 py-0.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 uppercase tracking-widest rounded-full px-2.5 py-0.5">
                         {baseCode}
                       </span>
                     </td>
@@ -141,12 +141,12 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                             step="50"
                             value={editPrice}
                             onChange={e => setEditPrice(e.target.value)}
-                            className="w-20 px-2 py-1 rounded-lg border border-amber-400 text-slate-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs"
+                            className="w-20 px-2 py-1 rounded-lg border border-slate-200 focus:border-amber-400 bg-slate-50/50 text-slate-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs"
                             autoFocus
                           />
                         </div>
                       ) : (
-                        <span className={cn("font-bold text-slate-900", isSaved && "text-emerald-700")}>
+                        <span className={cn("font-bold text-slate-900", isSaved && "text-amber-700")}>
                           Rs. {(lens.price || 0).toLocaleString()}/-
                         </span>
                       )}
@@ -163,7 +163,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                             step="50"
                             value={editPricePlus40}
                             onChange={e => setEditPricePlus40(e.target.value)}
-                            className="w-20 px-2 py-1 rounded-lg border border-amber-500 text-amber-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs bg-amber-50/50"
+                            className="w-20 px-2 py-1 rounded-lg border border-amber-200/60 focus:border-amber-400 bg-amber-50/50 text-amber-900 font-bold focus:ring-2 focus:ring-amber-400/50 focus:outline-none text-xs"
                           />
                         </div>
                       ) : (
@@ -185,7 +185,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                            Save Changes
+                            Save Base Price
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
