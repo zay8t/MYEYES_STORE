@@ -114,6 +114,19 @@ model OrderItem {
   prescriptionId String?
   price          Float
   quantity       Int           @default(1)
+
+  framePrice         Float?
+  lensBasePriceKey   String?
+  lensBasePriceValue Float?
+  lensMultiplier     Float?
+  lensFinalPrice     Float?
+  
+  isAsymmetricRx     Boolean?      @default(false)
+  rightEyeLensPrice  Float?
+  leftEyeLensPrice   Float?
+  rightMultiplier    Float?
+  leftMultiplier     Float?
+
   order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
@@ -159,3 +172,10 @@ model Lead {
   status    String   @default("abandoned")
   createdAt DateTime @default(now())
 }
+
+model BasePriceSetting {
+  key       String   @id
+  value     Float
+  updatedAt DateTime @updatedAt
+}
+

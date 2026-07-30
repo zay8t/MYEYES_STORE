@@ -11,9 +11,9 @@ import { compressImage } from "@/lib/nativeStorage";
 import {
   SOLEX_LENS_OPTIONS,
   CORE_FIVE_LENS_IDS,
-  calculateSolexLensPrice,
   SolexLensOption,
 } from "@/lib/solex-lens-pricing";
+import { calculateTotalLensPrice, BasePriceConfig, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
 import {
   preprocessPrescriptionImage,
   parseOpticalPrescription,
@@ -35,6 +35,11 @@ export interface PrescriptionDetails {
   add?: number | null;
   rxFileUrl?: string;
   notes?: string;
+  lensBasePriceKey?: string;
+  lensBasePriceValue?: number;
+  lensMultiplier?: number;
+  lensFinalPrice?: number;
+  framePrice?: number;
 }
 
 interface PrescriptionModalProps {
@@ -196,6 +201,26 @@ export default function PrescriptionModal({
   const [lead, setLead] = useState({ name: "", age: "", whatsapp: "" });
   const [leadSaving, setLeadSaving] = useState(false);
   const leadValid = lead.name.trim().length > 1 && Number(lead.age) > 0 && lead.whatsapp.replace(/\D/g, "").length >= 10;
+  
+  const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
+  const [basePricesLoaded, setBasePricesLoaded] = useState(false);
+
+  useEffect(() => {
+    async function fetchBasePrices() {
+      try {
+        const res = await fetch("/api/base-prices");
+        if (res.ok) {
+          const data = await res.json();
+          setBasePrices(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setBasePricesLoaded(true);
+      }
+    }
+    fetchBasePrices();
+  }, []);
 
   // Step 2: Lens selection (Default to #1 Progressive or #2 Blue Cut)
   const [selectedLensId, setSelectedLensId] = useState<string>("progressive-freeform");
@@ -306,18 +331,18 @@ export default function PrescriptionModal({
     [activeCustomerLenses, selectedLensId]
   );
 
-  const exactCalculatedLensPrice = useMemo(() =>
-    calculateSolexLensPrice(
-      selectedLensId,
-      maxSph,
-      maxCyl,
-      parsedAdd,
-      currentLensObj?.basePrice,
-      isPresbyopiaActive,
-      currentLensObj?.pricePlus40
-    ),
-    [selectedLensId, maxSph, maxCyl, parsedAdd, currentLensObj, isPresbyopiaActive]
-  );
+  const pricingResult = useMemo(() => {
+    if (!basePricesLoaded) return null;
+    return calculateTotalLensPrice(
+      selectedLensId, 
+      { sph: parsedOdSph, cyl: parsedOdCyl }, 
+      { sph: parsedOsSph, cyl: parsedOsCyl }, 
+      basePrices
+    );
+  }, [selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, basePrices, basePricesLoaded]);
+
+  const exactCalculatedLensPrice = pricingResult ? pricingResult.finalPrice : 0;
+  const isOutOfRange = pricingResult === null && basePricesLoaded;
 
   const totalPrice = productPrice + exactCalculatedLensPrice;
 
@@ -441,6 +466,16 @@ export default function PrescriptionModal({
       add: parsedAdd || null,
       rxFileUrl: rx.rxFileUrl,
       notes: rx.notes,
+      lensBasePriceKey: pricingResult?.basePriceKey,
+      lensBasePriceValue: pricingResult?.basePriceValue,
+      lensMultiplier: pricingResult?.multiplier,
+      lensFinalPrice: pricingResult?.finalPrice,
+      framePrice: productPrice,
+      isAsymmetricRx: pricingResult?.isAsymmetricRx || false,
+      rightEyeLensPrice: pricingResult?.rightEyeLensPrice,
+      leftEyeLensPrice: pricingResult?.leftEyeLensPrice,
+      rightMultiplier: pricingResult?.rightMultiplier,
+      leftMultiplier: pricingResult?.leftMultiplier,
     }, totalPrice);
     onClose();
   };
@@ -614,15 +649,14 @@ export default function PrescriptionModal({
                   const isProgressive = lens.id === "progressive-freeform";
                   const isPresbyopiaOption = isProgressive && ageNum >= 40;
 
-                  const calcPrice = calculateSolexLensPrice(
+                  const lensPricingResult = calculateTotalLensPrice(
                     lens.id,
-                    maxSph,
-                    maxCyl,
-                    isPresbyopiaOption ? 1.5 : 0,
-                    lens.basePrice,
-                    isPresbyopiaOption,
-                    lens.pricePlus40
+                    { sph: parsedOdSph, cyl: parsedOdCyl },
+                    { sph: parsedOsSph, cyl: parsedOsCyl },
+                    basePrices
                   );
+                  const calcPrice = lensPricingResult ? lensPricingResult.finalPrice : 0;
+                  const isLensOutOfRange = lensPricingResult === null && basePricesLoaded;
 
                   return (
                     <button
@@ -668,7 +702,11 @@ export default function PrescriptionModal({
                         </div>
 
                         <div className="text-right flex-shrink-0">
-                          <span className="text-sm font-extrabold text-slate-900 block">+Rs. {calcPrice}/-</span>
+                          {isLensOutOfRange ? (
+                            <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block mt-1">Out of Range</span>
+                          ) : (
+                            <span className="text-sm font-extrabold text-slate-900 block">+Rs. {calcPrice}/-</span>
+                          )}
                           {isSelected && <Check className="w-4.5 h-4.5 text-amber-600 ml-auto mt-1" />}
                         </div>
                       </div>
@@ -1000,13 +1038,24 @@ export default function PrescriptionModal({
                 </div>
               </div>
 
+              {isOutOfRange && (
+                <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>Custom RX Power — Lens Not Available for Standard Checkout. Please contact WhatsApp Support.</p>
+                </div>
+              )}
+
               {/* Add to Bag Button */}
               <button
                 onClick={handleFinalSubmit}
-                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                disabled={isOutOfRange}
+                className={cn(
+                  "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-sm",
+                  isOutOfRange ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-amber-500 hover:bg-amber-600 text-white cursor-pointer"
+                )}
               >
                 <Check className="w-4.5 h-4.5" />
-                Add to Bag — {formatPrice(totalPrice)}
+                {isOutOfRange ? "Not Available" : `Add to Bag — ${formatPrice(totalPrice)}`}
               </button>
             </div>
           )}

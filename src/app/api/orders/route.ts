@@ -17,6 +17,11 @@ interface PrescriptionInput {
   osAxis?: string | number | null;
   pd?: string | number;
   rxFileUrl?: string | null;
+  lensBasePriceKey?: string | null;
+  lensBasePriceValue?: number | null;
+  lensMultiplier?: number | null;
+  lensFinalPrice?: number | null;
+  framePrice?: number | null;
 }
 
 interface OrderItemInput {
@@ -154,6 +159,16 @@ export async function POST(request: NextRequest) {
           prescriptionId: prescriptionId || null,
           price: parseFloat(String(item.price)) || 0,
           quantity: item.quantity || 1,
+          framePrice: item.prescription?.framePrice || null,
+          lensBasePriceKey: item.prescription?.lensBasePriceKey || null,
+          lensBasePriceValue: item.prescription?.lensBasePriceValue || null,
+          lensMultiplier: item.prescription?.lensMultiplier || null,
+          lensFinalPrice: item.prescription?.lensFinalPrice || null,
+          isAsymmetricRx: item.prescription?.isAsymmetricRx || false,
+          rightEyeLensPrice: item.prescription?.rightEyeLensPrice || null,
+          leftEyeLensPrice: item.prescription?.leftEyeLensPrice || null,
+          rightMultiplier: item.prescription?.rightMultiplier || null,
+          leftMultiplier: item.prescription?.leftMultiplier || null,
         });
       }
 

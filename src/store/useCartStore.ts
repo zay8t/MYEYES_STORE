@@ -13,6 +13,17 @@ export interface OpticalPrescription {
   pd?: number;
   rxFileUrl?: string;
   notes?: string;
+  // Pricing breakdown
+  lensBasePriceKey?: string;
+  lensBasePriceValue?: number;
+  lensMultiplier?: number;
+  lensFinalPrice?: number;
+  framePrice?: number;
+  isAsymmetricRx?: boolean;
+  rightEyeLensPrice?: number;
+  leftEyeLensPrice?: number;
+  rightMultiplier?: number;
+  leftMultiplier?: number;
 }
 
 export interface CartItem {

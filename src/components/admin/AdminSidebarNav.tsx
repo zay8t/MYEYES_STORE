@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ClipboardList,
   Tag,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { name: "Customer CRM", href: "/admin/customers", icon: Users },
   { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
   { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
+  { name: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
 ];
 
 export default function AdminSidebarNav() {

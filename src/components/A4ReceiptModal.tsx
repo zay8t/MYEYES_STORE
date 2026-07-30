@@ -34,6 +34,16 @@ interface OrderItem {
   quantity: number;
   product: Product;
   prescription: Prescription | null;
+  framePrice: number | null;
+  lensBasePriceKey: string | null;
+  lensBasePriceValue: number | null;
+  lensMultiplier: number | null;
+  lensFinalPrice: number | null;
+  isAsymmetricRx?: boolean;
+  rightEyeLensPrice?: number | null;
+  leftEyeLensPrice?: number | null;
+  rightMultiplier?: number | null;
+  leftMultiplier?: number | null;
 }
 
 export interface OrderReceiptData {
@@ -252,12 +262,39 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                         <td className="py-3 px-3">
                           <span className="font-bold text-slate-950 block">{item.product?.name || "Eyewear Frame"}</span>
                           <span className="text-[10px] text-slate-500 font-mono">ID: {item.productId.slice(0, 8)}</span>
+                          {item.framePrice !== null && (
+                            <span className="text-[10px] text-slate-500 block mt-0.5">Frame Price: {formatPrice(item.framePrice)}</span>
+                          )}
                         </td>
                         <td className="py-3 px-3">
                           {item.prescription ? (
-                            <span className="font-semibold text-slate-900">
-                              {item.prescription.lensType} (Custom Rx Fitted)
-                            </span>
+                            <div className="space-y-0.5">
+                              <span className="font-semibold text-slate-900 block">
+                                {item.prescription.lensType}
+                              </span>
+                              {item.isAsymmetricRx ? (
+                                <div className="mt-1 space-y-0.5">
+                                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded block uppercase w-max">
+                                    OD: Tier {item.lensBasePriceKey} × {item.rightMultiplier}x → {formatPrice(item.rightEyeLensPrice || 0)}
+                                  </span>
+                                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded block uppercase w-max">
+                                    OS: Tier {item.lensBasePriceKey} × {item.leftMultiplier}x → {formatPrice(item.leftEyeLensPrice || 0)}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 block">Combined Lens Total: {formatPrice(item.lensFinalPrice || 0)}</span>
+                                </div>
+                              ) : (
+                                <>
+                                  {item.lensBasePriceKey && (
+                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded inline-block uppercase mt-1">
+                                      Tier {item.lensBasePriceKey}: {formatPrice(item.lensBasePriceValue || 0)} × {item.lensMultiplier}x
+                                    </span>
+                                  )}
+                                  {item.lensFinalPrice !== null && (
+                                    <span className="text-[10px] text-slate-500 block">Lens Price: {formatPrice(item.lensFinalPrice)}</span>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-slate-500">Standard Demo Frame Only</span>
                           )}
