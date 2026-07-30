@@ -12,7 +12,7 @@ const CORE_LENSES = [
     id: "progressive-freeform",
     name: "MY EYES CR Hard Crystal Coat",
     baseKey: "B1",
-    description: "Multi-focal progression for presbyopia with hard crystal scratch-resistant coating.",
+    description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
   },
   {
     id: "sv-156-bluecut",
@@ -33,7 +33,7 @@ const CORE_LENSES = [
     description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
   },
   {
-    id: "sv-161-ultrathin",
+    id: "sv-167-shmc",
     name: "MY EYES Ultra Thin Index",
     baseKey: "B5",
     description: "High-index ultra-thin profile for stronger prescriptions. Reduces lens thickness significantly.",
@@ -105,23 +105,42 @@ export default function PricingPage() {
         {/* Core Lenses Grid */}
         <div>
           <h2 className="text-2xl font-bold mb-6 text-center">Our 5 Core Lens Packages</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {CORE_LENSES.map((lens) => (
-              <div key={lens.id} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-900 transition-colors flex flex-col justify-between">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {CORE_LENSES.slice(0, 3).map((lens) => (
+              <div key={lens.id} className="bg-white border border-slate-200/70 hover:border-amber-300/60 rounded-3xl p-7 flex flex-col justify-between hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
                 <div className="space-y-3">
-                  <div className="inline-flex px-2 py-0.5 rounded-full border border-amber-200/60 text-[10px] font-bold uppercase tracking-widest bg-amber-50 text-amber-800 w-fit">
-                    Base: {lens.baseKey}
-                  </div>
-                  <h3 className="text-sm font-extrabold text-slate-900 leading-tight">
+                  <h3 className="text-slate-900 font-bold text-lg tracking-tight mb-2">
                     {lens.name}
                   </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-6 font-normal">
                     {lens.description}
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Starting from</span>
-                  <span className="text-xl font-black text-slate-900">
+                <div className="border-t border-slate-100 pt-4">
+                  <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest block mb-1">Starting from</span>
+                  <span className="text-2xl font-extrabold text-slate-900">
+                    {formatPrice(basePrices[lens.baseKey as keyof BasePriceConfig])}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6">
+            {CORE_LENSES.slice(3, 5).map((lens) => (
+              <div key={lens.id} className="bg-white border border-slate-200/70 hover:border-amber-300/60 rounded-3xl p-7 flex flex-col justify-between hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
+                <div className="space-y-3">
+                  <h3 className="text-slate-900 font-bold text-lg tracking-tight mb-2">
+                    {lens.name}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed mb-6 font-normal">
+                    {lens.description}
+                  </p>
+                </div>
+                <div className="border-t border-slate-100 pt-4">
+                  <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest block mb-1">Starting from</span>
+                  <span className="text-2xl font-extrabold text-slate-900">
                     {formatPrice(basePrices[lens.baseKey as keyof BasePriceConfig])}
                   </span>
                 </div>

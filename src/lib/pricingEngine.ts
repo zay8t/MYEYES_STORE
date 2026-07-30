@@ -115,16 +115,16 @@ export function calculateSingleEyePrice(
       // E. LENS TYPE 5: SV 1.67 Ultra Thin Index SHMC (Base B5)
       baseKey = "B5";
       baseValue = basePrices.B5;
-      if (absSph >= 0 && absSph <= 4.00 && absCyl >= 0 && absCyl <= 2.00) multiplier = 1.00;
-      else if (absSph >= 0 && absSph <= 4.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 1.75;
-      else if (absSph >= 0 && absSph <= 4.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 2.50;
-      else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 0 && absCyl <= 2.00) multiplier = 1.75;
-      else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 0 && absCyl <= 2.00) multiplier = 2.25;
+      if (absSph >= 0.00 && absSph <= 4.00 && absCyl >= 0.00 && absCyl <= 2.00) multiplier = 1.00;
+      else if (absSph >= 0.00 && absSph <= 4.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 1.75;
+      else if (absSph >= 0.00 && absSph <= 4.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 2.50;
+      else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 0.00 && absCyl <= 2.00) multiplier = 1.75;
+      else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 0.00 && absCyl <= 2.00) multiplier = 2.25;
       else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 2.75;
       else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 3.25;
       else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 3.50;
       else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 3.75;
-      else if (absSph >= 12.50 && absSph <= 16.00 && absCyl >= 0 && absCyl <= 2.00) multiplier = 4.50;
+      else if (absSph >= 12.50 && absSph <= 16.00 && absCyl >= 0.00 && absCyl <= 2.00) multiplier = 4.50;
       else if (absSph >= 12.50 && absSph <= 16.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 6.00;
       else return null;
       break;
