@@ -1,9 +1,11 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
-import { SOLEX_LENS_OPTIONS } from "@/lib/solex-lens-pricing";
+import { SOLEX_LENS_OPTIONS, CORE_FIVE_LENS_IDS } from "@/lib/solex-lens-pricing";
 import LensPricingClient from "./LensPricingClient";
 
 export const revalidate = 0;
+
+const CORE_SET = new Set<string>(CORE_FIVE_LENS_IDS);
 
 export default async function AdminLensPricingPage() {
   let lensOptions: {
@@ -29,12 +31,12 @@ export default async function AdminLensPricingPage() {
           type: lens.category,
           index: lens.index,
           description: lens.description,
-          isConfiguratorVisible: !["bifocal-round-top", "bifocal-flat-top", "sv-159-pc", "sv-156-hmc"].includes(lens.id),
+          isConfiguratorVisible: CORE_SET.has(lens.id),
         })),
       });
     }
 
-    lensOptions = await prisma.lensOption.findMany({
+    const dbOptions = await prisma.lensOption.findMany({
       orderBy: [{ type: "asc" }, { price: "asc" }],
       select: {
         id: true,
@@ -46,6 +48,16 @@ export default async function AdminLensPricingPage() {
         description: true,
         isConfiguratorVisible: true
       },
+    });
+
+    lensOptions = dbOptions.map(l => {
+      const staticMatch = SOLEX_LENS_OPTIONS.find(s => s.id === l.id);
+      return {
+        ...l,
+        name: l.name || staticMatch?.name || "",
+        description: l.description || staticMatch?.description || "",
+        isConfiguratorVisible: CORE_SET.has(l.id),
+      };
     });
   } catch (error) {
     console.error("Lens pricing page DB error:", error);

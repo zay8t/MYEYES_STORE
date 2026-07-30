@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Tag, Check, Pencil, X, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CORE_FIVE_LENS_IDS } from "@/lib/solex-lens-pricing";
 
 interface LensOption {
   id: string;
@@ -16,12 +17,12 @@ interface LensOption {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  single_vision: "Single Vision Lenses",
-  bifocal: "Bifocal Lenses",
   progressive: "Progressive Free Form Lenses",
+  single_vision: "Single Vision Lenses",
+  bifocal: "Bifocal Lenses (Lab Rates)",
 };
 
-const PRUNED_IDS = new Set(["bifocal-round-top", "bifocal-flat-top", "sv-159-pc", "sv-156-hmc"]);
+const CORE_FIVE_SET = new Set<string>(CORE_FIVE_LENS_IDS);
 
 export default function LensPricingClient({ initialOptions }: { initialOptions: LensOption[] }) {
   const [options, setOptions] = useState<LensOption[]>(initialOptions);
@@ -66,7 +67,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
     }
   };
 
-  const groups = ["single_vision", "bifocal", "progressive"];
+  const groups = ["progressive", "single_vision", "bifocal"];
 
   return (
     <div className="space-y-6">
@@ -85,8 +86,8 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
 
       {/* Legend */}
       <div className="flex items-center gap-5 text-xs font-semibold text-slate-500">
-        <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-emerald-500" /> Visible in configurator</span>
-        <span className="flex items-center gap-1.5"><EyeOff className="w-3.5 h-3.5 text-slate-400" /> Hidden from configurator (lab-only)</span>
+        <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-emerald-500" /> Visible in Customer Configurator (5 Core Options)</span>
+        <span className="flex items-center gap-1.5"><EyeOff className="w-3.5 h-3.5 text-slate-400" /> Lab Rate Only (Hidden from Configurator)</span>
       </div>
 
       {/* Grouped Tables */}
@@ -103,7 +104,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/30">
-                    <th className="px-5 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Lens Name</th>
+                    <th className="px-5 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">MY EYES Lens Option</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Index</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Visibility</th>
                     <th className="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider">Standard Price (No ADD)</th>
@@ -115,7 +116,7 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                   {groupLenses.map(lens => {
                     const isEditing = editingId === lens.id;
                     const isSaved = savedId === lens.id;
-                    const isPruned = PRUNED_IDS.has(lens.id);
+                    const isCoreOption = CORE_FIVE_SET.has(lens.id);
                     return (
                       <tr key={lens.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-5 py-3.5">
@@ -124,13 +125,13 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
                         </td>
                         <td className="px-4 py-3.5 text-slate-700 font-medium">{lens.index || "—"}</td>
                         <td className="px-4 py-3.5">
-                          {isPruned ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 rounded-full px-2.5 py-0.5">
-                              <EyeOff className="w-3 h-3" /> Lab only
+                          {isCoreOption ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-full px-2.5 py-0.5">
+                              <Eye className="w-3 h-3" /> Core Configurator
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-full px-2.5 py-0.5">
-                              <Eye className="w-3 h-3" /> Visible
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 rounded-full px-2.5 py-0.5">
+                              <EyeOff className="w-3 h-3" /> Lab Rate Only
                             </span>
                           )}
                         </td>

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { SOLEX_LENS_OPTIONS } from "@/lib/solex-lens-pricing";
+import { SOLEX_LENS_OPTIONS, CORE_FIVE_LENS_IDS } from "@/lib/solex-lens-pricing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const CORE_SET = new Set<string>(CORE_FIVE_LENS_IDS);
 
 export async function GET() {
   try {
@@ -19,7 +21,7 @@ export async function GET() {
           type: lens.category,
           index: lens.index,
           description: lens.description,
-          isConfiguratorVisible: !["bifocal-round-top", "bifocal-flat-top", "sv-159-pc", "sv-156-hmc"].includes(lens.id),
+          isConfiguratorVisible: CORE_SET.has(lens.id),
         })),
       });
     }
@@ -33,14 +35,14 @@ export async function GET() {
       const staticMatch = SOLEX_LENS_OPTIONS.find((s) => s.id === lens.id);
       return {
         id: lens.id,
-        name: lens.name,
+        name: lens.name || staticMatch?.name || "",
         basePrice: lens.price,
         pricePlus40: lens.pricePlus40 && lens.pricePlus40 > 0 ? lens.pricePlus40 : lens.price + 400,
         category: lens.type ?? staticMatch?.category ?? "single_vision",
         index: lens.index ?? staticMatch?.index ?? "1.56",
         description: lens.description ?? staticMatch?.description ?? "",
         coating: staticMatch?.coating ?? "Standard",
-        isConfiguratorVisible: lens.isConfiguratorVisible,
+        isConfiguratorVisible: CORE_SET.has(lens.id),
       };
     });
 

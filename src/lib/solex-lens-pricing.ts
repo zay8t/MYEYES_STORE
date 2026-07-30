@@ -9,96 +9,127 @@ export interface SolexLensOption {
   pricePlus40?: number;
 }
 
+export const CORE_FIVE_LENS_IDS = [
+  "progressive-freeform",
+  "sv-156-bluecut",
+  "sv-156-photogrey",
+  "sv-156-photogrey-bluecut",
+  "sv-167-shmc",
+] as const;
+
 export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
+  // 5 CORE CUSTOMER CONFIGURATOR OPTIONS (in exact order)
   {
-    id: "sv-156-hc",
-    name: "MY EYES 1.56 Diamond Hard Coat",
-    coating: "Univex Green / Scratch Resistant",
+    id: "progressive-freeform",
+    name: "MY EYES Hard Crystal Coat Progressive Standard",
+    coating: "Univex Progressive HMC",
     index: "1.56",
-    description: "Standard scratch-resistant clear lenses for everyday wear",
-    category: "single_vision",
-    basePrice: 300,
-    pricePlus40: 700,
-  },
-  {
-    id: "sv-156-hmc",
-    name: "MY EYES 1.56 HMC Anti-Reflective",
-    coating: "Univex Green Anti-Reflective",
-    index: "1.56",
-    description: "Anti-reflective coating reduces glare & reflections",
-    category: "single_vision",
-    basePrice: 480,
-    pricePlus40: 880,
+    description: "No-line seamless transition between distance, mid & reading vision",
+    category: "progressive",
+    basePrice: 650,
+    pricePlus40: 1050,
   },
   {
     id: "sv-156-bluecut",
-    name: "MY EYES 1.56 HMC UV420 Blue Cut",
+    name: "MY EYES Blue Light Filter + UV Protection HMC",
     coating: "Univex Blue Cut UV420",
     index: "1.56",
-    description: "Digital protection blocking harmful screen blue light",
+    description: "Digital screen protection blocking harmful blue light & UV rays",
     category: "single_vision",
     basePrice: 550,
     pricePlus40: 950,
   },
   {
     id: "sv-156-photogrey",
-    name: "MY EYES 1.56 Photo Grey SHMC",
+    name: "MY EYES Sun Adaptive Photochromic HMC",
     coating: "Univex Light Intelligent Photochromic",
     index: "1.56",
-    description: "Darkens outdoors in sunlight and clears indoors",
+    description: "Intelligent photochromic tint darkens outdoors in sunlight & clears indoors",
     category: "single_vision",
     basePrice: 800,
     pricePlus40: 1200,
   },
   {
     id: "sv-156-photogrey-bluecut",
-    name: "MY EYES 1.56 Photo Grey SHMC + Blue Cut (Ice Vision)",
-    coating: "Super Flat Blue Coating + Photochromic",
+    name: "MY EYES Dual Shield - Blue Light & Photochromic HMC",
+    coating: "Super Flat Blue + Photochromic",
     index: "1.56",
-    description: "Ultimate dual protection: Photochromic + Screen Blue Light filter",
+    description: "Dual protection combining photochromic tint with screen blue light filter",
     category: "single_vision",
     basePrice: 1600,
     pricePlus40: 2000,
   },
   {
+    id: "sv-167-shmc",
+    name: "MY EYES Ultra Thin Index",
+    coating: "Super Hydrophobic HMC",
+    index: "1.67",
+    description: "Ultra thin & lightweight high-index design engineered for high prescriptions",
+    category: "single_vision",
+    basePrice: 1200,
+    pricePlus40: 1600,
+  },
+
+  // RAW LAB / BASE RATES (Available in Admin Lens Pricing Manager & Database)
+  {
+    id: "sv-156-hc",
+    name: "MY EYES 1.56 Diamond Hard Coat (Lab Only)",
+    coating: "Univex Green / Scratch Resistant",
+    index: "1.56",
+    description: "Standard scratch-resistant clear lab rate",
+    category: "single_vision",
+    basePrice: 300,
+    pricePlus40: 700,
+  },
+  {
+    id: "sv-156-hmc",
+    name: "MY EYES 1.56 HMC Anti-Reflective (Lab Only)",
+    coating: "Univex Green Anti-Reflective",
+    index: "1.56",
+    description: "Anti-reflective coating clear lab rate",
+    category: "single_vision",
+    basePrice: 480,
+    pricePlus40: 880,
+  },
+  {
     id: "sv-159-pc",
-    name: "MY EYES 1.59 Polycarbonate SHMC",
+    name: "MY EYES 1.59 Polycarbonate Impact Safe (Lab Only)",
     coating: "Graphene Material Impact Resistant",
     index: "1.59",
-    description: "Impact-resistant shatterproof lenses for rimless & sports frames",
+    description: "Shatterproof polycarbonate clear lab rate",
     category: "single_vision",
     basePrice: 700,
     pricePlus40: 1100,
   },
   {
     id: "sv-159-pc-bluecut",
-    name: "MY EYES 1.59 Polycarbonate SHMC + Blue Cut",
+    name: "MY EYES 1.59 Polycarbonate Blue Cut (Lab Only)",
     coating: "Univex Blue Coating + Polycarbonate",
     index: "1.59",
-    description: "Shatterproof polycarbonate with digital blue cut protection",
+    description: "Shatterproof polycarbonate blue cut lab rate",
     category: "single_vision",
     basePrice: 1200,
     pricePlus40: 1600,
   },
   {
-    id: "sv-167-shmc",
-    name: "MY EYES 1.67 Ultra Thin High Index SHMC",
-    coating: "Super Hydrophobic HMC",
-    index: "1.67",
-    description: "Ultra thin & lightweight design for strong prescriptions",
-    category: "single_vision",
-    basePrice: 1200,
-    pricePlus40: 1600,
-  },
-  {
-    id: "progressive-freeform",
-    name: "MY EYES Progressive Free Form 1.56 HMC",
-    coating: "Univex Free Form HMC",
+    id: "bifocal-round-top",
+    name: "MY EYES 1.56 Round Top Bifocal (Lab Only)",
+    coating: "Univex Bifocal HMC",
     index: "1.56",
-    description: "No-line seamless transition between distance, mid & reading",
-    category: "progressive",
-    basePrice: 650,
-    pricePlus40: 1050,
+    description: "Lined round top bifocal lab rate",
+    category: "bifocal",
+    basePrice: 450,
+    pricePlus40: 850,
+  },
+  {
+    id: "bifocal-flat-top",
+    name: "MY EYES 1.56 Flat Top Bifocal (Lab Only)",
+    coating: "Univex Bifocal HMC",
+    index: "1.56",
+    description: "Lined flat top bifocal lab rate",
+    category: "bifocal",
+    basePrice: 600,
+    pricePlus40: 1000,
   },
 ];
 
@@ -296,19 +327,19 @@ function getRawSolexLensPrice(
 
     // 9. ROUND TOP BIFOCAL 1.56
     case "bifocal-round-top": {
-      if (add >= 1.0 && add <= 2.5) return 450; // HMC default
+      if (add >= 1.0 && add <= 2.5) return 450;
       return 450;
     }
 
     // 10. FLAT TOP BIFOCAL 1.56
     case "bifocal-flat-top": {
-      if (add >= 1.0 && add <= 2.5) return 600; // HMC default
+      if (add >= 1.0 && add <= 2.5) return 600;
       return 600;
     }
 
     // 11. PROGRESSIVE FREE FORM 1.56
     case "progressive-freeform": {
-      if (add >= 1.0 && add <= 2.5) return 650; // HMC default
+      if (add >= 1.0 && add <= 2.5) return 650;
       return 650;
     }
 
