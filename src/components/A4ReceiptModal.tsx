@@ -39,7 +39,7 @@ interface OrderItem {
   lensBasePriceValue: number | null;
   lensMultiplier: number | null;
   lensFinalPrice: number | null;
-  isAsymmetricRx?: boolean;
+  isAsymmetricRx?: boolean | null;
   rightEyeLensPrice?: number | null;
   leftEyeLensPrice?: number | null;
   rightMultiplier?: number | null;

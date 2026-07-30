@@ -323,8 +323,6 @@ export default function PrescriptionModal({
   const parsedOsSph = parseFloat(rx.osSph) || 0;
   const parsedOsCyl = parseFloat(rx.osCyl) || 0;
   const parsedAdd = isPresbyopiaActive ? (parseFloat(rx.add || addPower) || 1.5) : 0;
-  const maxSph = Math.abs(parsedOdSph) > Math.abs(parsedOsSph) ? parsedOdSph : parsedOsSph;
-  const maxCyl = Math.abs(parsedOdCyl) > Math.abs(parsedOsCyl) ? parsedOdCyl : parsedOsCyl;
 
   const currentLensObj = useMemo(() =>
     activeCustomerLenses.find(l => l.id === selectedLensId) || activeCustomerLenses[0] || SOLEX_LENS_OPTIONS[0],
