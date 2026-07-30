@@ -40,6 +40,11 @@ export interface PrescriptionDetails {
   lensMultiplier?: number;
   lensFinalPrice?: number;
   framePrice?: number;
+  isAsymmetricRx?: boolean;
+  rightEyeLensPrice?: number;
+  leftEyeLensPrice?: number;
+  rightMultiplier?: number;
+  leftMultiplier?: number;
 }
 
 interface PrescriptionModalProps {
