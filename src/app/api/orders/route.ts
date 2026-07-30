@@ -22,6 +22,11 @@ interface PrescriptionInput {
   lensMultiplier?: number | null;
   lensFinalPrice?: number | null;
   framePrice?: number | null;
+  isAsymmetricRx?: boolean;
+  rightEyeLensPrice?: number | null;
+  leftEyeLensPrice?: number | null;
+  rightMultiplier?: number | null;
+  leftMultiplier?: number | null;
 }
 
 interface OrderItemInput {
