@@ -54,8 +54,8 @@ export default async function AdminLensPricingPage() {
       const staticMatch = SOLEX_LENS_OPTIONS.find(s => s.id === l.id);
       return {
         ...l,
-        name: l.name || staticMatch?.name || "",
-        description: l.description || staticMatch?.description || "",
+        name: staticMatch?.name || l.name || "",
+        description: staticMatch?.description || l.description || "",
         isConfiguratorVisible: CORE_SET.has(l.id),
       };
     });

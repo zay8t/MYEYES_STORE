@@ -21,7 +21,7 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
   // 5 CORE CUSTOMER CONFIGURATOR OPTIONS (in exact order)
   {
     id: "progressive-freeform",
-    name: "MY EYES Hard Crystal Coat Progressive Standard",
+    name: "MY EYES CR Hard Crystal Coat",
     coating: "Univex Progressive HMC",
     index: "1.56",
     description: "No-line seamless transition between distance, mid & reading vision",

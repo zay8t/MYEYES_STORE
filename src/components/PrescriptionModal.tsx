@@ -231,10 +231,7 @@ export default function PrescriptionModal({
   const [selectedLensId, setSelectedLensId] = useState<string>("progressive-freeform");
   const [lensOptions, setLensOptions] = useState<SolexLensOption[]>([]);
 
-  // Step 3: Presbyopia & Prescription
-  const [hasAdd, setHasAdd] = useState<boolean | null>(null);
-  const [addPower, setAddPower] = useState("+1.50");
-  const [frameSetup, setFrameSetup] = useState<"separate" | "combined" | null>("combined");
+  // Step 3: Prescription
 
   const [uploadMode, setUploadMode] = useState<"upload" | "manual">("upload");
   const [, setRxFile] = useState<File | null>(null);
@@ -259,9 +256,7 @@ export default function PrescriptionModal({
     if (!isOpen) {
       setStep(1);
       setLead({ name: "", age: "", whatsapp: "" });
-      setHasAdd(null);
-      setAddPower("+1.50");
-      setFrameSetup("combined");
+
       setUploadMode("upload");
       setRxFile(null);
       setRxPreview("");
@@ -312,22 +307,12 @@ export default function PrescriptionModal({
     ).filter((l): l is SolexLensOption => Boolean(l));
   }, [lensOptions]);
 
-  // Conditional +40 Presbyopia Assistant Routing logic:
-  // ONLY active if Age >= 40 AND user chose Progressive ("MY EYES Hard Crystal Coat Progressive Standard")
-  const isPresbyopiaActive = useMemo(() => {
-    const ageNum = parseInt(lead.age, 10) || 0;
-    const isProgressiveSelected = selectedLensId === "progressive-freeform";
-    if (isProgressiveSelected && ageNum >= 40) return true;
-    if (isProgressiveSelected && (hasAdd === true || parseFloat(rx.add) > 0)) return true;
-    return false;
-  }, [selectedLensId, lead.age, hasAdd, rx.add]);
 
   // Pricing calculations
   const parsedOdSph = parseFloat(rx.odSph) || 0;
   const parsedOdCyl = parseFloat(rx.odCyl) || 0;
   const parsedOsSph = parseFloat(rx.osSph) || 0;
   const parsedOsCyl = parseFloat(rx.osCyl) || 0;
-  const parsedAdd = isPresbyopiaActive ? (parseFloat(rx.add || addPower) || 1.5) : 0;
 
   const currentLensObj = useMemo(() =>
     activeCustomerLenses.find(l => l.id === selectedLensId) || activeCustomerLenses[0] || SOLEX_LENS_OPTIONS[0],
@@ -424,11 +409,6 @@ export default function PrescriptionModal({
       if (extractedValues.odAxis) updates.odAxis = extractedValues.odAxis;
       if (extractedValues.osAxis) updates.osAxis = extractedValues.osAxis;
       if (extractedValues.pd) updates.pd = extractedValues.pd;
-      if (extractedValues.add) {
-        updates.add = formatSignedNotation(extractedValues.add);
-        setAddPower(formatSignedNotation(extractedValues.add));
-        setHasAdd(true);
-      }
 
       setRx(prev => ({ ...prev, ...updates }));
       setOcrExtracted(true);
@@ -466,7 +446,7 @@ export default function PrescriptionModal({
       osCyl: parsedOsCyl || null,
       osAxis: rx.osAxis ? parseInt(rx.osAxis, 10) : null,
       pd: parseFloat(rx.pd) || 63,
-      add: parsedAdd || null,
+      add: null,
       rxFileUrl: rx.rxFileUrl,
       notes: rx.notes,
       lensBasePriceKey: pricingResult?.basePriceKey,
@@ -584,12 +564,6 @@ export default function PrescriptionModal({
                     placeholder="e.g. 42"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
                   />
-                  {parseInt(lead.age) >= 40 && (
-                    <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-1.5 mt-2 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                      If you choose progressive lenses, our +40 Presbyopia assistant will activate automatically.
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -648,9 +622,6 @@ export default function PrescriptionModal({
                 {activeCustomerLenses.map((lens, idx) => {
                   const isSelected = selectedLensId === lens.id;
                   const meta = CORE_CONSUMER_META[lens.id];
-                  const ageNum = parseInt(lead.age, 10) || 0;
-                  const isProgressive = lens.id === "progressive-freeform";
-                  const isPresbyopiaOption = isProgressive && ageNum >= 40;
 
                   const lensPricingResult = calculateTotalLensPrice(
                     lens.id,
@@ -696,11 +667,6 @@ export default function PrescriptionModal({
                             <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{lens.description}</p>
                             <p className="text-[10px] font-semibold text-slate-400 mt-1">{lens.index} Index · {lens.coating}</p>
 
-                            {isPresbyopiaOption && (
-                              <p className="text-[10px] font-bold text-amber-700 mt-1 flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-amber-600" /> +40 Presbyopia Guided Package
-                              </p>
-                            )}
                           </div>
                         </div>
 
@@ -728,7 +694,7 @@ export default function PrescriptionModal({
             </div>
           )}
 
-          {/* STEP 3: PRESCRIPTION & REVIEW (WITH CONDITIONAL +40 ASSISTANT & SIGNED KEYPAD) */}
+          {/* STEP 3: PRESCRIPTION & REVIEW */}
           {step === 3 && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -745,74 +711,6 @@ export default function PrescriptionModal({
                 </button>
               </div>
 
-              {/* CONDITIONAL +40 PRESBYOPIA ASSISTANT MODULE */}
-              {isPresbyopiaActive && (
-                <div className="p-4 rounded-2xl bg-amber-50/80 border-2 border-amber-300/80 space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">+40 Presbyopia Guided Assistant</h4>
-                      <p className="text-[11px] text-amber-800">You selected Progressive Standard for age {lead.age}. Let&apos;s finalize your reading ADD power.</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-slate-800">Do you have an Addition (ADD) value?</p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setHasAdd(true)}
-                          className={cn("px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer", hasAdd !== false ? "bg-amber-500 text-white" : "bg-white text-slate-600 border border-slate-200")}
-                        >
-                          Yes
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setHasAdd(false)}
-                          className={cn("px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer", hasAdd === false ? "bg-slate-800 text-white" : "bg-white text-slate-600 border border-slate-200")}
-                        >
-                          No / Standard
-                        </button>
-                      </div>
-                    </div>
-
-                    {hasAdd !== false && (
-                      <div className="grid grid-cols-2 gap-3 pt-1">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Near ADD Power</label>
-                          <input
-                            type="text"
-                            value={rx.add}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setAddPower(val);
-                              setRx(prev => ({ ...prev, add: val }));
-                            }}
-                            onBlur={() => setRx(prev => ({ ...prev, add: formatSignedNotation(rx.add || addPower) }))}
-                            placeholder="+1.50"
-                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs font-bold focus:ring-2 focus:ring-amber-400 bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Frame Setup</label>
-                          <select
-                            value={frameSetup || "combined"}
-                            onChange={e => setFrameSetup(e.target.value as "combined" | "separate")}
-                            className="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs font-bold focus:ring-2 focus:ring-amber-400 bg-white"
-                          >
-                            <option value="combined">1 Combined Frame (Progressive)</option>
-                            <option value="separate">2 Separate Frames (Distance & Near)</option>
-                          </select>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* UPLOAD CARD / CAMERA SCANNER */}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
@@ -978,8 +876,8 @@ export default function PrescriptionModal({
                     </div>
                   </div>
 
-                  {/* PD & Near ADD */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* PD */}
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">PD (mm)</label>
                       <input
@@ -991,19 +889,6 @@ export default function PrescriptionModal({
                         placeholder="63"
                       />
                     </div>
-                    {isPresbyopiaActive && (
-                      <div>
-                        <label className="block text-[11px] font-bold text-amber-800 mb-1 uppercase tracking-wider">Near ADD</label>
-                        <input
-                          type="text"
-                          value={rx.add}
-                          onChange={e => setRx(prev => ({ ...prev, add: e.target.value }))}
-                          onBlur={() => setRx(prev => ({ ...prev, add: formatSignedNotation(rx.add) }))}
-                          className="w-full px-3 py-2 rounded-xl border border-amber-300 text-amber-900 text-xs font-bold text-center focus:ring-2 focus:ring-amber-400 bg-amber-50/50"
-                          placeholder="+1.50"
-                        />
-                      </div>
-                    )}
                   </div>
 
                   <div>
@@ -1068,7 +953,7 @@ export default function PrescriptionModal({
                   <div className="text-[10px] font-mono text-slate-600 bg-white rounded-xl border border-slate-200 p-2.5 space-y-0.5">
                     <p>OD: SPH {rx.odSph || "0.00"} CYL {rx.odCyl || "+0.00"} AXIS {rx.odAxis || "—"}</p>
                     <p>OS: SPH {rx.osSph || "0.00"} CYL {rx.osCyl || "+0.00"} AXIS {rx.osAxis || "—"}</p>
-                    <p>PD: {rx.pd}mm {isPresbyopiaActive ? `· ADD: ${rx.add}` : ""}</p>
+                    <p>PD: {rx.pd}mm</p>
                   </div>
                 )}
 

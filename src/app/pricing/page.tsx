@@ -10,7 +10,7 @@ import { formatPrice } from "@/lib/utils";
 const CORE_LENSES = [
   {
     id: "progressive-freeform",
-    name: "MY EYES Hard Crystal Coat Progressive Standard",
+    name: "MY EYES CR Hard Crystal Coat",
     baseKey: "B1",
     description: "Multi-focal progression for presbyopia with hard crystal scratch-resistant coating.",
   },
