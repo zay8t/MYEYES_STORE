@@ -1018,23 +1018,61 @@ export default function PrescriptionModal({
               {/* Price & Order Summary */}
               <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-2.5">
                 <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Price & Order Summary</p>
+                
+                {/* 1. Frame Base */}
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Frame — {productName}</span>
                   <span className="font-bold text-slate-900">{formatPrice(productPrice)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-600">
-                  <span>{currentLensObj?.name}</span>
-                  <span className="font-bold text-slate-900">+Rs. {exactCalculatedLensPrice}/-</span>
+                
+                {/* 2 & 3. Lens Choice & Prescription Power Add-on */}
+                <div className="flex justify-between items-center text-xs text-slate-600">
+                  <div>
+                    <span className="block font-semibold text-slate-900">
+                      {currentLensObj?.name} {pricingResult?.basePriceKey ? `(${pricingResult.basePriceKey})` : ""}
+                    </span>
+                    {!isOutOfRange && pricingResult && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Base Price: {formatPrice(pricingResult.basePriceValue)} 
+                        {!pricingResult.isAsymmetricRx && ` × ${pricingResult.multiplier.toFixed(2)}x`}
+                      </span>
+                    )}
+                  </div>
+                  {isOutOfRange ? (
+                    <span className="px-2 py-1 text-[10px] font-extrabold uppercase text-red-700 bg-red-50 border border-red-200 rounded-lg animate-pulse">
+                      Custom RX Required — Contact Support
+                    </span>
+                  ) : (
+                    <span className="font-bold text-slate-900">+Rs. {exactCalculatedLensPrice}/-</span>
+                  )}
                 </div>
+
+                {/* 4. Per-Eye Breakdown (If Asymmetric) */}
+                {!isOutOfRange && pricingResult?.isAsymmetricRx && (
+                  <div className="text-[10px] text-amber-800 bg-amber-50/50 border border-amber-200/50 rounded-xl p-2 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Right Eye (OD) Multiplier: {pricingResult.rightMultiplier?.toFixed(2)}x</span>
+                      <span className="font-bold">Rs. {pricingResult.rightEyeLensPrice}/-</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Left Eye (OS) Multiplier: {pricingResult.leftMultiplier?.toFixed(2)}x</span>
+                      <span className="font-bold">Rs. {pricingResult.leftEyeLensPrice}/-</span>
+                    </div>
+                    <div className="text-[9px] text-slate-500 text-center border-t border-amber-200/40 pt-1 mt-1 font-semibold">
+                      OD Price: Rs. {pricingResult.rightEyeLensPrice} | OS Price: Rs. {pricingResult.leftEyeLensPrice}
+                    </div>
+                  </div>
+                )}
 
                 {uploadMode === "manual" && (
                   <div className="text-[10px] font-mono text-slate-600 bg-white rounded-xl border border-slate-200 p-2.5 space-y-0.5">
-                    <p>OD: SPH {rx.odSph} CYL {rx.odCyl || "+0.00"} AXIS {rx.odAxis || "—"}</p>
-                    <p>OS: SPH {rx.osSph} CYL {rx.osCyl || "+0.00"} AXIS {rx.osAxis || "—"}</p>
+                    <p>OD: SPH {rx.odSph || "0.00"} CYL {rx.odCyl || "+0.00"} AXIS {rx.odAxis || "—"}</p>
+                    <p>OS: SPH {rx.osSph || "0.00"} CYL {rx.osCyl || "+0.00"} AXIS {rx.osAxis || "—"}</p>
                     <p>PD: {rx.pd}mm {isPresbyopiaActive ? `· ADD: ${rx.add}` : ""}</p>
                   </div>
                 )}
 
+                {/* 5. Live Total */}
                 <div className="flex justify-between pt-2 border-t border-slate-200">
                   <span className="text-sm font-extrabold text-slate-900">Total</span>
                   <span className="text-base font-extrabold text-slate-900">{formatPrice(totalPrice)}</span>
@@ -1058,7 +1096,7 @@ export default function PrescriptionModal({
                 )}
               >
                 <Check className="w-4.5 h-4.5" />
-                {isOutOfRange ? "Not Available" : `Add to Bag — ${formatPrice(totalPrice)}`}
+                Add to Bag — {formatPrice(totalPrice)}
               </button>
             </div>
           )}
