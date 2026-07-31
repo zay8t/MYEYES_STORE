@@ -280,14 +280,16 @@ export function calculateProgressivePrice(
   else return null;
 
   // Evaluate Tiers
-  // Tier 1 (Base Range): SPH >= 0.00 && SPH <= 3.00 && CYL === 0 && ADD >= 1.00 && ADD <= 3.00
-  if (parsedSph >= 0.00 && parsedSph <= 3.00 && parsedCyl === 0 && parsedAdd >= 1.00 && parsedAdd <= 3.00) {
+  const cylIsZero = absCyl < 0.125; // tolerance: half a 0.25D clinical step — guards against OCR noise
+
+  // Tier 1 (Base Range): SPH 0.00–3.00, CYL ≈ 0, ADD 0.50–3.00
+  if (parsedSph >= 0.00 && parsedSph <= 3.00 && cylIsZero && parsedAdd >= 0.50 && parsedAdd <= 3.00) {
     baseKey = pIndex;
     baseValue = basePrices[pIndex as keyof BasePriceConfig];
     multiplier = 1.00;
   }
-  // Tier 2 (Hyperopic High SPH): SPH >= 3.25 && SPH <= 6.00 && CYL === 0 && ADD >= 0.50 && ADD <= 3.50
-  else if (parsedSph >= 3.25 && parsedSph <= 6.00 && parsedCyl === 0 && parsedAdd >= 0.50 && parsedAdd <= 3.50) {
+  // Tier 2 (Hyperopic High SPH): SPH 3.25–6.00, CYL ≈ 0, ADD 0.50–3.50
+  else if (parsedSph >= 3.25 && parsedSph <= 6.00 && cylIsZero && parsedAdd >= 0.50 && parsedAdd <= 3.50) {
     baseKey = `${pIndex}_tier2`;
     baseValue = basePrices[baseKey as keyof BasePriceConfig];
     multiplier = 1.00;

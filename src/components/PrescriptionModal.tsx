@@ -269,7 +269,7 @@ export default function PrescriptionModal({
   const [rx, setRx] = useState({
     odSph: "+0.00", odCyl: "+0.00", odAxis: "",
     osSph: "+0.00", osCyl: "+0.00", osAxis: "",
-    pd: "63", add: "+1.50", rxFileUrl: "", notes: "",
+    pd: "63", add: "", rxFileUrl: "", notes: "",
   });
 
   // Reset state on modal open/close
@@ -285,7 +285,7 @@ export default function PrescriptionModal({
       setOcrError("");
       setOcrSanityOpen(false);
       setExtractedValues(null);
-      setRx({ odSph: "+0.00", odCyl: "+0.00", odAxis: "", osSph: "+0.00", osCyl: "+0.00", osAxis: "", pd: "63", add: "+1.50", rxFileUrl: "", notes: "" });
+      setRx({ odSph: "+0.00", odCyl: "+0.00", odAxis: "", osSph: "+0.00", osCyl: "+0.00", osAxis: "", pd: "63", add: "", rxFileUrl: "", notes: "" });
       setSelectedLensId("progressive-freeform");
     }
   }, [isOpen]);
@@ -320,25 +320,43 @@ export default function PrescriptionModal({
     if (isOpen) loadLensOptions();
   }, [isOpen]);
 
-  // Cart items count
+  // Cart items count — only count prescription-configured frames for multi-frame detection
   const cartItems = useCartStore((s) => s.items);
-  const cartFramesCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems]);
+  const cartFramesCount = useMemo(() =>
+    cartItems
+      .filter(item => item.prescription !== undefined)
+      .reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  );
+  // +1 for the current frame being configured
   const totalSelectedFrames = useMemo(() => 1 + cartFramesCount, [cartFramesCount]);
 
-  const userAge = useMemo(() => parseInt(lead.age) || 0, [lead.age]);
-  const parsedAdd = useMemo(() => parseFloat(rx.add) || 0, [rx.add]);
-  const hasValidAdd = useMemo(() => parsedAdd >= 0.50 && parsedAdd <= 3.50, [parsedAdd]);
+  // Strict numeric parsing — guards against empty string and NaN
+  const userAge = useMemo(() => parseInt(String(lead.age || "0"), 10) || 0, [lead.age]);
+  const parsedAdd = useMemo(() => {
+    const raw = rx.add.trim();
+    if (!raw) return 0;
+    const val = parseFloat(raw);
+    return isNaN(val) ? 0 : val;
+  }, [rx.add]);
+  // ADD must be explicitly entered (non-empty) AND within clinical range
+  const hasValidAdd = useMemo(() =>
+    rx.add.trim() !== "" && parsedAdd >= 0.50 && parsedAdd <= 3.50,
+    [rx.add, parsedAdd]
+  );
 
   const flowMode = useMemo(() => {
-    if (userAge >= 40 && hasValidAdd) {
-      if (totalSelectedFrames >= 2) {
-        return "FLOW_2"; // Two Frame Standard (forces Single Vision)
-      } else {
-        return "FLOW_3"; // Progressive Flow
-      }
+    // FLOW 1: Standard Single Vision — age < 40, or no ADD entered
+    if (userAge < 40 || !hasValidAdd || isNaN(parsedAdd)) {
+      return "FLOW_1";
     }
-    return "FLOW_1"; // Standard Single Vision
-  }, [userAge, hasValidAdd, totalSelectedFrames]);
+    // FLOW 2: Multi-frame presbyopia bypass — 2+ prescription frames
+    if (totalSelectedFrames >= 2) {
+      return "FLOW_2";
+    }
+    // FLOW 3: Single-frame presbyopia progressive
+    return "FLOW_3";
+  }, [userAge, hasValidAdd, parsedAdd, totalSelectedFrames]);
 
   // Active customer lens list (defaults to static core if state loading)
   const activeCustomerLenses = useMemo(() => {
@@ -670,7 +688,11 @@ export default function PrescriptionModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Select Frame Lens Package</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Select from our 5 core precision optical lens packages.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {flowMode === "FLOW_3"
+                      ? "Progressive (+40) compatible lenses — Ultra Thin excluded."
+                      : "Select from our 5 core precision optical lens packages."}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -680,6 +702,22 @@ export default function PrescriptionModal({
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to Info
                 </button>
               </div>
+
+              {/* FLOW_3: Progressive mode banner */}
+              {flowMode === "FLOW_3" && (
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800">
+                  <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                  <span>Progressive (+40) Mode — Lenses are matched to your near addition ({rx.add}) for seamless bifocal vision.</span>
+                </div>
+              )}
+
+              {/* FLOW_2: Multi-frame bypass pill */}
+              {flowMode === "FLOW_2" && (
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-sky-50 border border-sky-200 text-xs font-semibold text-sky-800">
+                  <Check className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                  <span>Multi-frame package detected — Standard single-vision lens rates applied.</span>
+                </div>
+              )}
 
               <div className="space-y-3">
                 {activeCustomerLenses.map((lens, idx) => {
