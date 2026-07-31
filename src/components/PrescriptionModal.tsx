@@ -634,17 +634,47 @@ export default function PrescriptionModal({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Age <span className="text-slate-400 font-normal">(Helps us tailor lens options)</span></label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="120"
-                    value={lead.age}
-                    onChange={e => setLead({ ...lead, age: e.target.value })}
-                    placeholder="e.g. 42"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
-                  />
+                {/* Age + ADD side by side */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Age <span className="text-slate-400 font-normal">(tailors lenses)</span></label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={lead.age}
+                      onChange={e => setLead({ ...lead, age: e.target.value })}
+                      placeholder="e.g. 42"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      ADD Power
+                      {userAge >= 40 ? (
+                        <span className="ml-1 text-[9px] font-extrabold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded tracking-wider">+40 Required</span>
+                      ) : (
+                        <span className="text-slate-400 font-normal"> (if applicable)</span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={rx.add}
+                      onChange={e => setRx(prev => ({ ...prev, add: e.target.value }))}
+                      onBlur={() => {
+                        const raw = rx.add.trim();
+                        if (raw && !isNaN(parseFloat(raw))) {
+                          const val = parseFloat(raw);
+                          setRx(prev => ({ ...prev, add: (val >= 0 ? "+" : "") + val.toFixed(2) }));
+                        }
+                      }}
+                      placeholder="+1.50"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl border text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all",
+                        userAge >= 40 ? "border-amber-300 bg-amber-50/30" : "border-slate-200"
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -722,10 +752,41 @@ export default function PrescriptionModal({
               <div className="space-y-3">
                 {activeCustomerLenses.map((lens, idx) => {
                   const isSelected = selectedLensId === lens.id;
-                  const consumerLens = CORE_CONSUMER_LENSES[lens.id] || {
-                    title: lens.name,
-                    subtitle: "",
-                    description: lens.description,
+
+                  // Progressive mode: override titles to clearly label as progressive lenses
+                  const PROGRESSIVE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; description: string }> = {
+                    "progressive-freeform": {
+                      title: "MY EYES Progressive Standard",
+                      subtitle: "Progressive",
+                      description: "No-line seamless transition between distance, intermediate, and near vision with hard crystal coating.",
+                    },
+                    "sv-156-bluecut": {
+                      title: "MY EYES Progressive Blue Light Filter",
+                      subtitle: "Progressive + Blue Shield",
+                      description: "Progressive distance-to-reading vision with full digital screen blue light & UV protection.",
+                    },
+                    "sv-156-photogrey": {
+                      title: "MY EYES Progressive Sun Adaptive",
+                      subtitle: "Progressive + Smart Tint",
+                      description: "Progressive lens that darkens automatically outdoors and clears indoors — distance to near.",
+                    },
+                    "sv-156-photogrey-bluecut": {
+                      title: "MY EYES Progressive Dual Shield",
+                      subtitle: "Progressive + Blue + Photochromic",
+                      description: "Ultimate progressive protection: sun-adaptive tint + blue light filter across full vision range.",
+                    },
+                  };
+
+                  const consumerLens = flowMode === "FLOW_3"
+                    ? (PROGRESSIVE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "Progressive", description: lens.description })
+                    : (CORE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "", description: lens.description });
+
+                  // In FLOW_3 before prescription is entered: show Tier 1 base price (P-rate) as starting price
+                  const PROGRESSIVE_BASE_PRICES: Record<string, keyof typeof basePrices> = {
+                    "progressive-freeform": "P1",
+                    "sv-156-bluecut": "P2",
+                    "sv-156-photogrey": "P3",
+                    "sv-156-photogrey-bluecut": "P4",
                   };
 
                   const lensPricingResult = flowMode === "FLOW_3"
@@ -742,8 +803,15 @@ export default function PrescriptionModal({
                         { sph: parsedOsSph, cyl: parsedOsCyl },
                         basePrices
                       );
-                  const calcPrice = lensPricingResult ? lensPricingResult.finalPrice : 0;
-                  const isLensOutOfRange = lensPricingResult === null && basePricesLoaded;
+
+                  // Fallback to P-base price if no prescription power entered yet
+                  const progressiveFallbackPrice = flowMode === "FLOW_3" && PROGRESSIVE_BASE_PRICES[lens.id]
+                    ? basePrices[PROGRESSIVE_BASE_PRICES[lens.id]] as number
+                    : 0;
+                  const calcPrice = lensPricingResult
+                    ? lensPricingResult.finalPrice
+                    : progressiveFallbackPrice;
+                  const isLensOutOfRange = lensPricingResult === null && basePricesLoaded && flowMode !== "FLOW_3";
 
                   return (
                     <button
@@ -771,7 +839,9 @@ export default function PrescriptionModal({
                               {consumerLens.subtitle && (
                                 <span className={cn(
                                   "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider",
-                                  isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600"
+                                  flowMode === "FLOW_3"
+                                    ? isSelected ? "bg-amber-200 text-amber-900" : "bg-amber-100 text-amber-700"
+                                    : isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600"
                                 )}>
                                   {consumerLens.subtitle}
                                 </span>
