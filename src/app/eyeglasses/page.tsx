@@ -52,7 +52,14 @@ function EyeglassesCatalog() {
   const filtered = products.filter((p) => {
     if (filterShape !== "All" && p.frameShape !== filterShape) return false;
     if (filterMaterial !== "All" && p.material !== filterMaterial) return false;
-    if (genderParam !== "All" && p.gender.toLowerCase() !== genderParam.toLowerCase()) return false;
+    if (genderParam !== "All") {
+      const pGen = (p.gender || "").toLowerCase();
+      const targetGen = genderParam.toLowerCase();
+      if (targetGen === "men" && pGen !== "men" && pGen !== "unisex") return false;
+      if (targetGen === "women" && pGen !== "women" && pGen !== "unisex") return false;
+      if (targetGen === "kids" && pGen !== "kids") return false;
+      if (targetGen !== "men" && targetGen !== "women" && targetGen !== "kids" && pGen !== targetGen) return false;
+    }
     return true;
   });
 

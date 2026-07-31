@@ -1162,6 +1162,20 @@ export default function PrescriptionModal({
                 </div>
               </div>
 
+              {/* Cash on Delivery Advance Payment Notice Banner */}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-2xs">
+                {flowMode === "FLOW_3" || (userAge >= 40 && parsedAdd >= 0.50)
+                  ? "40% advance must for Cash on Delivery progressive orders."
+                  : "25% advance must for Cash on Delivery orders."}
+              </div>
+
+              {/* WhatsApp PD Measurement Notice for Presbyopia (+40) Flow */}
+              {(flowMode === "FLOW_3" || (userAge >= 40 && parsedAdd >= 0.50)) && (
+                <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs text-amber-900 leading-relaxed font-medium">
+                  <strong>Pupillary Distance (PD) Measurement:</strong> For custom Presbyopia (+40) progressive lenses, our optical team will contact you directly on WhatsApp after order placement for your exact Pupillary Distance (PD) measurement.
+                </div>
+              )}
+
               {isOutOfRange && (
                 <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />

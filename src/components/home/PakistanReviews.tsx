@@ -103,7 +103,7 @@ export default function PakistanReviews() {
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-50 border border-slate-200/60">
             <MapPin className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Delivering All Across Pakistan 🇵🇰
+              Worldwide Express Shipping Available
             </span>
           </div>
         </div>

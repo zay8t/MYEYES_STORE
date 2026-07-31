@@ -494,12 +494,12 @@ export default function LensPricingPage() {
                 <div className="pt-2">
                   {!isPresbyopiaMode ? (
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-semibold">
-                      <span>🟢 Single Vision Calculator Active</span>
+                      <span>Single Vision Calculator Active</span>
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-semibold shadow-xs">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>✨ Presbyopia (+40) Progressive Calculator Active</span>
+                      <span>Presbyopia (+40) Progressive Calculator Active</span>
                     </div>
                   )}
                 </div>
@@ -510,6 +510,13 @@ export default function LensPricingPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-l-4 border-amber-500 pl-3">
                   Step 2: Enter Eye Prescription (OD &amp; OS)
                 </h3>
+
+                {/* WhatsApp PD Measurement Notice for Presbyopia (+40) Flow */}
+                {isPresbyopiaMode && (
+                  <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs text-amber-900 leading-relaxed font-medium">
+                    <strong>Pupillary Distance (PD) Measurement:</strong> For custom Presbyopia (+40) progressive lenses, our optical team will contact you directly on WhatsApp after order placement for your exact Pupillary Distance (PD) measurement.
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* OD */}
@@ -574,8 +581,8 @@ export default function LensPricingPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-amber-50/30 rounded-2xl border border-amber-200/60 p-6 sm:p-8">
-                    <div className="flex justify-between items-center mb-6">
+                  <div className="bg-amber-50/30 rounded-2xl border border-amber-200/60 p-6 sm:p-8 space-y-4">
+                    <div className="flex justify-between items-center mb-4">
                       <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
                         {isPresbyopiaMode ? "Estimated Progressive Lens Cost" : "Estimated Lens Cost"}
                       </span>
@@ -612,6 +619,13 @@ export default function LensPricingPage() {
                         </span>
                       </div>
                     )}
+
+                    {/* Cash on Delivery Advance Payment Notice Banner */}
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-2xs">
+                      {isPresbyopiaMode
+                        ? "40% advance must for Cash on Delivery progressive orders."
+                        : "25% advance must for Cash on Delivery orders."}
+                    </div>
                   </div>
                 )}
               </div>

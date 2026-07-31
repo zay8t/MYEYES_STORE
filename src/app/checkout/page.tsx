@@ -44,6 +44,15 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const hasProgressiveItem = items.some((item) => {
+    const nameMatch = (item.name || "").toLowerCase().includes("progressive") || (item.name || "").toLowerCase().includes("presbyopia");
+    const rx = item.prescription as any;
+    const usageMatch = (rx?.lensUsage || "").toLowerCase().includes("progressive");
+    const addMatch = rx?.add && parseFloat(String(rx.add)) >= 0.50;
+    const ageMatch = rx?.age && parseInt(String(rx.age)) >= 40;
+    return Boolean(nameMatch || usageMatch || (addMatch && ageMatch));
+  });
+
   const subtotal = subtotalPrice();
   const deliveryFee = 250; // Fixed 250 PKR
   const grandTotal = subtotal + deliveryFee;
@@ -441,7 +450,7 @@ export default function CheckoutPage() {
 
                   {/* Option 3 Details: COD */}
                   {paymentMethod === "COD" && (
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 animate-fade-in-up">
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 animate-fade-in-up">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
                         <Truck className="w-4 h-4 text-slate-700" />
                         <span>Pay via Cash on Delivery</span>
@@ -449,6 +458,11 @@ export default function CheckoutPage() {
                       <p className="text-[11px] text-slate-500 leading-relaxed">
                         Pay for your eyewear purchase in cash upon home delivery. A standard delivery fee of Rs. 250/- applies.
                       </p>
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-2xs">
+                        {hasProgressiveItem
+                          ? "40% advance must for Cash on Delivery progressive orders."
+                          : "25% advance must for Cash on Delivery orders."}
+                      </div>
                     </div>
                   )}
                 </div>

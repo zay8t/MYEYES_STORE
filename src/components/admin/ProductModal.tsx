@@ -45,9 +45,11 @@ export const FORM_CATEGORY_OPTIONS = [
   { label: "None / Other (Nill)", value: "NILL" },
   { label: "Men's Eyeglasses", value: "MENS_EYEGLASSES" },
   { label: "Women's Eyeglasses", value: "WOMENS_EYEGLASSES" },
+  { label: "Unisex Eyeglasses", value: "UNISEX_EYEGLASSES" },
   { label: "Kids' Eyeglasses", value: "KIDS_EYEGLASSES" },
   { label: "Men's Sunglasses", value: "MENS_SUNGLASSES" },
   { label: "Women's Sunglasses", value: "WOMENS_SUNGLASSES" },
+  { label: "Unisex Sunglasses", value: "UNISEX_SUNGLASSES" },
   { label: "Kids' Sunglasses", value: "KIDS_SUNGLASSES" },
   { label: "Contact Lenses", value: "CONTACT_LENSES" },
   { label: "Accessories", value: "ACCESSORIES" },
@@ -309,6 +311,9 @@ export default function ProductModal({
                     } else if (val === "WOMENS_EYEGLASSES") {
                       setCategory("EYEGLASSES");
                       setGender("Women");
+                    } else if (val === "UNISEX_EYEGLASSES") {
+                      setCategory("EYEGLASSES");
+                      setGender("Unisex");
                     } else if (val === "KIDS_EYEGLASSES") {
                       setCategory("EYEGLASSES");
                       setGender("Kids");
@@ -318,6 +323,9 @@ export default function ProductModal({
                     } else if (val === "WOMENS_SUNGLASSES") {
                       setCategory("SUNGLASSES");
                       setGender("Women");
+                    } else if (val === "UNISEX_SUNGLASSES") {
+                      setCategory("SUNGLASSES");
+                      setGender("Unisex");
                     } else if (val === "KIDS_SUNGLASSES") {
                       setCategory("SUNGLASSES");
                       setGender("Kids");
