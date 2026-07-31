@@ -72,7 +72,7 @@ export default function HomePage() {
             Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 flex-wrap">
             <Link
               href="/eyeglasses"
               className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold uppercase tracking-wider transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/20 hover:scale-[1.02] flex items-center justify-center gap-2.5 shadow-md"
@@ -88,6 +88,19 @@ export default function HomePage() {
             >
               <Sun className="w-4 h-4 text-amber-600" />
               Explore Sunglasses
+            </Link>
+
+            <Link
+              href="/lens-pricing"
+              className="btn-press w-full sm:w-auto px-8 py-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white/80 backdrop-blur-sm hover:border-amber-400 hover:bg-amber-50/60 text-slate-900 text-xs font-extrabold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center gap-2.5 group shadow-xs"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span>
+                <span className="text-amber-600 font-black">Live Prescription</span> Calculator ➔
+              </span>
             </Link>
           </div>
 
