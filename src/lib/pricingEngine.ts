@@ -33,18 +33,51 @@ export interface TotalPricingResult {
   leftMultiplier?: number;
 }
 
+export function parsePower(val: string | number | null | undefined): number {
+  const parsed = parseFloat(String(val || 0));
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+export async function getActiveBasePrices(): Promise<BasePriceConfig> {
+  const prices = { ...DEFAULT_BASE_PRICES };
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const settings = await prisma.basePriceSetting.findMany();
+    if (settings.length === 0) {
+      const seedData = Object.entries(prices).map(([key, val]) => ({
+        key,
+        value: val,
+      }));
+      await prisma.basePriceSetting.createMany({
+        data: seedData,
+      });
+      return prices;
+    }
+    for (const setting of settings) {
+      if (setting.key in prices) {
+        prices[setting.key as keyof typeof prices] = setting.value;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load active base prices from DB, using defaults:", error);
+  }
+  return prices;
+}
+
 /**
  * Calculates exact single lens costs based on absolute SPH and CYL prescription ranges.
  * Returns null if the combination is out-of-range for standard checkout.
  */
 export function calculateSingleEyePrice(
   lensType: string,
-  sph: number,
-  cyl: number,
+  sph: string | number | null | undefined,
+  cyl: string | number | null | undefined,
   basePrices: BasePriceConfig = DEFAULT_BASE_PRICES
 ): PricingResult | null {
-  const absSph = Math.abs(sph);
-  const absCyl = Math.abs(cyl);
+  const parsedSph = parsePower(sph);
+  const parsedCyl = parsePower(cyl);
+  const absSph = Math.abs(parsedSph);
+  const absCyl = Math.abs(parsedCyl);
 
   let baseKey = "";
   let baseValue = 0;
@@ -80,6 +113,8 @@ export function calculateSingleEyePrice(
       else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 0 && absCyl <= 2.00) multiplier = 1.75;
       else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 2.25;
       else if (absSph >= 4.25 && absSph <= 8.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 2.76;
+      else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 2.25 && absCyl <= 4.00) multiplier = 3.00;
+      else if (absSph >= 8.25 && absSph <= 12.00 && absCyl >= 4.25 && absCyl <= 6.00) multiplier = 3.15;
       else return null;
       break;
 
@@ -149,14 +184,19 @@ export function calculateSingleEyePrice(
  */
 export function calculateTotalLensPrice(
   lensType: string,
-  rightEye: { sph: number; cyl: number },
-  leftEye: { sph: number; cyl: number },
+  rightEye: { sph: string | number | null | undefined; cyl: string | number | null | undefined },
+  leftEye: { sph: string | number | null | undefined; cyl: string | number | null | undefined },
   basePrices: BasePriceConfig = DEFAULT_BASE_PRICES
 ): TotalPricingResult | null {
-  const isSymmetric = rightEye.sph === leftEye.sph && rightEye.cyl === leftEye.cyl;
+  const rightSph = parsePower(rightEye.sph);
+  const rightCyl = parsePower(rightEye.cyl);
+  const leftSph = parsePower(leftEye.sph);
+  const leftCyl = parsePower(leftEye.cyl);
+
+  const isSymmetric = rightSph === leftSph && rightCyl === leftCyl;
 
   if (isSymmetric) {
-    const res = calculateSingleEyePrice(lensType, rightEye.sph, rightEye.cyl, basePrices);
+    const res = calculateSingleEyePrice(lensType, rightSph, rightCyl, basePrices);
     if (!res) return null;
     return {
       basePriceKey: res.basePriceKey,
@@ -168,8 +208,8 @@ export function calculateTotalLensPrice(
   }
 
   // Asymmetric: Calculate for each eye and split price
-  const rightRes = calculateSingleEyePrice(lensType, rightEye.sph, rightEye.cyl, basePrices);
-  const leftRes = calculateSingleEyePrice(lensType, leftEye.sph, leftEye.cyl, basePrices);
+  const rightRes = calculateSingleEyePrice(lensType, rightSph, rightCyl, basePrices);
+  const leftRes = calculateSingleEyePrice(lensType, leftSph, leftCyl, basePrices);
 
   if (!rightRes || !leftRes) return null;
 

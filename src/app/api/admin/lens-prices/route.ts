@@ -81,6 +81,37 @@ export async function PATCH(request: Request) {
       data: updateData,
     });
 
+    // Synchronize to BasePriceSetting table for B1-B5 key mapping
+    const baseCodes: Record<string, string> = {
+      "progressive-freeform": "B1",
+      "sv-156-bluecut": "B2",
+      "sv-156-photogrey": "B3",
+      "sv-156-photogrey-bluecut": "B4",
+      "sv-167-shmc": "B5",
+    };
+
+    const baseKey = baseCodes[id];
+    if (baseKey && basePrice !== undefined && basePrice !== null) {
+      await prisma.basePriceSetting.upsert({
+        where: { key: baseKey },
+        update: { value: parseFloat(basePrice) },
+        create: { key: baseKey, value: parseFloat(basePrice) },
+      });
+    }
+
+    // Invalidate cached prices site-wide
+    const { revalidatePath } = await import("next/cache");
+    try {
+      revalidatePath("/lens-pricing");
+      revalidatePath("/pricing");
+      revalidatePath("/admin/lens-pricing");
+      revalidatePath("/admin/base-prices");
+      revalidatePath("/api/admin/base-prices");
+      revalidatePath("/api/base-prices");
+    } catch (err) {
+      console.warn("revalidatePath warning:", err);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to update lens option price:", error);

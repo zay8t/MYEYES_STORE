@@ -127,6 +127,10 @@ model OrderItem {
   rightMultiplier    Float?
   leftMultiplier     Float?
 
+  selectedLensName    String?
+  calculatedLensPrice Float?
+  totalAmount         Float?
+
   order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   prescription   Prescription? @relation(fields: [prescriptionId], references: [id])

@@ -26,8 +26,8 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
     index: "1.56",
     description: "No-line seamless transition between distance, mid & reading vision",
     category: "progressive",
-    basePrice: 650,
-    pricePlus40: 1050,
+    basePrice: 850,
+    pricePlus40: 1250,
   },
   {
     id: "sv-156-bluecut",
@@ -36,8 +36,8 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
     index: "1.56",
     description: "Digital screen protection blocking harmful blue light & UV rays",
     category: "single_vision",
-    basePrice: 550,
-    pricePlus40: 950,
+    basePrice: 1850,
+    pricePlus40: 2250,
   },
   {
     id: "sv-156-photogrey",
@@ -46,8 +46,8 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
     index: "1.56",
     description: "Intelligent photochromic tint darkens outdoors in sunlight & clears indoors",
     category: "single_vision",
-    basePrice: 800,
-    pricePlus40: 1200,
+    basePrice: 1950,
+    pricePlus40: 2350,
   },
   {
     id: "sv-156-photogrey-bluecut",
@@ -56,8 +56,8 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
     index: "1.56",
     description: "Dual protection combining photochromic tint with screen blue light filter",
     category: "single_vision",
-    basePrice: 1600,
-    pricePlus40: 2000,
+    basePrice: 3250,
+    pricePlus40: 3650,
   },
   {
     id: "sv-167-shmc",
@@ -66,8 +66,8 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
     index: "1.67",
     description: "Ultra thin & lightweight high-index design engineered for high prescriptions",
     category: "single_vision",
-    basePrice: 1200,
-    pricePlus40: 1600,
+    basePrice: 1950,
+    pricePlus40: 2350,
   },
 
   // RAW LAB / BASE RATES (Available in Admin Lens Pricing Manager & Database)

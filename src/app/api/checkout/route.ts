@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
           prescriptionId: prescriptionId || null,
           price: parseFloat(item.price) || 0,
           quantity: item.quantity || 1,
-          framePrice: item.prescription?.framePrice || null,
+          framePrice: item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null ? parseFloat(String(item.prescription.framePrice)) : null,
           lensBasePriceKey: item.prescription?.lensBasePriceKey || null,
           lensBasePriceValue: item.prescription?.lensBasePriceValue || null,
           lensMultiplier: item.prescription?.lensMultiplier || null,
@@ -98,6 +98,10 @@ export async function POST(request: NextRequest) {
           leftEyeLensPrice: item.prescription?.leftEyeLensPrice || null,
           rightMultiplier: item.prescription?.rightMultiplier || null,
           leftMultiplier: item.prescription?.leftMultiplier || null,
+          selectedLensName: item.prescription?.lensUsage || null,
+          calculatedLensPrice: item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null ? parseFloat(String(item.prescription.lensFinalPrice)) : null,
+          totalAmount: (item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null ? parseFloat(String(item.prescription.framePrice)) : 0) +
+                       (item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null ? parseFloat(String(item.prescription.lensFinalPrice)) : 0) || parseFloat(String(item.price)) || 0,
         });
       }
 

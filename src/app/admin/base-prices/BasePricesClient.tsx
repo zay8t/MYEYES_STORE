@@ -10,18 +10,18 @@ export default function BasePricesClient({ initialPrices }: { initialPrices: Bas
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: "" });
 
   const LENS_MAPPING = {
-    B1: "Progressive Free Form 1.56 HMC",
-    B2: "SV 1.56 HMC UV420 Blue Cut",
-    B3: "SV 1.56 Photogrey SHMC",
-    B4: "SV 1.56 Photogrey SHMC + Blue Cut",
-    B5: "SV 1.67 Ultra Thin Index SHMC",
+    B1: "MY EYES CR Hard Crystal Coat",
+    B2: "MY EYES Blue Light Filter + UV Protection HMC",
+    B3: "MY EYES Sun Adaptive Photochromic HMC",
+    B4: "MY EYES Dual Shield - Blue Light & Photochromic HMC",
+    B5: "MY EYES Ultra Thin Index",
   };
 
   const handleSave = async () => {
     setLoading(true);
     setStatus({ type: null, message: "" });
     try {
-      const res = await fetch("/api/base-prices", {
+      const res = await fetch("/api/admin/base-prices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(prices),

@@ -213,7 +213,7 @@ export default function PrescriptionModal({
   useEffect(() => {
     async function fetchBasePrices() {
       try {
-        const res = await fetch("/api/base-prices");
+        const res = await fetch("/api/admin/base-prices", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setBasePrices(data);
@@ -928,23 +928,25 @@ export default function PrescriptionModal({
                       Custom RX Required — Contact Support
                     </span>
                   ) : (
-                    <span className="font-bold text-slate-900">+Rs. {exactCalculatedLensPrice}/-</span>
+                    <span className="font-bold text-slate-900">
+                      Prescription Lenses — +Rs. {exactCalculatedLensPrice.toLocaleString()}/-
+                    </span>
                   )}
                 </div>
 
                 {/* 4. Per-Eye Breakdown (If Asymmetric) */}
                 {!isOutOfRange && pricingResult?.isAsymmetricRx && (
-                  <div className="text-[10px] text-amber-800 bg-amber-50/50 border border-amber-200/50 rounded-xl p-2 space-y-1">
+                  <div className="text-[10px] text-amber-800 bg-amber-50/50 border border-amber-200/50 rounded-xl p-2.5 space-y-1">
                     <div className="flex justify-between">
-                      <span>Right Eye (OD) Multiplier: {pricingResult.rightMultiplier?.toFixed(2)}x</span>
-                      <span className="font-bold">Rs. {pricingResult.rightEyeLensPrice}/-</span>
+                      <span>Right Eye (OD) — +Rs. {pricingResult.rightEyeLensPrice}/-</span>
+                      <span className="font-mono">({pricingResult.rightMultiplier?.toFixed(2)}x)</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Left Eye (OS) Multiplier: {pricingResult.leftMultiplier?.toFixed(2)}x</span>
-                      <span className="font-bold">Rs. {pricingResult.leftEyeLensPrice}/-</span>
+                      <span>Left Eye (OS) — +Rs. {pricingResult.leftEyeLensPrice}/-</span>
+                      <span className="font-mono">({pricingResult.leftMultiplier?.toFixed(2)}x)</span>
                     </div>
                     <div className="text-[9px] text-slate-500 text-center border-t border-amber-200/40 pt-1 mt-1 font-semibold">
-                      OD Price: Rs. {pricingResult.rightEyeLensPrice} | OS Price: Rs. {pricingResult.leftEyeLensPrice}
+                      Combined Lens Price: Rs. {exactCalculatedLensPrice}/-
                     </div>
                   </div>
                 )}
