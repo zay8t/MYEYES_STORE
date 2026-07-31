@@ -46,10 +46,10 @@ export default function CheckoutPage() {
 
   const hasProgressiveItem = items.some((item) => {
     const nameMatch = (item.name || "").toLowerCase().includes("progressive") || (item.name || "").toLowerCase().includes("presbyopia");
-    const rx = item.prescription as any;
-    const usageMatch = (rx?.lensUsage || "").toLowerCase().includes("progressive");
-    const addMatch = rx?.add && parseFloat(String(rx.add)) >= 0.50;
-    const ageMatch = rx?.age && parseInt(String(rx.age)) >= 40;
+    const rx = item.prescription as Record<string, unknown> | undefined;
+    const usageMatch = typeof rx?.lensUsage === "string" && rx.lensUsage.toLowerCase().includes("progressive");
+    const addMatch = rx?.add !== undefined && parseFloat(String(rx.add)) >= 0.50;
+    const ageMatch = rx?.age !== undefined && parseInt(String(rx.age)) >= 40;
     return Boolean(nameMatch || usageMatch || (addMatch && ageMatch));
   });
 
