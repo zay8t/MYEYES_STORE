@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
     });
 
     revalidatePath("/");
+    revalidatePath("/catalog");
     revalidatePath("/products");
     revalidatePath("/eyeglasses");
     revalidatePath("/sunglasses");

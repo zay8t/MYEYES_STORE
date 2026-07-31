@@ -78,6 +78,7 @@ export async function PATCH(
     });
 
     revalidatePath("/");
+    revalidatePath("/catalog");
     revalidatePath("/products");
     revalidatePath("/eyeglasses");
     revalidatePath("/sunglasses");
@@ -122,6 +123,7 @@ export async function DELETE(
     await prisma.product.delete({ where: { id } });
 
     revalidatePath("/");
+    revalidatePath("/catalog");
     revalidatePath("/products");
     revalidatePath("/eyeglasses");
     revalidatePath("/sunglasses");

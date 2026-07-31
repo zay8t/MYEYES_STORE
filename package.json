@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node --max-old-space-size=4096 node_modules/next/dist/bin/next dev",
-    "build": "prisma generate && (prisma db push || echo DB_OFFLINE) && (node scripts/inject-test-product.js || echo DB_OFFLINE) && next build",
+    "build": "prisma generate && (prisma db push || echo DB_OFFLINE) && (node scripts/purge-test-product.js || echo DB_OFFLINE) && next build",
     "start": "next start",
     "lint": "eslint"
   },
