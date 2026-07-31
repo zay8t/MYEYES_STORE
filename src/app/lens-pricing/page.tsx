@@ -9,7 +9,7 @@ import {
   DEFAULT_BASE_PRICES,
   BasePriceConfig,
 } from "@/lib/pricingEngine";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 
 // Standard Single Vision Lenses
 const CORE_SINGLE_VISION_LENSES = [
@@ -72,6 +72,147 @@ const CORE_PROGRESSIVE_LENSES = [
     description: "Ultimate progressive protection: sun-adaptive tint + blue light filter across full vision range.",
   },
 ];
+
+// Diopter Option Generators
+const SPH_OPTIONS_MINUS = Array.from({ length: 48 }, (_, i) => {
+  const val = -12.00 + i * 0.25;
+  return val.toFixed(2);
+}).reverse();
+
+const SPH_OPTIONS_PLUS = Array.from({ length: 24 }, (_, i) => {
+  const val = 0.25 + i * 0.25;
+  return `+${val.toFixed(2)}`;
+});
+
+const SPH_ALL_OPTIONS = [...SPH_OPTIONS_MINUS, "+0.00", ...SPH_OPTIONS_PLUS];
+
+const CYL_OPTIONS_MINUS = Array.from({ length: 24 }, (_, i) => {
+  const val = -6.00 + i * 0.25;
+  return val.toFixed(2);
+}).reverse();
+
+const CYL_OPTIONS_PLUS = Array.from({ length: 16 }, (_, i) => {
+  const val = 0.25 + i * 0.25;
+  return `+${val.toFixed(2)}`;
+});
+
+const CYL_ALL_OPTIONS = [...CYL_OPTIONS_MINUS, "+0.00", ...CYL_OPTIONS_PLUS];
+
+const ADD_OPTIONS = Array.from({ length: 13 }, (_, i) => {
+  const val = 0.50 + i * 0.25;
+  return `+${val.toFixed(2)}`;
+});
+
+// Utility functions for diopter signs and formatting
+function formatDiopter(valStr: string): string {
+  const trimmed = String(valStr || "").trim();
+  if (!trimmed) return "+0.00";
+  const num = parseFloat(trimmed);
+  if (isNaN(num)) return "+0.00";
+  if (num === 0) return "+0.00";
+  const sign = num > 0 ? "+" : "";
+  return `${sign}${num.toFixed(2)}`;
+}
+
+function toggleSign(valStr: string, targetSign: "+" | "-"): string {
+  const rawNum = Math.abs(parseFloat(valStr) || 0);
+  const sign = targetSign === "-" ? "-" : "+";
+  return `${sign}${rawNum.toFixed(2)}`;
+}
+
+function getSign(valStr: string): "+" | "-" {
+  const trimmed = String(valStr || "").trim();
+  if (trimmed.startsWith("-")) return "-";
+  return "+";
+}
+
+interface PrescriptionInputGroupProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  accentColor?: "blue" | "indigo";
+}
+
+function PrescriptionInputGroup({ label, value, onChange, options, accentColor = "blue" }: PrescriptionInputGroupProps) {
+  const currentSign = getSign(value);
+
+  const handleSignChange = (targetSign: "+" | "-") => {
+    onChange(toggleSign(value, targetSign));
+  };
+
+  const isBlue = accentColor === "blue";
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider">
+          {label}
+        </label>
+        {/* Segmented [ + ] / [ - ] Toggle Controls */}
+        <div className="inline-flex rounded-lg p-0.5 bg-slate-200/60 border border-slate-200 text-xs">
+          <button
+            type="button"
+            onClick={() => handleSignChange("+")}
+            className={cn(
+              "px-2.5 py-0.5 rounded-md text-[11px] font-black transition-all cursor-pointer",
+              currentSign === "+"
+                ? isBlue
+                  ? "bg-white text-blue-700 shadow-xs border border-slate-200"
+                  : "bg-white text-indigo-700 shadow-xs border border-slate-200"
+                : "text-slate-500 hover:text-slate-900"
+            )}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSignChange("-")}
+            className={cn(
+              "px-2.5 py-0.5 rounded-md text-[11px] font-black transition-all cursor-pointer",
+              currentSign === "-"
+                ? isBlue
+                  ? "bg-white text-amber-700 shadow-xs border border-slate-200"
+                  : "bg-white text-amber-700 shadow-xs border border-slate-200"
+                : "text-slate-500 hover:text-slate-900"
+            )}
+          >
+            -
+          </button>
+        </div>
+      </div>
+
+      <div className="relative">
+        <select
+          value={formatDiopter(value)}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            "w-full px-3.5 py-2 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none font-mono font-extrabold text-slate-900 shadow-2xs transition-all",
+            isBlue ? "focus:ring-2 focus:ring-blue-500" : "focus:ring-2 focus:ring-indigo-500"
+          )}
+        >
+          <optgroup label="Minus (-) Diopters">
+            {options.filter((o) => o.startsWith("-")).map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Plano / Zero">
+            <option value="+0.00">+0.00 (Plano)</option>
+          </optgroup>
+          <optgroup label="Plus (+) Diopters">
+            {options.filter((o) => o.startsWith("+")).map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </div>
+    </div>
+  );
+}
 
 export default function LensPricingPage() {
   const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
@@ -299,7 +440,7 @@ export default function LensPricingPage() {
                         value={age}
                         onChange={(e) => setAge(e.target.value)}
                         placeholder="e.g. 42"
-                        className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-900"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-900 shadow-2xs"
                       />
                     </div>
 
@@ -309,24 +450,18 @@ export default function LensPricingPage() {
                         {parsedAge >= 40 && <span className="ml-1 text-[10px] text-amber-700 font-black uppercase">(+40 Required)</span>}
                       </label>
                       <select
-                        value={add}
+                        value={formatDiopter(add)}
                         onChange={(e) => setAdd(e.target.value)}
-                        className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-900"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono font-bold text-slate-900 shadow-2xs"
                       >
-                        <option value="">None (Single Vision)</option>
-                        <option value="+0.50">+0.50</option>
-                        <option value="+0.75">+0.75</option>
-                        <option value="+1.00">+1.00</option>
-                        <option value="+1.25">+1.25</option>
-                        <option value="+1.50">+1.50</option>
-                        <option value="+1.75">+1.75</option>
-                        <option value="+2.00">+2.00</option>
-                        <option value="+2.25">+2.25</option>
-                        <option value="+2.50">+2.50</option>
-                        <option value="+2.75">+2.75</option>
-                        <option value="+3.00">+3.00</option>
-                        <option value="+3.25">+3.25</option>
-                        <option value="+3.50">+3.50</option>
+                        <option value="+0.00">None (Single Vision)</option>
+                        <optgroup label="Progressive Addition (+)">
+                          {ADD_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
                   </div>
@@ -340,7 +475,7 @@ export default function LensPricingPage() {
                   <select
                     value={selectedLensId}
                     onChange={(e) => setSelectedLensId(e.target.value)}
-                    className="w-full px-4 py-3 text-sm border-2 border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-amber-500 focus:bg-white font-bold text-slate-900 transition-colors"
+                    className="w-full px-4 py-3 text-sm border-2 border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-amber-500 focus:bg-white font-bold text-slate-900 transition-colors shadow-2xs"
                   >
                     {activeLenses.map((lens) => (
                       <option key={lens.id} value={lens.id}>
@@ -350,7 +485,7 @@ export default function LensPricingPage() {
                   </select>
                 </div>
 
-                {/* OD / OS Inputs */}
+                {/* OD / OS Inputs with Segmented [ + ] / [ - ] Sign Controls */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* OD */}
                   <div className="space-y-4 p-5 rounded-2xl border border-blue-100 bg-blue-50/30">
@@ -359,26 +494,20 @@ export default function LensPricingPage() {
                       <span className="text-sm font-extrabold text-blue-900">Right Eye (OD)</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sphere (SPH)</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={odSph}
-                          onChange={(e) => setOdSph(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cylinder (CYL)</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={odCyl}
-                          onChange={(e) => setOdCyl(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-900"
-                        />
-                      </div>
+                      <PrescriptionInputGroup
+                        label="Sphere (SPH)"
+                        value={odSph}
+                        onChange={setOdSph}
+                        options={SPH_ALL_OPTIONS}
+                        accentColor="blue"
+                      />
+                      <PrescriptionInputGroup
+                        label="Cylinder (CYL)"
+                        value={odCyl}
+                        onChange={setOdCyl}
+                        options={CYL_ALL_OPTIONS}
+                        accentColor="blue"
+                      />
                     </div>
                   </div>
 
@@ -389,26 +518,20 @@ export default function LensPricingPage() {
                       <span className="text-sm font-extrabold text-indigo-900">Left Eye (OS)</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Sphere (SPH)</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={osSph}
-                          onChange={(e) => setOsSph(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cylinder (CYL)</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={osCyl}
-                          onChange={(e) => setOsCyl(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-slate-900"
-                        />
-                      </div>
+                      <PrescriptionInputGroup
+                        label="Sphere (SPH)"
+                        value={osSph}
+                        onChange={setOsSph}
+                        options={SPH_ALL_OPTIONS}
+                        accentColor="indigo"
+                      />
+                      <PrescriptionInputGroup
+                        label="Cylinder (CYL)"
+                        value={osCyl}
+                        onChange={setOsCyl}
+                        options={CYL_ALL_OPTIONS}
+                        accentColor="indigo"
+                      />
                     </div>
                   </div>
                 </div>
