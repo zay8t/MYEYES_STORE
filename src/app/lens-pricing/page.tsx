@@ -154,7 +154,7 @@ function PrescriptionInputGroup({ label, value, onChange, options }: Prescriptio
             className={cn(
               "px-3 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer",
               currentSign === "+"
-                ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                ? "bg-amber-500 text-slate-950 font-bold shadow-xs"
                 : "text-neutral-500 hover:text-neutral-900 font-medium"
             )}
           >
@@ -166,7 +166,7 @@ function PrescriptionInputGroup({ label, value, onChange, options }: Prescriptio
             className={cn(
               "px-3 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer",
               currentSign === "-"
-                ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                ? "bg-amber-500 text-slate-950 font-bold shadow-xs"
                 : "text-neutral-500 hover:text-neutral-900 font-medium"
             )}
           >
@@ -179,7 +179,7 @@ function PrescriptionInputGroup({ label, value, onChange, options }: Prescriptio
         <select
           value={formatDiopter(value)}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-mono font-bold"
+          className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-mono font-bold"
         >
           <optgroup label="Minus (-) Diopters">
             {options.filter((o) => o.startsWith("-")).map((opt) => (
@@ -276,12 +276,12 @@ export default function LensPricingPage() {
   }, [isPresbyopiaMode, selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, basePrices]);
 
   return (
-    <div className="min-h-screen bg-neutral-50/30 py-12 text-neutral-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-white to-neutral-50/50 py-12 text-neutral-900 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Page Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-neutral-200/60 pb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-[11px] font-bold uppercase tracking-widest text-neutral-700">
-            <Tag className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold uppercase tracking-widest text-amber-700">
+            <Tag className="w-3.5 h-3.5 text-amber-600" />
             Official MY EYES Precision Lens Catalog
           </div>
 
@@ -295,9 +295,9 @@ export default function LensPricingPage() {
 
           {/* Active Mode Notification Pill */}
           {isPresbyopiaMode && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-semibold shadow-xs">
               <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
-              <span>Presbyopia (+40) Progressive Mode Active</span>
+              <span>✨ Presbyopia (+40) Progressive Calculator Active</span>
             </div>
           )}
         </div>
@@ -328,10 +328,10 @@ export default function LensPricingPage() {
                 key={lens.id}
                 onClick={() => setSelectedLensId(lens.id)}
                 className={cn(
-                  "bg-white border rounded-2xl p-5 transition-all duration-200 shadow-xs hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between",
+                  "border rounded-2xl p-5 transition-all duration-200 shadow-xs hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between",
                   selectedLensId === lens.id
-                    ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/10"
-                    : "border-neutral-200 hover:border-neutral-400"
+                    ? "ring-2 ring-amber-500/20 border-amber-500 bg-amber-50/20"
+                    : "bg-white border-neutral-200 hover:border-neutral-400"
                 )}
               >
                 <div className="space-y-3">
@@ -340,10 +340,12 @@ export default function LensPricingPage() {
                       {lens.name}
                     </h3>
                     {selectedLensId === lens.id && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0 mt-1.5" />
+                      <span className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-slate-950 font-extrabold" />
+                      </span>
                     )}
                   </div>
-                  <div className="text-[11px] font-semibold text-neutral-700 bg-neutral-100 border border-neutral-200 rounded-lg px-2.5 py-1 inline-block">
+                  <div className="text-[11px] font-bold text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1 inline-block">
                     Starting from Rs. {(basePrices[lens.baseKey as keyof BasePriceConfig] || 0).toLocaleString()}/-
                   </div>
                   <p className="text-neutral-500 text-xs leading-relaxed font-normal">
@@ -352,7 +354,7 @@ export default function LensPricingPage() {
                 </div>
                 <div className="border-t border-neutral-100 pt-4 mt-4">
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-1">Starting from</span>
-                  <span className="text-2xl font-black text-neutral-900">
+                  <span className="text-2xl font-black text-amber-600">
                     {formatPrice(basePrices[lens.baseKey as keyof BasePriceConfig])}
                   </span>
                 </div>
@@ -367,10 +369,10 @@ export default function LensPricingPage() {
                   key={lens.id}
                   onClick={() => setSelectedLensId(lens.id)}
                   className={cn(
-                    "bg-white border rounded-2xl p-5 transition-all duration-200 shadow-xs hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between",
+                    "border rounded-2xl p-5 transition-all duration-200 shadow-xs hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between",
                     selectedLensId === lens.id
-                      ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/10"
-                      : "border-neutral-200 hover:border-neutral-400"
+                      ? "ring-2 ring-amber-500/20 border-amber-500 bg-amber-50/20"
+                      : "bg-white border-neutral-200 hover:border-neutral-400"
                   )}
                 >
                   <div className="space-y-3">
@@ -379,10 +381,12 @@ export default function LensPricingPage() {
                         {lens.name}
                       </h3>
                       {selectedLensId === lens.id && (
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0 mt-1.5" />
+                        <span className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-slate-950 font-extrabold" />
+                        </span>
                       )}
                     </div>
-                    <div className="text-[11px] font-semibold text-neutral-700 bg-neutral-100 border border-neutral-200 rounded-lg px-2.5 py-1 inline-block">
+                    <div className="text-[11px] font-bold text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1 inline-block">
                       Starting from Rs. {(basePrices[lens.baseKey as keyof BasePriceConfig] || 0).toLocaleString()}/-
                     </div>
                     <p className="text-neutral-500 text-xs leading-relaxed font-normal">
@@ -391,7 +395,7 @@ export default function LensPricingPage() {
                   </div>
                   <div className="border-t border-neutral-100 pt-4 mt-4">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-1">Starting from</span>
-                    <span className="text-2xl font-black text-neutral-900">
+                    <span className="text-2xl font-black text-amber-600">
                       {formatPrice(basePrices[lens.baseKey as keyof BasePriceConfig])}
                     </span>
                   </div>
@@ -403,11 +407,11 @@ export default function LensPricingPage() {
 
         {/* Interactive Matrix Calculator Card */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-10 shadow-sm max-w-4xl mx-auto">
+          <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-sm max-w-4xl mx-auto">
             
             {/* Header */}
             <div className="flex items-center gap-3 mb-8 border-b border-neutral-100 pb-6">
-              <div className="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-900 flex items-center justify-center border border-neutral-200/60">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center border border-amber-500/20">
                 <Calculator className="w-5 h-5" />
               </div>
               <div>
@@ -422,7 +426,7 @@ export default function LensPricingPage() {
               {/* 1. TOP CONTROLS SECTION (Age, Near ADD, Lens Package Select) */}
               {/* ================================================================ */}
               <div className="space-y-4 border-b border-neutral-100 pb-8">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-l-4 border-amber-500 pl-3">
                   Step 1: Patient Profile &amp; Lens Type
                 </h3>
 
@@ -439,7 +443,7 @@ export default function LensPricingPage() {
                       value={age}
                       onChange={(e) => setAge(e.target.value)}
                       placeholder="e.g. 42"
-                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold"
+                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold"
                     />
                     <p className="text-xs text-neutral-500 mt-1.5 font-normal">
                       Determines single vision vs progressive (+40) mode
@@ -454,7 +458,7 @@ export default function LensPricingPage() {
                     <select
                       value={formatDiopter(add)}
                       onChange={(e) => setAdd(e.target.value)}
-                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-mono font-bold"
+                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-mono font-bold"
                     >
                       <option value="+0.00">None / 0.00</option>
                       <optgroup label="Progressive Addition (+)">
@@ -475,7 +479,7 @@ export default function LensPricingPage() {
                     <select
                       value={selectedLensId}
                       onChange={(e) => setSelectedLensId(e.target.value)}
-                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold truncate"
+                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold truncate"
                     >
                       {activeLenses.map((lens) => (
                         <option key={lens.id} value={lens.id}>
@@ -489,13 +493,13 @@ export default function LensPricingPage() {
                 {/* Dynamic Status Pill */}
                 <div className="pt-2">
                   {!isPresbyopiaMode ? (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-semibold">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-semibold">
                       <span>🟢 Single Vision Calculator Active</span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-xs">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-semibold shadow-xs">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>✨ Presbyopia (+40) Progressive Calculator Active (Ultra Thin Excluded)</span>
+                      <span>✨ Presbyopia (+40) Progressive Calculator Active</span>
                     </div>
                   )}
                 </div>
@@ -503,7 +507,7 @@ export default function LensPricingPage() {
 
               {/* Step 2: Prescription Powers (OD / OS) */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-l-4 border-amber-500 pl-3">
                   Step 2: Enter Eye Prescription (OD &amp; OS)
                 </h3>
 
@@ -511,7 +515,7 @@ export default function LensPricingPage() {
                   {/* OD */}
                   <div className="p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4">
                     <div className="flex items-center gap-2 mb-1 border-b border-neutral-200/60 pb-3">
-                      <Eye className="w-4 h-4 text-neutral-700" />
+                      <Eye className="w-4 h-4 text-amber-600" />
                       <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Right Eye (OD)</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -533,7 +537,7 @@ export default function LensPricingPage() {
                   {/* OS */}
                   <div className="p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4">
                     <div className="flex items-center gap-2 mb-1 border-b border-neutral-200/60 pb-3">
-                      <Eye className="w-4 h-4 text-neutral-700" />
+                      <Eye className="w-4 h-4 text-amber-600" />
                       <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Left Eye (OS)</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -570,7 +574,7 @@ export default function LensPricingPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-6 sm:p-8">
+                  <div className="bg-amber-50/30 rounded-2xl border border-amber-200/60 p-6 sm:p-8">
                     <div className="flex justify-between items-center mb-6">
                       <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
                         {isPresbyopiaMode ? "Estimated Progressive Lens Cost" : "Estimated Lens Cost"}
@@ -616,7 +620,7 @@ export default function LensPricingPage() {
               <div className="pt-4 text-center">
                 <Link 
                   href="/eyeglasses"
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold shadow-sm transition-all hover:shadow-md hover:scale-[1.01]"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#F59E0B] text-[#0F172A] hover:bg-[#D97706] font-bold shadow-sm transition-all hover:shadow-md hover:scale-[1.01]"
                 >
                   Shop Eyeglasses Now <ArrowRight className="w-4 h-4" />
                 </Link>
