@@ -57,12 +57,32 @@ interface PrescriptionModalProps {
 }
 
 // Consumer-friendly display names & luxury badges for the 5 Core Options
-const CORE_CONSUMER_META: Record<string, { badge: string }> = {
-  "progressive-freeform":     { badge: "+40 Progressive" },
-  "sv-156-bluecut":          { badge: "Digital Shield" },
-  "sv-156-photogrey":        { badge: "Smart Tint" },
-  "sv-156-photogrey-bluecut":{ badge: "Dual Shield" },
-  "sv-167-shmc":             { badge: "1.67 High Index" },
+const CORE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; description: string }> = {
+  "progressive-freeform": {
+    title: "MY EYES CR Hard Crystal Coat",
+    subtitle: "Daily Scratch Resistance",
+    description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
+  },
+  "sv-156-bluecut": {
+    title: "MY EYES Blue Light Filter + UV Protection",
+    subtitle: "Digital Shield",
+    description: "Digital protection blocking harmful screen blue light and 100% UV rays.",
+  },
+  "sv-156-photogrey": {
+    title: "MY EYES Sun Adaptive Photochromic",
+    subtitle: "Smart Tint",
+    description: "Darkens outdoors in sunlight and turns clear indoors automatically.",
+  },
+  "sv-156-photogrey-bluecut": {
+    title: "MY EYES Dual Shield",
+    subtitle: "Blue Light & Photochromic",
+    description: "Ultimate dual protection: Photochromic tint outdoors with screen blue light filter indoors.",
+  },
+  "sv-167-shmc": {
+    title: "MY EYES Ultra Thin Index",
+    subtitle: "Ultra Thin Profile",
+    description: "Ultra-thin profile engineered for stronger prescriptions to significantly reduce lens thickness.",
+  },
 };
 
 function formatSignedNotation(val: string | number): string {
@@ -435,9 +455,9 @@ export default function PrescriptionModal({
   // Final submit
   const handleFinalSubmit = () => {
     onSubmit({
-      lensUsage: currentLensObj.name,
+      lensUsage: CORE_CONSUMER_LENSES[currentLensObj.id]?.title || currentLensObj.name,
       lensUsagePrice: exactCalculatedLensPrice,
-      lensMaterial: `${currentLensObj.index} Index (${currentLensObj.coating})`,
+      lensMaterial: CORE_CONSUMER_LENSES[currentLensObj.id]?.subtitle || "Precision Lens",
       lensMaterialPrice: 0,
       odSph: parsedOdSph,
       odCyl: parsedOdCyl || null,
@@ -621,7 +641,11 @@ export default function PrescriptionModal({
               <div className="space-y-3">
                 {activeCustomerLenses.map((lens, idx) => {
                   const isSelected = selectedLensId === lens.id;
-                  const meta = CORE_CONSUMER_META[lens.id];
+                  const consumerLens = CORE_CONSUMER_LENSES[lens.id] || {
+                    title: lens.name,
+                    subtitle: "",
+                    description: lens.description,
+                  };
 
                   const lensPricingResult = calculateTotalLensPrice(
                     lens.id,
@@ -654,19 +678,17 @@ export default function PrescriptionModal({
                           </span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-extrabold text-slate-900">{lens.name}</span>
-                              {meta?.badge && (
+                              <span className="text-xs font-extrabold text-slate-900">{consumerLens.title}</span>
+                              {consumerLens.subtitle && (
                                 <span className={cn(
                                   "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider",
                                   isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600"
                                 )}>
-                                  {meta.badge}
+                                  {consumerLens.subtitle}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{lens.description}</p>
-                            <p className="text-[10px] font-semibold text-slate-400 mt-1">{lens.index} Index · {lens.coating}</p>
-
+                            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{consumerLens.description}</p>
                           </div>
                         </div>
 
@@ -674,7 +696,7 @@ export default function PrescriptionModal({
                           {isLensOutOfRange ? (
                             <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block mt-1">Out of Range</span>
                           ) : (
-                            <span className="text-sm font-extrabold text-slate-900 block">+Rs. {calcPrice}/-</span>
+                            <span className="text-sm font-extrabold text-slate-900 block">Starting from Rs. {calcPrice.toLocaleString()}/-</span>
                           )}
                           {isSelected && <Check className="w-4.5 h-4.5 text-amber-600 ml-auto mt-1" />}
                         </div>
@@ -914,7 +936,7 @@ export default function PrescriptionModal({
                 <div className="flex justify-between items-center text-xs text-slate-600">
                   <div>
                     <span className="block font-semibold text-slate-900">
-                      {currentLensObj?.name} {pricingResult?.basePriceKey ? `(${pricingResult.basePriceKey})` : ""}
+                      {CORE_CONSUMER_LENSES[currentLensObj.id]?.title || currentLensObj?.name}
                     </span>
                     {!isOutOfRange && pricingResult && (
                       <span className="text-[10px] text-slate-500 font-medium">
