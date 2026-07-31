@@ -52,7 +52,7 @@ export default function BasePricesClient({ initialPrices }: { initialPrices: Bas
         )}
 
         <div className="grid grid-cols-1 gap-6">
-          {(Object.keys(prices) as Array<keyof BasePriceConfig>).map((key) => (
+          {(["B1", "B2", "B3", "B4", "B5"] as const).map((key) => (
             <div key={key} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
               <div>
                 <div className="flex items-center gap-2 mb-1">

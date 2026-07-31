@@ -13,7 +13,8 @@ import {
   CORE_FIVE_LENS_IDS,
   SolexLensOption,
 } from "@/lib/solex-lens-pricing";
-import { calculateTotalLensPrice, BasePriceConfig, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
+import { calculateTotalLensPrice, calculateTotalProgressivePrice, BasePriceConfig, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
+import { useCartStore } from "@/store/useCartStore";
 import {
   preprocessPrescriptionImage,
   parseOpticalPrescription,
@@ -319,14 +320,47 @@ export default function PrescriptionModal({
     if (isOpen) loadLensOptions();
   }, [isOpen]);
 
+  // Cart items count
+  const cartItems = useCartStore((s) => s.items);
+  const cartFramesCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems]);
+  const totalSelectedFrames = useMemo(() => 1 + cartFramesCount, [cartFramesCount]);
+
+  const userAge = useMemo(() => parseInt(lead.age) || 0, [lead.age]);
+  const parsedAdd = useMemo(() => parseFloat(rx.add) || 0, [rx.add]);
+  const hasValidAdd = useMemo(() => parsedAdd >= 0.50 && parsedAdd <= 3.50, [parsedAdd]);
+
+  const flowMode = useMemo(() => {
+    if (userAge >= 40 && hasValidAdd) {
+      if (totalSelectedFrames >= 2) {
+        return "FLOW_2"; // Two Frame Standard (forces Single Vision)
+      } else {
+        return "FLOW_3"; // Progressive Flow
+      }
+    }
+    return "FLOW_1"; // Standard Single Vision
+  }, [userAge, hasValidAdd, totalSelectedFrames]);
+
   // Active customer lens list (defaults to static core if state loading)
   const activeCustomerLenses = useMemo(() => {
-    if (lensOptions.length > 0) return lensOptions;
-    return CORE_FIVE_LENS_IDS.map(id =>
-      SOLEX_LENS_OPTIONS.find(l => l.id === id)
-    ).filter((l): l is SolexLensOption => Boolean(l));
-  }, [lensOptions]);
+    let lenses = lensOptions;
+    if (lenses.length === 0) {
+      lenses = CORE_FIVE_LENS_IDS.map(id =>
+        SOLEX_LENS_OPTIONS.find(l => l.id === id)
+      ).filter((l): l is SolexLensOption => Boolean(l));
+    }
+    
+    // In Progressive mode, hide Option 5 (sv-167-shmc)
+    if (flowMode === "FLOW_3") {
+      return lenses.filter(l => l.id !== "sv-167-shmc");
+    }
+    return lenses;
+  }, [lensOptions, flowMode]);
 
+  useEffect(() => {
+    if (flowMode === "FLOW_3" && selectedLensId === "sv-167-shmc") {
+      setSelectedLensId("progressive-freeform");
+    }
+  }, [flowMode, selectedLensId]);
 
   // Pricing calculations
   const parsedOdSph = parseFloat(rx.odSph) || 0;
@@ -341,13 +375,22 @@ export default function PrescriptionModal({
 
   const pricingResult = useMemo(() => {
     if (!basePricesLoaded) return null;
+    if (flowMode === "FLOW_3") {
+      return calculateTotalProgressivePrice(
+        selectedLensId,
+        { sph: parsedOdSph, cyl: parsedOdCyl },
+        { sph: parsedOsSph, cyl: parsedOsCyl },
+        parsedAdd,
+        basePrices
+      );
+    }
     return calculateTotalLensPrice(
       selectedLensId, 
       { sph: parsedOdSph, cyl: parsedOdCyl }, 
       { sph: parsedOsSph, cyl: parsedOsCyl }, 
       basePrices
     );
-  }, [selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, basePrices, basePricesLoaded]);
+  }, [selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, basePrices, basePricesLoaded, flowMode]);
 
   const exactCalculatedLensPrice = pricingResult ? pricingResult.finalPrice : 0;
   const isOutOfRange = pricingResult === null && basePricesLoaded;
@@ -466,7 +509,7 @@ export default function PrescriptionModal({
       osCyl: parsedOsCyl || null,
       osAxis: rx.osAxis ? parseInt(rx.osAxis, 10) : null,
       pd: parseFloat(rx.pd) || 63,
-      add: null,
+      add: flowMode === "FLOW_3" ? parsedAdd : null,
       rxFileUrl: rx.rxFileUrl,
       notes: rx.notes,
       lensBasePriceKey: pricingResult?.basePriceKey,
@@ -647,12 +690,20 @@ export default function PrescriptionModal({
                     description: lens.description,
                   };
 
-                  const lensPricingResult = calculateTotalLensPrice(
-                    lens.id,
-                    { sph: parsedOdSph, cyl: parsedOdCyl },
-                    { sph: parsedOsSph, cyl: parsedOsCyl },
-                    basePrices
-                  );
+                  const lensPricingResult = flowMode === "FLOW_3"
+                    ? calculateTotalProgressivePrice(
+                        lens.id,
+                        { sph: parsedOdSph, cyl: parsedOdCyl },
+                        { sph: parsedOsSph, cyl: parsedOsCyl },
+                        parsedAdd,
+                        basePrices
+                      )
+                    : calculateTotalLensPrice(
+                        lens.id,
+                        { sph: parsedOdSph, cyl: parsedOdCyl },
+                        { sph: parsedOsSph, cyl: parsedOsCyl },
+                        basePrices
+                      );
                   const calcPrice = lensPricingResult ? lensPricingResult.finalPrice : 0;
                   const isLensOutOfRange = lensPricingResult === null && basePricesLoaded;
 
@@ -898,8 +949,8 @@ export default function PrescriptionModal({
                     </div>
                   </div>
 
-                  {/* PD */}
-                  <div className="grid grid-cols-1 gap-3">
+                  {/* PD and ADD */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">PD (mm)</label>
                       <input
@@ -909,6 +960,21 @@ export default function PrescriptionModal({
                         onChange={e => setRx(prev => ({ ...prev, pd: e.target.value }))}
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-xs font-bold text-center focus:ring-2 focus:ring-amber-400 bg-white"
                         placeholder="63"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">ADD Power</label>
+                      <input
+                        type="text"
+                        value={rx.add}
+                        onChange={e => setRx(prev => ({ ...prev, add: e.target.value }))}
+                        onBlur={() => {
+                          if (rx.add && !isNaN(parseFloat(rx.add))) {
+                            setRx(prev => ({ ...prev, add: formatSignedNotation(rx.add) }));
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-xs font-bold text-center focus:ring-2 focus:ring-amber-400 bg-white"
+                        placeholder="+1.50"
                       />
                     </div>
                   </div>
@@ -977,7 +1043,7 @@ export default function PrescriptionModal({
                   <div className="text-[10px] font-mono text-slate-600 bg-white rounded-xl border border-slate-200 p-2.5 space-y-0.5">
                     <p>OD: SPH {rx.odSph || "0.00"} CYL {rx.odCyl || "+0.00"} AXIS {rx.odAxis || "—"}</p>
                     <p>OS: SPH {rx.osSph || "0.00"} CYL {rx.osCyl || "+0.00"} AXIS {rx.osAxis || "—"}</p>
-                    <p>PD: {rx.pd}mm</p>
+                    <p>PD: {rx.pd}mm {flowMode === "FLOW_3" && `| ADD: ${rx.add}`}</p>
                   </div>
                 )}
 

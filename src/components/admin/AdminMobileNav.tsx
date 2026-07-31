@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ClipboardList,
   Tag,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { name: "Customer CRM", href: "/admin/customers", icon: Users },
   { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
   { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
+  { name: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
 ];
 
 export default function AdminMobileNav() {

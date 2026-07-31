@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Tag,
   Calculator,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
   { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
   { name: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
+  { name: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
 ];
 
 export default function AdminSidebarNav() {

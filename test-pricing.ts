@@ -1,4 +1,4 @@
-import { calculateTotalLensPrice, DEFAULT_BASE_PRICES } from "./src/lib/pricingEngine";
+import { calculateTotalLensPrice, calculateTotalProgressivePrice, DEFAULT_BASE_PRICES } from "./src/lib/pricingEngine";
 
 console.log("=== RUNNING PRICING ENGINE INTEGRITY TESTS ===\n");
 
@@ -47,6 +47,23 @@ if (resultB5 && resultB5.finalPrice === 1950 && resultB5.multiplier === 1.00) {
   console.log("✅ Test 3 Passed!");
 } else {
   console.error("❌ Test 3 Failed!");
+  process.exit(1);
+}
+
+// Test 4: Progressive Lens 2 (sv-156-bluecut), SPH -3.00 / CYL -3.00 + ADD 2.00 (Tier 4)
+// Multiplier: 1.75x, Base P2_tier2 = 9850. Expected: 9850 * 1.75 = 17237.5
+const resultProgTier4 = calculateTotalProgressivePrice(
+  "sv-156-bluecut",
+  { sph: -3.00, cyl: -3.00 },
+  { sph: -3.00, cyl: -3.00 },
+  2.00,
+  DEFAULT_BASE_PRICES
+);
+console.log("\nTest 4 (Progressive Tier 4):", resultProgTier4);
+if (resultProgTier4 && resultProgTier4.finalPrice === 17237.5 && resultProgTier4.multiplier === 1.75 && resultProgTier4.basePriceKey === "P2_tier2") {
+  console.log("✅ Test 4 Passed!");
+} else {
+  console.error("❌ Test 4 Failed!");
   process.exit(1);
 }
 
