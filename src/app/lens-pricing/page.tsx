@@ -147,7 +147,7 @@ function PrescriptionInputGroup({ label, value, onChange, options }: Prescriptio
           {label}
         </label>
         {/* Segmented Sign Toggles (+ / -) */}
-        <div className="inline-flex rounded-xl p-1 bg-neutral-100 border border-neutral-200/60 text-xs">
+        <div className="inline-flex rounded-xl p-1 bg-neutral-100 border border-neutral-200/60 text-xs shadow-2xs">
           <button
             type="button"
             onClick={() => handleSignChange("+")}
@@ -403,7 +403,7 @@ export default function LensPricingPage() {
 
         {/* Interactive Matrix Calculator Card */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-sm max-w-4xl mx-auto">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-10 shadow-sm max-w-4xl mx-auto">
             
             {/* Header */}
             <div className="flex items-center gap-3 mb-8 border-b border-neutral-100 pb-6">
@@ -419,14 +419,14 @@ export default function LensPricingPage() {
             <div className="space-y-8">
               
               {/* ================================================================ */}
-              {/* 1. RELOCATE AGE & ADDITION CONTROLS TO THE TOP SECTION */}
+              {/* 1. TOP CONTROLS SECTION (Age, Near ADD, Lens Package Select) */}
               {/* ================================================================ */}
               <div className="space-y-4 border-b border-neutral-100 pb-8">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Step 1: Patient Profile &amp; Prescription Type
+                  Step 1: Patient Profile &amp; Lens Type
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {/* Field 1 (Age Input) */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-2">
@@ -442,7 +442,7 @@ export default function LensPricingPage() {
                       className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold"
                     />
                     <p className="text-xs text-neutral-500 mt-1.5 font-normal">
-                      Determines standard vs progressive (+40) lens eligibility
+                      Determines single vision vs progressive (+40) mode
                     </p>
                   </div>
 
@@ -456,7 +456,7 @@ export default function LensPricingPage() {
                       onChange={(e) => setAdd(e.target.value)}
                       className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-mono font-bold"
                     >
-                      <option value="+0.00">None / Single Vision (0.00)</option>
+                      <option value="+0.00">None / 0.00</option>
                       <optgroup label="Progressive Addition (+)">
                         {ADD_OPTIONS.map((opt) => (
                           <option key={opt} value={opt}>
@@ -466,66 +466,45 @@ export default function LensPricingPage() {
                       </optgroup>
                     </select>
                   </div>
+
+                  {/* Field 3 (Select Lens Package Dropdown) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-2">
+                      Select Lens Package
+                    </label>
+                    <select
+                      value={selectedLensId}
+                      onChange={(e) => setSelectedLensId(e.target.value)}
+                      className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-medium transition-all outline-none font-bold truncate"
+                    >
+                      {activeLenses.map((lens) => (
+                        <option key={lens.id} value={lens.id}>
+                          {lens.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Dynamic Status Pill */}
                 <div className="pt-2">
                   {!isPresbyopiaMode ? (
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-semibold">
-                      <span>🟢 Standard Single Vision Pricing Active</span>
+                      <span>🟢 Single Vision Calculator Active</span>
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-xs">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>✨ Presbyopia (+40) Progressive Pricing Active (Ultra Thin Excluded)</span>
+                      <span>✨ Presbyopia (+40) Progressive Calculator Active (Ultra Thin Excluded)</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Step 2: Lens Package Selection Cards */}
-              <div className="space-y-4 border-b border-neutral-100 pb-8">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Step 2: Select Lens Package
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {activeLenses.map((lens) => {
-                    const isSelected = selectedLensId === lens.id;
-                    return (
-                      <button
-                        key={lens.id}
-                        type="button"
-                        onClick={() => setSelectedLensId(lens.id)}
-                        className={cn(
-                          "bg-white border rounded-2xl p-4 text-left transition-all duration-200 shadow-xs hover:-translate-y-0.5 flex flex-col justify-between gap-3 cursor-pointer",
-                          isSelected
-                            ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/10"
-                            : "border-neutral-200 hover:border-neutral-400"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-xs text-neutral-900 line-clamp-1">{lens.name}</span>
-                            {isSelected && <Check className="w-4 h-4 text-amber-600 flex-shrink-0" />}
-                          </div>
-                          <p className="text-[11px] text-neutral-500 font-normal line-clamp-2 leading-relaxed">
-                            {lens.description}
-                          </p>
-                        </div>
-                        <div className="text-xs font-black text-neutral-900 pt-2 border-t border-neutral-100">
-                          {formatPrice(basePrices[lens.baseKey as keyof BasePriceConfig])}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Step 3: Prescription Powers (OD / OS) */}
+              {/* Step 2: Prescription Powers (OD / OS) */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Step 3: Enter Eye Prescription (OD &amp; OS)
+                  Step 2: Enter Eye Prescription (OD &amp; OS)
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
