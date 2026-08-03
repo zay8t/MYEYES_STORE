@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import { useCartStore } from "@/lib/cart-store";
-import { Glasses, Sun, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
+import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
@@ -75,29 +75,30 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
             <Link
               href="/eyeglasses"
-              className="bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              className="bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <Glasses className="w-4 h-4 text-white" />
               <span>Explore Eyeglasses</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </Link>
 
             <Link
               href="/sunglasses"
-              className="border border-[#0F172A] bg-white text-[#0F172A] hover:bg-[#0F172A] hover:text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              className="border border-[#F59E0B] bg-white text-[#F59E0B] hover:bg-[#F59E0B] hover:text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
-              <Sun className="w-4 h-4" />
+              <Sun className="w-4 h-4 transition-colors" />
               <span>Explore Sunglasses</span>
             </Link>
 
             <Link
               href="/lens-pricing"
-              className="bg-neutral-50 text-[#0F172A] border border-transparent hover:bg-neutral-100 hover:border-neutral-200 font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              className="bg-neutral-50 text-[#0F172A] border border-neutral-200/80 hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
+              <span>Live Prescription Calculator</span>
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
-              <span>Live Prescription Calculator</span>
             </Link>
           </div>
 
