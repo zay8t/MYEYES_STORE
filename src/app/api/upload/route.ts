@@ -21,24 +21,34 @@ export async function POST(request: NextRequest) {
       const base64Data = buffer.toString("base64");
       const fileStr = `data:${mimeType};base64,${base64Data}`;
       
-      const uploadRes = await uploadToCloudinary(fileStr);
-      return NextResponse.json(uploadRes);
+      const uploadRes = await uploadToCloudinary(fileStr, "payment_receipts");
+      return NextResponse.json({
+        success: true,
+        url: uploadRes.secure_url,
+        secure_url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
+      });
     } else {
       // Accept direct base64 encoded JSON body
       const body = await request.json();
-      const { file } = body;
+      const { file, folder } = body;
       if (!file) {
         return NextResponse.json({ error: "No base64 file data provided" }, { status: 400 });
       }
       
-      const uploadRes = await uploadToCloudinary(file);
-      return NextResponse.json(uploadRes);
+      const uploadRes = await uploadToCloudinary(file, folder || "payment_receipts");
+      return NextResponse.json({
+        success: true,
+        url: uploadRes.secure_url,
+        secure_url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
+      });
     }
   } catch (error: unknown) {
     console.error("API upload error:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to upload file to Cloudinary";
     return NextResponse.json(
-      { error: errorMessage },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

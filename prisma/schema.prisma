@@ -79,6 +79,8 @@ model Order {
   shippingAddress     String?
   shippingCity        String?
   paymentMethod       String?
+  paymentStatus       String      @default("PENDING")
+  paymentReceiptUrl   String?
   transactionProofUrl String?
   shippingFee         Float?      @default(250)
   stripeSessionId     String?

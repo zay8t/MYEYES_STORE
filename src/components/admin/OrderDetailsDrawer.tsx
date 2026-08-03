@@ -14,10 +14,12 @@ import {
   Eye,
   Copy,
   Check,
+  FileCheck,
+  ExternalLink,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
-import { updateOrderStatusAction } from "@/app/actions/admin";
+import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
 
 export interface OrderDetailsDrawerProps {
@@ -39,6 +41,9 @@ export default function OrderDetailsDrawer({
   onReceiptClick,
 }: OrderDetailsDrawerProps) {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>(order.status as OrderStatus);
+  const [paymentStatus, setPaymentStatus] = useState<string>(
+    order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")
+  );
   const [isUpdating, setIsUpdating] = useState(false);
   const [copiedText, setCopiedText] = useState("");
   const [zoomImage, setZoomImage] = useState<string | null>(null);
@@ -56,8 +61,32 @@ export default function OrderDetailsDrawer({
     setIsUpdating(false);
   };
 
+  const handlePaymentStatusChange = async (newPayStatus: string) => {
+    setIsUpdating(true);
+    setPaymentStatus(newPayStatus);
+    await updatePaymentStatusAction(order.id, newPayStatus);
+    setIsUpdating(false);
+  };
+
   const hasRx = order.items.some((item) => item.prescription);
   const rxItem = order.items.find((item) => item.prescription);
+  const receiptUrl = order.paymentReceiptUrl || order.transactionProofUrl;
+
+  const getPaymentBadgeClass = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "RECEIPT_SUBMITTED":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "VERIFIED":
+      case "PAID":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "REJECTED":
+        return "bg-rose-100 text-rose-800 border-rose-200";
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200";
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity">
@@ -150,6 +179,81 @@ export default function OrderDetailsDrawer({
                 );
               })}
             </div>
+          </div>
+
+          {/* Dedicated Payment Receipt Proof Section */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-4.5 h-4.5 text-blue-600" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                  Payment Receipt Proof
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase">
+                  Method: {order.paymentMethod || "COD"}
+                </span>
+                <select
+                  value={paymentStatus}
+                  onChange={(e) => handlePaymentStatusChange(e.target.value)}
+                  disabled={isUpdating}
+                  className={cn(
+                    "px-3 py-1 rounded-xl text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors",
+                    getPaymentBadgeClass(paymentStatus)
+                  )}
+                >
+                  <option value="PENDING">PENDING</option>
+                  <option value="RECEIPT_SUBMITTED">RECEIPT_SUBMITTED</option>
+                  <option value="VERIFIED">VERIFIED</option>
+                  <option value="PAID">PAID</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </div>
+            </div>
+
+            {receiptUrl ? (
+              <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="relative w-16 h-16 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 cursor-pointer group flex-shrink-0"
+                    onClick={() => setZoomImage(receiptUrl)}
+                  >
+                    <img
+                      src={receiptUrl}
+                      alt="Payment Receipt Proof Thumbnail"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-900">Payment Screenshot Proof</p>
+                    <p className="text-[11px] text-slate-500 font-medium">Click thumbnail to inspect in high-resolution</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setZoomImage(receiptUrl)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Preview Image
+                  </button>
+                  <a
+                    href={receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Tab
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs font-medium">
+                No payment receipt proof uploaded for this order (Cash on Delivery / Direct order).
+              </div>
+            )}
           </div>
 
           {/* Prescription Data Section (If Prescription Present) */}
@@ -359,19 +463,37 @@ export default function OrderDetailsDrawer({
       {/* Image Lightbox Modal */}
       {zoomImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setZoomImage(null)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center">
-            <Image
-              src={zoomImage}
-              alt="Prescription Doctor Slip Zoom"
-              fill
-              className="object-contain rounded-xl"
-            />
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center space-y-4">
+            <div className="relative w-full flex-1 min-h-0">
+              <img
+                src={zoomImage}
+                alt="High-resolution receipt preview"
+                className="w-full h-full object-contain rounded-xl"
+              />
+            </div>
+            
+            <div className="flex items-center gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+              <a
+                href={zoomImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" /> Open Full Image in New Tab
+              </a>
+              <button
+                onClick={() => setZoomImage(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer transition-colors"
+              >
+                Close Preview
+              </button>
+            </div>
+
             <button
               onClick={() => setZoomImage(null)}
-              className="absolute top-4 right-4 p-3 rounded-full bg-white/20 hover:bg-white/40 text-white transition-colors cursor-pointer"
+              className="absolute top-2 right-2 p-3 rounded-full bg-white/20 hover:bg-white/40 text-white transition-colors cursor-pointer"
             >
               <X className="w-6 h-6" />
             </button>

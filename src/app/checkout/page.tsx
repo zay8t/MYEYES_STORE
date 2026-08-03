@@ -17,10 +17,14 @@ import {
   Truck,
   ArrowLeft,
   Loader2,
+  X,
+  FileCheck,
+  Building2,
+  Smartphone,
 } from "lucide-react";
 import Link from "next/link";
 
-type PaymentMethod = "COD" | "EASYPAISA" | "ALFALAH";
+type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -34,10 +38,12 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
 
-  // Payment proof states
+  // Payment Receipt Verification States
   const [proofFile, setProofFile] = useState<File | null>(null);
-  const [proofUrl, setProofUrl] = useState("");
+  const [paymentReceiptUrl, setPaymentReceiptUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // General States
   const [copiedText, setCopiedText] = useState("");
@@ -76,19 +82,70 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedText(""), 2000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProofFile(file);
-      setUploadingProof(true);
-      setErrorMsg("");
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    setProofFile(file);
+    setUploadingProof(true);
+    setErrorMsg("");
 
-      // Simulate a premium upload loading experience (500ms)
-      setTimeout(() => {
-        // In local development, we mock the uploaded URL
-        setProofUrl(`/uploads/proof-${Date.now()}-${file.name}`);
-        setUploadingProof(false);
-      }, 800);
+    // Create local object URL for instant preview before network returns
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || (!data.url && !data.secure_url)) {
+        throw new Error(data.error || "Failed to upload receipt screenshot to Cloudinary.");
+      }
+
+      const receiptUrl = data.url || data.secure_url;
+      setPaymentReceiptUrl(receiptUrl);
+      setPreviewUrl(receiptUrl);
+    } catch (err) {
+      console.error("Receipt upload error:", err);
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Failed to upload payment receipt screenshot. Please try again."
+      );
+      setPaymentReceiptUrl("");
+      setPreviewUrl("");
+    } finally {
+      setUploadingProof(false);
+    }
+  };
+
+  const removeReceipt = () => {
+    setPaymentReceiptUrl("");
+    setPreviewUrl("");
+    setProofFile(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      handleFileUpload(file);
     }
   };
 
@@ -102,8 +159,10 @@ export default function CheckoutPage() {
       return;
     }
 
-    if ((paymentMethod === "EASYPAISA" || paymentMethod === "ALFALAH") && !proofUrl) {
-      setErrorMsg("Please upload your transaction screenshot or payment proof.");
+    const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA";
+
+    if (isOnlinePayment && !paymentReceiptUrl) {
+      setErrorMsg("Please upload your payment verification receipt before confirming your order.");
       return;
     }
 
@@ -120,7 +179,9 @@ export default function CheckoutPage() {
           shippingAddress: address,
           shippingCity: city,
           paymentMethod,
-          transactionProofUrl: proofUrl || null,
+          paymentStatus: isOnlinePayment ? "RECEIPT_SUBMITTED" : "PENDING",
+          paymentReceiptUrl: isOnlinePayment ? paymentReceiptUrl : null,
+          transactionProofUrl: isOnlinePayment ? paymentReceiptUrl : null,
           items,
         }),
       });
@@ -151,6 +212,9 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA";
+  const isConfirmDisabled = submitting || uploadingProof || (isOnlinePayment && !paymentReceiptUrl);
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-12">
@@ -191,7 +255,7 @@ export default function CheckoutPage() {
                   <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Shipping Destination</h2>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Full Name</label>
                       <div className="relative">
                         <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -280,44 +344,148 @@ export default function CheckoutPage() {
                       type="button"
                       onClick={() => {
                         setPaymentMethod("COD");
-                        setProofFile(null);
-                        setProofUrl("");
+                        removeReceipt();
                       }}
-                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                         paymentMethod === "COD"
                           ? "bg-white text-slate-900 shadow-sm border border-slate-200/40"
                           : "text-slate-500 hover:text-slate-800"
                       }`}
                     >
-                      Cash on Delivery
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>Cash on Delivery</span>
                     </button>
                     
                     <button
                       type="button"
+                      onClick={() => setPaymentMethod("BANK_TRANSFER")}
+                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        paymentMethod === "BANK_TRANSFER"
+                          ? "bg-white text-slate-900 shadow-sm border border-slate-200/40"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Bank Transfer</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setPaymentMethod("EASYPAISA")}
-                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                         paymentMethod === "EASYPAISA"
                           ? "bg-white text-slate-900 shadow-sm border border-slate-200/40"
                           : "text-slate-500 hover:text-slate-800"
                       }`}
                     >
-                      EasyPaisa / JazzCash
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("ALFALAH")}
-                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                        paymentMethod === "ALFALAH"
-                          ? "bg-white text-slate-900 shadow-sm border border-slate-200/40"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      Bank Alfalah
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>EasyPaisa / JazzCash</span>
                     </button>
                   </div>
 
-                  {/* Option 1 Details: EasyPaisa / JazzCash */}
+                  {/* Option 1 Details: Bank Transfer */}
+                  {paymentMethod === "BANK_TRANSFER" && (
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4 animate-fade-in-up">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-2 text-xs">
+                          <p className="font-bold text-slate-900">Transfer directly via IBFT / Raast:</p>
+                          <div className="space-y-1 bg-white border border-slate-200 p-3 rounded-lg leading-relaxed font-medium text-slate-700">
+                            <p><strong>Bank:</strong> Bank Alfalah Islamic</p>
+                            <p><strong>Account Title:</strong> MUHAMMAD AASIM MUSHTAQ</p>
+                            <p><strong>Account Number:</strong> 5601005000034907</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span><strong>IBAN:</strong> <span className="font-mono text-[11px] font-bold text-slate-900">PK03ALFH5601005000034907</span></span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard("PK03ALFH5601005000034907", "iban")}
+                                className="p-1 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
+                                title="Copy IBAN"
+                              >
+                                {copiedText === "iban" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* QR Code */}
+                        <div className="w-28 h-28 border border-slate-200 rounded-lg bg-white overflow-hidden p-1 flex-shrink-0 flex items-center justify-center">
+                          <img src="/bank-qr.jpg" alt="Bank Alfalah QR" className="w-full h-full object-contain" />
+                        </div>
+                      </div>
+
+                      {/* Cloudinary Receipt Upload Drag & Drop Component */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-2">
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                          Upload Payment Verification Screenshot <span className="text-red-500">*</span>
+                        </label>
+
+                        {previewUrl ? (
+                          <div className="p-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between shadow-2xs">
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                                <img src={previewUrl} alt="Payment Receipt Preview" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-xs font-bold text-slate-900 truncate max-w-[180px]">
+                                  {proofFile ? proofFile.name : "Payment Receipt Screenshot"}
+                                </p>
+                                <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                                  <FileCheck className="w-3.5 h-3.5" />
+                                  <span>Cloudinary Upload Verified</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={removeReceipt}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              title="Replace / Remove Screenshot"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : uploadingProof ? (
+                          <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-900 mx-auto" />
+                            <p className="text-xs font-bold text-slate-800">Uploading Payment Screenshot to Cloudinary...</p>
+                            <p className="text-[10px] text-slate-400">Please wait a moment while your image is processing.</p>
+                          </div>
+                        ) : (
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`p-6 rounded-2xl border-2 border-dashed transition-all text-center ${
+                              isDragging
+                                ? "border-slate-900 bg-slate-100/80"
+                                : "border-slate-300 hover:border-slate-400 bg-white"
+                            }`}
+                          >
+                            <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-slate-800">
+                              Drag & drop your receipt screenshot here
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5 mb-3">
+                              Supports JPG, PNG, WEBP images up to 10MB
+                            </p>
+                            <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Select Image File</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Option 2 Details: EasyPaisa / JazzCash */}
                   {paymentMethod === "EASYPAISA" && (
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4 animate-fade-in-up">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -348,101 +516,73 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      {/* File Upload for Proof */}
-                      <div className="border-t border-slate-200/80 pt-3">
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">
-                          Upload Payment Screenshot / Proof <span className="text-red-500">*</span>
+                      {/* Cloudinary Receipt Upload Drag & Drop Component */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-2">
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                          Upload EasyPaisa / JazzCash Screenshot <span className="text-red-500">*</span>
                         </label>
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center justify-center gap-2 px-4 py-2 border border-dashed border-slate-300 hover:border-slate-500 rounded-xl cursor-pointer text-xs font-bold text-slate-700 bg-white transition-colors">
-                            <Upload className="w-4 h-4 text-slate-400" />
-                            Choose Screenshot
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleFileChange}
-                              className="hidden"
-                            />
-                          </label>
-                          <span className="text-xs text-slate-500 font-medium truncate max-w-[200px]">
-                            {proofFile ? proofFile.name : "No file chosen"}
-                          </span>
-                        </div>
 
-                        {uploadingProof && (
-                          <p className="text-[10px] text-slate-400 font-medium mt-1 flex items-center gap-1.5 animate-pulse">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Simulated Uploading Proof...
-                          </p>
-                        )}
-                        {proofUrl && !uploadingProof && (
-                          <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> Proof saved successfully.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Option 2 Details: Bank Alfalah */}
-                  {paymentMethod === "ALFALAH" && (
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4 animate-fade-in-up">
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        <div className="space-y-2 text-xs">
-                          <p className="font-bold text-slate-900">Transfer directly via IBFT / Raast:</p>
-                          <div className="space-y-1 bg-white border border-slate-200 p-3 rounded-lg leading-relaxed font-medium text-slate-700">
-                            <p><strong>Bank:</strong> Bank Alfalah Islamic</p>
-                            <p><strong>Account Title:</strong> MUHAMMAD AASIM MUSHTAQ</p>
-                            <p><strong>Account Number:</strong> 5601005000034907</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span><strong>IBAN:</strong> <span className="font-mono text-[11px] font-bold text-slate-900">PK03ALFH5601005000034907</span></span>
-                              <button
-                                type="button"
-                                onClick={() => copyToClipboard("PK03ALFH5601005000034907", "iban")}
-                                className="p-1 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
-                                title="Copy IBAN"
-                              >
-                                {copiedText === "iban" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                              </button>
+                        {previewUrl ? (
+                          <div className="p-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between shadow-2xs">
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                                <img src={previewUrl} alt="Payment Receipt Preview" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-xs font-bold text-slate-900 truncate max-w-[180px]">
+                                  {proofFile ? proofFile.name : "Payment Receipt Screenshot"}
+                                </p>
+                                <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                                  <FileCheck className="w-3.5 h-3.5" />
+                                  <span>Cloudinary Upload Verified</span>
+                                </div>
+                              </div>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={removeReceipt}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              title="Replace / Remove Screenshot"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
-                        </div>
-
-                        {/* QR Code */}
-                        <div className="w-28 h-28 border border-slate-200 rounded-lg bg-white overflow-hidden p-1 flex-shrink-0 flex items-center justify-center">
-                          <img src="/bank-qr.jpg" alt="Bank Alfalah QR" className="w-full h-full object-contain" />
-                        </div>
-                      </div>
-
-                      {/* File Upload for Proof */}
-                      <div className="border-t border-slate-200/80 pt-3">
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">
-                          Upload Payment Screenshot / Proof <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center justify-center gap-2 px-4 py-2 border border-dashed border-slate-300 hover:border-slate-500 rounded-xl cursor-pointer text-xs font-bold text-slate-700 bg-white transition-colors">
-                            <Upload className="w-4 h-4 text-slate-400" />
-                            Choose Screenshot
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleFileChange}
-                              className="hidden"
-                            />
-                          </label>
-                          <span className="text-xs text-slate-500 font-medium truncate max-w-[200px]">
-                            {proofFile ? proofFile.name : "No file chosen"}
-                          </span>
-                        </div>
-
-                        {uploadingProof && (
-                          <p className="text-[10px] text-slate-400 font-medium mt-1 flex items-center gap-1.5 animate-pulse">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Simulated Uploading Proof...
-                          </p>
-                        )}
-                        {proofUrl && !uploadingProof && (
-                          <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> Proof saved successfully.
-                          </p>
+                        ) : uploadingProof ? (
+                          <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-900 mx-auto" />
+                            <p className="text-xs font-bold text-slate-800">Uploading Payment Screenshot to Cloudinary...</p>
+                            <p className="text-[10px] text-slate-400">Please wait a moment while your image is processing.</p>
+                          </div>
+                        ) : (
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`p-6 rounded-2xl border-2 border-dashed transition-all text-center ${
+                              isDragging
+                                ? "border-slate-900 bg-slate-100/80"
+                                : "border-slate-300 hover:border-slate-400 bg-white"
+                            }`}
+                          >
+                            <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-slate-800">
+                              Drag & drop your payment screenshot here
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5 mb-3">
+                              Supports JPG, PNG, WEBP images up to 10MB
+                            </p>
+                            <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Select Image File</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -469,16 +609,16 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  disabled={submitting || uploadingProof}
-                  className="w-full mt-4 py-4 px-6 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  disabled={isConfirmDisabled}
+                  className="w-full mt-4 py-4 px-6 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Placing Order...
+                      <Loader2 className="w-4 h-4 animate-spin" /> Confirming Order...
                     </>
                   ) : (
                     <>
-                      Place Order ({formatPrice(grandTotal)})
+                      Confirm Order ({formatPrice(grandTotal)})
                     </>
                   )}
                 </button>

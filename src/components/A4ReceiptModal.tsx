@@ -58,6 +58,8 @@ export interface OrderReceiptData {
   city?: string | null;
   postalCode?: string | null;
   paymentMethod?: string | null;
+  paymentStatus?: string | null;
+  paymentReceiptUrl?: string | null;
   transactionProofUrl?: string | null;
   shippingFee?: number;
   totalAmount: number;

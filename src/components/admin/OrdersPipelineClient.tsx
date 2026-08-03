@@ -11,7 +11,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import OrderDetailsDrawer from "./OrderDetailsDrawer";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 import { OrderStatus } from "@prisma/client";
-import { updateOrderStatusAction } from "@/app/actions/admin";
+import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import Toast from "./Toast";
 
 export interface OrdersPipelineClientProps {
@@ -63,6 +63,20 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
     }
   };
 
+  const handlePaymentStatusChange = async (orderId: string, newPaymentStatus: string) => {
+    const previousOrders = [...orders];
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: newPaymentStatus } : o))
+    );
+    setToast({ message: `Order #${orderId.slice(0, 8)} payment status updated to ${newPaymentStatus}`, type: "success" });
+
+    const result = await updatePaymentStatusAction(orderId, newPaymentStatus);
+    if (!result.success) {
+      setOrders(previousOrders);
+      setToast({ message: result.error || "Failed to update payment status", type: "error" });
+    }
+  };
+
   // Filtered Orders Calculation
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -98,6 +112,22 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
         return "bg-indigo-50 text-indigo-900 border-indigo-200";
       case "DELIVERED":
         return "bg-emerald-50 text-emerald-900 border-emerald-200";
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200";
+    }
+  };
+
+  const getPaymentStatusBadgeClass = (status?: string | null) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "RECEIPT_SUBMITTED":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "VERIFIED":
+      case "PAID":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "REJECTED":
+        return "bg-rose-100 text-rose-800 border-rose-200";
       default:
         return "bg-slate-100 text-slate-800 border-slate-200";
     }
@@ -210,6 +240,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                 <th className="px-6 py-4">Customer Details</th>
                 <th className="px-6 py-4">Optical Specs</th>
                 <th className="px-6 py-4">Total Amount</th>
+                <th className="px-6 py-4">Payment Status</th>
                 <th className="px-6 py-4">Pipeline Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -217,7 +248,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
             <tbody className="divide-y divide-slate-100">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-400 font-medium">
+                  <td colSpan={7} className="p-12 text-center text-slate-400 font-medium">
                     No prescription orders found matching criteria.
                   </td>
                 </tr>
@@ -255,6 +286,28 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
                       <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
                         {formatPrice(order.totalAmount)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                            {order.paymentMethod || "COD"}
+                          </span>
+                          <select
+                            value={order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")}
+                            onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                            className={cn(
+                              "px-2.5 py-1 rounded-xl text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors",
+                              getPaymentStatusBadgeClass(order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED"))
+                            )}
+                          >
+                            <option value="PENDING">PENDING</option>
+                            <option value="RECEIPT_SUBMITTED">RECEIPT_SUBMITTED</option>
+                            <option value="VERIFIED">VERIFIED</option>
+                            <option value="PAID">PAID</option>
+                            <option value="REJECTED">REJECTED</option>
+                          </select>
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">
@@ -342,19 +395,36 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
-                    className={cn(
-                      "px-3 py-2 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none min-h-[38px]",
-                      getStatusBadgeClass(order.status)
-                    )}
-                  >
-                    <option value="PENDING">PENDING</option>
-                    <option value="PROCESSING">PROCESSING</option>
-                    <option value="SHIPPED">SHIPPED</option>
-                    <option value="DELIVERED">DELIVERED</option>
-                  </select>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                      className={cn(
+                        "px-3 py-2 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none min-h-[38px]",
+                        getStatusBadgeClass(order.status)
+                      )}
+                    >
+                      <option value="PENDING">PENDING</option>
+                      <option value="PROCESSING">PROCESSING</option>
+                      <option value="SHIPPED">SHIPPED</option>
+                      <option value="DELIVERED">DELIVERED</option>
+                    </select>
+
+                    <select
+                      value={order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")}
+                      onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                      className={cn(
+                        "px-3 py-2 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none min-h-[38px]",
+                        getPaymentStatusBadgeClass(order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED"))
+                      )}
+                    >
+                      <option value="PENDING">PENDING</option>
+                      <option value="RECEIPT_SUBMITTED">RECEIPT_SUBMITTED</option>
+                      <option value="VERIFIED">VERIFIED</option>
+                      <option value="PAID">PAID</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                  </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <button

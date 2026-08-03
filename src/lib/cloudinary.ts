@@ -16,11 +16,12 @@ export { cloudinary };
  */
 export async function uploadToCloudinary(
   fileStr: string,
-  folder: string = "myeyes_eyewear"
+  folder: string = "payment_receipts"
 ): Promise<{ secure_url: string; public_id: string }> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
   if (!cloudName || !apiKey || !apiSecret || apiSecret === "**********" || apiSecret.trim() === "") {
     console.warn("Cloudinary credentials not fully configured. Using fallback base64 string.");
@@ -31,10 +32,15 @@ export async function uploadToCloudinary(
   }
 
   try {
-    const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+    const uploadOptions: Record<string, unknown> = {
       folder,
       resource_type: "auto",
-    });
+    };
+    if (uploadPreset) {
+      uploadOptions.upload_preset = uploadPreset;
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(fileStr, uploadOptions);
     return {
       secure_url: uploadResponse.secure_url,
       public_id: uploadResponse.public_id,

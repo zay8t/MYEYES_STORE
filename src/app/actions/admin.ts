@@ -35,6 +35,23 @@ export async function updateOrderStatusAction(orderId: string, status: OrderStat
   }
 }
 
+export async function updatePaymentStatusAction(orderId: string, paymentStatus: string) {
+  try {
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { paymentStatus },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/customers");
+    return { success: true, order: updatedOrder };
+  } catch (error) {
+    console.error("Error updating payment status:", error);
+    return { success: false, error: "Failed to update payment status" };
+  }
+}
+
 export async function updateProductStockAction(productId: string, newStock: number) {
   try {
     const updated = await prisma.product.update({

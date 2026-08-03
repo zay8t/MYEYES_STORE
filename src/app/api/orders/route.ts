@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
       shippingAddress,
       shippingCity,
       paymentMethod,
+      paymentStatus,
+      paymentReceiptUrl,
       transactionProofUrl,
       items,
     } = body;
@@ -75,12 +77,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalReceiptUrl = paymentReceiptUrl || transactionProofUrl || null;
+    const finalPaymentStatus = paymentStatus || (paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED");
+
     if (
-      (paymentMethod === "EASYPAISA" || paymentMethod === "ALFALAH") &&
-      !transactionProofUrl
+      (paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "ALFALAH") &&
+      !finalReceiptUrl
     ) {
       return NextResponse.json(
-        { error: "Transaction proof/screenshot is required for direct payment options." },
+        { error: "Payment verification receipt screenshot is required for direct bank transfer and EasyPaisa payments." },
         { status: 400 }
       );
     }
@@ -192,7 +197,9 @@ export async function POST(request: NextRequest) {
           shippingAddress,
           shippingCity,
           paymentMethod,
-          transactionProofUrl: transactionProofUrl || null,
+          paymentStatus: finalPaymentStatus,
+          paymentReceiptUrl: finalReceiptUrl,
+          transactionProofUrl: finalReceiptUrl,
           shippingFee,
           totalAmount,
           status: "PENDING",
