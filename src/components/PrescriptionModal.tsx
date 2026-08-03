@@ -825,20 +825,21 @@ export default function PrescriptionModal({
                           : "border-slate-200 bg-white hover:border-slate-300"
                       )}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <span className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 mt-0.5",
-                            isSelected ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-500"
-                          )}>
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-extrabold text-slate-900">{consumerLens.title}</span>
+                      <div className="flex items-start gap-3 w-full">
+                        <span className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 mt-0.5",
+                          isSelected ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-500"
+                        )}>
+                          {idx + 1}
+                        </span>
+
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 w-full">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <span className="text-xs sm:text-sm font-extrabold text-slate-900">{consumerLens.title}</span>
                               {consumerLens.subtitle && (
                                 <span className={cn(
-                                  "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider",
+                                  "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider whitespace-nowrap",
                                   flowMode === "FLOW_3"
                                     ? isSelected ? "bg-amber-200 text-amber-900" : "bg-amber-100 text-amber-700"
                                     : isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600"
@@ -847,17 +848,20 @@ export default function PrescriptionModal({
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{consumerLens.description}</p>
-                          </div>
-                        </div>
 
-                        <div className="text-right flex-shrink-0">
-                          {isLensOutOfRange ? (
-                            <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block mt-1">Out of Range</span>
-                          ) : (
-                            <span className="text-sm font-extrabold text-slate-900 block">Starting from Rs. {calcPrice.toLocaleString()}/-</span>
-                          )}
-                          {isSelected && <Check className="w-4.5 h-4.5 text-amber-600 ml-auto mt-1" />}
+                            <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+                              {isLensOutOfRange ? (
+                                <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block whitespace-nowrap">Out of Range</span>
+                              ) : (
+                                <span className="text-sm sm:text-base font-bold text-[#0F172A] whitespace-nowrap block">Starting from Rs. {calcPrice.toLocaleString()}/-</span>
+                              )}
+                              {isSelected && <Check className="w-4.5 h-4.5 text-amber-600 flex-shrink-0 ml-auto sm:ml-0" />}
+                            </div>
+                          </div>
+
+                          <div className="w-full">
+                            <p className="text-sm text-neutral-600 leading-relaxed">{consumerLens.description}</p>
+                          </div>
                         </div>
                       </div>
                     </button>
