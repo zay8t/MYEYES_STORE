@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import { useCartStore } from "@/lib/cart-store";
-import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
+import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box, Calculator } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
@@ -53,7 +53,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
-      <section className="relative pt-24 pb-16 sm:pb-24 bg-white">
+      <section className="relative pt-24 pb-4 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand/10 to-brand/5 border border-brand/20 text-[11px] font-bold uppercase tracking-widest text-brand-dark shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-brand animate-pulse" />
@@ -71,58 +71,76 @@ export default function HomePage() {
           <p className="text-base sm:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
             Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
           </p>
+        </div>
+      </section>
 
-          {/* ═══════════════════════════════════════════════════ */}
-          {/*  HERO CTA — GOD-LEVEL LUXURY PILL BUTTONS          */}
-          {/* ═══════════════════════════════════════════════════ */}
-          <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 max-w-4xl mx-auto py-2 mt-8">
+      {/* ============================================================ */}
+      {/*  DEDICATED HERO ACTION BAR SECTION WITH BACKGROUND IMAGE     */}
+      {/* ============================================================ */}
+      <section className="relative w-full py-8 my-6 overflow-hidden border-y border-neutral-200/60 shadow-inner bg-white">
+        {/* Background Image Layer with Gradient & Blur Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 scale-105 pointer-events-none filter blur-[1px]" 
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&q=80')" }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-neutral-50/80 to-white opacity-90 pointer-events-none" />
 
-            {/* ─── BUTTON 1 (PRIMARY): Take Style Quiz ─── */}
-            <Link
-              href="/quiz"
-              id="hero-style-quiz-btn"
-              className="group inline-flex items-center justify-center gap-2.5 h-[52px] px-7 rounded-full font-bold text-sm sm:text-base tracking-wide subpixel-antialiased text-white transition-all duration-300 ease-out transform-gpu bg-gradient-to-r from-[#F59E0B] via-[#EA580C] to-[#D97706] shadow-[0_10px_25px_-5px_rgba(245,158,11,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(245,158,11,0.6)] ring-2 ring-amber-400/30 ring-offset-2 ring-offset-white hover:-translate-y-0.5 active:translate-y-0 active:scale-95 max-sm:w-full max-sm:justify-center"
-            >
-              <Sparkles className="w-4 h-4 text-amber-100 animate-pulse shrink-0" />
-              <span>Take Style Quiz</span>
-            </Link>
+        {/* Content Container */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 grid grid-cols-2 md:flex md:flex-row md:items-center md:justify-center gap-2.5 md:gap-4 w-full max-w-md md:max-w-none">
+          
+          {/* Button 1 (PRIMARY): Start with a quiz */}
+          <Link
+            href="/quiz"
+            id="hero-style-quiz-btn"
+            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md shadow-amber-500/15 backdrop-blur-md transition-all duration-200 bg-[#F59E0B] text-white hover:bg-[#D97706] inline-flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <Sparkles className="w-4 h-4 text-white shrink-0" />
+            <span>Start with a quiz</span>
+          </Link>
 
-            {/* ─── BUTTON 2 (SECONDARY): Explore Eyeglasses ─── */}
-            <Link
-              href="/eyeglasses"
-              id="hero-eyeglasses-btn"
-              className="group inline-flex items-center justify-center gap-2.5 h-[52px] px-7 rounded-full font-bold text-sm sm:text-base tracking-wide subpixel-antialiased text-white transition-all duration-300 ease-out transform-gpu bg-[#78350F] border border-[#92400E]/50 shadow-[0_10px_25px_-5px_rgba(120,53,15,0.3)] hover:bg-[#451A03] hover:shadow-[0_15px_30px_-5px_rgba(120,53,15,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 max-sm:w-full max-sm:justify-center"
-            >
-              <Glasses className="w-4 h-4 shrink-0" />
-              <span>Explore Eyeglasses</span>
-              <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
+          {/* Button 2 (SECONDARY): Explore eyeglasses */}
+          <Link
+            href="/eyeglasses"
+            id="hero-eyeglasses-btn"
+            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md backdrop-blur-md transition-all duration-200 bg-[#0F172A] text-white hover:bg-[#1E293B] inline-flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <Glasses className="w-4 h-4 text-white shrink-0" />
+            <span>Explore eyeglasses</span>
+            <ArrowRight className="w-3.5 h-3.5 text-white/80 shrink-0 group-hover:translate-x-1 transition-transform" />
+          </Link>
 
-            {/* ─── BUTTON 3 (GHOST OUTLINE): Explore Sunglasses ─── */}
-            <Link
-              href="/sunglasses"
-              id="hero-sunglasses-btn"
-              className="group inline-flex items-center justify-center gap-2.5 h-[52px] px-7 rounded-full font-bold text-sm sm:text-base tracking-wide subpixel-antialiased text-[#B45309] transition-all duration-300 ease-out transform-gpu bg-white/80 backdrop-blur-md border-2 border-[#D97706]/80 shadow-sm hover:bg-[#D97706] hover:text-white hover:border-[#D97706] hover:shadow-lg hover:shadow-orange-500/20 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 max-sm:w-full max-sm:justify-center"
-            >
-              <Sun className="w-4 h-4 shrink-0 group-hover:rotate-45 transition-transform duration-500" />
-              <span>Explore Sunglasses</span>
-            </Link>
+          {/* Button 3 (OUTLINE): Explore sunglasses */}
+          <Link
+            href="/sunglasses"
+            id="hero-sunglasses-btn"
+            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-sm backdrop-blur-md transition-all duration-200 bg-white/90 text-[#0F172A] border-2 border-[#0F172A] hover:bg-[#0F172A] hover:text-white inline-flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <Sun className="w-4 h-4 shrink-0 group-hover:rotate-45 transition-transform duration-500" />
+            <span>Explore sunglasses</span>
+          </Link>
 
-            {/* ─── BUTTON 4 (UTILITY): Live Prescription Calculator ─── */}
-            <Link
-              href="/lens-pricing"
-              id="hero-prescription-btn"
-              className="group inline-flex items-center justify-center gap-2.5 h-[52px] px-7 rounded-full font-bold text-sm sm:text-base tracking-wide subpixel-antialiased text-[#78350F] transition-all duration-300 ease-out transform-gpu bg-[#F3F4F6] border border-[#E5E7EB] shadow-sm hover:bg-[#E5E7EB] hover:border-[#D1D5DB] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 max-sm:w-full max-sm:justify-center"
-            >
-              <span>Live Prescription Calculator</span>
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-            </Link>
+          {/* Button 4 (UTILITY): Live prescription calculator */}
+          <Link
+            href="/lens-pricing"
+            id="hero-prescription-btn"
+            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-sm backdrop-blur-md transition-all duration-200 bg-neutral-100/90 text-[#0F172A] border border-neutral-300 hover:bg-neutral-200 inline-flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <Calculator className="w-4 h-4 text-[#0F172A] shrink-0" />
+            <span>Live prescription calculator</span>
+            <span className="relative flex h-2 w-2 shrink-0 ml-1">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          </Link>
 
-          </div>
+        </div>
+      </section>
 
+      {/* ============================================================ */}
+      {/*  3D MODEL DISPLAY                                            */}
+      {/* ============================================================ */}
+      <section className="relative pb-16 sm:pb-24 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* 3D Eyewear Studio Canvas */}
           <div className="relative w-full max-w-4xl mx-auto min-h-[460px] sm:min-h-[500px] md:h-[520px] mt-6 sm:mt-8 flex items-center justify-center bg-transparent z-10">
             <Frame3DCanvasWrapper />
