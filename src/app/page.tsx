@@ -75,88 +75,63 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  SEAMLESS HERO BANNER SECTION (bg-slate-950)                 */}
+      {/*  PURE WHITE MINIMALIST SECTION ARCHITECTURE                  */}
       {/* ============================================================ */}
-      <section className="relative w-full py-12 md:py-20 my-6 overflow-hidden bg-slate-950 text-white">
-        {/* High-Fashion Eyewear Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-luminosity scale-105 pointer-events-none" 
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80')" }} 
-        />
-        
-        {/* Edge Fades: Seamlessly blends top and bottom into page background */}
-        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
-        
-        {/* High-Contrast Radial/Linear Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-0 pointer-events-none" />
+      <section className="w-full bg-white py-6 my-2">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center text-center space-y-4">
+          
+          {/* Clean Subtitle / Micro Headline */}
+          <span className="text-xs uppercase tracking-widest font-bold text-amber-600 bg-amber-50 px-3.5 py-1 rounded-full border border-amber-200/60">
+            Interactive Shopping Tools
+          </span>
 
-        {/* Content Container aligned with Store Layout */}
-        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-xl space-y-4 text-left">
-            {/* Category Pill */}
-            <span className="inline-block text-xs uppercase tracking-widest font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3.5 py-1 rounded-full">
-              MY EYES • Fall 2026 Collection
-            </span>
+          {/* 4 Unified High-Contrast Pill Buttons */}
+          <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+            
+            {/* Button 1: Primary Amber Quiz */}
+            <Link 
+              href="/quiz"
+              id="hero-style-quiz-btn"
+              className="h-[42px] px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shadow-amber-500/20"
+            >
+              <Sparkles className="w-4 h-4 text-white"/>
+              <span>Start with a quiz</span>
+            </Link>
 
-            {/* Main Headline */}
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase text-white">
-              Find Your <span className="text-[#F59E0B]">Frame</span>
-            </h2>
+            {/* Button 2: Deep Slate Eyeglasses */}
+            <Link 
+              href="/eyeglasses"
+              id="hero-eyeglasses-btn"
+              className="h-[42px] px-6 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+            >
+              <Glasses className="w-4 h-4 text-white"/>
+              <span>Shop eyeglasses</span>
+            </Link>
 
-            {/* Subtitle */}
-            <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-              Lab-precision optics meets high-fashion hand-crafted frames. Try our 1-minute style quiz or explore our catalog.
-            </p>
+            {/* Button 3: Clean Outlined Sunglasses */}
+            <Link 
+              href="/sunglasses"
+              id="hero-sunglasses-btn"
+              className="h-[42px] px-6 rounded-full bg-white text-slate-800 border-2 border-slate-200 hover:border-slate-800 hover:bg-slate-800 hover:text-white transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+            >
+              <Sun className="w-4 h-4"/>
+              <span>Shop sunglasses</span>
+            </Link>
 
-            {/* 4 Seamless & High-Contrast Pill Buttons Container */}
-            <div className="pt-3 flex flex-wrap items-center gap-2.5 max-w-lg">
-              
-              {/* Button 1 (PRIMARY): Start with a quiz */}
-              <Link
-                href="/quiz"
-                id="hero-style-quiz-btn"
-                className="bg-[#F59E0B] text-white hover:bg-[#D97706] rounded-full h-[42px] px-5 flex items-center justify-center gap-2 font-bold transition-all hover:scale-[1.03] shadow-md shadow-amber-500/20 text-xs sm:text-sm whitespace-nowrap animate-in fade-in zoom-in-95 duration-300"
-              >
-                <Sparkles className="w-4 h-4 text-white" />
-                <span>Start with a quiz</span>
-              </Link>
+            {/* Button 4: Soft Neutral Live Calculator */}
+            <Link 
+              href="/lens-pricing"
+              id="hero-prescription-btn"
+              className="h-[42px] px-6 rounded-full bg-neutral-100 text-slate-900 border border-neutral-200 hover:bg-neutral-200 transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+            >
+              <Calculator className="w-4 h-4 text-slate-900"/>
+              <span>Live calculator</span>
+              <span className="relative flex h-2 w-2 ml-0.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </Link>
 
-              {/* Button 2 (SECONDARY): Shop eyeglasses */}
-              <Link
-                href="/eyeglasses"
-                id="hero-eyeglasses-btn"
-                className="bg-slate-900 text-white border border-slate-700 hover:bg-slate-800 rounded-full h-[42px] px-5 flex items-center justify-center gap-2 font-bold transition-all hover:scale-[1.03] shadow-md text-xs sm:text-sm whitespace-nowrap animate-in fade-in zoom-in-95 duration-300 delay-75"
-              >
-                <Glasses className="w-4 h-4 text-white" />
-                <span>Shop eyeglasses</span>
-              </Link>
-
-              {/* Button 3 (TERTIARY): Shop sunglasses */}
-              <Link
-                href="/sunglasses"
-                id="hero-sunglasses-btn"
-                className="bg-white/20 hover:bg-white hover:text-slate-900 text-white backdrop-blur-md border border-white/30 rounded-full h-[42px] px-5 flex items-center justify-center gap-2 font-bold transition-all hover:scale-[1.03] text-xs sm:text-sm whitespace-nowrap animate-in fade-in zoom-in-95 duration-300 delay-150"
-              >
-                <Sun className="w-4 h-4" />
-                <span>Shop sunglasses</span>
-              </Link>
-
-              {/* Button 4 (UTILITY - HIGH VISIBILITY FIX): Live calculator */}
-              <Link
-                href="/lens-pricing"
-                id="hero-prescription-btn"
-                className="bg-white text-slate-900 hover:bg-slate-100 rounded-full h-[42px] px-5 flex items-center justify-center gap-2 font-bold transition-all hover:scale-[1.03] shadow-md cursor-pointer text-xs sm:text-sm whitespace-nowrap animate-in fade-in zoom-in-95 duration-300 delay-200"
-              >
-                <Calculator className="w-4 h-4 text-slate-900" />
-                <span>Live calculator</span>
-                <span className="relative flex h-2 w-2 ml-0.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-              </Link>
-
-            </div>
           </div>
         </div>
       </section>
