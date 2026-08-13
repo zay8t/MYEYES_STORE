@@ -75,62 +75,71 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  PURE WHITE MINIMALIST SECTION ARCHITECTURE                  */}
+      {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
       {/* ============================================================ */}
-      <section className="w-full bg-white py-6 my-2">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center text-center space-y-4">
-          
-          {/* Clean Subtitle / Micro Headline */}
-          <span className="text-xs uppercase tracking-widest font-bold text-amber-600 bg-amber-50 px-3.5 py-1 rounded-full border border-amber-200/60">
-            Interactive Shopping Tools
-          </span>
-
-          {/* 4 Unified High-Contrast Pill Buttons */}
-          <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+      <section className="w-full bg-white py-10 my-4">
+        {/* Content Container aligned exactly as before */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-xl space-y-4 text-left">
             
-            {/* Button 1: Primary Amber Quiz */}
-            <Link 
-              href="/quiz"
-              id="hero-style-quiz-btn"
-              className="h-[42px] px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shadow-amber-500/20"
-            >
-              <Sparkles className="w-4 h-4 text-white"/>
-              <span>Start with a quiz</span>
-            </Link>
+            {/* 1. Category Pill Badge (Preserved) */}
+            <span className="inline-block text-xs uppercase tracking-widest font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-1 rounded-full">
+              MY EYES • Fall 2026 Collection
+            </span>
 
-            {/* Button 2: Deep Slate Eyeglasses */}
-            <Link 
-              href="/eyeglasses"
-              id="hero-eyeglasses-btn"
-              className="h-[42px] px-6 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
-            >
-              <Glasses className="w-4 h-4 text-white"/>
-              <span>Shop eyeglasses</span>
-            </Link>
+            {/* 2. Main Headline (Preserved - Text inverted to Slate-900/Amber) */}
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase text-[#0F172A]">
+              Find Your <span className="text-[#F59E0B]">Frame</span>
+            </h2>
 
-            {/* Button 3: Clean Outlined Sunglasses */}
-            <Link 
-              href="/sunglasses"
-              id="hero-sunglasses-btn"
-              className="h-[42px] px-6 rounded-full bg-white text-slate-800 border-2 border-slate-200 hover:border-slate-800 hover:bg-slate-800 hover:text-white transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
-            >
-              <Sun className="w-4 h-4"/>
-              <span>Shop sunglasses</span>
-            </Link>
+            {/* 3. Subtitle (Preserved - Text inverted to Slate-600) */}
+            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+              Lab-precision optics meets high-fashion hand-crafted frames. Try our 1-minute style quiz or explore our catalog.
+            </p>
 
-            {/* Button 4: Soft Neutral Live Calculator */}
-            <Link 
-              href="/lens-pricing"
-              id="hero-prescription-btn"
-              className="h-[42px] px-6 rounded-full bg-neutral-100 text-slate-900 border border-neutral-200 hover:bg-neutral-200 transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
-            >
-              <Calculator className="w-4 h-4 text-slate-900"/>
-              <span>Live calculator</span>
-              <span className="relative flex h-2 w-2 ml-0.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            </Link>
+            {/* 4. Exact 4-Button Arrangement (Preserved with High-Contrast Light Colors) */}
+            <div className="pt-2 flex flex-wrap items-center gap-2.5 max-w-lg">
+              
+              {/* Button 1: Start with a quiz */}
+              <Link 
+                href="/quiz"
+                className="h-[42px] px-5 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shadow-amber-500/20"
+              >
+                <Sparkles className="w-4 h-4 text-white"/>
+                <span>Start with a quiz</span>
+              </Link>
+
+              {/* Button 2: Shop eyeglasses */}
+              <Link 
+                href="/eyeglasses"
+                className="h-[42px] px-5 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+              >
+                <Glasses className="w-4 h-4 text-white"/>
+                <span>Shop eyeglasses</span>
+              </Link>
+
+              {/* Button 3: Shop sunglasses */}
+              <Link 
+                href="/sunglasses"
+                className="h-[42px] px-5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+              >
+                <Sun className="w-4 h-4 text-slate-700"/>
+                <span>Shop sunglasses</span>
+              </Link>
+
+              {/* Button 4: Live calculator */}
+              <Link 
+                href="/lens-pricing"
+                className="h-[42px] px-5 rounded-full bg-white text-slate-900 border-2 border-slate-800 hover:bg-slate-800 hover:text-white transition-all hover:scale-[1.03] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+              >
+                <Calculator className="w-4 h-4"/>
+                <span>Live calculator</span>
+                <span className="relative flex h-2 w-2 ml-0.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </Link>
+            </div>
 
           </div>
         </div>
