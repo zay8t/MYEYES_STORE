@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import { useCartStore } from "@/lib/cart-store";
-import { Glasses, Sun, ArrowRight, Sparkles, Truck, ShieldCheck, CreditCard, Box, Calculator } from "lucide-react";
+import { Glasses, Sun, Sparkles, Truck, ShieldCheck, CreditCard, Box } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
@@ -75,64 +75,80 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  DEDICATED HERO ACTION BAR SECTION WITH BACKGROUND IMAGE     */}
+      {/*  FULL-BLEED LIFESTYLE HERO SECTION (WARBY PARKER STYLE)       */}
       {/* ============================================================ */}
-      <section className="relative w-full py-8 my-6 overflow-hidden border-y border-neutral-200/60 shadow-inner bg-white">
-        {/* Background Image Layer with Gradient & Blur Overlay */}
+      <section className="relative w-full min-h-[380px] sm:min-h-[440px] my-8 overflow-hidden rounded-3xl max-w-7xl mx-auto shadow-2xl flex items-end sm:items-center">
+        {/* High-Fashion Eyewear Editorial Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 scale-105 pointer-events-none filter blur-[1px]" 
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&q=80')" }} 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 hover:scale-105" 
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80')" }} 
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-neutral-50/80 to-white opacity-90 pointer-events-none" />
+        
+        {/* Subtle Gradient Overlay for Unbeatable Text & Button Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
 
-        {/* Content Container */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 grid grid-cols-2 md:flex md:flex-row md:items-center md:justify-center gap-2.5 md:gap-4 w-full max-w-md md:max-w-none">
+        {/* Content Overlay */}
+        <div className="relative z-10 p-6 sm:p-12 md:p-16 max-w-xl text-white space-y-4">
+          <span className="inline-block text-xs uppercase tracking-widest font-bold text-amber-400 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-amber-400/30">
+            MY EYES • Fall 2026 Collection
+          </span>
           
-          {/* Button 1 (PRIMARY): Start with a quiz */}
-          <Link
-            href="/quiz"
-            id="hero-style-quiz-btn"
-            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md shadow-amber-500/15 backdrop-blur-md transition-all duration-200 bg-[#F59E0B] text-white hover:bg-[#D97706] inline-flex items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Sparkles className="w-4 h-4 text-white shrink-0" />
-            <span>Start with a quiz</span>
-          </Link>
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase">
+            Find Your <span className="text-amber-400">Frame</span>
+          </h2>
+          
+          <p className="text-sm sm:text-base text-neutral-200 font-medium max-w-md">
+            Lab-precision optics meets high-fashion hand-crafted frames. Try our 1-minute style quiz or explore our catalog.
+          </p>
 
-          {/* Button 2 (SECONDARY): Explore eyeglasses */}
-          <Link
-            href="/eyeglasses"
-            id="hero-eyeglasses-btn"
-            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md backdrop-blur-md transition-all duration-200 bg-[#0F172A] text-white hover:bg-[#1E293B] inline-flex items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Glasses className="w-4 h-4 text-white shrink-0" />
-            <span>Explore eyeglasses</span>
-            <ArrowRight className="w-3.5 h-3.5 text-white/80 shrink-0 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          {/* Ultra-Minimalist Button Group */}
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            
+            {/* Button 1 (PRIMARY): Start with a quiz */}
+            <Link
+              href="/quiz"
+              id="hero-style-quiz-btn"
+              className="bg-[#F59E0B] text-white hover:bg-[#D97706] rounded-full px-6 py-3 text-xs sm:text-sm font-bold transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-white" />
+              <span>Start with a quiz</span>
+            </Link>
 
-          {/* Button 3 (OUTLINE): Explore sunglasses */}
-          <Link
-            href="/sunglasses"
-            id="hero-sunglasses-btn"
-            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-sm backdrop-blur-md transition-all duration-200 bg-white/90 text-[#0F172A] border-2 border-[#0F172A] hover:bg-[#0F172A] hover:text-white inline-flex items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Sun className="w-4 h-4 shrink-0 group-hover:rotate-45 transition-transform duration-500" />
-            <span>Explore sunglasses</span>
-          </Link>
+            {/* Button 2 (SECONDARY): Shop eyeglasses */}
+            <Link
+              href="/eyeglasses"
+              id="hero-eyeglasses-btn"
+              className="bg-[#0F172A] text-white hover:bg-[#1E293B] rounded-full px-6 py-3 text-xs sm:text-sm font-bold transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <Glasses className="w-4 h-4 text-white" />
+              <span>Shop eyeglasses</span>
+            </Link>
 
-          {/* Button 4 (UTILITY): Live prescription calculator */}
-          <Link
-            href="/lens-pricing"
-            id="hero-prescription-btn"
-            className="group w-full md:w-auto h-[44px] px-6 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-sm backdrop-blur-md transition-all duration-200 bg-neutral-100/90 text-[#0F172A] border border-neutral-300 hover:bg-neutral-200 inline-flex items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Calculator className="w-4 h-4 text-[#0F172A] shrink-0" />
-            <span>Live prescription calculator</span>
-            <span className="relative flex h-2 w-2 shrink-0 ml-1">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-          </Link>
+            {/* Button 3 (TERTIARY): Shop sunglasses */}
+            <Link
+              href="/sunglasses"
+              id="hero-sunglasses-btn"
+              className="bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-slate-900 rounded-full px-6 py-3 text-xs sm:text-sm font-bold transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <Sun className="w-4 h-4" />
+              <span>Shop sunglasses</span>
+            </Link>
 
+            {/* Button 4 (UTILITY): Live calculator › */}
+            <Link
+              href="/lens-pricing"
+              id="hero-prescription-btn"
+              className="text-white hover:text-amber-400 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer pt-1 px-2"
+            >
+              <span>Live calculator</span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="font-semibold">&rsaquo;</span>
+            </Link>
+
+          </div>
         </div>
       </section>
 

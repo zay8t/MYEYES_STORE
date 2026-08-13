@@ -250,16 +250,18 @@ export default function Header() {
                 Lens Pricing
               </Link>
 
-              {/* ✨ Style Quiz Badge */}
+              {/* Style Quiz Link */}
               <Link
                 href="/quiz"
                 id="nav-style-quiz-link"
                 className={cn(
-                  "text-sm font-semibold bg-amber-50 text-[#D97706] border border-amber-200 px-3.5 py-1.5 rounded-full hover:bg-amber-100 transition-all flex items-center gap-1.5",
-                  pathname.startsWith("/quiz") && "bg-amber-100 border-amber-300 text-amber-700"
+                  "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl",
+                  pathname.startsWith("/quiz")
+                    ? "text-[#F59E0B] bg-amber-50/50 font-bold"
+                    : "text-slate-600 hover:text-[#F59E0B] hover:bg-slate-50"
                 )}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-4 h-4 text-[#F59E0B] shrink-0" />
                 Style Quiz
               </Link>
             </nav>
@@ -416,14 +418,19 @@ export default function Header() {
               Lens Pricing
             </Link>
 
-            {/* Mobile Style Quiz Badge */}
+            {/* Mobile Style Quiz Link */}
             <Link
               href="/quiz"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl min-h-[44px] bg-amber-50 border border-amber-200 text-[#D97706] font-bold text-sm hover:bg-amber-100 transition-all"
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[44px]",
+                pathname.startsWith("/quiz")
+                  ? "text-[#F59E0B] bg-amber-50"
+                  : "text-slate-800 hover:bg-slate-50"
+              )}
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              ✨ Style Quiz
+              <Sparkles className="w-4 h-4 text-[#F59E0B]" />
+              Style Quiz
             </Link>
           </div>
         </div>
