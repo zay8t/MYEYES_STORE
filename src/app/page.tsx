@@ -72,33 +72,49 @@ export default function HomePage() {
             Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-3.5 mt-8">
+            {/* Button 1: Explore Eyeglasses */}
             <Link
               href="/eyeglasses"
-              className="bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              id="hero-eyeglasses-btn"
+              className="bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
-              <Glasses className="w-4 h-4 text-white" />
+              <Glasses className="w-4 h-4" />
               <span>Explore Eyeglasses</span>
-              <ArrowRight className="w-4 h-4 text-white" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
 
+            {/* Button 2: Explore Sunglasses */}
             <Link
               href="/sunglasses"
-              className="border border-[#F59E0B] bg-white text-[#F59E0B] hover:bg-[#F59E0B] hover:text-white font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              id="hero-sunglasses-btn"
+              className="border border-[#F59E0B] bg-white text-[#F59E0B] hover:bg-[#F59E0B] hover:text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <Sun className="w-4 h-4 transition-colors" />
               <span>Explore Sunglasses</span>
             </Link>
 
+            {/* Button 3: Live Prescription Calculator */}
             <Link
               href="/lens-pricing"
-              className="bg-neutral-50 text-[#0F172A] border border-neutral-200/80 hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] font-semibold text-sm px-6 py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+              id="hero-prescription-btn"
+              className="bg-neutral-50 text-[#0F172A] border border-neutral-200 hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <span>Live Prescription Calculator</span>
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
+            </Link>
+
+            {/* Button 4: Take Style Quiz (NEW) */}
+            <Link
+              href="/quiz"
+              id="hero-style-quiz-btn"
+              className="bg-amber-50 text-[#D97706] border border-amber-200 hover:bg-[#F59E0B] hover:text-white hover:border-[#F59E0B] font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Take Style Quiz</span>
             </Link>
           </div>
 

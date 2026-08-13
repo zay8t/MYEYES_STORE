@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingBag, Menu, X, Home, Tag, Glasses, Sun, ChevronDown } from "lucide-react";
+import { ShoppingBag, Menu, X, Home, Tag, Glasses, Sun, ChevronDown, Sparkles } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,7 @@ export default function Header() {
   }, [mobileOpen]);
 
   if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/quiz")) return null;
 
   return (
     <>
@@ -248,6 +249,19 @@ export default function Header() {
                 <Tag className="w-4 h-4 text-slate-400" />
                 Lens Pricing
               </Link>
+
+              {/* ✨ Style Quiz Badge */}
+              <Link
+                href="/quiz"
+                id="nav-style-quiz-link"
+                className={cn(
+                  "text-sm font-semibold bg-amber-50 text-[#D97706] border border-amber-200 px-3.5 py-1.5 rounded-full hover:bg-amber-100 transition-all flex items-center gap-1.5",
+                  pathname.startsWith("/quiz") && "bg-amber-100 border-amber-300 text-amber-700"
+                )}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Style Quiz
+              </Link>
             </nav>
 
             {/* Right Actions */}
@@ -400,6 +414,16 @@ export default function Header() {
             >
               <Tag className="w-4 h-4 text-slate-400" />
               Lens Pricing
+            </Link>
+
+            {/* Mobile Style Quiz Badge */}
+            <Link
+              href="/quiz"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl min-h-[44px] bg-amber-50 border border-amber-200 text-[#D97706] font-bold text-sm hover:bg-amber-100 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              ✨ Style Quiz
             </Link>
           </div>
         </div>
