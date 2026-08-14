@@ -201,11 +201,21 @@ function buildFilterTags(answers: QuizAnswers): FilterTag[] {
 
   if (answers.colorPalette && answers.colorPalette.length > 0) {
     const colorMap: Record<string, string> = {
-      tortoise: "Tortoise",
       black: "Black",
+      tortoise: "Tortoise",
       crystal: "Crystal Clear",
-      warm: "Warm Tones",
-      silver: "Silver / Metal",
+      grey: "Grey",
+      amber: "Amber",
+      gold: "Gold",
+      silver: "Silver",
+      rose_gold: "Rose Gold",
+      red: "Red",
+      blue: "Blue",
+      teal: "Teal",
+      green: "Green",
+      orange: "Orange",
+      pink: "Pink",
+      purple: "Purple",
     };
     answers.colorPalette.slice(0, 2).forEach((c) => {
       tags.push({ key: `color-${c}`, label: colorMap[c] || c });

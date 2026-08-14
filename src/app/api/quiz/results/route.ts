@@ -73,10 +73,17 @@ function scoreProduct(
     score += SCORING_WEIGHTS.material;
   }
 
-  // 5. COLOR PALETTE (10pts) — scored via keyword match on name+description
+  // 5. COLOR PALETTE (10pts) — scored via direct colors array or keyword match on name+description
   if (answers.colorPalette && answers.colorPalette.length > 0) {
     const productText = `${product.name} ${product.description}`.toLowerCase();
     const colorMatch = answers.colorPalette.some((paletteKey) => {
+      // 1. Direct match with product.colors
+      if (product.colors && Array.isArray(product.colors)) {
+        if (product.colors.map(c => c.toLowerCase()).includes(paletteKey.toLowerCase())) {
+          return true;
+        }
+      }
+      // 2. Fallback keyword match in product text
       const palette = COLOR_PALETTES[paletteKey];
       if (!palette) return false;
       return palette.keywords.some((kw) => productText.includes(kw));

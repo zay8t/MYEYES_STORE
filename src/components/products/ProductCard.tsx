@@ -6,6 +6,24 @@ import Image from "next/image";
 import { Glasses, Sun } from "lucide-react";
 import { formatPrice, formatMaterial, formatFrameShape } from "@/lib/utils";
 
+const COLOR_MAP: Record<string, string> = {
+  black: "#18181B",
+  tortoise: "#6B3E11",
+  crystal: "#E2E8F0",
+  grey: "#64748B",
+  amber: "#D97706",
+  gold: "#EAB308",
+  silver: "#94A3B8",
+  rose_gold: "#FB7185",
+  red: "#DC2626",
+  blue: "#2563EB",
+  teal: "#06B6D4",
+  green: "#16A34A",
+  orange: "#EA580C",
+  pink: "#EC4899",
+  purple: "#9333EA"
+};
+
 export interface Product {
   id: string;
   name: string;
@@ -16,6 +34,7 @@ export interface Product {
   frameShape: string;
   material: string;
   gender: string;
+  colors?: string | string[];
   images: string | string[]; // Can be string, string[], or JSON string
   image?: string; // fallback field if defined
   featured: boolean;
@@ -68,6 +87,24 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
 
   const imgUrl = getProductImage();
 
+  const getProductColors = (): string[] => {
+    const rawColors = product.colors;
+    if (!rawColors) return [];
+    if (Array.isArray(rawColors)) return rawColors;
+    if (typeof rawColors === "string") {
+      const trimmed = rawColors.trim();
+      if (trimmed.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) return parsed;
+        } catch {}
+      }
+      return trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  };
+  const colorsList = getProductColors();
+
   return (
     <div className="card-hover group relative rounded-2xl border border-slate-200/80 bg-white p-5 transition-all duration-300 flex flex-col justify-between">
       <Link href={`/products/${product.slug}`} className="block space-y-4">
@@ -98,6 +135,24 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
           </div>
           <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
           <p className="text-xs text-slate-500 mt-1 line-clamp-1">{product.description}</p>
+          
+          {/* Color Indicator Dots */}
+          {colorsList.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {colorsList.map((c) => {
+                const hex = COLOR_MAP[c.toLowerCase()];
+                if (!hex) return null;
+                return (
+                  <span
+                    key={c}
+                    className="w-2.5 h-2.5 rounded-full border border-slate-200 shadow-2xs block shrink-0"
+                    style={{ backgroundColor: hex }}
+                    title={c}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </Link>
 

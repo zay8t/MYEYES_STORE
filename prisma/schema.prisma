@@ -59,7 +59,8 @@ model Product {
   stock       Int        @default(0)
   frameShape  FrameShape @default(NILL)
   material    Material   @default(NILL)
-  gender      String     @default("NILL")
+  gender      String     @default("unisex")
+  colors      String[]   @default([])
   images      String
   category    Category   @default(EYEGLASSES)
   featured    Boolean    @default(false)

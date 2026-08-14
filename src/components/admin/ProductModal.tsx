@@ -41,18 +41,29 @@ export const MATERIALS_OPTIONS = [
   { label: "Hybrid / Combination", value: "HYBRID" },
 ];
 
-export const FORM_CATEGORY_OPTIONS = [
-  { label: "None / Other (Nill)", value: "NILL" },
-  { label: "Men's Eyeglasses", value: "MENS_EYEGLASSES" },
-  { label: "Women's Eyeglasses", value: "WOMENS_EYEGLASSES" },
-  { label: "Unisex Eyeglasses", value: "UNISEX_EYEGLASSES" },
-  { label: "Kids' Eyeglasses", value: "KIDS_EYEGLASSES" },
-  { label: "Men's Sunglasses", value: "MENS_SUNGLASSES" },
-  { label: "Women's Sunglasses", value: "WOMENS_SUNGLASSES" },
-  { label: "Unisex Sunglasses", value: "UNISEX_SUNGLASSES" },
-  { label: "Kids' Sunglasses", value: "KIDS_SUNGLASSES" },
-  { label: "Contact Lenses", value: "CONTACT_LENSES" },
-  { label: "Accessories", value: "ACCESSORIES" },
+export const GENDER_OPTIONS = [
+  { label: "Men", value: "Men" },
+  { label: "Women", value: "Women" },
+  { label: "Unisex", value: "Unisex" },
+  { label: "Kids", value: "Kids" },
+];
+
+export const ALL_COLORS = [
+  { value: "black", label: "Solid Black & Midnight", hex: "#18181B" },
+  { value: "tortoise", label: "Classic Tortoise & Havana", hex: "#6B3E11" },
+  { value: "crystal", label: "Crystal Clear & Ice", hex: "#E2E8F0" },
+  { value: "grey", label: "Smoked Slate & Grey", hex: "#64748B" },
+  { value: "amber", label: "Warm Amber & Honey Brown", hex: "#D97706" },
+  { value: "gold", label: "Classic Gold & Champagne", hex: "#EAB308" },
+  { value: "silver", label: "Silver & Gunmetal Steel", hex: "#94A3B8" },
+  { value: "rose_gold", label: "Rose Gold & Warm Copper", hex: "#FB7185" },
+  { value: "red", label: "Crimson & Bold Red", hex: "#DC2626" },
+  { value: "blue", label: "Electric Cobalt & Deep Navy", hex: "#2563EB" },
+  { value: "teal", label: "Bright Cyan & Tropical Teal", hex: "#06B6D4" },
+  { value: "green", label: "Emerald & Olive Green", hex: "#16A34A" },
+  { value: "orange", label: "Vivid Orange & Sunburst", hex: "#EA580C" },
+  { value: "pink", label: "Bubblegum & Pastel Pink", hex: "#EC4899" },
+  { value: "purple", label: "Lilac & Royal Purple", hex: "#9333EA" }
 ];
 
 export const CATEGORIES_OPTIONS = [
@@ -89,31 +100,20 @@ export default function ProductModal({
   const [category, setCategory] = useState<Category>(product?.category || "EYEGLASSES");
   const [frameShape, setFrameShape] = useState<FrameShape>(product?.frameShape || "NILL");
   const [material, setMaterial] = useState<Material>(product?.material || "NILL");
-  const [gender, setGender] = useState(product?.gender || "Unspecified");
+  const [gender, setGender] = useState(product?.gender || "Unisex");
+  const [selectedColors, setSelectedColors] = useState<string[]>(() => {
+    if (!product) return [];
+    const prod = product as Record<string, unknown>;
+    const rawColors = prod.colors;
+    if (Array.isArray(rawColors)) {
+      return rawColors.map(c => String(c));
+    }
+    if (typeof rawColors === "string") {
+      return rawColors.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  });
   const [featured, setFeatured] = useState<boolean>(product?.featured ?? false);
-
-  const getInitialFormCategory = (): string => {
-    if (!product) return "MENS_EYEGLASSES";
-    const cat = product.category;
-    const gen = product.gender?.toLowerCase() || "";
-    if (cat === "EYEGLASSES") {
-      if (gen === "men") return "MENS_EYEGLASSES";
-      if (gen === "women") return "WOMENS_EYEGLASSES";
-      if (gen === "kids") return "KIDS_EYEGLASSES";
-      return "MENS_EYEGLASSES";
-    }
-    if (cat === "SUNGLASSES") {
-      if (gen === "men") return "MENS_SUNGLASSES";
-      if (gen === "women") return "WOMENS_SUNGLASSES";
-      if (gen === "kids") return "KIDS_SUNGLASSES";
-      return "MENS_SUNGLASSES";
-    }
-    if (cat === "CONTACT_LENSES") return "CONTACT_LENSES";
-    if (cat === "ACCESSORIES") return "ACCESSORIES";
-    return "NILL";
-  };
-
-  const [formCategory, setFormCategory] = useState<string>(getInitialFormCategory());
 
   const [images, setImages] = useState<string[]>(parseExistingImages(product?.images));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +139,11 @@ export default function ProductModal({
     setIsSubmitting(true);
     setErrorMsg("");
 
+    if (selectedColors.length === 0) {
+      setErrorMsg("Please select at least one available color variant.");
+      return;
+    }
+
     const inputData = {
       name: name.trim(),
       description: description.trim(),
@@ -148,6 +153,7 @@ export default function ProductModal({
       frameShape,
       material,
       gender,
+      colors: selectedColors,
       images,
       featured,
     };
@@ -295,54 +301,34 @@ export default function ProductModal({
               <Tag className="w-4 h-4 text-amber-600" /> Frame Variants & Optical Specs
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Category / Subcategory *
+                  Category *
                 </label>
                 <select
-                  value={formCategory}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormCategory(val);
-                    if (val === "MENS_EYEGLASSES") {
-                      setCategory("EYEGLASSES");
-                      setGender("Men");
-                    } else if (val === "WOMENS_EYEGLASSES") {
-                      setCategory("EYEGLASSES");
-                      setGender("Women");
-                    } else if (val === "UNISEX_EYEGLASSES") {
-                      setCategory("EYEGLASSES");
-                      setGender("Unisex");
-                    } else if (val === "KIDS_EYEGLASSES") {
-                      setCategory("EYEGLASSES");
-                      setGender("Kids");
-                    } else if (val === "MENS_SUNGLASSES") {
-                      setCategory("SUNGLASSES");
-                      setGender("Men");
-                    } else if (val === "WOMENS_SUNGLASSES") {
-                      setCategory("SUNGLASSES");
-                      setGender("Women");
-                    } else if (val === "UNISEX_SUNGLASSES") {
-                      setCategory("SUNGLASSES");
-                      setGender("Unisex");
-                    } else if (val === "KIDS_SUNGLASSES") {
-                      setCategory("SUNGLASSES");
-                      setGender("Kids");
-                    } else if (val === "CONTACT_LENSES") {
-                      setCategory("CONTACT_LENSES");
-                      setGender("Unisex");
-                    } else if (val === "ACCESSORIES") {
-                      setCategory("ACCESSORIES");
-                      setGender("Unisex");
-                    } else {
-                      setCategory("NILL");
-                      setGender("NILL");
-                    }
-                  }}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as Category)}
                   className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
-                  {FORM_CATEGORY_OPTIONS.map((opt) => (
+                  {CATEGORIES_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Target Audience / Gender *
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
+                >
+                  {GENDER_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -382,6 +368,46 @@ export default function ProductModal({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Multi-Select Color Picker */}
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                Available Frame Colors *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {ALL_COLORS.map((c) => {
+                  const isSelected = selectedColors.includes(c.value);
+                  return (
+                    <label
+                      key={c.value}
+                      className={`flex items-center gap-2 p-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer select-none
+                        ${isSelected
+                          ? "border-amber-500 bg-amber-50/40 text-amber-950"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setSelectedColors((prev) =>
+                            prev.includes(c.value)
+                              ? prev.filter((v) => v !== c.value)
+                              : [...prev, c.value]
+                          );
+                        }}
+                        className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer shrink-0"
+                      />
+                      <span
+                        className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-2xs block shrink-0"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      <span className="truncate">{c.label.split(" & ")[0]}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 

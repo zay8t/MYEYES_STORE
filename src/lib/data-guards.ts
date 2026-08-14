@@ -13,6 +13,7 @@ export interface SafeProduct {
   material: string;
   formattedMaterial: string;
   gender: string;
+  colors: string[];
   images: string[];
   firstImage: string;
   category: "EYEGLASSES" | "SUNGLASSES" | "CONTACT_LENSES" | "ACCESSORIES" | "NILL";
@@ -78,6 +79,7 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
       material: "NILL",
       formattedMaterial: "Standard Alloy",
       gender: "Unspecified",
+      colors: [],
       images: ["/placeholder-frame.png"],
       firstImage: "/placeholder-frame.png",
       category: "EYEGLASSES",
@@ -89,6 +91,26 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
   const rawPrice = typeof product.price === "number" ? product.price : parseFloat(String(product.price || 0)) || 0;
   const rawStock = typeof product.stock === "number" ? product.stock : parseInt(String(product.stock || 0), 10) || 0;
   const images = parseProductImages(product.images);
+
+  let colorsList: string[] = [];
+  const rawColors = product.colors;
+  if (Array.isArray(rawColors)) {
+    colorsList = rawColors.map((c) => String(c));
+  } else if (typeof rawColors === "string") {
+    const trimmed = rawColors.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          colorsList = parsed.map((c) => String(c));
+        }
+      } catch {
+        colorsList = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+    } else {
+      colorsList = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+  }
 
   return {
     id: String(product.id || `prod-${Date.now()}`),
@@ -103,6 +125,7 @@ export function safeProduct(product: Record<string, unknown> | null | undefined)
     material: String(product.material || "NILL"),
     formattedMaterial: formatMaterial(typeof product.material === "string" ? product.material : null),
     gender: String(product.gender || "Unspecified"),
+    colors: colorsList,
     images,
     firstImage: images[0] || "/placeholder-frame.png",
     category: (product.category === "SUNGLASSES" || 
