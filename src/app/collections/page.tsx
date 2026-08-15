@@ -5,7 +5,7 @@ import { safeProductList, SafeProduct } from "@/lib/data-guards";
 import StorefrontCatalogLayout from "@/components/catalog/StorefrontCatalogLayout";
 import { Loader2 } from "lucide-react";
 
-function WomenCatalogContent() {
+function CollectionsCatalogContent() {
   const [products, setProducts] = useState<SafeProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,11 +13,7 @@ function WomenCatalogContent() {
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => {
-        const list = safeProductList(data);
-        const womenList = list.filter(
-          (p) => (p.gender || "").toLowerCase() === "women" || (p.gender || "").toLowerCase() === "unisex"
-        );
-        setProducts(womenList);
+        setProducts(safeProductList(data));
         setLoading(false);
       })
       .catch(() => {
@@ -31,7 +27,7 @@ function WomenCatalogContent() {
       <div className="min-h-screen bg-white flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-slate-900 mb-3" />
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Loading Women Collection...
+          Loading All Collections...
         </p>
       </div>
     );
@@ -40,15 +36,15 @@ function WomenCatalogContent() {
   return (
     <StorefrontCatalogLayout
       initialProducts={products}
-      title="Women's Designer Eyewear Collection"
-      subtitle="Elevated cat-eye, round, crystal clear, and rose gold silhouettes engineered with featherlight frames and bespoke prescription optics."
-      categoryTag="Women's Collection"
+      title="All Eyewear Collections"
+      subtitle="Explore our complete line of optical eyeglasses, designer sunglasses, and premium prescription eyewear with multi-faceted filtering."
+      categoryTag="Complete Catalog"
       categoryDefault="ALL"
     />
   );
 }
 
-export default function WomenCollectionPage() {
+export default function CollectionsCatalog() {
   return (
     <Suspense
       fallback={
@@ -60,7 +56,7 @@ export default function WomenCollectionPage() {
         </div>
       }
     >
-      <WomenCatalogContent />
+      <CollectionsCatalogContent />
     </Suspense>
   );
 }
