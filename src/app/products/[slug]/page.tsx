@@ -6,6 +6,8 @@ import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw } from "l
 import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
+import ProductGallery from "@/components/product/ProductGallery";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 interface Product {
   id: string;
@@ -30,7 +32,6 @@ export default function ProductDetailPage({
   const resolvedParams = use(params);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // Prescription modal state
   const [rxModalOpen, setRxModalOpen] = useState(false);
@@ -54,14 +55,7 @@ export default function ProductDetailPage({
   }, [resolvedParams.slug]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white py-16 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Loading Frame Details...</p>
-        </div>
-      </div>
-    );
+    return <LogoLoader text="LOADING FRAME DETAILS & OPTICS..." />;
   }
 
   if (!product) {
@@ -98,7 +92,7 @@ export default function ProductDetailPage({
   };
 
   const imagesList = parseImages(product.images);
-  const currentImage = imagesList[activeImageIndex] || "";
+  const currentImage = imagesList[0] || "";
 
   const handleRxSubmit = (details: PrescriptionDetails, totalPrice: number) => {
     addItem({
@@ -147,47 +141,13 @@ export default function ProductDetailPage({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* LEFT: Multi-Angle Frame Showcase Gallery (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            {/* Main Showcase Image */}
-            <div className="relative aspect-[4/3] rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center p-8">
-              {currentImage ? (
-                <img
-                  src={currentImage}
-                  alt={product.name}
-                  className="w-full h-full object-contain transition-all duration-300"
-                />
-              ) : (
-                <div className="text-center text-slate-300">
-                  {product.category === "SUNGLASSES" ? (
-                    <Sun className="w-24 h-24 mx-auto stroke-[1.25]" />
-                  ) : (
-                    <Glasses className="w-24 h-24 mx-auto stroke-[1.25]" />
-                  )}
-                  <p className="text-xs font-medium mt-2 text-slate-400">Frame Studio View</p>
-                </div>
-              )}
-            </div>
-
-            {/* Clickable Thumbnail Multi-Angle Gallery */}
-            {imagesList.length > 1 && (
-              <div className="flex items-center gap-3 overflow-x-auto pb-2">
-                {imagesList.map((imgUrl, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImageIndex(idx)}
-                    className={cn(
-                      "relative aspect-square w-20 rounded-xl bg-slate-50 border overflow-hidden transition-all flex-shrink-0 cursor-pointer p-2",
-                      activeImageIndex === idx
-                        ? "border-slate-900 ring-1 ring-slate-900"
-                        : "border-slate-200 hover:border-slate-400 opacity-70 hover:opacity-100"
-                    )}
-                  >
-                    <img src={imgUrl} alt="" className="w-full h-full object-contain" />
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* LEFT: Multi-Angle Swipeable Frame Gallery (7 cols) */}
+          <div className="lg:col-span-7">
+            <ProductGallery
+              images={imagesList}
+              productName={product.name}
+              category={product.category}
+            />
           </div>
 
           {/* RIGHT: Product Information & Spec Sheet (5 cols) */}
