@@ -27,6 +27,7 @@ import {
   X,
   Check,
   ExternalLink,
+  Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -95,8 +96,9 @@ interface PaymentVerificationClientProps {
 //  Constants
 // ─────────────────────────────────────────────────────────────────────────────
 const REJECTION_REASONS = [
+  "Invalid TID / Reference Number",
   "TID does not match bank records",
-  "Incomplete transfer amount",
+  "Amount mismatch / Incomplete transfer",
   "Blurry / unreadable receipt screenshot",
   "Duplicate / fake transaction receipt",
   "Wrong beneficiary account / mobile number",
@@ -104,13 +106,11 @@ const REJECTION_REASONS = [
 ];
 
 const FILTER_TABS = [
-  { id: "PENDING_VERIFICATION", label: "Pending", color: "text-amber-700 bg-amber-50 border-amber-200" },
-  { id: "RECEIPT_SUBMITTED", label: "New Receipts", color: "text-blue-700 bg-blue-50 border-blue-200" },
-  { id: "OCR_MATCHED", label: "OCR Matched", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-  { id: "FLAGGED_SUSPICIOUS", label: "Flagged", color: "text-red-700 bg-red-50 border-red-200" },
-  { id: "PAID", label: "Approved", color: "text-slate-700 bg-slate-50 border-slate-200" },
-  { id: "FAILED", label: "Rejected", color: "text-slate-500 bg-slate-50 border-slate-100" },
-  { id: "ALL", label: "All", color: "text-slate-700 bg-white border-slate-200" },
+  { id: "PENDING_VERIFICATION", label: "Pending Verification", color: "text-amber-700 bg-amber-50 border-amber-200" },
+  { id: "PAID", label: "Verified / Paid", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  { id: "FAILED", label: "Rejected", color: "text-rose-700 bg-rose-50 border-rose-200" },
+  { id: "FLAGGED_SUSPICIOUS", label: "Flagged", color: "text-orange-700 bg-orange-50 border-orange-200" },
+  { id: "ALL", label: "All Orders", color: "text-slate-700 bg-white border-slate-200" },
 ];
 
 const ADMIN_EMAIL = "admin@myeyes.pk";
@@ -133,10 +133,10 @@ function timeAgo(dateStr: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    PENDING_VERIFICATION: { label: "Pending", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+    PENDING_VERIFICATION: { label: "Pending Verification", cls: "bg-amber-100 text-amber-800 border-amber-200" },
     RECEIPT_SUBMITTED: { label: "Receipt In", cls: "bg-blue-100 text-blue-800 border-blue-200" },
-    PAID: { label: "✓ Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-    FAILED: { label: "✗ Rejected", cls: "bg-red-100 text-red-800 border-red-200" },
+    PAID: { label: "✓ Verified / Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+    FAILED: { label: "✗ Rejected", cls: "bg-rose-100 text-rose-800 border-rose-200" },
     FLAGGED_SUSPICIOUS: { label: "⚠ Flagged", cls: "bg-orange-100 text-orange-800 border-orange-200" },
     PENDING: { label: "Pending", cls: "bg-slate-100 text-slate-600 border-slate-200" },
   };
@@ -194,7 +194,7 @@ function TidComparison({ order }: { order: PaymentOrder }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  Interactive Receipt Viewer
 // ─────────────────────────────────────────────────────────────────────────────
-function ReceiptViewer({ url }: { url: string }) {
+function ReceiptViewer({ url, onMaximize }: { url: string; onMaximize?: () => void }) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [inverted, setInverted] = useState(false);
@@ -230,6 +230,11 @@ function ReceiptViewer({ url }: { url: string }) {
           <button onClick={() => setInverted((v) => !v)} className={`p-1.5 rounded-lg cursor-pointer ${inverted ? "bg-amber-500 text-white" : "bg-slate-700 hover:bg-slate-600 text-slate-300"}`} title="Invert Colors">
             <Contrast className="w-3.5 h-3.5" />
           </button>
+          {onMaximize && (
+            <button onClick={onMaximize} className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 cursor-pointer" title="Full Screen View">
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          )}
           <span className="text-[10px] font-mono text-slate-500 ml-1">{(zoom * 100).toFixed(0)}%</span>
           <a href={url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 cursor-pointer ml-1" title="Open Original">
             <ExternalLink className="w-3.5 h-3.5" />
@@ -243,8 +248,9 @@ function ReceiptViewer({ url }: { url: string }) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={onMaximize}
+        title="Click to view full resolution"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={url}
           alt="Payment receipt"
@@ -383,11 +389,12 @@ function RejectDialog({
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PaymentVerificationClient({ initialOrders }: PaymentVerificationClientProps) {
   const [orders, setOrders] = useState<PaymentOrder[]>(initialOrders);
-  const [activeTab, setActiveTab] = useState("RECEIPT_SUBMITTED");
+  const [activeTab, setActiveTab] = useState("PENDING_VERIFICATION");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selected, setSelected] = useState<PaymentOrder | null>(null);
+  const [selected, setSelected] = useState<PaymentOrder | null>(initialOrders[0] || null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [fullscreenReceipt, setFullscreenReceipt] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -410,10 +417,19 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     let list = orders;
 
     // Tab filter
-    if (activeTab === "OCR_MATCHED") {
-      list = list.filter((o) => o.isOcrMatched);
-    } else if (activeTab !== "ALL") {
-      list = list.filter((o) => o.paymentStatus === activeTab);
+    if (activeTab === "PENDING_VERIFICATION") {
+      list = list.filter(
+        (o) =>
+          o.paymentStatus === "PENDING_VERIFICATION" ||
+          o.paymentStatus === "RECEIPT_SUBMITTED" ||
+          o.paymentStatus === "PENDING"
+      );
+    } else if (activeTab === "PAID") {
+      list = list.filter((o) => o.paymentStatus === "PAID");
+    } else if (activeTab === "FAILED") {
+      list = list.filter((o) => o.paymentStatus === "FAILED");
+    } else if (activeTab === "FLAGGED_SUSPICIOUS") {
+      list = list.filter((o) => o.flaggedSuspicious || o.paymentStatus === "FLAGGED_SUSPICIOUS");
     }
 
     // Search filter
@@ -424,6 +440,8 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
           o.orderNumber?.toLowerCase().includes(q) ||
           o.customerName.toLowerCase().includes(q) ||
           o.customerPhone?.includes(q) ||
+          o.paymentSenderName?.toLowerCase().includes(q) ||
+          o.paymentSenderPhone?.includes(q) ||
           o.transactionId?.toLowerCase().includes(q)
       );
     }
@@ -434,11 +452,18 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
   // Tab counts
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    FILTER_TABS.forEach((tab) => {
-      if (tab.id === "OCR_MATCHED") c[tab.id] = orders.filter((o) => o.isOcrMatched).length;
-      else if (tab.id === "ALL") c[tab.id] = orders.length;
-      else c[tab.id] = orders.filter((o) => o.paymentStatus === tab.id).length;
-    });
+    c["PENDING_VERIFICATION"] = orders.filter(
+      (o) =>
+        o.paymentStatus === "PENDING_VERIFICATION" ||
+        o.paymentStatus === "RECEIPT_SUBMITTED" ||
+        o.paymentStatus === "PENDING"
+    ).length;
+    c["PAID"] = orders.filter((o) => o.paymentStatus === "PAID").length;
+    c["FAILED"] = orders.filter((o) => o.paymentStatus === "FAILED").length;
+    c["FLAGGED_SUSPICIOUS"] = orders.filter(
+      (o) => o.flaggedSuspicious || o.paymentStatus === "FLAGGED_SUSPICIOUS"
+    ).length;
+    c["ALL"] = orders.length;
     return c;
   }, [orders]);
 
@@ -535,6 +560,37 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl text-sm font-bold flex items-center gap-2 animate-fade-in-up ${toast.type === "success" ? "bg-emerald-600 text-white" : toast.type === "error" ? "bg-red-600 text-white" : "bg-slate-900 text-white"}`}>
           {toast.type === "success" ? <Check className="w-4 h-4" /> : toast.type === "error" ? <X className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* Fullscreen Receipt Modal */}
+      {fullscreenReceipt && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in">
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <a
+              href={fullscreenReceipt}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              title="Open Original Image"
+            >
+              <ExternalLink className="w-5 h-5" />
+            </a>
+            <button
+              onClick={() => setFullscreenReceipt(null)}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              title="Close Fullscreen View"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="max-w-4xl max-h-[85vh] w-full flex items-center justify-center p-2">
+            <img
+              src={fullscreenReceipt}
+              alt="Full Resolution Payment Receipt"
+              className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl"
+            />
+          </div>
         </div>
       )}
 
@@ -703,7 +759,10 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   {/* Receipt Viewer */}
                   <div>
                     {selected.paymentReceiptUrl ? (
-                      <ReceiptViewer url={selected.paymentReceiptUrl} />
+                      <ReceiptViewer
+                        url={selected.paymentReceiptUrl}
+                        onMaximize={() => setFullscreenReceipt(selected.paymentReceiptUrl || null)}
+                      />
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-slate-200 h-64 flex items-center justify-center text-slate-400 bg-slate-50">
                         <div className="text-center">
@@ -745,7 +804,14 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                           </div>
                         )}
                         {selected.paymentSenderName && (
-                          <div className="text-[10px] text-slate-400">Sender: {selected.paymentSenderName}</div>
+                          <div className="text-[10px] text-slate-600">
+                            <strong>Sender:</strong> {selected.paymentSenderName}
+                          </div>
+                        )}
+                        {selected.paymentSenderPhone && (
+                          <div className="text-[10px] text-slate-600">
+                            <strong>Sender Phone:</strong> {selected.paymentSenderPhone}
+                          </div>
                         )}
                       </div>
                     </div>

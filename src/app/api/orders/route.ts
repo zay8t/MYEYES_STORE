@@ -81,14 +81,14 @@ export async function POST(request: NextRequest) {
     }
 
     const finalReceiptUrl = paymentReceiptUrl || transactionProofUrl || null;
-    const finalPaymentStatus = paymentStatus || (paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED");
+    const finalPaymentStatus = paymentStatus || (paymentMethod === "COD" ? "PENDING" : "PENDING_VERIFICATION");
 
     if (
-      (paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "ALFALAH") &&
+      (paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "JAZZCASH" || paymentMethod === "ALFALAH") &&
       !finalReceiptUrl
     ) {
       return NextResponse.json(
-        { error: "Payment verification receipt screenshot is required for direct bank transfer and EasyPaisa payments." },
+        { error: "Payment verification receipt screenshot is required for online bank transfer, EasyPaisa, and JazzCash payments." },
         { status: 400 }
       );
     }

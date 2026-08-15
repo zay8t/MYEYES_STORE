@@ -209,6 +209,7 @@ export async function verifyPaymentAction(
       where: { id: orderId },
       data: {
         paymentStatus: "PAID",
+        status: "PROCESSING",
         verifiedBy: adminEmail,
         verifiedAt: new Date(),
         customerNotified: false,

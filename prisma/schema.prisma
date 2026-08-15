@@ -86,6 +86,7 @@ model Order {
   shippingFee         Float?      @default(250)
   stripeSessionId     String?
   totalAmount         Float
+  currency            String      @default("PKR")
   status              OrderStatus @default(PENDING)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA";
+type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA" | "JAZZCASH";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -48,6 +48,7 @@ export default function CheckoutPage() {
   // Transaction ID Fraud Prevention States
   const [transactionId, setTransactionId] = useState("");
   const [paymentSenderName, setPaymentSenderName] = useState("");
+  const [paymentSenderPhone, setPaymentSenderPhone] = useState("");
   const [tidCheckStatus, setTidCheckStatus] = useState<"idle" | "checking" | "ok" | "duplicate">("idle");
   const [tidError, setTidError] = useState("");
 
@@ -191,10 +192,15 @@ export default function CheckoutPage() {
       return;
     }
 
-    const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA";
+    const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "JAZZCASH";
+
+    if (isOnlinePayment && !transactionId) {
+      setErrorMsg("Please enter your Transaction ID (TID) / Reference number.");
+      return;
+    }
 
     if (isOnlinePayment && !paymentReceiptUrl) {
-      setErrorMsg("Please upload your payment verification receipt before confirming your order.");
+      setErrorMsg("Please upload your payment verification receipt screenshot before confirming your order.");
       return;
     }
 
@@ -216,11 +222,12 @@ export default function CheckoutPage() {
           shippingAddress: address,
           shippingCity: city,
           paymentMethod,
-          paymentStatus: isOnlinePayment ? "RECEIPT_SUBMITTED" : "PENDING",
+          paymentStatus: isOnlinePayment ? "PENDING_VERIFICATION" : "PENDING",
           paymentReceiptUrl: isOnlinePayment ? paymentReceiptUrl : null,
           transactionProofUrl: isOnlinePayment ? paymentReceiptUrl : null,
           transactionId: isOnlinePayment && transactionId ? transactionId.trim().toUpperCase() : null,
           paymentSenderName: isOnlinePayment && paymentSenderName ? paymentSenderName.trim() : null,
+          paymentSenderPhone: isOnlinePayment && paymentSenderPhone ? paymentSenderPhone.trim() : null,
           items,
         }),
       });
@@ -252,8 +259,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA";
-  const isConfirmDisabled = submitting || uploadingProof || (isOnlinePayment && !paymentReceiptUrl);
+  const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "JAZZCASH";
+  const isConfirmDisabled = submitting || uploadingProof || (isOnlinePayment && (!paymentReceiptUrl || !transactionId || tidCheckStatus === "duplicate"));
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-12">
@@ -378,7 +385,7 @@ export default function CheckoutPage() {
                   <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Payment Option</h2>
                   
                   {/* Selector Tabs */}
-                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/60">
                     <button
                       type="button"
                       onClick={() => {
@@ -392,7 +399,7 @@ export default function CheckoutPage() {
                       }`}
                     >
                       <Truck className="w-3.5 h-3.5" />
-                      <span>Cash on Delivery</span>
+                      <span>COD</span>
                     </button>
                     
                     <button
@@ -418,7 +425,20 @@ export default function CheckoutPage() {
                       }`}
                     >
                       <Smartphone className="w-3.5 h-3.5" />
-                      <span>EasyPaisa / JazzCash</span>
+                      <span>EasyPaisa</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("JAZZCASH")}
+                      className={`py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        paymentMethod === "JAZZCASH"
+                          ? "bg-white text-slate-900 shadow-sm border border-slate-200/40"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>JazzCash</span>
                     </button>
                   </div>
 
@@ -431,7 +451,17 @@ export default function CheckoutPage() {
                           <div className="space-y-1 bg-white border border-slate-200 p-3 rounded-lg leading-relaxed font-medium text-slate-700">
                             <p><strong>Bank:</strong> Bank Alfalah Islamic</p>
                             <p><strong>Account Title:</strong> MUHAMMAD AASIM MUSHTAQ</p>
-                            <p><strong>Account Number:</strong> 5601005000034907</p>
+                            <div className="flex items-center gap-2">
+                              <span><strong>Account Number:</strong> <span className="font-mono font-bold text-slate-900">5601005000034907</span></span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard("5601005000034907", "account")}
+                                className="p-1 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
+                                title="Copy Account Number"
+                              >
+                                {copiedText === "account" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
                             <div className="flex items-center gap-2 mt-1">
                               <span><strong>IBAN:</strong> <span className="font-mono text-[11px] font-bold text-slate-900">PK03ALFH5601005000034907</span></span>
                               <button
@@ -452,7 +482,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      {/* Cloudinary Receipt Upload Drag & Drop Component */}
+                      {/* Cloudinary Receipt Upload Component */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-2">
                         <label className="block text-[10px] font-bold text-slate-600 uppercase">
                           Upload Payment Verification Screenshot <span className="text-red-500">*</span>
@@ -522,15 +552,16 @@ export default function CheckoutPage() {
                         )}
                       </div>
 
-                      {/* Transaction ID & Sender Name fields */}
+                      {/* Transaction ID & Sender Details fields */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-3">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
-                            Transaction ID (TID) <span className="text-slate-400 font-normal normal-case">(from your bank receipt)</span>
+                            Transaction ID (TID / Ref #) <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <input
                               type="text"
+                              required
                               placeholder="e.g. 12345678901"
                               value={transactionId}
                               onChange={(e) => setTransactionId(e.target.value.replace(/\s/g, ""))}
@@ -558,55 +589,70 @@ export default function CheckoutPage() {
                             </p>
                           )}
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Sender Account Name</label>
-                          <input
-                            type="text"
-                            placeholder="Name on bank account / mobile wallet"
-                            value={paymentSenderName}
-                            onChange={(e) => setPaymentSenderName(e.target.value)}
-                            className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
-                          />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Account Title <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Name on bank account"
+                              value={paymentSenderName}
+                              onChange={(e) => setPaymentSenderName(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Phone Number
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="03XXXXXXXXX"
+                              value={paymentSenderPhone}
+                              onChange={(e) => setPaymentSenderPhone(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Option 2 Details: EasyPaisa / JazzCash */}
+                  {/* Option 2 Details: EasyPaisa */}
                   {paymentMethod === "EASYPAISA" && (
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4 animate-fade-in-up">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-xs font-bold text-slate-900">Transfer directly to Mobile Account:</p>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm font-extrabold text-slate-900 bg-white border border-slate-200 px-3 py-1 rounded-lg">
-                              03006694928
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard("03006694928", "phone")}
-                              className="p-1.5 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
-                              title="Copy Mobile Number"
-                            >
-                              {copiedText === "phone" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
+                        <div className="space-y-2 text-xs">
+                          <p className="font-bold text-slate-900">Transfer directly via EasyPaisa:</p>
+                          <div className="space-y-1 bg-white border border-slate-200 p-3 rounded-lg leading-relaxed font-medium text-slate-700">
+                            <p><strong>Account Title:</strong> MUHAMMAD AASIM MUSHTAQ</p>
+                            <div className="flex items-center gap-2">
+                              <span><strong>EasyPaisa Number:</strong> <span className="font-mono text-sm font-bold text-slate-900">03006694928</span></span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard("03006694928", "easypaisa_phone")}
+                                className="p-1 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
+                                title="Copy Number"
+                              >
+                                {copiedText === "easypaisa_phone" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
                           </div>
-                          
-                          <p className="text-[10px] text-slate-500 leading-relaxed pt-1">
-                            <strong>JazzCash Till ID:</strong> <span className="font-mono font-bold text-slate-800">982789898</span> (Dial <span className="font-mono font-bold">*786*10#</span> to pay)
-                          </p>
                         </div>
 
                         {/* QR Code */}
                         <div className="w-28 h-28 border border-slate-200 rounded-lg bg-white overflow-hidden p-1 flex-shrink-0 flex items-center justify-center">
-                          <img src="/jazzcash-qr.jpg" alt="JazzCash QR" className="w-full h-full object-contain" />
+                          <img src="/jazzcash-qr.jpg" alt="EasyPaisa / JazzCash QR" className="w-full h-full object-contain" />
                         </div>
                       </div>
 
-                      {/* Cloudinary Receipt Upload Drag & Drop Component */}
+                      {/* Cloudinary Receipt Upload Component */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-2">
                         <label className="block text-[10px] font-bold text-slate-600 uppercase">
-                          Upload EasyPaisa / JazzCash Screenshot <span className="text-red-500">*</span>
+                          Upload EasyPaisa Receipt Screenshot <span className="text-red-500">*</span>
                         </label>
 
                         {previewUrl ? (
@@ -654,7 +700,7 @@ export default function CheckoutPage() {
                           >
                             <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                             <p className="text-xs font-bold text-slate-800">
-                              Drag & drop your payment screenshot here
+                              Drag & drop your EasyPaisa screenshot here
                             </p>
                             <p className="text-[10px] text-slate-400 mt-0.5 mb-3">
                               Supports JPG, PNG, WEBP images up to 10MB
@@ -673,15 +719,16 @@ export default function CheckoutPage() {
                         )}
                       </div>
 
-                      {/* Transaction ID & Sender Name fields */}
+                      {/* Transaction ID & Sender Details fields */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-3">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
-                            Transaction ID (TID) <span className="text-slate-400 font-normal normal-case">(from your EasyPaisa / JazzCash receipt)</span>
+                            Transaction ID (TID / Ref #) <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <input
                               type="text"
+                              required
                               placeholder="e.g. 12345678901"
                               value={transactionId}
                               onChange={(e) => setTransactionId(e.target.value.replace(/\s/g, ""))}
@@ -709,21 +756,209 @@ export default function CheckoutPage() {
                             </p>
                           )}
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Mobile Wallet Account Name</label>
-                          <input
-                            type="text"
-                            placeholder="Name registered on EasyPaisa / JazzCash"
-                            value={paymentSenderName}
-                            onChange={(e) => setPaymentSenderName(e.target.value)}
-                            className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
-                          />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Account Title <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Name on EasyPaisa account"
+                              value={paymentSenderName}
+                              onChange={(e) => setPaymentSenderName(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Mobile Number
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="03XXXXXXXXX"
+                              value={paymentSenderPhone}
+                              onChange={(e) => setPaymentSenderPhone(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
+                  {/* Option 3 Details: JazzCash */}
+                  {paymentMethod === "JAZZCASH" && (
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4 animate-fade-in-up">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-2 text-xs">
+                          <p className="font-bold text-slate-900">Transfer directly via JazzCash:</p>
+                          <div className="space-y-1 bg-white border border-slate-200 p-3 rounded-lg leading-relaxed font-medium text-slate-700">
+                            <p><strong>Account Title:</strong> MUHAMMAD AASIM MUSHTAQ</p>
+                            <div className="flex items-center gap-2">
+                              <span><strong>JazzCash Number:</strong> <span className="font-mono text-sm font-bold text-slate-900">03006694928</span></span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard("03006694928", "jazzcash_phone")}
+                                className="p-1 text-slate-400 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors cursor-pointer"
+                                title="Copy Number"
+                              >
+                                {copiedText === "jazzcash_phone" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-slate-500 pt-1">
+                              <strong>Till ID:</strong> <span className="font-mono font-bold text-slate-900">982789898</span> (Dial <span className="font-mono font-bold">*786*10#</span>)
+                            </p>
+                          </div>
+                        </div>
 
+                        {/* QR Code */}
+                        <div className="w-28 h-28 border border-slate-200 rounded-lg bg-white overflow-hidden p-1 flex-shrink-0 flex items-center justify-center">
+                          <img src="/jazzcash-qr.jpg" alt="JazzCash QR" className="w-full h-full object-contain" />
+                        </div>
+                      </div>
+
+                      {/* Cloudinary Receipt Upload Component */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-2">
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                          Upload JazzCash Receipt Screenshot <span className="text-red-500">*</span>
+                        </label>
+
+                        {previewUrl ? (
+                          <div className="p-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between shadow-2xs">
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                                <img src={previewUrl} alt="Payment Receipt Preview" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-xs font-bold text-slate-900 truncate max-w-[180px]">
+                                  {proofFile ? proofFile.name : "Payment Receipt Screenshot"}
+                                </p>
+                                <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                                  <FileCheck className="w-3.5 h-3.5" />
+                                  <span>Cloudinary Upload Verified</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={removeReceipt}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              title="Replace / Remove Screenshot"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : uploadingProof ? (
+                          <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-900 mx-auto" />
+                            <p className="text-xs font-bold text-slate-800">Uploading Payment Screenshot to Cloudinary...</p>
+                            <p className="text-[10px] text-slate-400">Please wait a moment while your image is processing.</p>
+                          </div>
+                        ) : (
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`p-6 rounded-2xl border-2 border-dashed transition-all text-center ${
+                              isDragging
+                                ? "border-slate-900 bg-slate-100/80"
+                                : "border-slate-300 hover:border-slate-400 bg-white"
+                            }`}
+                          >
+                            <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-slate-800">
+                              Drag & drop your JazzCash screenshot here
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5 mb-3">
+                              Supports JPG, PNG, WEBP images up to 10MB
+                            </p>
+                            <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Select Image File</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Transaction ID & Sender Details fields */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                            Transaction ID (TID / Ref #) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. 12345678901"
+                              value={transactionId}
+                              onChange={(e) => setTransactionId(e.target.value.replace(/\s/g, ""))}
+                              className={`w-full px-3 py-2.5 text-xs font-mono border rounded-xl bg-white focus:outline-none transition-colors ${
+                                tidCheckStatus === "duplicate"
+                                  ? "border-red-400 bg-red-50/50"
+                                  : tidCheckStatus === "ok"
+                                  ? "border-emerald-400"
+                                  : "border-slate-200 focus:border-slate-900"
+                              }`}
+                            />
+                            {tidCheckStatus === "checking" && (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "ok" && (
+                              <Check className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "duplicate" && (
+                              <X className="w-3.5 h-3.5 text-red-600 absolute right-3 top-2.5" />
+                            )}
+                          </div>
+                          {tidError && (
+                            <p className="text-[10px] font-bold text-red-600 mt-1 flex items-center gap-1">
+                              ⚠️ {tidError}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Account Title <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Name on JazzCash account"
+                              value={paymentSenderName}
+                              onChange={(e) => setPaymentSenderName(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                              Sender Mobile Number
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="03XXXXXXXXX"
+                              value={paymentSenderPhone}
+                              onChange={(e) => setPaymentSenderPhone(e.target.value)}
+                              className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Option 4 Details: COD */}
                   {paymentMethod === "COD" && (
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 animate-fade-in-up">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
