@@ -58,24 +58,24 @@ function ResultProductCard({
   const imgUrl = product.firstImage || "/placeholder-frame.png";
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white flex flex-col justify-between hover:shadow-md transition-shadow">
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group">
       {/* Match badge overlay */}
       <div className="absolute top-3 left-3 z-10">
         <MatchBadge percent={product.matchPercent} />
       </div>
 
       {/* 1. PRODUCT CARD IMAGE CONTAINER */}
-      <Link href={`/products/${product.slug}`} className="block relative w-full aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-t-2xl bg-neutral-100">
+      <Link href={`/products/${product.slug}`} className="block relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden">
         <Image
           alt={product.name}
-          className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-105"
+          className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           src={imgUrl}
         />
         {/* Category Badge positioned cleanly inside top-right */}
-        <span className="absolute top-3 right-3 bg-[#0F172A]/90 backdrop-blur-sm text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-          {product.category}
+        <span className="absolute top-3 right-3 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+          {product.category || "Eyeglasses"}
         </span>
       </Link>
 

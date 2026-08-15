@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, formatMaterial, formatFrameShape } from "@/lib/utils";
+import { Glasses } from "lucide-react";
 
 const COLOR_MAP: Record<string, string> = {
   black: "#18181B",
@@ -105,68 +106,81 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
   const colorsList = getProductColors();
 
   return (
-    <div className="card-hover group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white flex flex-col justify-between hover:shadow-md transition-shadow">
-      <Link href={`/products/${product.slug}`} className="block relative w-full aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-t-2xl bg-neutral-100">
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group">
+      {/* 100% Full-width top image container */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="block relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden"
+      >
         <Image
+          src={imgUrl}
           alt={product.name}
-          className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-105"
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          src={imgUrl}
+          className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
         />
-        {/* Category Badge positioned cleanly inside top-right */}
-        <span className="absolute top-3 right-3 bg-[#0F172A]/90 backdrop-blur-sm text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-          {product.category}
+
+        {/* Category Pill Badge pinned inside top right */}
+        <span className="absolute top-3 right-3 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+          {product.category || "Eyeglasses"}
         </span>
       </Link>
 
+      {/* Content Container with isolated padding */}
       <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 space-y-3">
-        <div>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold mb-1">
-            <span>{formatFrameShape(product.frameShape)}</span>
-            <span>{formatMaterial(product.material)}</span>
-          </div>
-          <Link href={`/products/${product.slug}`}>
-            <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
-          </Link>
-          <p className="text-xs text-slate-500 mt-1 line-clamp-1">{product.description}</p>
-          
-          {/* Color Indicator Dots */}
-          {colorsList.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              {colorsList.map((c) => {
-                const hex = COLOR_MAP[c.toLowerCase()];
-                if (!hex) return null;
-                return (
-                  <span
-                    key={c}
-                    className="w-2.5 h-2.5 rounded-full border border-slate-200 shadow-2xs block shrink-0"
-                    style={{ backgroundColor: hex }}
-                    title={c}
-                  />
-                );
-              })}
-            </div>
-          )}
+        {/* Shape / Material Row */}
+        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+          <span>{formatFrameShape(product.frameShape)}</span>
+          <span>{formatMaterial(product.material)}</span>
         </div>
 
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
-          <span className="font-extrabold text-slate-900 text-sm">{formatPrice(product.price)}</span>
-          
-          {product.category === "EYEGLASSES" ? (
+        {/* Title & Description */}
+        <div>
+          <Link href={`/products/${product.slug}`}>
+            <h3 className="text-base font-bold text-slate-900 line-clamp-1 group-hover:underline">
+              {product.name}
+            </h3>
+          </Link>
+          <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{product.description}</p>
+        </div>
+
+        {/* Color Swatch Dots */}
+        {colorsList && colorsList.length > 0 && (
+          <div className="flex items-center gap-1.5 pt-1">
+            {colorsList.map((c, i) => {
+              const hex = COLOR_MAP[c.toLowerCase()] || c;
+              return (
+                <span
+                  key={i}
+                  className="w-2.5 h-2.5 rounded-full border border-black/10 shadow-xs"
+                  style={{ backgroundColor: hex }}
+                  title={c}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Price & Add Lenses CTA Button */}
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+          <span className="text-sm sm:text-base font-extrabold text-slate-900">
+            {formatPrice(product.price)}
+          </span>
+
+          {product.category === "EYEGLASSES" || !product.category ? (
             <button
               onClick={() => onAddLenses && onAddLenses(product)}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+              className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <Image src="/logo.svg" alt="My Eyes Logo" width={12} height={12} className="object-contain brightness-0 invert" />
-              <span>Add Lenses</span>
+              <Glasses className="w-3.5 h-3.5" />
+              <span>ADD LENSES</span>
             </button>
           ) : (
             <button
               onClick={() => onAddToCart && onAddToCart(product)}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+              className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Add to Bag</span>
+              <span>ADD TO BAG</span>
             </button>
           )}
         </div>
@@ -174,3 +188,4 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
     </div>
   );
 }
+
