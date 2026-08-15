@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Sparkles,
@@ -57,46 +58,45 @@ function ResultProductCard({
   const imgUrl = product.firstImage || "/placeholder-frame.png";
 
   return (
-    <div className="group relative rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex flex-col">
+    <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white flex flex-col justify-between hover:shadow-md transition-shadow">
       {/* Match badge overlay */}
       <div className="absolute top-3 left-3 z-10">
         <MatchBadge percent={product.matchPercent} />
       </div>
 
-      {/* Category badge */}
-      <div className="absolute top-3 right-3 z-10">
-        <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white text-[8px] font-bold uppercase tracking-wider">
+      {/* 1. PRODUCT CARD IMAGE CONTAINER */}
+      <Link href={`/products/${product.slug}`} className="block relative w-full aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-t-2xl bg-neutral-100">
+        <Image
+          alt={product.name}
+          className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-105"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          src={imgUrl}
+        />
+        {/* Category Badge positioned cleanly inside top-right */}
+        <span className="absolute top-3 right-3 bg-[#0F172A]/90 backdrop-blur-sm text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
           {product.category}
         </span>
-      </div>
-
-      {/* Image */}
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
-          <img
-            src={imgUrl}
-            alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
       </Link>
 
-      {/* Info */}
-      <div className="p-4 flex flex-col gap-2 flex-1">
-        <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold">
-          <span>{product.formattedShape}</span>
-          <span>{product.formattedMaterial}</span>
+      {/* 2. CARD CONTENT PADDING & SEPARATION */}
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold">
+            <span>{product.formattedShape}</span>
+            <span>{product.formattedMaterial}</span>
+          </div>
+
+          <Link href={`/products/${product.slug}`}>
+            <h3 className="font-bold text-slate-900 text-sm leading-snug hover:underline line-clamp-2">
+              {product.name}
+            </h3>
+          </Link>
+
+          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+            {product.description}
+          </p>
         </div>
-
-        <Link href={`/products/${product.slug}`}>
-          <h3 className="font-bold text-slate-900 text-sm leading-snug hover:underline line-clamp-2">
-            {product.name}
-          </h3>
-        </Link>
-
-        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-          {product.description}
-        </p>
 
         {/* Price + CTAs */}
         <div className="pt-3 border-t border-slate-100 mt-auto space-y-2">
@@ -232,9 +232,9 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 animate-pulse">
-          <div className="aspect-[4/3] bg-slate-200/60 rounded-t-2xl" />
-          <div className="p-4 space-y-2.5">
+        <div key={i} className="rounded-2xl border border-neutral-200 bg-white animate-pulse flex flex-col justify-between overflow-hidden">
+          <div className="w-full aspect-[4/3] sm:aspect-[16/11] bg-slate-200/60" />
+          <div className="p-4 sm:p-5 space-y-3 flex-1">
             <div className="h-3 w-3/4 bg-slate-200 rounded" />
             <div className="h-3 w-1/2 bg-slate-200 rounded" />
             <div className="h-8 bg-slate-200 rounded-xl mt-4" />

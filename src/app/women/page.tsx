@@ -181,10 +181,12 @@ export default function WomenCollectionPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-2xl border border-slate-100 p-4 animate-pulse space-y-4">
-                <div className="aspect-[4/3] rounded-xl bg-slate-100" />
-                <div className="h-4 bg-slate-100 rounded w-3/4" />
-                <div className="h-3 bg-slate-100 rounded w-1/2" />
+              <div key={i} className="rounded-2xl border border-neutral-200 bg-white animate-pulse flex flex-col justify-between overflow-hidden">
+                <div className="w-full aspect-[4/3] sm:aspect-[16/11] bg-slate-100" />
+                <div className="p-4 sm:p-5 space-y-3 flex-1">
+                  <div className="h-4 bg-slate-100 rounded w-3/4" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                </div>
               </div>
             ))}
           </div>

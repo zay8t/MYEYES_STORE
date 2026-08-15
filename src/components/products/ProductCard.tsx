@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Glasses, Sun } from "lucide-react";
 import { formatPrice, formatMaterial, formatFrameShape } from "@/lib/utils";
 
 const COLOR_MAP: Record<string, string> = {
@@ -106,34 +105,30 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
   const colorsList = getProductColors();
 
   return (
-    <div className="card-hover group relative rounded-2xl border border-slate-200/80 bg-white p-5 transition-all duration-300 flex flex-col justify-between">
-      <Link href={`/products/${product.slug}`} className="block space-y-4">
-        <div className="aspect-[4/3] bg-slate-50/50 rounded-xl overflow-hidden flex items-center justify-center p-4 border border-slate-100 relative">
-          {imgUrl ? (
-            <img
-              src={imgUrl}
-              alt={product.name}
-              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-300">
-              {product.category === "SUNGLASSES" ? (
-                <Sun className="w-12 h-12 stroke-[1.25]" />
-              ) : (
-                <Glasses className="w-12 h-12 stroke-[1.25]" />
-              )}
-            </div>
-          )}
-          <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded bg-slate-900 text-white text-[9px] font-bold uppercase tracking-wider">
-            {product.category}
-          </span>
-        </div>
+    <div className="card-hover group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white flex flex-col justify-between hover:shadow-md transition-shadow">
+      <Link href={`/products/${product.slug}`} className="block relative w-full aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-t-2xl bg-neutral-100">
+        <Image
+          alt={product.name}
+          className="object-cover object-center w-full h-full transition-transform duration-500 hover:scale-105"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          src={imgUrl}
+        />
+        {/* Category Badge positioned cleanly inside top-right */}
+        <span className="absolute top-3 right-3 bg-[#0F172A]/90 backdrop-blur-sm text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+          {product.category}
+        </span>
+      </Link>
+
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 space-y-3">
         <div>
           <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold mb-1">
             <span>{formatFrameShape(product.frameShape)}</span>
             <span>{formatMaterial(product.material)}</span>
           </div>
-          <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
+          <Link href={`/products/${product.slug}`}>
+            <h3 className="font-bold text-slate-900 text-sm group-hover:underline truncate">{product.name}</h3>
+          </Link>
           <p className="text-xs text-slate-500 mt-1 line-clamp-1">{product.description}</p>
           
           {/* Color Indicator Dots */}
@@ -154,27 +149,27 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
             </div>
           )}
         </div>
-      </Link>
 
-      <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-        <span className="font-extrabold text-slate-900 text-sm">{formatPrice(product.price)}</span>
-        
-        {product.category === "EYEGLASSES" ? (
-          <button
-            onClick={() => onAddLenses && onAddLenses(product)}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-          >
-            <Image src="/logo.svg" alt="My Eyes Logo" width={12} height={12} className="object-contain brightness-0 invert" />
-            <span>Add Lenses</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => onAddToCart && onAddToCart(product)}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
-          >
-            <span>Add to Bag</span>
-          </button>
-        )}
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
+          <span className="font-extrabold text-slate-900 text-sm">{formatPrice(product.price)}</span>
+          
+          {product.category === "EYEGLASSES" ? (
+            <button
+              onClick={() => onAddLenses && onAddLenses(product)}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <Image src="/logo.svg" alt="My Eyes Logo" width={12} height={12} className="object-contain brightness-0 invert" />
+              <span>Add Lenses</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onAddToCart && onAddToCart(product)}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+            >
+              <span>Add to Bag</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
