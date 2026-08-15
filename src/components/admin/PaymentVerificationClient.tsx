@@ -21,7 +21,6 @@ import {
   Hash,
   Shield,
   ShieldAlert,
-  ChevronRight,
   RefreshCw,
   FileText,
   Loader2,
@@ -30,7 +29,7 @@ import {
   Copy,
   ExternalLink,
   Maximize2,
-  Calendar,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -141,8 +140,10 @@ function StatusBadge({ status }: { status: string }) {
     FAILED: { label: "✗ Rejected", cls: "bg-rose-100 text-rose-800 border-rose-200" },
     FLAGGED_SUSPICIOUS: { label: "⚠ Flagged", cls: "bg-orange-100 text-orange-800 border-orange-200" },
     PENDING: { label: "Pending", cls: "bg-slate-100 text-slate-600 border-slate-200" },
+    UNPAID: { label: "Unpaid", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+    SUBMITTED: { label: "Submitted", cls: "bg-blue-100 text-blue-800 border-blue-200" },
   };
-  const cfg = map[status] || { label: status, cls: "bg-slate-100 text-slate-600 border-slate-200" };
+  const cfg = map[status] || { label: status.replace(/_/g, " "), cls: "bg-slate-100 text-slate-600 border-slate-200" };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider border ${cfg.cls}`}>
       {cfg.label}
@@ -162,7 +163,7 @@ function TidComparison({ order }: { order: PaymentOrder }) {
   if (!order.ocrExtractedTid && !order.transactionId) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
+    <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
       <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           <Shield className="w-3.5 h-3.5" /> OCR TID Analysis
@@ -173,7 +174,7 @@ function TidComparison({ order }: { order: PaymentOrder }) {
           </span>
         )}
       </div>
-      <div className="p-4 grid grid-cols-2 gap-3">
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer Entered</p>
           <p className="font-mono text-xs font-bold text-slate-900 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg break-all">{customerTid}</p>
@@ -185,7 +186,7 @@ function TidComparison({ order }: { order: PaymentOrder }) {
       </div>
       {order.ocrExtractedTid && order.transactionId && (
         <div className={`mx-4 mb-4 px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-bold ${isMatch ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"}`}>
-          {isMatch ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+          {isMatch ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
           {isMatch ? "TIDs match — receipt appears genuine." : "TID mismatch — manual review required."}
         </div>
       )}
@@ -292,9 +293,9 @@ function AuditLogTimeline({ logs }: { logs: PaymentOrder["auditLogs"] }) {
       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
         {[...logs].reverse().map((log) => (
           <div key={log.id} className="flex gap-2.5 text-[11px]">
-            <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${actionColors[log.action] || "bg-slate-400"}`} />
+            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${actionColors[log.action] || "bg-slate-400"}`} />
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-slate-800">{log.action}</span>
                 <span className="text-slate-400 text-[10px]">by {log.actor}</span>
                 <span className="text-slate-300 text-[10px]">· {timeAgo(log.createdAt)}</span>
@@ -423,15 +424,12 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       list = list.filter(
         (o) =>
           o.paymentStatus === "PENDING_VERIFICATION" ||
-          o.paymentStatus === "RECEIPT_SUBMITTED" ||
-          o.paymentStatus === "PENDING"
+          (o.paymentStatus !== "PAID" && o.paymentStatus !== "FAILED")
       );
     } else if (activeTab === "PAID") {
       list = list.filter((o) => o.paymentStatus === "PAID");
     } else if (activeTab === "FAILED") {
       list = list.filter((o) => o.paymentStatus === "FAILED");
-    } else if (activeTab === "FLAGGED_SUSPICIOUS") {
-      list = list.filter((o) => o.flaggedSuspicious || o.paymentStatus === "FLAGGED_SUSPICIOUS");
     }
 
     // Search filter
@@ -457,29 +455,42 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     c["PENDING_VERIFICATION"] = orders.filter(
       (o) =>
         o.paymentStatus === "PENDING_VERIFICATION" ||
-        o.paymentStatus === "RECEIPT_SUBMITTED" ||
-        o.paymentStatus === "PENDING"
+        (o.paymentStatus !== "PAID" && o.paymentStatus !== "FAILED")
     ).length;
     c["PAID"] = orders.filter((o) => o.paymentStatus === "PAID").length;
     c["FAILED"] = orders.filter((o) => o.paymentStatus === "FAILED").length;
-    c["FLAGGED_SUSPICIOUS"] = orders.filter(
-      (o) => o.flaggedSuspicious || o.paymentStatus === "FLAGGED_SUSPICIOUS"
-    ).length;
     c["ALL"] = orders.length;
     return c;
   }, [orders]);
 
   // Metrics
   const metrics = useMemo(() => {
-    const pending = orders.filter((o) => ["PENDING_VERIFICATION", "RECEIPT_SUBMITTED"].includes(o.paymentStatus));
-    const pendingPKR = pending.reduce((s, o) => s + o.totalAmount, 0);
-    const todayPaid = orders.filter((o) => {
-      const today = new Date();
-      const d = new Date(o.createdAt);
-      return o.paymentStatus === "PAID" && d.toDateString() === today.toDateString();
+    const pendingOrders = orders.filter(
+      (o) =>
+        o.paymentStatus === "PENDING_VERIFICATION" ||
+        (o.paymentStatus !== "PAID" && o.paymentStatus !== "FAILED")
+    );
+    const pendingAmount = pendingOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+    const pendingCount = pendingOrders.length;
+
+    const today = new Date().toDateString();
+    const approvedTodayOrders = orders.filter((o) => {
+      if (o.paymentStatus !== "PAID") return false;
+      const d = o.verifiedAt ? new Date(o.verifiedAt) : new Date(o.createdAt);
+      return d.toDateString() === today;
     });
-    const todayRevenue = todayPaid.reduce((s, o) => s + o.totalAmount, 0);
-    return { pendingPKR, todayRevenue, pendingCount: pending.length };
+    const approvedTodayAmount = approvedTodayOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+    const approvedTodayCount = approvedTodayOrders.length;
+
+    const totalReceiptsCount = orders.filter((o) => Boolean(o.paymentReceiptUrl || o.transactionId)).length;
+
+    return {
+      pendingAmount,
+      pendingCount,
+      approvedTodayAmount,
+      approvedTodayCount,
+      totalReceiptsCount,
+    };
   }, [orders]);
 
   const updateOrderInState = useCallback((orderId: string, patch: Partial<PaymentOrder>) => {
@@ -487,34 +498,46 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     setSelected((prev) => (prev?.id === orderId ? { ...prev, ...patch } : prev));
   }, []);
 
-  const handleApprove = useCallback(async () => {
-    if (!selected || actionLoading) return;
+  const handleApproveTarget = useCallback(async (targetOrder: PaymentOrder) => {
+    if (actionLoading) return;
     setActionLoading(true);
-    const result = await verifyPaymentAction(selected.id, ADMIN_EMAIL);
+    const result = await verifyPaymentAction(targetOrder.id, ADMIN_EMAIL);
     if (result.success) {
-      updateOrderInState(selected.id, { paymentStatus: "PAID", verifiedBy: ADMIN_EMAIL, verifiedAt: new Date().toISOString() });
-      showToast(`✅ Order #${selected.orderNumber} approved & customer notified.`, "success");
+      updateOrderInState(targetOrder.id, {
+        paymentStatus: "PAID",
+        verifiedBy: ADMIN_EMAIL,
+        verifiedAt: new Date().toISOString(),
+      });
+      showToast(`✅ Order #${targetOrder.orderNumber || targetOrder.id.slice(0, 8)} approved & customer notified.`, "success");
     } else {
       showToast(result.error || "Failed to approve", "error");
     }
     setActionLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, actionLoading, updateOrderInState]);
+  }, [actionLoading, updateOrderInState]);
 
-  const handleReject = useCallback(async (reason: string) => {
-    if (!selected || actionLoading) return;
+  const handleApprove = useCallback(async () => {
+    if (!selected) return;
+    await handleApproveTarget(selected);
+  }, [selected, handleApproveTarget]);
+
+  const handleRejectTarget = useCallback(async (targetOrder: PaymentOrder, reason: string) => {
+    if (actionLoading) return;
     setActionLoading(true);
-    const result = await rejectPaymentAction(selected.id, ADMIN_EMAIL, reason);
+    const result = await rejectPaymentAction(targetOrder.id, ADMIN_EMAIL, reason);
     if (result.success) {
-      updateOrderInState(selected.id, { paymentStatus: "FAILED", rejectionReason: reason });
-      showToast(`❌ Order #${selected.orderNumber} rejected. Customer notified.`, "error");
+      updateOrderInState(targetOrder.id, { paymentStatus: "FAILED", rejectionReason: reason });
+      showToast(`❌ Order #${targetOrder.orderNumber || targetOrder.id.slice(0, 8)} rejected. Customer notified.`, "error");
       setShowRejectDialog(false);
     } else {
       showToast(result.error || "Failed to reject", "error");
     }
     setActionLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, actionLoading, updateOrderInState]);
+  }, [actionLoading, updateOrderInState]);
+
+  const handleReject = useCallback(async (reason: string) => {
+    if (!selected) return;
+    await handleRejectTarget(selected, reason);
+  }, [selected, handleRejectTarget]);
 
   const handleFlag = useCallback(async () => {
     if (!selected || actionLoading) return;
@@ -522,12 +545,11 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     const result = await flagPaymentAction(selected.id, ADMIN_EMAIL, "Flagged for manager review via hotkey.");
     if (result.success) {
       updateOrderInState(selected.id, { paymentStatus: "FLAGGED_SUSPICIOUS", flaggedSuspicious: true });
-      showToast(`⚠️ Order #${selected.orderNumber} flagged for review.`, "info");
+      showToast(`⚠️ Order #${selected.orderNumber || selected.id.slice(0, 8)} flagged for review.`, "info");
     } else {
       showToast(result.error || "Failed to flag", "error");
     }
     setActionLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, actionLoading, updateOrderInState]);
 
   // Keyboard hotkeys
@@ -546,7 +568,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/admin/orders?type=payments", { cache: "no-store" });
+      const res = await fetch("/api/admin/payments", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (data.orders) setOrders(data.orders);
@@ -565,29 +587,29 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
   };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative w-full max-w-full overflow-hidden" ref={containerRef}>
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl text-sm font-bold flex items-center gap-2 animate-fade-in-up ${toast.type === "success" ? "bg-emerald-600 text-white" : toast.type === "error" ? "bg-red-600 text-white" : "bg-slate-900 text-white"}`}>
-          {toast.type === "success" ? <Check className="w-4 h-4" /> : toast.type === "error" ? <X className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-          {toast.msg}
+          {toast.type === "success" ? <Check className="w-4 h-4 shrink-0" /> : toast.type === "error" ? <X className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+          <span className="line-clamp-2">{toast.msg}</span>
         </div>
       )}
 
       {/* Interactive Lightbox Modal */}
       {fullscreenReceipt && selected && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-4 animate-fade-in">
           {/* Modal Header */}
-          <div className="w-full max-w-5xl flex items-center justify-between py-3 px-5 bg-slate-900/90 border border-slate-800 rounded-2xl mb-3 text-white">
-            <div>
-              <h3 className="font-extrabold text-sm sm:text-base tracking-tight">
+          <div className="w-full max-w-5xl flex items-center justify-between py-3 px-4 sm:px-5 bg-slate-900/90 border border-slate-800 rounded-2xl mb-3 text-white">
+            <div className="min-w-0 pr-2">
+              <h3 className="font-extrabold text-sm sm:text-base tracking-tight truncate">
                 Verifying Payment for Order #{selected.orderNumber || selected.id.slice(0, 8)}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5 truncate">
                 Customer: <strong className="text-slate-200">{selected.customerName}</strong> · Total: <strong className="text-emerald-400">{formatPKR(selected.totalAmount)}</strong> · TID: <strong className="font-mono text-amber-300">{selected.transactionId || "N/A"}</strong>
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <a
                 href={fullscreenReceipt}
                 target="_blank"
@@ -609,15 +631,15 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
             </div>
           </div>
 
-          <div className="w-full max-w-5xl max-h-[80vh] flex flex-col md:flex-row items-center justify-center gap-4">
-            <div className="flex-1 max-h-[75vh] flex items-center justify-center p-2">
+          <div className="w-full max-w-5xl max-h-[80vh] flex flex-col md:flex-row items-center justify-center gap-4 overflow-y-auto">
+            <div className="flex-1 max-h-[60vh] md:max-h-[75vh] flex items-center justify-center p-2">
               <img
                 src={fullscreenReceipt}
                 alt={`Payment Receipt for Order #${selected.orderNumber || selected.id}`}
-                className="max-h-[75vh] max-w-full object-contain rounded-xl shadow-2xl"
+                className="max-h-[60vh] md:max-h-[75vh] max-w-full object-contain rounded-xl shadow-2xl"
               />
             </div>
-            <div className="w-full md:w-72 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-white text-xs space-y-3 flex-shrink-0">
+            <div className="w-full md:w-72 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-white text-xs space-y-3 shrink-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Order Information</p>
               <div>
                 <span className="text-slate-400 text-[11px] block">Order Number:</span>
@@ -664,178 +686,305 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Payment Verification & Settlement</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Verify customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders.</p>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight">
+            Payment Verification & Settlement
+          </h1>
+          <p className="text-xs text-slate-500 max-w-sm sm:max-w-none mt-0.5">
+            Verify customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600">
             <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-emerald-700 font-mono">A</kbd> Approve ·
             <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-red-700 font-mono">R</kbd> Reject ·
             <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-orange-700 font-mono">F</kbd> Flag
           </div>
-          <button onClick={handleRefresh} className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 cursor-pointer" title="Refresh queue">
+          <button
+            onClick={handleRefresh}
+            className="h-9 w-9 p-0 flex items-center justify-center shrink-0 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 cursor-pointer transition-colors"
+            title="Refresh queue"
+          >
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </button>
         </div>
       </div>
 
-      {/* Metrics Banner */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { icon: Clock, label: "Pending Verification", value: formatPKR(metrics.pendingPKR), sub: `${metrics.pendingCount} orders` },
-          { icon: TrendingUp, label: "Today's Approved Revenue", value: formatPKR(metrics.todayRevenue), sub: "verified today" },
-          { icon: Banknote, label: "Total Receipts", value: orders.filter(o => o.paymentReceiptUrl).length.toString(), sub: "with receipts" },
-        ].map(({ icon: Icon, label, value, sub }) => (
-          <div key={label} className="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
-              <Icon className="w-4.5 h-4.5 text-slate-600" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-              <p className="text-lg font-extrabold text-slate-900 mt-0.5">{value}</p>
-              <p className="text-[10px] text-slate-400">{sub}</p>
-            </div>
+      {/* Stats & KPI Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full my-4">
+        {/* Card 1: Pending Verification */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 flex items-center justify-between shadow-xs">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pending Verification</span>
+            <div className="text-xl font-extrabold text-slate-900">Rs. {metrics.pendingAmount.toLocaleString()}/-</div>
+            <span className="text-xs text-slate-400 font-medium">{metrics.pendingCount} orders</span>
           </div>
-        ))}
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5"/>
+          </div>
+        </div>
+
+        {/* Card 2: Approved Revenue */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 flex items-center justify-between shadow-xs">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Today&apos;s Approved</span>
+            <div className="text-xl font-extrabold text-emerald-600">Rs. {metrics.approvedTodayAmount.toLocaleString()}/-</div>
+            <span className="text-xs text-slate-400 font-medium">{metrics.approvedTodayCount} verified today</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5"/>
+          </div>
+        </div>
+
+        {/* Card 3: Total Receipts */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 flex items-center justify-between shadow-xs">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Receipts</span>
+            <div className="text-xl font-extrabold text-slate-900">{metrics.totalReceiptsCount}</div>
+            <span className="text-xs text-slate-400 font-medium">With receipt proof</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Receipt className="w-5 h-5"/>
+          </div>
+        </div>
       </div>
 
-      {/* Split-Screen Layout */}
+      {/* Search Bar & Filter Tabs */}
+      <div className="space-y-3 mb-5">
+        <div className="relative w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Order # (e.g. 00000002), TID, name, phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 text-sm bg-white border border-neutral-200 rounded-xl shadow-xs focus:outline-none focus:border-slate-900 font-medium transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none w-full">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "text-xs font-bold px-3 py-1.5 rounded-xl border whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 shrink-0",
+                activeTab === tab.id
+                  ? `${tab.color} font-extrabold shadow-2xs ring-1 ring-slate-900/10`
+                  : "text-slate-500 bg-white border-slate-200 hover:border-slate-300"
+              )}
+            >
+              {tab.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-extrabold",
+                  activeTab === tab.id ? "bg-white/80" : "bg-slate-100 text-slate-500"
+                )}
+              >
+                {counts[tab.id] ?? 0}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* LEFT: Queue Panel */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-
-          {/* Search */}
-          <div className="p-4 border-b border-slate-100">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Order # (e.g. 00000002), TID, name, phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-slate-900 font-medium"
-              />
-            </div>
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-xs">
+          <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+              Orders Queue ({filtered.length})
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">Tap card to inspect</span>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-1 p-3 border-b border-slate-100">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border cursor-pointer transition-all flex items-center gap-1 ${activeTab === tab.id ? tab.color + " font-extrabold shadow-2xs" : "text-slate-500 bg-white border-slate-200 hover:border-slate-300"}`}
-              >
-                {tab.label}
-                <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ${activeTab === tab.id ? "bg-white/70" : "bg-slate-100 text-slate-500"}`}>
-                  {counts[tab.id] ?? 0}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Order List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[calc(100vh-380px)]">
+          {/* Order List / Cards */}
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[calc(100vh-320px)] sm:max-h-[calc(100vh-360px)]">
             {filtered.length === 0 ? (
               <div className="p-8 text-center">
                 <Eye className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-500">No orders in this queue</p>
+                <p className="text-xs font-bold text-slate-500">No orders found in this filter</p>
+                <p className="text-[11px] text-slate-400 mt-1">Try switching tabs or clearing your search term.</p>
               </div>
             ) : (
               filtered.map((order) => (
-                <button
+                <div
                   key={order.id}
                   onClick={() => setSelected(order)}
-                  className={`w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer group flex items-start justify-between gap-3 ${selected?.id === order.id ? "bg-slate-50 border-l-2 border-slate-900" : ""}`}
+                  className={cn(
+                    "w-full text-left p-3.5 sm:p-4 hover:bg-slate-50/80 transition-colors cursor-pointer group flex flex-col gap-2.5",
+                    selected?.id === order.id ? "bg-slate-50/90 border-l-4 border-slate-900" : ""
+                  )}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <Link
                         href={`/admin/orders/${order.id}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="font-mono font-bold text-xs sm:text-sm bg-slate-900 hover:bg-black text-white px-2.5 py-1 rounded-md transition-colors inline-block"
+                        className="font-mono font-bold text-xs bg-slate-900 hover:bg-black text-white px-2 py-0.5 rounded-md transition-colors inline-block"
                         title="Click to open order breakdown page"
                       >
                         #{order.orderNumber || order.id.slice(0, 8)}
                       </Link>
+                      {order.paymentMethod && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          {order.paymentMethod.replace(/_/g, " ")}
+                        </span>
+                      )}
                       <StatusBadge status={order.paymentStatus} />
-                      {order.flaggedSuspicious && <ShieldAlert className="w-3.5 h-3.5 text-orange-500" />}
-                      {order.isOcrMatched && <Shield className="w-3.5 h-3.5 text-emerald-500" />}
+                      {order.flaggedSuspicious && <ShieldAlert className="w-3.5 h-3.5 text-orange-500 shrink-0" />}
+                      {order.isOcrMatched && <Shield className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
                     </div>
-                    <p className="text-[11px] font-bold text-slate-800 truncate">{order.customerName} {order.customerPhone ? `(${order.customerPhone})` : ""}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5 truncate font-semibold">
-                      {order.paymentMethod} · <span className="text-slate-900 font-extrabold">{formatPKR(order.totalAmount)}</span>
-                    </p>
-                    {order.transactionId && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">TID: {order.transactionId}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyTid(order.transactionId!, e)}
-                          className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer"
-                          title="Copy TID"
-                        >
-                          {copiedTid === order.transactionId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        </button>
+                    <span className="text-[10px] text-slate-400 font-medium shrink-0">{timeAgo(order.createdAt)}</span>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-900 truncate">
+                        {order.customerName}
+                      </p>
+                      {order.customerPhone && (
+                        <p className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 mt-0.5">
+                          <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                          {order.customerPhone}
+                        </p>
+                      )}
+                      <p className="text-xs font-extrabold text-slate-900 mt-1">
+                        {formatPKR(order.totalAmount)}
+                      </p>
+
+                      {order.transactionId && (
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <span className="text-[10px] font-mono text-slate-700 bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded max-w-[170px] truncate">
+                            TID: {order.transactionId}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyTid(order.transactionId!, e)}
+                            className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
+                            title="Copy TID"
+                          >
+                            {copiedTid === order.transactionId ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Inline Receipt Thumbnail (if present) */}
+                    {order.paymentReceiptUrl && (
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(order);
+                          setFullscreenReceipt(order.paymentReceiptUrl || null);
+                        }}
+                        className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 hover:opacity-90 transition-opacity cursor-pointer relative group/thumb"
+                        title="Click to view full receipt"
+                      >
+                        <img
+                          src={order.paymentReceiptUrl}
+                          alt="Receipt preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                          <ZoomIn className="w-4 h-4 text-white" />
+                        </div>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[9px] text-slate-400">{timeAgo(order.createdAt)}</span>
-                    {order.paymentReceiptUrl && <div className="w-2 h-2 rounded-full bg-emerald-500" title="Receipt uploaded" />}
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 transition-colors" />
+
+                  {/* Mobile Quick Action Buttons (Stacked on mobile screen card) */}
+                  <div className="flex sm:hidden items-center gap-2 pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(order);
+                        handleApproveTarget(order);
+                      }}
+                      disabled={actionLoading || order.paymentStatus === "PAID"}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(order);
+                        setShowRejectDialog(true);
+                      }}
+                      disabled={actionLoading || order.paymentStatus === "FAILED"}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Reject
+                    </button>
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>
         </div>
 
         {/* RIGHT: Inspection Panel */}
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 w-full">
           {!selected ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-16 text-center shadow-xs">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
                 <Eye className="w-7 h-7 text-slate-300" />
               </div>
               <h3 className="font-bold text-slate-900 text-sm mb-1">Select an Order to Inspect</h3>
-              <p className="text-[11px] text-slate-400">Click any order from the queue to open it here.</p>
-              <p className="text-[10px] text-slate-300 mt-4">
-                Use hotkeys: <kbd className="bg-slate-100 rounded px-1 font-mono text-emerald-700">A</kbd> Approve ·{" "}
-                <kbd className="bg-slate-100 rounded px-1 font-mono text-red-700">R</kbd> Reject ·{" "}
-                <kbd className="bg-slate-100 rounded px-1 font-mono text-orange-700">F</kbd> Flag
+              <p className="text-[11px] text-slate-400">Click any order from the queue to inspect receipt proofs & settle payment.</p>
+              <p className="hidden sm:block text-[10px] text-slate-400 mt-4">
+                Use hotkeys: <kbd className="bg-slate-100 rounded px-1 font-mono text-emerald-700 font-bold">A</kbd> Approve ·{" "}
+                <kbd className="bg-slate-100 rounded px-1 font-mono text-red-700 font-bold">R</kbd> Reject ·{" "}
+                <kbd className="bg-slate-100 rounded px-1 font-mono text-orange-700 font-bold">F</kbd> Flag
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
               {/* Inspection Header */}
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
                   <Link
                     href={`/admin/orders/${selected.id}`}
-                    className="font-mono font-bold text-sm sm:text-base bg-slate-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors inline-block"
+                    className="font-mono font-bold text-xs sm:text-sm bg-slate-900 hover:bg-black text-white px-2.5 py-1.5 rounded-lg transition-colors inline-block"
                     title="Open Order Details"
                   >
                     #{selected.orderNumber || selected.id.slice(0, 8)}
                   </Link>
-                  <div>
-                    <h2 className="font-extrabold text-slate-900 text-sm">
+                  <div className="min-w-0">
+                    <h2 className="font-extrabold text-slate-900 text-sm truncate">
                       {selected.customerName}
                     </h2>
-                    <p className="text-[11px] text-slate-500">{selected.paymentMethod} · {formatPKR(selected.totalAmount)}</p>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      {selected.paymentMethod?.replace(/_/g, " ") || "PREPAID"} · {formatPKR(selected.totalAmount)}
+                    </p>
                   </div>
                   <StatusBadge status={selected.paymentStatus} />
                 </div>
-                <button onClick={() => setSelected(null)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 cursor-pointer">
+                <button
+                  onClick={() => setSelected(null)}
+                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 cursor-pointer shrink-0"
+                  title="Close Inspector"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-5 space-y-5">
-                {/* Side-by-Side: Receipt Viewer + OCR Analysis */}
+              <div className="p-4 sm:p-5 space-y-5">
+                {/* Side-by-Side on Desktop / Stacked on Mobile: Receipt Viewer + OCR Analysis */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Receipt Viewer */}
                   <div>
@@ -846,9 +995,10 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                       />
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-slate-200 h-64 flex items-center justify-center text-slate-400 bg-slate-50">
-                        <div className="text-center">
+                        <div className="text-center p-4">
                           <FileText className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                          <p className="text-xs font-bold text-slate-400">No receipt uploaded</p>
+                          <p className="text-xs font-bold text-slate-400">No receipt image uploaded</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Customer may have only submitted a TID</p>
                         </div>
                       </div>
                     )}
@@ -857,50 +1007,54 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   {/* Order + Customer Info */}
                   <div className="space-y-3">
                     {/* Customer Details */}
-                    <div className="rounded-xl border border-slate-200 p-4 space-y-2.5">
+                    <div className="rounded-xl border border-slate-200 p-4 space-y-2.5 bg-slate-50/50">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer & Proof Details</p>
                       <div className="space-y-2 text-xs">
                         <div className="flex items-center gap-2 text-slate-700">
-                          <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span className="font-bold">{selected.customerName}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <div className="flex items-center gap-2 text-slate-500 min-w-0">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span className="truncate">{selected.customerEmail}</span>
                         </div>
                         {selected.customerPhone && (
                           <div className="flex items-center gap-2 text-slate-500">
-                            <Phone className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{selected.customerPhone}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2 text-slate-900 font-extrabold">
-                          <Banknote className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          <Banknote className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span>{formatPKR(selected.totalAmount)}</span>
                         </div>
                         {selected.transactionId && (
-                          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
-                            <div className="flex items-center gap-2 text-slate-700">
-                              <Hash className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                              <span className="font-mono font-bold text-xs">{selected.transactionId}</span>
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+                            <div className="flex items-center gap-2 text-slate-700 min-w-0">
+                              <Hash className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="font-mono font-bold text-xs truncate">{selected.transactionId}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleCopyTid(selected.transactionId!)}
-                              className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer"
+                              className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
                               title="Copy Transaction ID"
                             >
-                              {copiedTid === selected.transactionId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                              {copiedTid === selected.transactionId ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
                             </button>
                           </div>
                         )}
                         {selected.paymentSenderName && (
-                          <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
                             <strong>Sender Title:</strong> {selected.paymentSenderName}
                           </div>
                         )}
                         {selected.paymentSenderPhone && (
-                          <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
                             <strong>Sender Mobile:</strong> {selected.paymentSenderPhone}
                           </div>
                         )}
@@ -908,12 +1062,12 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                     </div>
 
                     {/* Items */}
-                    <div className="rounded-xl border border-slate-200 p-4 max-h-32 overflow-y-auto">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Items</p>
+                    <div className="rounded-xl border border-slate-200 p-4 max-h-36 overflow-y-auto">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Order Items</p>
                       {selected.items.map((item) => (
-                        <div key={item.id} className="flex justify-between text-xs py-1 border-b border-slate-50 last:border-0">
-                          <span className="text-slate-700 truncate flex-1 mr-2">{item.product.name}</span>
-                          <span className="font-bold text-slate-900 flex-shrink-0">{formatPKR(item.totalAmount || item.price)}</span>
+                        <div key={item.id} className="flex justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                          <span className="text-slate-700 truncate flex-1 mr-2">{item.product.name} (x{item.quantity})</span>
+                          <span className="font-bold text-slate-900 shrink-0">{formatPKR(item.totalAmount || item.price)}</span>
                         </div>
                       ))}
                     </div>
@@ -933,33 +1087,33 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   </div>
                 )}
 
-                {/* Quick Action Bar */}
+                {/* Action Bar (Full-width stacked / responsive buttons) */}
                 <div className="pt-4 border-t border-slate-100">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <button
                       onClick={handleApprove}
                       disabled={actionLoading || selected.paymentStatus === "PAID"}
-                      className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                      className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      <span>Approve</span>
+                      <span>Approve Payment</span>
                       <kbd className="hidden sm:inline bg-emerald-500 px-1.5 py-0.5 rounded text-[10px] font-mono">A</kbd>
                     </button>
 
                     <button
                       onClick={() => setShowRejectDialog(true)}
                       disabled={actionLoading || selected.paymentStatus === "FAILED"}
-                      className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                      className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       <XCircle className="w-4 h-4" />
-                      <span>Reject</span>
+                      <span>Reject Payment</span>
                       <kbd className="hidden sm:inline bg-rose-500 px-1.5 py-0.5 rounded text-[10px] font-mono">R</kbd>
                     </button>
 
                     <button
                       onClick={handleFlag}
                       disabled={actionLoading || selected.flaggedSuspicious}
-                      className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                      className="py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       <AlertTriangle className="w-4 h-4" />
                       <span>Flag</span>
@@ -981,4 +1135,3 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     </div>
   );
 }
-

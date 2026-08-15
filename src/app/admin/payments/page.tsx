@@ -15,9 +15,12 @@ export default async function AdminPaymentsPage() {
   try {
     const raw = await prisma.order.findMany({
       where: {
-        paymentMethod: {
-          in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"],
-        },
+        OR: [
+          { paymentStatus: { in: ["PENDING_VERIFICATION", "UNPAID", "SUBMITTED", "PAID", "FAILED", "FLAGGED_SUSPICIOUS", "RECEIPT_SUBMITTED", "PENDING"] } },
+          { paymentMethod: { in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"] } },
+          { transactionId: { not: null } },
+          { paymentReceiptUrl: { not: null } },
+        ],
       },
       include: {
         items: {

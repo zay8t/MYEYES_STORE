@@ -28,6 +28,16 @@ export async function GET(request: NextRequest) {
     if (paymentStatus && paymentStatus !== "ALL") {
       if (paymentStatus === "OCR_MATCHED") {
         whereClause.isOcrMatched = true;
+      } else if (paymentStatus === "PENDING_VERIFICATION") {
+        whereClause.OR = [
+          { paymentStatus: { in: ["PENDING_VERIFICATION", "UNPAID", "SUBMITTED", "PENDING", "RECEIPT_SUBMITTED"] } },
+          {
+            AND: [
+              { paymentStatus: { notIn: ["PAID", "FAILED"] } },
+              { paymentMethod: { in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"] } },
+            ],
+          },
+        ];
       } else {
         whereClause.paymentStatus = paymentStatus;
       }
@@ -35,10 +45,17 @@ export async function GET(request: NextRequest) {
 
     if (paymentMethod && paymentMethod !== "ALL") {
       whereClause.paymentMethod = paymentMethod;
-    } else {
-      whereClause.paymentMethod = {
-        in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"],
-      };
+    }
+
+    // Default fallback filter when no specific status/method filter is provided:
+    // Fetch orders that are not purely empty COD, or have payment details / non-paid statuses
+    if (!paymentStatus && !paymentMethod && !orderNumber && !search) {
+      whereClause.OR = [
+        { paymentStatus: { in: ["PENDING_VERIFICATION", "UNPAID", "SUBMITTED", "PAID", "FAILED", "FLAGGED_SUSPICIOUS", "RECEIPT_SUBMITTED", "PENDING"] } },
+        { paymentMethod: { in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"] } },
+        { transactionId: { not: null } },
+        { paymentReceiptUrl: { not: null } },
+      ];
     }
 
     if (search) {
