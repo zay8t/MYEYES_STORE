@@ -45,6 +45,12 @@ export default function CheckoutPage() {
   const [uploadingProof, setUploadingProof] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Transaction ID Fraud Prevention States
+  const [transactionId, setTransactionId] = useState("");
+  const [paymentSenderName, setPaymentSenderName] = useState("");
+  const [tidCheckStatus, setTidCheckStatus] = useState<"idle" | "checking" | "ok" | "duplicate">("idle");
+  const [tidError, setTidError] = useState("");
+
   // General States
   const [copiedText, setCopiedText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -75,6 +81,32 @@ export default function CheckoutPage() {
       router.push("/");
     }
   }, [mounted, items, router, submitting]);
+
+  // Live TID duplicate check (debounced 600ms)
+  useEffect(() => {
+    if (!transactionId || transactionId.length < 8) {
+      setTidCheckStatus("idle");
+      setTidError("");
+      return;
+    }
+    setTidCheckStatus("checking");
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/payments/check-tid?tid=${encodeURIComponent(transactionId)}`);
+        const data = await res.json();
+        if (data.isDuplicate) {
+          setTidCheckStatus("duplicate");
+          setTidError(data.message || "This Transaction ID has already been used. Please verify your receipt.");
+        } else {
+          setTidCheckStatus("ok");
+          setTidError("");
+        }
+      } catch {
+        setTidCheckStatus("idle");
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [transactionId]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -166,6 +198,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (isOnlinePayment && tidCheckStatus === "duplicate") {
+      setErrorMsg("Transaction ID already used in another order. Please upload a valid unique receipt.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -182,6 +219,8 @@ export default function CheckoutPage() {
           paymentStatus: isOnlinePayment ? "RECEIPT_SUBMITTED" : "PENDING",
           paymentReceiptUrl: isOnlinePayment ? paymentReceiptUrl : null,
           transactionProofUrl: isOnlinePayment ? paymentReceiptUrl : null,
+          transactionId: isOnlinePayment && transactionId ? transactionId.trim().toUpperCase() : null,
+          paymentSenderName: isOnlinePayment && paymentSenderName ? paymentSenderName.trim() : null,
           items,
         }),
       });
@@ -482,6 +521,54 @@ export default function CheckoutPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Transaction ID & Sender Name fields */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                            Transaction ID (TID) <span className="text-slate-400 font-normal normal-case">(from your bank receipt)</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="e.g. 12345678901"
+                              value={transactionId}
+                              onChange={(e) => setTransactionId(e.target.value.replace(/\s/g, ""))}
+                              className={`w-full px-3 py-2.5 text-xs font-mono border rounded-xl bg-white focus:outline-none transition-colors ${
+                                tidCheckStatus === "duplicate"
+                                  ? "border-red-400 bg-red-50/50"
+                                  : tidCheckStatus === "ok"
+                                  ? "border-emerald-400"
+                                  : "border-slate-200 focus:border-slate-900"
+                              }`}
+                            />
+                            {tidCheckStatus === "checking" && (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "ok" && (
+                              <Check className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "duplicate" && (
+                              <X className="w-3.5 h-3.5 text-red-600 absolute right-3 top-2.5" />
+                            )}
+                          </div>
+                          {tidError && (
+                            <p className="text-[10px] font-bold text-red-600 mt-1 flex items-center gap-1">
+                              ⚠️ {tidError}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Sender Account Name</label>
+                          <input
+                            type="text"
+                            placeholder="Name on bank account / mobile wallet"
+                            value={paymentSenderName}
+                            onChange={(e) => setPaymentSenderName(e.target.value)}
+                            className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -585,10 +672,58 @@ export default function CheckoutPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Transaction ID & Sender Name fields */}
+                      <div className="border-t border-slate-200/80 pt-3 space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
+                            Transaction ID (TID) <span className="text-slate-400 font-normal normal-case">(from your EasyPaisa / JazzCash receipt)</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="e.g. 12345678901"
+                              value={transactionId}
+                              onChange={(e) => setTransactionId(e.target.value.replace(/\s/g, ""))}
+                              className={`w-full px-3 py-2.5 text-xs font-mono border rounded-xl bg-white focus:outline-none transition-colors ${
+                                tidCheckStatus === "duplicate"
+                                  ? "border-red-400 bg-red-50/50"
+                                  : tidCheckStatus === "ok"
+                                  ? "border-emerald-400"
+                                  : "border-slate-200 focus:border-slate-900"
+                              }`}
+                            />
+                            {tidCheckStatus === "checking" && (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "ok" && (
+                              <Check className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-2.5" />
+                            )}
+                            {tidCheckStatus === "duplicate" && (
+                              <X className="w-3.5 h-3.5 text-red-600 absolute right-3 top-2.5" />
+                            )}
+                          </div>
+                          {tidError && (
+                            <p className="text-[10px] font-bold text-red-600 mt-1 flex items-center gap-1">
+                              ⚠️ {tidError}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Mobile Wallet Account Name</label>
+                          <input
+                            type="text"
+                            placeholder="Name registered on EasyPaisa / JazzCash"
+                            value={paymentSenderName}
+                            onChange={(e) => setPaymentSenderName(e.target.value)}
+                            className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 font-medium"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  {/* Option 3 Details: COD */}
+
                   {paymentMethod === "COD" && (
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 animate-fade-in-up">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">

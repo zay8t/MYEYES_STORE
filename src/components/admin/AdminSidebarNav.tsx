@@ -14,12 +14,14 @@ import {
   Tag,
   Calculator,
   Eye,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Payment Verification", href: "/admin/payments", icon: CreditCard },
   { name: "Frames Catalog", href: "/admin/products", icon: Glasses },
   { name: "Inventory Control", href: "/admin/inventory", icon: Boxes },
   { name: "Customer CRM", href: "/admin/customers", icon: Users },
@@ -28,6 +30,7 @@ const NAV_ITEMS = [
   { name: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
   { name: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
 ];
+
 
 export default function AdminSidebarNav() {
   const pathname = usePathname();

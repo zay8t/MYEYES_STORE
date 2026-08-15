@@ -90,7 +90,35 @@ model Order {
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   items               OrderItem[]
+
+  // ── Payment Verification Fields ──────────────────────────────────
+  transactionId        String?  @unique        // Unique → prevents duplicate TID fraud
+  paymentSenderName    String?
+  paymentSenderPhone   String?
+  ocrExtractedTid      String?                 // TID extracted by OCR parser
+  ocrConfidenceScore   Float?                  // OCR confidence 0–100
+  isOcrMatched         Boolean  @default(false) // OCR TID matches customer-entered TID
+  flaggedSuspicious    Boolean  @default(false)
+
+  // ── Admin Audit Trail ─────────────────────────────────────────────
+  verifiedBy           String?                 // Admin email / ID
+  verifiedAt           DateTime?
+  rejectionReason      String?
+  customerNotified     Boolean  @default(false)
+  auditLogs            PaymentAuditLog[]
 }
+
+model PaymentAuditLog {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  action    String   // SUBMITTED | OCR_PARSED | APPROVED | REJECTED | FLAGGED | NOTIFIED
+  actor     String   // CUSTOMER | SYSTEM_OCR | ADMIN
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+
 
 model LensOption {
   id                     String   @id @default(uuid())

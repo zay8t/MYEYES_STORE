@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
       paymentStatus,
       paymentReceiptUrl,
       transactionProofUrl,
+      transactionId,
+      paymentSenderName,
+      paymentSenderPhone,
       items,
     } = body;
 
@@ -200,6 +203,9 @@ export async function POST(request: NextRequest) {
           paymentStatus: finalPaymentStatus,
           paymentReceiptUrl: finalReceiptUrl,
           transactionProofUrl: finalReceiptUrl,
+          transactionId: transactionId ? String(transactionId).trim().toUpperCase() : null,
+          paymentSenderName: paymentSenderName || null,
+          paymentSenderPhone: paymentSenderPhone || null,
           shippingFee,
           totalAmount,
           status: "PENDING",
@@ -218,6 +224,22 @@ export async function POST(request: NextRequest) {
         },
       });
     });
+
+    // Write initial payment audit log entry
+    if (order.paymentReceiptUrl) {
+      try {
+        await prisma.paymentAuditLog.create({
+          data: {
+            orderId: order.id,
+            action: "SUBMITTED",
+            actor: "CUSTOMER",
+            notes: `Payment receipt submitted via ${paymentMethod}. TID: ${order.transactionId || "not provided"}. Sender: ${order.paymentSenderName || "not provided"}.`,
+          },
+        });
+      } catch (auditErr) {
+        console.error("Audit log write failed (non-fatal):", auditErr);
+      }
+    }
 
     // CRM Lead Deduplication Algorithm
     const normalizedPhone = normalizePhoneNumber(customerPhone);
