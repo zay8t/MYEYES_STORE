@@ -1,12 +1,12 @@
 /**
- * Compresses an image file (PNG/JPEG) using HTML5 Canvas in the browser.
- * Returns a promise resolving to a compressed base64 JPEG data URL.
+ * Compresses/formats an image file using HTML5 Canvas in the browser with high-fidelity settings.
+ * Preserves high resolution up to 2400px width/height and maintains high-DPI quality (0.92-0.95).
  */
 export function compressImage(
   file: File,
-  maxWidth = 1024,
-  maxHeight = 1024,
-  quality = 0.7
+  maxWidth = 2400,
+  maxHeight = 2400,
+  quality = 0.92
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") {
@@ -24,14 +24,12 @@ export function compressImage(
         let width = img.width;
         let height = img.height;
 
-        // Calculate new dimensions preserving aspect ratio
-        if (width > height) {
-          if (width > maxWidth) {
+        // Calculate new dimensions preserving aspect ratio without downscaling unless larger than bounds
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
             height = Math.round((height * maxWidth) / width);
             width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
+          } else {
             width = Math.round((width * maxHeight) / height);
             height = maxHeight;
           }
@@ -46,11 +44,25 @@ export function compressImage(
           return;
         }
 
-        // Draw image onto canvas (resizing it)
+        // Enable high-quality image smoothing for Retina displays
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        // Draw image onto canvas
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Export as compressed JPEG base64 data URL
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        // Export as high-quality WebP / JPEG / PNG
+        const targetMime = file.type === "image/png" ? "image/png" : "image/webp";
+        let dataUrl: string;
+        try {
+          dataUrl = canvas.toDataURL(targetMime, quality);
+          // If browser didn't support webp, fallback to jpeg
+          if (!dataUrl.startsWith(`data:${targetMime}`)) {
+            dataUrl = canvas.toDataURL("image/jpeg", quality);
+          }
+        } catch {
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
         resolve(dataUrl);
       };
       img.onerror = (err) => {

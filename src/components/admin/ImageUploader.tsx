@@ -42,10 +42,10 @@ export default function ImageUploader({ images, onChange }: ImageUploaderProps) 
   }, [onChange]);
 
   const processFiles = useCallback((files: FileList | File[]) => {
-    const MAX_SIZE = 8 * 1024 * 1024; // 8MB
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB max bounds for high-res eyewear frames
     const oversize = Array.from(files).filter((file) => file.size > MAX_SIZE);
     if (oversize.length > 0) {
-      alert("Some files exceed the 8MB size limit and were skipped.");
+      alert("Some files exceed the 10MB size limit and were skipped.");
     }
 
     const fileArray = Array.from(files).filter((file) =>
@@ -70,12 +70,12 @@ export default function ImageUploader({ images, onChange }: ImageUploaderProps) 
       return updated;
     });
 
-    // 2. ASYNCHRONOUS BACKGROUND FILE CONVERSION WITH CANVAS COMPRESSION (Non-blocking UI Thread)
+    // 2. ASYNCHRONOUS BACKGROUND FILE CONVERSION WITH HIGH-RES RETINA PRESERVATION (Non-blocking UI Thread)
     fileArray.forEach((file, index) => {
       const targetId = newItems[index].id;
 
       setTimeout(() => {
-        compressImage(file, 800, 800, 0.75)
+        compressImage(file, 2400, 2400, 0.92)
           .then((compressedBase64) => {
             setItems((prev) => {
               const updated = prev.map((item) =>

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("file") as File | null;
-      const folder = (formData.get("folder") as string) || "myeyes/payment_receipts";
+      const folder = (formData.get("folder") as string) || "myeyes/frames";
       const tag = formData.get("tag") as string | null;
 
       if (!file) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       }
       
       const tags = tag ? [tag] : undefined;
-      const uploadRes = await uploadToCloudinary(file, folder || "myeyes/payment_receipts", tags);
+      const uploadRes = await uploadToCloudinary(file, folder || "myeyes/frames", tags);
       return NextResponse.json({
         success: true,
         url: uploadRes.secure_url,

@@ -93,8 +93,9 @@ export default function ProductGallery({
                 alt={`${productName} view ${index + 1}`}
                 fill
                 priority={index === 0}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                className="object-contain p-4 md:p-6 w-full h-full transition-transform duration-500 ease-out group-hover:scale-105"
+                quality={95}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain p-2 md:p-4 w-full h-full transition-transform duration-500 ease-out group-hover:scale-105"
               />
             </div>
           ))}
@@ -172,6 +173,7 @@ export default function ProductGallery({
                   src={src}
                   alt={`${productName} thumbnail ${index + 1}`}
                   fill
+                  quality={85}
                   sizes="80px"
                   className="object-contain p-1"
                 />

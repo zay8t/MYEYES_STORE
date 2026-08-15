@@ -124,10 +124,11 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
         className="block relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden"
       >
         <Image
-          src={activeImageUrl}
+          src={activeImageUrl || "/placeholder-frame.png"}
           alt={product.name}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          quality={90}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 

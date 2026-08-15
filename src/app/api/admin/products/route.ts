@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     for (const img of imageList) {
       if (img.startsWith("data:image/")) {
-        const uploadRes = await uploadToCloudinary(img);
+        const uploadRes = await uploadToCloudinary(img, "myeyes/frames");
         uploadedUrls.push(uploadRes.secure_url);
         if (!firstPublicId) {
           firstPublicId = uploadRes.public_id;
