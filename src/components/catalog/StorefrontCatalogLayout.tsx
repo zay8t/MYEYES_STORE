@@ -80,12 +80,8 @@ export default function StorefrontCatalogLayout({
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-100 pb-6 mb-6 gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+              <span className="text-xs uppercase tracking-widest font-bold text-slate-500">
                 {categoryTag}
-              </span>
-              <span className="text-slate-300">/</span>
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-                WARBY PARKER FAUX-LUXURY CATALOG
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mt-1">
