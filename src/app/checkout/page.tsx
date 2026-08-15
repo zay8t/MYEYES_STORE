@@ -23,6 +23,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import Link from "next/link";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA" | "JAZZCASH";
 
@@ -264,11 +265,7 @@ export default function CheckoutPage() {
   };
 
   if (!mounted || (items.length === 0 && !submitting)) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-      </div>
-    );
+    return <LogoLoader text="SECURING CHECKOUT SESSION..." />;
   }
 
   const isOnlinePayment = paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "JAZZCASH";

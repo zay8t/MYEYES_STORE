@@ -11,8 +11,8 @@ import {
   X,
   Glasses,
   Sun,
-  Loader2,
 } from "lucide-react";
+import LogoLoader from "@/components/ui/LogoLoader";
 import { QuizAnswers, QUIZ_STEPS } from "@/lib/quizData";
 import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice } from "@/lib/utils";
@@ -542,16 +542,7 @@ function ResultsInner() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function QuizResultsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 text-slate-500">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-            <p className="text-sm font-semibold">Loading your results...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<LogoLoader text="CURATING YOUR PERSONALIZED OPTICAL RESULTS..." />}>
       <ResultsInner />
     </Suspense>
   );

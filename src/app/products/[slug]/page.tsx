@@ -55,7 +55,7 @@ export default function ProductDetailPage({
   }, [resolvedParams.slug]);
 
   if (loading) {
-    return <LogoLoader text="LOADING FRAME DETAILS & OPTICS..." />;
+    return <LogoLoader size="fullscreen" text="LOADING FRAME DETAILS..." />;
   }
 
   if (!product) {
