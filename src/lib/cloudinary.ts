@@ -16,7 +16,8 @@ export { cloudinary };
  */
 export async function uploadToCloudinary(
   fileStr: string,
-  folder: string = "payment_receipts"
+  folder: string = "myeyes/payment_receipts",
+  tags?: string[]
 ): Promise<{ secure_url: string; public_id: string }> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -36,6 +37,9 @@ export async function uploadToCloudinary(
       folder,
       resource_type: "auto",
     };
+    if (tags && tags.length > 0) {
+      uploadOptions.tags = tags;
+    }
     if (uploadPreset) {
       uploadOptions.upload_preset = uploadPreset;
     }

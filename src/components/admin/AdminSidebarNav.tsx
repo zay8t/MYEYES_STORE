@@ -34,6 +34,30 @@ const NAV_ITEMS = [
 
 export default function AdminSidebarNav() {
   const pathname = usePathname();
+  const [pendingCount, setPendingCount] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchPending = async () => {
+      try {
+        const res = await fetch("/api/admin/payments?paymentStatus=PENDING_VERIFICATION");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && typeof data.count === "number") {
+            setPendingCount(data.count);
+          }
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchPending();
+    const interval = setInterval(fetchPending, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <nav className="space-y-1.5">
@@ -43,6 +67,7 @@ export default function AdminSidebarNav() {
             ? pathname === "/admin"
             : pathname.startsWith(item.href);
         const Icon = item.icon;
+        const isPayment = item.href === "/admin/payments";
 
         return (
           <Link
@@ -59,7 +84,14 @@ export default function AdminSidebarNav() {
               <Icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-amber-600 font-bold" : "text-slate-400")} />
               <span>{item.name}</span>
             </div>
-            <ChevronRight className={cn("w-4 h-4 transition-transform group-hover:translate-x-0.5", isActive ? "text-amber-600 opacity-100" : "text-slate-300 opacity-60")} />
+            <div className="flex items-center gap-1.5">
+              {isPayment && pendingCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-2xs animate-pulse">
+                  {pendingCount} Pending
+                </span>
+              )}
+              <ChevronRight className={cn("w-4 h-4 transition-transform group-hover:translate-x-0.5", isActive ? "text-amber-600 opacity-100" : "text-slate-300 opacity-60")} />
+            </div>
           </Link>
         );
       })}

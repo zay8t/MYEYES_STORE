@@ -14,11 +14,16 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const paymentStatus = searchParams.get("paymentStatus");
+    const paymentStatus = searchParams.get("paymentStatus") || searchParams.get("status");
     const paymentMethod = searchParams.get("paymentMethod");
+    const orderNumber = searchParams.get("orderNumber")?.trim();
     const search = searchParams.get("search")?.trim().toLowerCase();
 
     const whereClause: Record<string, unknown> = {};
+
+    if (orderNumber) {
+      whereClause.orderNumber = { contains: orderNumber, mode: "insensitive" };
+    }
 
     if (paymentStatus && paymentStatus !== "ALL") {
       if (paymentStatus === "OCR_MATCHED") {
@@ -43,6 +48,8 @@ export async function GET(request: NextRequest) {
         { customerPhone: { contains: search, mode: "insensitive" } },
         { customerEmail: { contains: search, mode: "insensitive" } },
         { transactionId: { contains: search, mode: "insensitive" } },
+        { paymentSenderName: { contains: search, mode: "insensitive" } },
+        { paymentSenderPhone: { contains: search, mode: "insensitive" } },
       ];
     }
 

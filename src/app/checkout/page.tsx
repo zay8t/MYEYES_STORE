@@ -44,6 +44,7 @@ export default function CheckoutPage() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [checkoutOrderNumber, setCheckoutOrderNumber] = useState("");
 
   // Transaction ID Fraud Prevention States
   const [transactionId, setTransactionId] = useState("");
@@ -74,6 +75,15 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Initialize persistent tentative Order Number for transfer remarks & cloudinary tagging
+    const storedOrd = sessionStorage.getItem("myeyes_checkout_ord");
+    if (storedOrd) {
+      setCheckoutOrderNumber(storedOrd);
+    } else {
+      const gen = Math.floor(10000000 + Math.random() * 90000000).toString();
+      sessionStorage.setItem("myeyes_checkout_ord", gen);
+      setCheckoutOrderNumber(gen);
+    }
   }, []);
 
   // Redirect if cart is empty after client hydration
@@ -128,6 +138,8 @@ export default function CheckoutPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folder", "myeyes/payment_receipts");
+      formData.append("tag", `receipt_order_${checkoutOrderNumber || "PENDING"}_${Date.now()}`);
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -482,6 +494,16 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
+                      {/* Order Remarks Notice */}
+                      {checkoutOrderNumber && (
+                        <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs text-amber-950 font-medium flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
+                          <span>
+                            Please mention <strong className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-bold text-slate-900">Order #{checkoutOrderNumber}</strong> in your transfer remarks.
+                          </span>
+                        </div>
+                      )}
+
                       {/* Cloudinary Receipt Upload Component */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-2">
                         <label className="block text-[10px] font-bold text-slate-600 uppercase">
@@ -648,6 +670,16 @@ export default function CheckoutPage() {
                           <img src="/jazzcash-qr.jpg" alt="EasyPaisa / JazzCash QR" className="w-full h-full object-contain" />
                         </div>
                       </div>
+
+                      {/* Order Remarks Notice */}
+                      {checkoutOrderNumber && (
+                        <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs text-amber-950 font-medium flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
+                          <span>
+                            Please mention <strong className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-bold text-slate-900">Order #{checkoutOrderNumber}</strong> in your transfer remarks.
+                          </span>
+                        </div>
+                      )}
 
                       {/* Cloudinary Receipt Upload Component */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-2">
@@ -818,6 +850,16 @@ export default function CheckoutPage() {
                           <img src="/jazzcash-qr.jpg" alt="JazzCash QR" className="w-full h-full object-contain" />
                         </div>
                       </div>
+
+                      {/* Order Remarks Notice */}
+                      {checkoutOrderNumber && (
+                        <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs text-amber-950 font-medium flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
+                          <span>
+                            Please mention <strong className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-bold text-slate-900">Order #{checkoutOrderNumber}</strong> in your transfer remarks.
+                          </span>
+                        </div>
+                      )}
 
                       {/* Cloudinary Receipt Upload Component */}
                       <div className="border-t border-slate-200/80 pt-3 space-y-2">

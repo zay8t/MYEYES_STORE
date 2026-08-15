@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   XCircle,
@@ -26,8 +27,10 @@ import {
   Loader2,
   X,
   Check,
+  Copy,
   ExternalLink,
   Maximize2,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -96,27 +99,26 @@ interface PaymentVerificationClientProps {
 //  Constants
 // ─────────────────────────────────────────────────────────────────────────────
 const REJECTION_REASONS = [
-  "Invalid TID / Reference Number",
+  "Invalid TID",
+  "Amount Mismatch",
+  "Blurry Screenshot",
+  "Duplicate Receipt",
   "TID does not match bank records",
-  "Amount mismatch / Incomplete transfer",
-  "Blurry / unreadable receipt screenshot",
-  "Duplicate / fake transaction receipt",
   "Wrong beneficiary account / mobile number",
   "Transaction is too old (>48 hours)",
 ];
 
 const FILTER_TABS = [
+  { id: "ALL", label: "All Payments", color: "text-slate-700 bg-white border-slate-200" },
   { id: "PENDING_VERIFICATION", label: "Pending Verification", color: "text-amber-700 bg-amber-50 border-amber-200" },
-  { id: "PAID", label: "Verified / Paid", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  { id: "PAID", label: "Approved / Paid", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
   { id: "FAILED", label: "Rejected", color: "text-rose-700 bg-rose-50 border-rose-200" },
-  { id: "FLAGGED_SUSPICIOUS", label: "Flagged", color: "text-orange-700 bg-orange-50 border-orange-200" },
-  { id: "ALL", label: "All Orders", color: "text-slate-700 bg-white border-slate-200" },
 ];
 
 const ADMIN_EMAIL = "admin@myeyes.pk";
 
 function formatPKR(amount: number) {
-  return `PKR ${amount.toLocaleString("en-PK")}`;
+  return `Rs. ${amount.toLocaleString("en-PK")}/-`;
 }
 
 function timeAgo(dateStr: string) {
@@ -135,7 +137,7 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     PENDING_VERIFICATION: { label: "Pending Verification", cls: "bg-amber-100 text-amber-800 border-amber-200" },
     RECEIPT_SUBMITTED: { label: "Receipt In", cls: "bg-blue-100 text-blue-800 border-blue-200" },
-    PAID: { label: "✓ Verified / Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+    PAID: { label: "✓ Approved / Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
     FAILED: { label: "✗ Rejected", cls: "bg-rose-100 text-rose-800 border-rose-200" },
     FLAGGED_SUSPICIOUS: { label: "⚠ Flagged", cls: "bg-orange-100 text-orange-800 border-orange-200" },
     PENDING: { label: "Pending", cls: "bg-slate-100 text-slate-600 border-slate-200" },
@@ -553,6 +555,15 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     setRefreshing(false);
   };
 
+  const [copiedTid, setCopiedTid] = useState<string | null>(null);
+
+  const handleCopyTid = (tid: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(tid);
+    setCopiedTid(tid);
+    setTimeout(() => setCopiedTid(null), 2000);
+  };
+
   return (
     <div className="relative" ref={containerRef}>
       {/* Toast */}
@@ -563,33 +574,81 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
         </div>
       )}
 
-      {/* Fullscreen Receipt Modal */}
-      {fullscreenReceipt && (
+      {/* Interactive Lightbox Modal */}
+      {fullscreenReceipt && selected && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in">
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            <a
-              href={fullscreenReceipt}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-              title="Open Original Image"
-            >
-              <ExternalLink className="w-5 h-5" />
-            </a>
-            <button
-              onClick={() => setFullscreenReceipt(null)}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-              title="Close Fullscreen View"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          {/* Modal Header */}
+          <div className="w-full max-w-5xl flex items-center justify-between py-3 px-5 bg-slate-900/90 border border-slate-800 rounded-2xl mb-3 text-white">
+            <div>
+              <h3 className="font-extrabold text-sm sm:text-base tracking-tight">
+                Verifying Payment for Order #{selected.orderNumber || selected.id.slice(0, 8)}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Customer: <strong className="text-slate-200">{selected.customerName}</strong> · Total: <strong className="text-emerald-400">{formatPKR(selected.totalAmount)}</strong> · TID: <strong className="font-mono text-amber-300">{selected.transactionId || "N/A"}</strong>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href={fullscreenReceipt}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={`receipt_order_${selected.orderNumber || selected.id}.jpg`}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                title="Download / Open Original Image"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="hidden sm:inline">Original</span>
+              </a>
+              <button
+                onClick={() => setFullscreenReceipt(null)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Close Fullscreen View"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="max-w-4xl max-h-[85vh] w-full flex items-center justify-center p-2">
-            <img
-              src={fullscreenReceipt}
-              alt="Full Resolution Payment Receipt"
-              className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl"
-            />
+
+          <div className="w-full max-w-5xl max-h-[80vh] flex flex-col md:flex-row items-center justify-center gap-4">
+            <div className="flex-1 max-h-[75vh] flex items-center justify-center p-2">
+              <img
+                src={fullscreenReceipt}
+                alt={`Payment Receipt for Order #${selected.orderNumber || selected.id}`}
+                className="max-h-[75vh] max-w-full object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+            <div className="w-full md:w-72 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-white text-xs space-y-3 flex-shrink-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Order Information</p>
+              <div>
+                <span className="text-slate-400 text-[11px] block">Order Number:</span>
+                <span className="font-mono font-bold text-sm text-white">#{selected.orderNumber || selected.id.slice(0, 8)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 text-[11px] block">Total Amount:</span>
+                <span className="font-extrabold text-emerald-400 text-sm">{formatPKR(selected.totalAmount)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 text-[11px] block">Submitted TID:</span>
+                <span className="font-mono font-bold text-amber-300">{selected.transactionId || "None"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 text-[11px] block">Customer:</span>
+                <span className="font-medium text-slate-200">{selected.customerName}</span>
+                {selected.customerPhone && <span className="block text-[11px] text-slate-400">{selected.customerPhone}</span>}
+              </div>
+              {selected.paymentSenderName && (
+                <div>
+                  <span className="text-slate-400 text-[11px] block">Sender Name:</span>
+                  <span className="font-medium text-slate-200">{selected.paymentSenderName}</span>
+                </div>
+              )}
+              {selected.paymentSenderPhone && (
+                <div>
+                  <span className="text-slate-400 text-[11px] block">Sender Phone:</span>
+                  <span className="font-medium text-slate-200">{selected.paymentSenderPhone}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -607,8 +666,8 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Payment Verification</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Review receipts, run OCR, approve or reject payments.</p>
+          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Payment Verification & Settlement</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Review customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders into lab production.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600">
@@ -654,7 +713,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Order #, TID, name, phone..."
+                placeholder="Order # (e.g. 00000002), TID, name, phone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-slate-900 font-medium"
@@ -693,25 +752,40 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   className={`w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer group flex items-start justify-between gap-3 ${selected?.id === order.id ? "bg-slate-50 border-l-2 border-slate-900" : ""}`}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-extrabold text-slate-900 font-mono">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-mono font-bold text-xs sm:text-sm bg-slate-900 hover:bg-black text-white px-2.5 py-1 rounded-md transition-colors inline-block"
+                        title="Click to open order breakdown page"
+                      >
                         #{order.orderNumber || order.id.slice(0, 8)}
-                      </span>
+                      </Link>
                       <StatusBadge status={order.paymentStatus} />
                       {order.flaggedSuspicious && <ShieldAlert className="w-3.5 h-3.5 text-orange-500" />}
                       {order.isOcrMatched && <Shield className="w-3.5 h-3.5 text-emerald-500" />}
                     </div>
-                    <p className="text-[11px] font-bold text-slate-700 truncate">{order.customerName}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      {order.paymentMethod} · {formatPKR(order.totalAmount)}
+                    <p className="text-[11px] font-bold text-slate-800 truncate">{order.customerName} {order.customerPhone ? `(${order.customerPhone})` : ""}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate font-semibold">
+                      {order.paymentMethod} · <span className="text-slate-900 font-extrabold">{formatPKR(order.totalAmount)}</span>
                     </p>
                     {order.transactionId && (
-                      <p className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">TID: {order.transactionId}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">TID: {order.transactionId}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyTid(order.transactionId!, e)}
+                          className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer"
+                          title="Copy TID"
+                        >
+                          {copiedTid === order.transactionId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className="text-[9px] text-slate-400">{timeAgo(order.createdAt)}</span>
-                    {order.paymentReceiptUrl && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Receipt uploaded" />}
+                    {order.paymentReceiptUrl && <div className="w-2 h-2 rounded-full bg-emerald-500" title="Receipt uploaded" />}
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 transition-colors" />
                   </div>
                 </button>
@@ -740,11 +814,18 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
               {/* Inspection Header */}
               <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  <Link
+                    href={`/admin/orders/${selected.id}`}
+                    className="font-mono font-bold text-sm sm:text-base bg-slate-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors inline-block"
+                    title="Open Order Details"
+                  >
+                    #{selected.orderNumber || selected.id.slice(0, 8)}
+                  </Link>
                   <div>
                     <h2 className="font-extrabold text-slate-900 text-sm">
-                      Order #{selected.orderNumber || selected.id.slice(0, 8)}
+                      {selected.customerName}
                     </h2>
-                    <p className="text-[11px] text-slate-500">{selected.customerName} · {selected.paymentMethod}</p>
+                    <p className="text-[11px] text-slate-500">{selected.paymentMethod} · {formatPKR(selected.totalAmount)}</p>
                   </div>
                   <StatusBadge status={selected.paymentStatus} />
                 </div>
@@ -776,9 +857,9 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   {/* Order + Customer Info */}
                   <div className="space-y-3">
                     {/* Customer Details */}
-                    <div className="rounded-xl border border-slate-200 p-4 space-y-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</p>
-                      <div className="space-y-1.5 text-xs">
+                    <div className="rounded-xl border border-slate-200 p-4 space-y-2.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer & Proof Details</p>
+                      <div className="space-y-2 text-xs">
                         <div className="flex items-center gap-2 text-slate-700">
                           <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                           <span className="font-bold">{selected.customerName}</span>
@@ -798,19 +879,29 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                           <span>{formatPKR(selected.totalAmount)}</span>
                         </div>
                         {selected.transactionId && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <Hash className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                            <span className="font-mono font-bold">{selected.transactionId}</span>
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
+                            <div className="flex items-center gap-2 text-slate-700">
+                              <Hash className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                              <span className="font-mono font-bold text-xs">{selected.transactionId}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyTid(selected.transactionId!)}
+                              className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer"
+                              title="Copy Transaction ID"
+                            >
+                              {copiedTid === selected.transactionId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
                         )}
                         {selected.paymentSenderName && (
-                          <div className="text-[10px] text-slate-600">
-                            <strong>Sender:</strong> {selected.paymentSenderName}
+                          <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <strong>Sender Title:</strong> {selected.paymentSenderName}
                           </div>
                         )}
                         {selected.paymentSenderPhone && (
-                          <div className="text-[10px] text-slate-600">
-                            <strong>Sender Phone:</strong> {selected.paymentSenderPhone}
+                          <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <strong>Sender Mobile:</strong> {selected.paymentSenderPhone}
                           </div>
                         )}
                       </div>
@@ -848,7 +939,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                     <button
                       onClick={handleApprove}
                       disabled={actionLoading || selected.paymentStatus === "PAID"}
-                      className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                     >
                       {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       <span>Approve</span>
@@ -858,17 +949,17 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                     <button
                       onClick={() => setShowRejectDialog(true)}
                       disabled={actionLoading || selected.paymentStatus === "FAILED"}
-                      className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                     >
                       <XCircle className="w-4 h-4" />
                       <span>Reject</span>
-                      <kbd className="hidden sm:inline bg-red-500 px-1.5 py-0.5 rounded text-[10px] font-mono">R</kbd>
+                      <kbd className="hidden sm:inline bg-rose-500 px-1.5 py-0.5 rounded text-[10px] font-mono">R</kbd>
                     </button>
 
                     <button
                       onClick={handleFlag}
                       disabled={actionLoading || selected.flaggedSuspicious}
-                      className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                     >
                       <AlertTriangle className="w-4 h-4" />
                       <span>Flag</span>

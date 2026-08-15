@@ -10,6 +10,9 @@ export async function POST(request: NextRequest) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("file") as File | null;
+      const folder = (formData.get("folder") as string) || "myeyes/payment_receipts";
+      const tag = formData.get("tag") as string | null;
+
       if (!file) {
         return NextResponse.json({ error: "No file provided in form data" }, { status: 400 });
       }
@@ -21,7 +24,8 @@ export async function POST(request: NextRequest) {
       const base64Data = buffer.toString("base64");
       const fileStr = `data:${mimeType};base64,${base64Data}`;
       
-      const uploadRes = await uploadToCloudinary(fileStr, "payment_receipts");
+      const tags = tag ? [tag] : undefined;
+      const uploadRes = await uploadToCloudinary(fileStr, folder, tags);
       return NextResponse.json({
         success: true,
         url: uploadRes.secure_url,
@@ -31,12 +35,13 @@ export async function POST(request: NextRequest) {
     } else {
       // Accept direct base64 encoded JSON body
       const body = await request.json();
-      const { file, folder } = body;
+      const { file, folder, tag } = body;
       if (!file) {
         return NextResponse.json({ error: "No base64 file data provided" }, { status: 400 });
       }
       
-      const uploadRes = await uploadToCloudinary(file, folder || "payment_receipts");
+      const tags = tag ? [tag] : undefined;
+      const uploadRes = await uploadToCloudinary(file, folder || "myeyes/payment_receipts", tags);
       return NextResponse.json({
         success: true,
         url: uploadRes.secure_url,

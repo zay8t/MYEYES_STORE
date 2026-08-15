@@ -18,12 +18,14 @@ import {
   ClipboardList,
   Tag,
   Eye,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Payment Verification", href: "/admin/payments", icon: CreditCard },
   { name: "Frames Catalog", href: "/admin/products", icon: Glasses },
   { name: "Inventory Control", href: "/admin/inventory", icon: Boxes },
   { name: "Customer CRM", href: "/admin/customers", icon: Users },
@@ -35,6 +37,30 @@ const NAV_ITEMS = [
 export default function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const [pendingCount, setPendingCount] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchPending = async () => {
+      try {
+        const res = await fetch("/api/admin/payments?paymentStatus=PENDING_VERIFICATION");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && typeof data.count === "number") {
+            setPendingCount(data.count);
+          }
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchPending();
+    const interval = setInterval(fetchPending, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <>
@@ -118,7 +144,14 @@ export default function AdminMobileNav() {
                   <Icon className={cn("w-4 h-4", isActive ? "text-amber-600" : "text-slate-400")} />
                   <span>{item.name}</span>
                 </div>
-                <ChevronRight className={cn("w-4 h-4 opacity-70", isActive ? "text-amber-600" : "text-slate-300")} />
+                <div className="flex items-center gap-1.5">
+                  {item.href === "/admin/payments" && pendingCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-2xs animate-pulse">
+                      {pendingCount} Pending
+                    </span>
+                  )}
+                  <ChevronRight className={cn("w-4 h-4 opacity-70", isActive ? "text-amber-600" : "text-slate-300")} />
+                </div>
               </Link>
             );
           })}
