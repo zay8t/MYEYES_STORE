@@ -127,17 +127,13 @@ export default function HomePage() {
                 <span className="truncate">Shop sunglasses</span>
               </Link>
 
-              {/* Button 4: Live calculator */}
+              {/* Button 4: Lens Pricing */}
               <Link 
                 href="/lens-pricing"
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-white text-slate-900 border-2 border-slate-800 hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Calculator className="w-3.5 h-3.5 shrink-0"/>
-                <span className="truncate">Live calculator</span>
-                <span className="relative flex h-2 w-2 ml-0.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+                <span className="truncate">Lens Pricing</span>
               </Link>
             </div>
 
