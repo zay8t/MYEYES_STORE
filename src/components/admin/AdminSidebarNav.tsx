@@ -19,16 +19,16 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
-  { name: "Payment Verification", href: "/admin/payments", icon: CreditCard },
-  { name: "Frames Catalog", href: "/admin/products", icon: Glasses },
-  { name: "Inventory Control", href: "/admin/inventory", icon: Boxes },
-  { name: "Customer CRM", href: "/admin/customers", icon: Users },
-  { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
-  { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
-  { name: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
-  { name: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
+  { name: "Executive Dashboard", label: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Prescription Pipeline", label: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Payment Verification", label: "Payment Verification", href: "/admin/payments", icon: CreditCard, badge: "Pending" },
+  { name: "Frames Catalog", label: "Frames Catalog", href: "/admin/products", icon: Glasses },
+  { name: "Inventory Control", label: "Inventory Control", href: "/admin/inventory", icon: Boxes },
+  { name: "Customer CRM", label: "Customer CRM", href: "/admin/customers", icon: Users },
+  { name: "Partial Leads", label: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
+  { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
+  { name: "Base Price Matrix ($B)", label: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
+  { name: "Presbyopia (+40) Pricing", label: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
 ];
 
 
@@ -82,12 +82,12 @@ export default function AdminSidebarNav() {
           >
             <div className="flex items-center gap-3">
               <Icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-amber-600 font-bold" : "text-slate-400")} />
-              <span>{item.name}</span>
+              <span>{item.label || item.name}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              {isPayment && pendingCount > 0 && (
+              {isPayment && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-2xs animate-pulse">
-                  {pendingCount} Pending
+                  {pendingCount > 0 ? `${pendingCount} Pending` : "Pending"}
                 </span>
               )}
               <ChevronRight className={cn("w-4 h-4 transition-transform group-hover:translate-x-0.5", isActive ? "text-amber-600 opacity-100" : "text-slate-300 opacity-60")} />

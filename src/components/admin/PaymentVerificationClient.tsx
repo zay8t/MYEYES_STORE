@@ -109,7 +109,7 @@ const REJECTION_REASONS = [
 ];
 
 const FILTER_TABS = [
-  { id: "ALL", label: "All Payments", color: "text-slate-700 bg-white border-slate-200" },
+  { id: "ALL", label: "All Orders", color: "text-slate-700 bg-white border-slate-200" },
   { id: "PENDING_VERIFICATION", label: "Pending Verification", color: "text-amber-700 bg-amber-50 border-amber-200" },
   { id: "PAID", label: "Approved / Paid", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
   { id: "FAILED", label: "Rejected", color: "text-rose-700 bg-rose-50 border-rose-200" },
@@ -667,7 +667,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Payment Verification & Settlement</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Review customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders into lab production.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Verify customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600">

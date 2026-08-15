@@ -23,15 +23,15 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
-  { name: "Payment Verification", href: "/admin/payments", icon: CreditCard },
-  { name: "Frames Catalog", href: "/admin/products", icon: Glasses },
-  { name: "Inventory Control", href: "/admin/inventory", icon: Boxes },
-  { name: "Customer CRM", href: "/admin/customers", icon: Users },
-  { name: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
-  { name: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
-  { name: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
+  { name: "Executive Dashboard", label: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Prescription Pipeline", label: "Prescription Pipeline", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Payment Verification", label: "Payment Verification", href: "/admin/payments", icon: CreditCard, badge: "Pending" },
+  { name: "Frames Catalog", label: "Frames Catalog", href: "/admin/products", icon: Glasses },
+  { name: "Inventory Control", label: "Inventory Control", href: "/admin/inventory", icon: Boxes },
+  { name: "Customer CRM", label: "Customer CRM", href: "/admin/customers", icon: Users },
+  { name: "Partial Leads", label: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
+  { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
+  { name: "Presbyopia (+40) Pricing", label: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
 ];
 
 export default function AdminMobileNav() {
