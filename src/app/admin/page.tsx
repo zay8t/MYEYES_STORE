@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { Product } from "@prisma/client";
 
-export const revalidate = 0; // Fresh data per request
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface ProductSalesItem {
   product: Product;
@@ -42,37 +43,37 @@ async function getDashboardMetrics() {
       }),
     ]);
 
-    const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const totalOrdersCount = orders.length;
+    const totalRevenue = (orders || []).reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    const totalOrdersCount = orders ? orders.length : 0;
 
     // Prescription vs Non-Prescription Sales Ratio
     let rxOrdersCount = 0;
-    orders.forEach((o) => {
-      const hasRx = o.items.some((i) => i.prescription);
+    (orders || []).forEach((o) => {
+      const hasRx = o.items && o.items.some((i) => i.prescription);
       if (hasRx) rxOrdersCount++;
     });
     const rxRatio = totalOrdersCount > 0 ? Math.round((rxOrdersCount / totalOrdersCount) * 100) : 0;
 
     // Pending Lab Queue
-    const pendingLabCount = orders.filter(
+    const pendingLabCount = (orders || []).filter(
       (o) => o.status === "PENDING" || o.status === "PROCESSING"
     ).length;
 
     // Total In-Stock Frames
-    const totalStockCount = products.reduce((sum, p) => sum + p.stock, 0);
-    const lowStockProductsCount = products.filter((p) => p.stock < 5).length;
+    const totalStockCount = (products || []).reduce((sum, p) => sum + (p.stock || 0), 0);
+    const lowStockProductsCount = (products || []).filter((p) => (p.stock || 0) < 5).length;
 
     // Top Selling Frames Calculation
     const productSalesMap: Record<string, ProductSalesItem> = {};
-    orders.forEach((o) => {
-      o.items.forEach((item) => {
+    (orders || []).forEach((o) => {
+      (o.items || []).forEach((item) => {
         if (item.product) {
           const pId = item.product.id;
           if (!productSalesMap[pId]) {
             productSalesMap[pId] = { product: item.product, qty: 0, revenue: 0 };
           }
-          productSalesMap[pId].qty += item.quantity;
-          productSalesMap[pId].revenue += item.price * item.quantity;
+          productSalesMap[pId].qty += item.quantity || 1;
+          productSalesMap[pId].revenue += (item.price || 0) * (item.quantity || 1);
         }
       });
     });
@@ -82,19 +83,21 @@ async function getDashboardMetrics() {
       .slice(0, 5);
 
     return {
-      products,
-      orders: orders.slice(0, 8), // Recent 8 orders
+      products: products || [],
+      orders: (orders || []).slice(0, 8), // Recent 8 orders
       totalRevenue,
       totalOrdersCount,
-      totalCustomersCount: totalCustomersCount.length,
+      totalCustomersCount: totalCustomersCount ? totalCustomersCount.length : 0,
       rxRatio,
       pendingLabCount,
       totalStockCount,
       lowStockProductsCount,
       topSellingFrames,
+      hasError: false,
+      errorMessage: null as string | null,
     };
-  } catch (error) {
-    console.error("Dashboard query error:", error);
+  } catch (err) {
+    console.error("Admin Page Database Error:", err);
     return {
       products: [],
       orders: [],
@@ -106,6 +109,8 @@ async function getDashboardMetrics() {
       totalStockCount: 0,
       lowStockProductsCount: 0,
       topSellingFrames: [],
+      hasError: true,
+      errorMessage: err instanceof Error ? err.message : "Database connection issue",
     };
   }
 }
@@ -115,6 +120,19 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Database Warning Banner if DB has connection issues */}
+      {metrics.hasError && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-3">
+          <div className="p-1 rounded bg-amber-200 text-amber-900 font-bold text-xs">WARNING</div>
+          <div className="text-sm">
+            <p className="font-bold">Database Temporarily Unavailable</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Could not retrieve live records ({metrics.errorMessage || "Connection error"}). Displaying fallback view. Check database credentials or network status.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Top Hero Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200/80">
         <div>
