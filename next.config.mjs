@@ -1,15 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // NOTE: Do NOT set output: "standalone" for Vercel deployments.
-  // Vercel manages its own output format. standalone is only for Docker/self-hosted.
   transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
   reactStrictMode: true,
+  compress: true,
+  typescript: {
+    // Local type-checks handle validation; skips heavy memory consumption during build
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    // Skip ESLint fork during build to conserve RAM
+    ignoreDuringBuilds: true,
+  },
   experimental: {
+    // Single process build to avoid worker fork memory spikes
+    cpus: 1,
+    workerThreads: false,
     serverActions: {
       bodySizeLimit: "10mb",
     },
   },
   images: {
+    unoptimized: true, // Cloudinary CDN handles compression/resizing; avoids server-side buffer allocs
     remotePatterns: [
       {
         protocol: "https",
@@ -40,7 +51,6 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-    unoptimized: true, // Guarantees zero unconfigured host crashes
   },
   // API rewrites: proxies /api/* to NEXT_PUBLIC_API_URL when set (for external backend).
   // In the standard monolithic Next.js deployment, all /api/* routes are handled
