@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/admin/payments/verify
- * Body: { orderId: string, action: "APPROVE" | "REJECT", rejectionReason?: string }
+ * Payload: { orderId: string, action: "APPROVE" | "REJECT", rejectionReason?: string, adminEmail?: string }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({
         success: true,
-        message: "Payment successfully verified and approved.",
+        message: "Payment successfully verified and approved. Order is now in production.",
         order: result.order,
       });
     } else if (action === "REJECT") {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({
         success: true,
-        message: "Payment marked as rejected.",
+        message: "Payment marked as rejected. Customer will be notified to resubmit proof.",
         order: result.order,
       });
     } else {

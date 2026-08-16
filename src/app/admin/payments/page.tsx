@@ -1,12 +1,14 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+import { PaymentMethod } from "@prisma/client";
 import PaymentVerificationClient, { PaymentOrder } from "@/components/admin/PaymentVerificationClient";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
   title: "Payment Verification | My Eyes Admin",
-  description: "Enterprise payment verification workspace for My Eyes Eyewear.",
+  description: "Prepaid online payment verification & settlement system for My Eyes Eyewear.",
 };
 
 export default async function AdminPaymentsPage() {
@@ -15,12 +17,15 @@ export default async function AdminPaymentsPage() {
   try {
     const raw = await prisma.order.findMany({
       where: {
-        OR: [
-          { paymentStatus: { in: ["PENDING_VERIFICATION", "UNPAID", "SUBMITTED", "PAID", "FAILED", "FLAGGED_SUSPICIOUS", "RECEIPT_SUBMITTED", "PENDING"] } },
-          { paymentMethod: { in: ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "ALFALAH", "NAYAPAY", "SADAPAY"] } },
-          { transactionId: { not: null } },
-          { paymentReceiptUrl: { not: null } },
-        ],
+        paymentMethod: {
+          in: [
+            PaymentMethod.BANK_TRANSFER,
+            PaymentMethod.EASYPAISA,
+            PaymentMethod.JAZZCASH,
+            PaymentMethod.RAAST,
+          ],
+          not: PaymentMethod.COD,
+        },
       },
       include: {
         items: {
@@ -46,7 +51,7 @@ export default async function AdminPaymentsPage() {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 300, // Cap at 300 most recent for performance
+      take: 300,
     });
 
     orders = raw.map((ord) => ({
@@ -105,4 +110,3 @@ export default async function AdminPaymentsPage() {
 
   return <PaymentVerificationClient initialOrders={orders} />;
 }
-

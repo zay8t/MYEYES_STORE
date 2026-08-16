@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { OrderStatus, Category, FrameShape, Material } from "@prisma/client";
+import { OrderStatus, PaymentStatus, Category, FrameShape, Material } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
   sendApprovalNotification,
@@ -40,11 +40,11 @@ export async function updateOrderStatusAction(orderId: string, status: OrderStat
   }
 }
 
-export async function updatePaymentStatusAction(orderId: string, paymentStatus: string) {
+export async function updatePaymentStatusAction(orderId: string, paymentStatus: PaymentStatus | string) {
   try {
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { paymentStatus },
+      data: { paymentStatus: paymentStatus as PaymentStatus },
     });
 
     revalidatePath("/admin");
@@ -208,8 +208,8 @@ export async function verifyPaymentAction(
     const order = await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "PAID",
-        status: "PROCESSING",
+        paymentStatus: PaymentStatus.PAID,
+        status: OrderStatus.PROCESSING,
         verifiedBy: adminEmail,
         verifiedAt: new Date(),
         customerNotified: false,
@@ -266,7 +266,7 @@ export async function rejectPaymentAction(
     const order = await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "FAILED",
+        paymentStatus: PaymentStatus.FAILED,
         verifiedBy: adminEmail,
         verifiedAt: new Date(),
         rejectionReason: reason,
@@ -324,7 +324,6 @@ export async function flagPaymentAction(
     const order = await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "FLAGGED_SUSPICIOUS",
         flaggedSuspicious: true,
         verifiedBy: adminEmail,
       },

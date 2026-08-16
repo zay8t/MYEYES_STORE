@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
@@ -57,7 +58,6 @@ export async function POST(request: NextRequest) {
       shippingAddress,
       shippingCity,
       paymentMethod,
-      paymentStatus,
       paymentReceiptUrl,
       transactionProofUrl,
       transactionId,
@@ -80,15 +80,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const finalReceiptUrl = paymentReceiptUrl || transactionProofUrl || null;
-    const finalPaymentStatus = paymentStatus || (paymentMethod === "COD" ? "PENDING" : "PENDING_VERIFICATION");
+    let parsedMethod: PaymentMethod = PaymentMethod.BANK_TRANSFER;
+    if (paymentMethod === "COD") {
+      parsedMethod = PaymentMethod.COD;
+    } else if (paymentMethod === "EASYPAISA") {
+      parsedMethod = PaymentMethod.EASYPAISA;
+    } else if (paymentMethod === "JAZZCASH") {
+      parsedMethod = PaymentMethod.JAZZCASH;
+    } else if (paymentMethod === "RAAST") {
+      parsedMethod = PaymentMethod.RAAST;
+    } else if (paymentMethod === "BANK_TRANSFER" || paymentMethod === "ALFALAH") {
+      parsedMethod = PaymentMethod.BANK_TRANSFER;
+    }
 
-    if (
-      (paymentMethod === "BANK_TRANSFER" || paymentMethod === "EASYPAISA" || paymentMethod === "JAZZCASH" || paymentMethod === "ALFALAH") &&
-      !finalReceiptUrl
-    ) {
+    const finalReceiptUrl = paymentReceiptUrl || transactionProofUrl || null;
+    const finalPaymentStatus: PaymentStatus =
+      parsedMethod === PaymentMethod.COD
+        ? PaymentStatus.UNPAID
+        : PaymentStatus.PENDING_VERIFICATION;
+
+    if (parsedMethod !== PaymentMethod.COD && !finalReceiptUrl) {
       return NextResponse.json(
-        { error: "Payment verification receipt screenshot is required for online bank transfer, EasyPaisa, and JazzCash payments." },
+        { error: "Payment verification receipt screenshot is required for online prepaid payments." },
         { status: 400 }
       );
     }
@@ -199,7 +212,7 @@ export async function POST(request: NextRequest) {
           customerPhone,
           shippingAddress,
           shippingCity,
-          paymentMethod,
+          paymentMethod: parsedMethod,
           paymentStatus: finalPaymentStatus,
           paymentReceiptUrl: finalReceiptUrl,
           transactionProofUrl: finalReceiptUrl,
@@ -208,7 +221,7 @@ export async function POST(request: NextRequest) {
           paymentSenderPhone: paymentSenderPhone || null,
           shippingFee,
           totalAmount,
-          status: "PENDING",
+          status: OrderStatus.PROCESSING,
           stripeSessionId: mockSessionId,
           items: {
             create: orderItemsData,

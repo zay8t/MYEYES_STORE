@@ -118,10 +118,10 @@ export async function GET(
       .fontSize(8)
       .font("Helvetica")
       .fillColor("#334155")
-      .text(`Ref ID: ${order.id}`, 52, y + 22)
-      .text(`Status: ${order.status}`, 52, y + 34)
-      .text(`Payment Method: ${order.paymentMethod || "COD"}`, 52, y + 46)
-      .text(`Shipping Fee: PKR ${order.shippingFee || 250}`, 52, y + 58);
+      .text(`Ref ID: ${order.id}`, 52, y + 20)
+      .text(`Status: ${order.status}`, 52, y + 30)
+      .text(`Payment: ${order.paymentMethod || "COD"} (${order.paymentStatus === "PAID" ? "PAID (VERIFIED)" : order.paymentStatus === "FAILED" ? "FAILED" : order.paymentMethod === "COD" ? "COD" : "PENDING VERIFICATION"})`, 52, y + 42)
+      .text(`Shipping Fee: PKR ${order.shippingFee || 250}`, 52, y + 54);
 
     doc
       .fontSize(9)

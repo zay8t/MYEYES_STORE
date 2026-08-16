@@ -220,7 +220,17 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                     <p><strong className="text-slate-900">Order Date:</strong> {orderDate} at {orderTime}</p>
                     <p><strong className="text-slate-900">Order Status:</strong> <span className="uppercase font-bold text-slate-950">{order.status}</span></p>
                     <p><strong className="text-slate-900">Payment Method:</strong> {getFriendlyPaymentMethod(order.paymentMethod)}</p>
-                    <p><strong className="text-slate-900">Payment Status:</strong> {order.status === "DELIVERED" ? "PAID" : "CONFIRMED / PENDING FULFILLMENT"}</p>
+                    <p><strong className="text-slate-900">Payment Status:</strong>{" "}
+                      <span className="font-extrabold uppercase text-slate-950">
+                        {order.paymentStatus === "PAID (VERIFIED)" || order.paymentStatus === "PAID"
+                          ? "PAID (VERIFIED)"
+                          : order.paymentStatus === "FAILED" || order.paymentStatus === "PAYMENT FAILED / REJECTED"
+                          ? "PAYMENT FAILED / UNDER REVIEW"
+                          : order.paymentMethod === "COD"
+                          ? "CASH ON DELIVERY (PENDING DELIVERY)"
+                          : "PENDING VERIFICATION"}
+                      </span>
+                    </p>
                   </div>
                 </div>
 

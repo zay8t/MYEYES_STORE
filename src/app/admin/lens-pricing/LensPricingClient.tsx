@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tag, Check, Pencil, X, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Tag, Check, Pencil, X, Eye, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CORE_FIVE_LENS_IDS } from "@/lib/solex-lens-pricing";
 
@@ -15,12 +15,6 @@ interface LensOption {
   description: string;
   isConfiguratorVisible: boolean;
 }
-
-const CATEGORY_LABELS: Record<string, string> = {
-  progressive: "Progressive Free Form Lenses",
-  single_vision: "Single Vision Lenses",
-  bifocal: "Bifocal Lenses (Lab Rates)",
-};
 
 const BASE_CODES: Record<string, string> = {
   "progressive-freeform": "B1",
@@ -74,8 +68,6 @@ export default function LensPricingClient({ initialOptions }: { initialOptions: 
       setSaving(false);
     }
   };
-
-  const groups = ["progressive", "single_vision", "bifocal"];
 
   return (
     <div className="space-y-6">

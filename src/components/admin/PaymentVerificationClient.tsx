@@ -108,7 +108,7 @@ const REJECTION_REASONS = [
 ];
 
 const FILTER_TABS = [
-  { id: "ALL", label: "All Orders", color: "text-slate-700 bg-white border-slate-200" },
+  { id: "ALL", label: "All Online Payments", color: "text-slate-700 bg-white border-slate-200" },
   { id: "PENDING_VERIFICATION", label: "Pending Verification", color: "text-amber-700 bg-amber-50 border-amber-200" },
   { id: "PAID", label: "Approved / Paid", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
   { id: "FAILED", label: "Rejected", color: "text-rose-700 bg-rose-50 border-rose-200" },

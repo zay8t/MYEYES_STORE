@@ -251,9 +251,9 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to place order");
       }
 
-      if (data.orderId) {
+      if (data.orderNumber || data.orderId) {
         clearCart();
-        router.push(`/checkout/success?orderId=${data.orderId}`);
+        router.push(`/order-success/${data.orderNumber || data.orderId}`);
       }
     } catch (err) {
       console.error(err);

@@ -10,6 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PaymentStatus {
+  UNPAID
+  PENDING_VERIFICATION
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  BANK_TRANSFER
+  EASYPAISA
+  JAZZCASH
+  RAAST
+}
+
 enum FrameShape {
   NILL
   WAYFARER
@@ -72,24 +88,24 @@ model Product {
 }
 
 model Order {
-  id                  String      @id @default(uuid())
-  orderNumber         String?     @unique
+  id                  String         @id @default(uuid())
+  orderNumber         String?        @unique
   customerName        String
   customerEmail       String
   customerPhone       String?
   shippingAddress     String?
   shippingCity        String?
-  paymentMethod       String?
-  paymentStatus       String      @default("PENDING")
+  paymentMethod       PaymentMethod  @default(BANK_TRANSFER)
+  paymentStatus       PaymentStatus  @default(PENDING_VERIFICATION)
   paymentReceiptUrl   String?
   transactionProofUrl String?
-  shippingFee         Float?      @default(250)
+  shippingFee         Float?         @default(250)
   stripeSessionId     String?
   totalAmount         Float
-  currency            String      @default("PKR")
-  status              OrderStatus @default(PENDING)
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  currency            String         @default("PKR")
+  status              OrderStatus    @default(PROCESSING)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   items               OrderItem[]
 
   // ── Payment Verification Fields ──────────────────────────────────

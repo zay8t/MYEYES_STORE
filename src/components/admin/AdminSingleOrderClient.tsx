@@ -12,7 +12,6 @@ import {
   Clock,
   Eye,
   Check,
-  Copy,
   FileCheck,
   ExternalLink,
   X,
@@ -31,23 +30,15 @@ const ORDER_STEPS = [
   { status: "DELIVERED" as OrderStatus, label: "Delivered" },
 ];
 
-export default function AdminSingleOrderClient({ order: initialOrder }: { order: OrderReceiptData }) {
-  const [order, setOrder] = useState<OrderReceiptData>(initialOrder);
+export default function AdminSingleOrderClient({ order }: { order: OrderReceiptData }) {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>(order.status as OrderStatus);
   const [paymentStatus, setPaymentStatus] = useState<string>(
-    order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")
+    order.paymentStatus || (order.paymentMethod === "COD" ? "UNPAID" : "PENDING_VERIFICATION")
   );
   const [isUpdating, setIsUpdating] = useState(false);
-  const [copiedText, setCopiedText] = useState("");
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedText(label);
-    setTimeout(() => setCopiedText(""), 2000);
-  };
 
   const handleStepClick = async (newStatus: OrderStatus) => {
     setIsUpdating(true);
@@ -79,13 +70,17 @@ export default function AdminSingleOrderClient({ order: initialOrder }: { order:
 
   const getPaymentBadgeClass = (status: string) => {
     switch (status) {
+      case "PENDING_VERIFICATION":
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "UNPAID":
+        return "bg-slate-100 text-slate-700 border-slate-200";
       case "RECEIPT_SUBMITTED":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "VERIFIED":
       case "PAID":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "FAILED":
       case "REJECTED":
         return "bg-rose-100 text-rose-800 border-rose-200";
       default:
@@ -186,11 +181,11 @@ export default function AdminSingleOrderClient({ order: initialOrder }: { order:
                 getPaymentBadgeClass(paymentStatus)
               )}
             >
-              <option value="PENDING">PENDING</option>
-              <option value="RECEIPT_SUBMITTED">RECEIPT_SUBMITTED</option>
-              <option value="VERIFIED">VERIFIED</option>
+              <option value="PENDING_VERIFICATION">PENDING_VERIFICATION</option>
               <option value="PAID">PAID</option>
-              <option value="REJECTED">REJECTED</option>
+              <option value="FAILED">FAILED</option>
+              <option value="UNPAID">UNPAID</option>
+              <option value="REFUNDED">REFUNDED</option>
             </select>
           </div>
         </div>
