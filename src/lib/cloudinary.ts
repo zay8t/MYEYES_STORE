@@ -62,13 +62,58 @@ export async function uploadToCloudinary(
 }
 
 /**
+ * Extracts the Cloudinary public_id from a full Cloudinary URL.
+ */
+export function getPublicIdFromUrl(url: string): string | null {
+  if (!url || typeof url !== "string") return null;
+  if (!url.includes("cloudinary.com")) return null;
+  try {
+    const uploadIndex = url.indexOf("/upload/");
+    if (uploadIndex === -1) return null;
+    const pathAfterUpload = url.substring(uploadIndex + 8);
+    const parts = pathAfterUpload.split("/");
+    const cleanParts: string[] = [];
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      // Skip version tag (e.g. v1712345678)
+      if (part.startsWith("v") && /^\d+$/.test(part.substring(1))) {
+        continue;
+      }
+      // Skip transformation segments (e.g. f_auto,q_auto, w_800, etc.)
+      if (
+        part.includes(",") ||
+        (part.includes("_") &&
+          (part.startsWith("f_") ||
+            part.startsWith("q_") ||
+            part.startsWith("c_") ||
+            part.startsWith("w_") ||
+            part.startsWith("h_") ||
+            part.startsWith("b_") ||
+            part.startsWith("dpr_")))
+      ) {
+        continue;
+      }
+      cleanParts.push(part);
+    }
+
+    const fullPath = cleanParts.join("/");
+    const lastDotIndex = fullPath.lastIndexOf(".");
+    return lastDotIndex !== -1 ? fullPath.substring(0, lastDotIndex) : fullPath;
+  } catch (err) {
+    console.error("Error extracting public ID from URL:", err);
+    return null;
+  }
+}
+
+/**
  * Deletes a file from Cloudinary by its public ID.
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   if (!publicId) return false;
   try {
     const result = await cloudinary.uploader.destroy(publicId);
-    return result.result === "ok";
+    return result.result === "ok" || result.result === "not found";
   } catch (error) {
     console.error("Cloudinary deletion error details:", error);
     return false;

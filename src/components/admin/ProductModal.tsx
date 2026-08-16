@@ -425,12 +425,16 @@ export default function ProductModal({
             </div>
           </div>
 
-          {/* Zero-Lag Async Image Uploader */}
+          {/* Zero-Lag Cloudinary Image Uploader */}
           <div className="space-y-1">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">
-              Instant Zero-Lag Frame Image Manager *
+              Cloudinary Frame Image Manager *
             </label>
-            <ImageUploader images={images} onChange={(newImgs) => setImages(newImgs)} />
+            <ImageUploader
+              images={images}
+              productId={product?.id}
+              onChange={(newImgs) => setImages(newImgs)}
+            />
           </div>
 
           {/* Form Actions Footer */}
