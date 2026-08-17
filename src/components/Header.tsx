@@ -9,6 +9,7 @@ import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
 import { cn } from "@/lib/utils";
 import PWAInstallButton from "@/components/PWAInstallButton";
+import ShareAppButton from "@/components/ShareAppButton";
 
 const EYEGLASSES_DROPDOWN = [
   { label: "All Eyeglasses", href: "/eyeglasses" },
@@ -320,6 +321,9 @@ export default function Header() {
                 )}
               </button>
 
+              {/* Share — native Web Share sheet on Android/iOS */}
+              <ShareAppButton variant="icon" />
+
               {/* PWA Install — shows only when installable, hidden otherwise */}
               <PWAInstallButton />
 
@@ -473,6 +477,11 @@ export default function Header() {
               <Sparkles className="w-4 h-4 text-[#F59E0B]" />
               Style Quiz
             </Link>
+
+            {/* Mobile Share — bottom of drawer, always visible */}
+            <div className="pt-1 border-t border-slate-100 mt-1">
+              <ShareAppButton variant="row" />
+            </div>
           </div>
         </div>
       </header>
