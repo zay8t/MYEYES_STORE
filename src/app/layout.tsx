@@ -14,7 +14,7 @@ const inter = Inter({
 // PWA Viewport — enables safe-area insets for iPhone notch / Dynamic Island
 // ---------------------------------------------------------------------------
 export const viewport: Viewport = {
-  themeColor: "#ff7a00",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
