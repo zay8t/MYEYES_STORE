@@ -1,3 +1,98 @@
+// @ts-check
+import withPWAInit from "@ducanh2912/next-pwa";
+
+// ---------------------------------------------------------------------------
+// Workbox Runtime Caching Strategy
+//
+// NEVER CACHE (NetworkOnly):
+//   - /api/checkout      — order creation, Stripe, Prisma transaction
+//   - /api/orders/*      — order reads/updates
+//   - /api/upload        — prescription / image uploads to Cloudinary
+//   - /api/payments/*    — payment verification
+//   - /api/admin/*       — admin CRUD (except product GET handled below)
+//   - Any POST/PUT/PATCH/DELETE (handled by Workbox's default method exclusion)
+//
+// NetworkFirst (short cache, 60 s):
+//   - /api/admin/products* — product catalogue; fresh network preferred,
+//     cache used only when network fails. Max age 60 s prevents stale data.
+//
+// StaleWhileRevalidate (7 days):
+//   - res.cloudinary.com  — product images; CDN URLs change when images change,
+//     so caching is safe for performance.
+//
+// CacheFirst (implicit via next-pwa):
+//   - /_next/static/*     — hashed JS/CSS bundles (safe, versioned by Next.js)
+// ---------------------------------------------------------------------------
+
+const withPWA = withPWAInit({
+  dest: "public",               // Service worker output: public/sw.js
+  register: true,               // Auto-register SW from _app / layout
+  skipWaiting: true,            // Activate new SW immediately on update
+  reloadOnOnline: true,         // Reload page when network returns
+  disable: process.env.NODE_ENV === "development", // No SW in dev mode
+  workboxOptions: {
+    // ── Sensitive / dynamic routes: never cache ──────────────────────────
+    runtimeCaching: [
+      {
+        // Product catalogue API — NetworkFirst, 60 s cache as fallback only
+        urlPattern: /^\/api\/admin\/products(\?.*)?$/,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "myeyes-products-api",
+          networkTimeoutSeconds: 10,
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60,        // 60 seconds — prevents stale catalogue
+          },
+          cacheableResponse: {
+            statuses: [200],
+          },
+        },
+      },
+      {
+        // Cloudinary product images — StaleWhileRevalidate, 7 days
+        urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/,
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "myeyes-cloudinary-images",
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 60 * 60 * 24 * 7,  // 7 days
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
+          },
+        },
+      },
+      {
+        // Checkout — NetworkOnly (NEVER cache — prevents order replay)
+        urlPattern: /^\/api\/checkout/,
+        handler: "NetworkOnly",
+      },
+      {
+        // Orders — NetworkOnly
+        urlPattern: /^\/api\/orders/,
+        handler: "NetworkOnly",
+      },
+      {
+        // Prescription / image uploads — NetworkOnly (private files)
+        urlPattern: /^\/api\/upload/,
+        handler: "NetworkOnly",
+      },
+      {
+        // Payment verification — NetworkOnly
+        urlPattern: /^\/api\/payments/,
+        handler: "NetworkOnly",
+      },
+      {
+        // All remaining /api/* — NetworkOnly (safe default for any new routes)
+        urlPattern: /^\/api\/.*/,
+        handler: "NetworkOnly",
+      },
+    ],
+  },
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
@@ -69,4 +164,5 @@ const nextConfig = {
   // },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
+

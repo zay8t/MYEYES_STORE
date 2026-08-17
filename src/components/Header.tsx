@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { ShoppingBag, Menu, X, Home, Tag, Glasses, Sun, ChevronDown, Sparkles } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
 import { cn } from "@/lib/utils";
+import PWAInstallButton from "@/components/PWAInstallButton";
 
 const EYEGLASSES_DROPDOWN = [
   { label: "All Eyeglasses", href: "/eyeglasses" },
@@ -31,6 +32,7 @@ const COLLECTIONS_DROPDOWN = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -41,6 +43,25 @@ export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // ── Secret triple-tap admin access ────────────────────────────────────────
+  // Three taps on the logo within 1 second navigates to /admin.
+  // A single tap still navigates to "/" normally via the inner Link.
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoTap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 3) {
+      tapCountRef.current = 0;
+      router.push("/admin");
+      return;
+    }
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 1000);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -86,27 +107,44 @@ export default function Header() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[72px]">
-            {/* Brand Logo & Title */}
-            <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group relative z-10">
-              <div className="relative w-8 h-8 flex items-center justify-center">
-                <Image
-                  src="/logo.svg"
-                  alt="My Eyes Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base font-extrabold tracking-wider text-amber-600 uppercase group-hover:text-amber-700 transition-colors duration-200">
-                  MY EYES
-                </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
-                  OPTICAL STUDIO
-                </span>
-              </div>
-            </Link>
+            {/* Brand Logo & Title — triple-tap for admin access */}
+            <div
+              onClick={handleLogoTap}
+              className="flex items-center gap-2.5 group relative z-10 cursor-pointer"
+              role="link"
+              aria-label="My Eyes — Home"
+            >
+              <Link
+                href="/"
+                onClick={(e) => {
+                  // Allow single/double tap to navigate home normally;
+                  // triple-tap is handled by the parent div's onClick.
+                  setMobileOpen(false);
+                  if (tapCountRef.current >= 2) e.preventDefault();
+                }}
+                tabIndex={-1}
+                className="flex items-center gap-2.5"
+              >
+                <div className="relative w-8 h-8 flex items-center justify-center">
+                  <Image
+                    src="/logo.svg"
+                    alt="My Eyes Logo"
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-extrabold tracking-wider text-amber-600 uppercase group-hover:text-amber-700 transition-colors duration-200">
+                    MY EYES
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
+                    OPTICAL STUDIO
+                  </span>
+                </div>
+              </Link>
+            </div>
 
             {/* Desktop Nav Links */}
             <nav className="hidden md:flex items-center gap-1">
@@ -281,6 +319,9 @@ export default function Header() {
                   </span>
                 )}
               </button>
+
+              {/* PWA Install — shows only when installable, hidden otherwise */}
+              <PWAInstallButton />
 
               {/* Mobile Menu Toggle */}
               <button

@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -17,11 +18,23 @@ export default function Footer() {
               © {new Date().getFullYear()} Optical Studio
             </span>
           </div>
-          <p className="text-xs text-slate-500 font-medium">
-            Pakistan Prescription Based Eyewear Store · Delivering All Across world
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-slate-500 font-medium">
+              Pakistan Prescription Based Eyewear Store · Delivering All Across world
+            </p>
+            {/* Discreet staff access link — intentionally low-contrast */}
+            <Link
+              href="/admin"
+              id="footer-staff-login"
+              className="text-[10px] text-slate-300 hover:text-slate-500 transition-colors duration-200 whitespace-nowrap select-none"
+              aria-label="Staff Portal"
+            >
+              Staff Login
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+
