@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { QuizAnswers, SCORING_WEIGHTS, COLOR_PALETTES } from "@/lib/quizData";
 import { safeProduct, SafeProduct } from "@/lib/data-guards";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export interface ScoredProduct extends SafeProduct {
   matchScore: number;
   matchPercent: number;

@@ -31,7 +31,7 @@ export default function HomePage() {
 
   useEffect(() => {
     try {
-      fetch("/api/admin/products")
+      fetch("/api/admin/products", { cache: "no-store" })
         .then((res) => res.json())
         .then((data) => {
           setProducts(safeProductList(data));

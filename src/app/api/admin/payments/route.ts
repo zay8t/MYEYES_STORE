@@ -4,6 +4,7 @@ import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { verifyPaymentAction, rejectPaymentAction } from "@/app/actions/admin";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const PREPAID_METHODS: PaymentMethod[] = [
   PaymentMethod.BANK_TRANSFER,

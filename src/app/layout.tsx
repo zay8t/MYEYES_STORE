@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/layout/Footer";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
+import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
 
 import "./globals.css";
 
@@ -79,10 +80,12 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <PWAInstallBanner />
+        <RealtimeSyncProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <PWAInstallBanner />
+        </RealtimeSyncProvider>
       </body>
     </html>
   );

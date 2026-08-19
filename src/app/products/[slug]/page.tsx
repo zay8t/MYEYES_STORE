@@ -40,7 +40,7 @@ export default function ProductDetailPage({
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    fetch("/api/admin/products")
+    fetch("/api/admin/products", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: Product[]) => {
         if (Array.isArray(data)) {

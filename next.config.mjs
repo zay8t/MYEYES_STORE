@@ -26,28 +26,18 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",               // Service worker output: public/sw.js
-  register: true,               // Auto-register SW from _app / layout
+  customWorkerDir: "worker",    // Injects worker/index.ts into sw.js
+  register: true,               // Auto-register SW from layout
   skipWaiting: true,            // Activate new SW immediately on update
   reloadOnOnline: true,         // Reload page when network returns
   disable: process.env.NODE_ENV === "development", // No SW in dev mode
   workboxOptions: {
-    // ── Sensitive / dynamic routes: never cache ──────────────────────────
+    // ── Sensitive / dynamic routes: never cache (NetworkOnly) ────────────
     runtimeCaching: [
       {
-        // Product catalogue API — NetworkFirst, 60 s cache as fallback only
-        urlPattern: /^\/api\/admin\/products(\?.*)?$/,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "myeyes-products-api",
-          networkTimeoutSeconds: 10,
-          expiration: {
-            maxEntries: 10,
-            maxAgeSeconds: 60,        // 60 seconds — prevents stale catalogue
-          },
-          cacheableResponse: {
-            statuses: [200],
-          },
-        },
+        // All API endpoints (products, orders, checkout, payments, etc.) — NetworkOnly (NEVER cache)
+        urlPattern: /^\/api\/.*/,
+        handler: "NetworkOnly",
       },
       {
         // Cloudinary product images — StaleWhileRevalidate, 7 days
@@ -63,31 +53,6 @@ const withPWA = withPWAInit({
             statuses: [0, 200],
           },
         },
-      },
-      {
-        // Checkout — NetworkOnly (NEVER cache — prevents order replay)
-        urlPattern: /^\/api\/checkout/,
-        handler: "NetworkOnly",
-      },
-      {
-        // Orders — NetworkOnly
-        urlPattern: /^\/api\/orders/,
-        handler: "NetworkOnly",
-      },
-      {
-        // Prescription / image uploads — NetworkOnly (private files)
-        urlPattern: /^\/api\/upload/,
-        handler: "NetworkOnly",
-      },
-      {
-        // Payment verification — NetworkOnly
-        urlPattern: /^\/api\/payments/,
-        handler: "NetworkOnly",
-      },
-      {
-        // All remaining /api/* — NetworkOnly (safe default for any new routes)
-        urlPattern: /^\/api\/.*/,
-        handler: "NetworkOnly",
       },
     ],
   },

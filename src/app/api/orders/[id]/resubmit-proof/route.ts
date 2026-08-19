@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { PaymentStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * POST /api/orders/[id]/resubmit-proof

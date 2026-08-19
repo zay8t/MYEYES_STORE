@@ -104,7 +104,9 @@ export default function CheckoutPage() {
     setTidCheckStatus("checking");
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/payments/check-tid?tid=${encodeURIComponent(transactionId)}`);
+        const res = await fetch(`/api/payments/check-tid?tid=${encodeURIComponent(transactionId)}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (data.isDuplicate) {
           setTidCheckStatus("duplicate");

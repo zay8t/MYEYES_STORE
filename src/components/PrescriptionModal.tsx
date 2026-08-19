@@ -294,7 +294,7 @@ export default function PrescriptionModal({
   useEffect(() => {
     async function loadLensOptions() {
       try {
-        const res = await fetch("/api/admin/lens-prices");
+        const res = await fetch("/api/admin/lens-prices", { cache: "no-store" });
         if (res.ok) {
           const data: SolexLensOption[] = await res.json();
           // Filter to strictly the 5 Core Options in exact order

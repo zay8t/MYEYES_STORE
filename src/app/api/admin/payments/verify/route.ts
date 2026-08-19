@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPaymentAction, rejectPaymentAction } from "@/app/actions/admin";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * POST /api/admin/payments/verify

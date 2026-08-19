@@ -20,7 +20,7 @@ function SuccessContent() {
       return;
     }
 
-    fetch(`/api/orders/${encodeURIComponent(orderId)}`)
+    fetch(`/api/orders/${encodeURIComponent(orderId)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.order) {
