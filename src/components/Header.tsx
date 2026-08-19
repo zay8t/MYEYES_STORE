@@ -15,7 +15,6 @@ import {
   ChevronDown,
   Sparkles,
   Search,
-  MessageCircle,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
@@ -342,18 +341,6 @@ export default function Header() {
               >
                 <Search className="w-5 h-5 stroke-[1.8]" />
               </button>
-
-              {/* WhatsApp Support Shortcut */}
-              <a
-                href="https://wa.me/923006694928"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2.5 rounded-xl hover:bg-emerald-50 text-emerald-600 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center relative"
-                aria-label="WhatsApp Support"
-              >
-                <MessageCircle className="w-5 h-5 stroke-[1.8]" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
-              </a>
 
               {/* Cart Button (Desktop & Mobile fallback) */}
               <button
