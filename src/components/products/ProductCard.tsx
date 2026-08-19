@@ -117,7 +117,7 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
   const colorsList = getProductColors();
 
   return (
-    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group">
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group app-card-press">
       {/* 100% Full-width top image container */}
       <Link
         href={`/products/${product.slug}`}

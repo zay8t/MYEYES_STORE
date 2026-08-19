@@ -23,17 +23,22 @@ export default function CartDrawer() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end">
+    <div className="fixed inset-0 z-[100] flex flex-col justify-end md:flex-row md:justify-end">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
         onClick={closeCart}
       />
 
-      {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-white border-l border-slate-200 h-full shadow-2xl flex flex-col z-10 animate-fade-in-up">
+      {/* Drawer / Bottom Sheet Panel */}
+      <div className="relative w-full md:max-w-md bg-white rounded-t-3xl md:rounded-none border-t md:border-t-0 md:border-l border-slate-200 max-h-[90vh] md:max-h-full h-auto md:h-full shadow-2xl flex flex-col z-10 animate-slide-up-sheet md:animate-fade-in-up">
+        {/* Mobile Pull Handle */}
+        <div className="md:hidden pt-2 pb-1 flex justify-center">
+          <div className="sheet-drag-handle" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 md:py-5 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-slate-900" />
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
@@ -42,7 +47,8 @@ export default function CartDrawer() {
           </div>
           <button
             onClick={closeCart}
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Close Cart"
           >
             <X className="w-5 h-5" />
           </button>
@@ -60,7 +66,7 @@ export default function CartDrawer() {
             items.map((item) => (
               <div
                 key={item.id}
-                className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3"
+                className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3 app-card-press"
               >
                 <div className="flex gap-3">
                   {/* Frame Thumbnail */}
@@ -80,7 +86,8 @@ export default function CartDrawer() {
                       </h4>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-slate-400 hover:text-red-600 transition-colors p-0.5"
+                        className="text-slate-400 hover:text-red-600 transition-colors p-0.5 cursor-pointer"
+                        aria-label="Remove item"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -95,7 +102,8 @@ export default function CartDrawer() {
                       <div className="inline-flex items-center border border-slate-200 rounded-lg bg-white">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1 hover:bg-slate-100 text-slate-600"
+                          className="p-1 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                          aria-label="Decrease quantity"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -104,7 +112,8 @@ export default function CartDrawer() {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1 hover:bg-slate-100 text-slate-600"
+                          className="p-1 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                          aria-label="Increase quantity"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -141,7 +150,7 @@ export default function CartDrawer() {
 
         {/* Footer Calculation & Checkout */}
         {items.length > 0 && (
-          <div className="p-6 border-t border-slate-100 bg-white space-y-3">
+          <div className="p-6 border-t border-slate-100 bg-white space-y-3 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
             <div className="space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -165,7 +174,7 @@ export default function CartDrawer() {
 
             <button
               onClick={handleCheckout}
-              className="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               Proceed to Checkout ({formatPrice(grandTotal)})
               <ArrowRight className="w-4 h-4" />

@@ -92,11 +92,16 @@ export default function MobileFilterDrawer({ facets, totalResults }: MobileFilte
       {isOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
           <div
-            className="bg-white w-full max-h-[88vh] rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+            className="bg-white w-full max-h-[88vh] rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up-sheet"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Pull-down drag indicator */}
+            <div className="pt-2 pb-1 flex justify-center">
+              <div className="sheet-drag-handle" />
+            </div>
+
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-extrabold text-slate-900">Filter & Refine</h3>
                 {activeFilterCount > 0 && (

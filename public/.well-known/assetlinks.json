@@ -1,12 +1,8 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "app.vercel.myeyes_store_git_main_zay8t1.twa",
-      "sha256_cert_fingerprints": [
-        "44:46:E3:E8:B9:AE:DA:5D:01:C7:6B:A9:9D:5B:90:4B:6D:E7:DF:C4:9D:D6:C9:EE:89:2B:BE:78:6C:8E:3E:5D"
-      ]
-    }
-  }
-]
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.myeyes_store_git_main_zay8t1.twa",
+        "sha256_cert_fingerprints": ["44:46:E3:E8:B9:AE:DA:5D:01:C7:6B:A9:9D:5B:90:4B:6D:E7:DF:C4:9D:D6:C9:EE:89:2B:BE:78:6C:8E:3E:5D"]
+      }
+    }]

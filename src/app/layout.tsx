@@ -5,7 +5,6 @@ import Footer from "@/components/layout/Footer";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
-import StandaloneBodyManager from "@/components/StandaloneBodyManager";
 
 import "./globals.css";
 
@@ -18,7 +17,7 @@ const inter = Inter({
 // PWA Viewport — enables safe-area insets for iPhone notch / Dynamic Island
 // ---------------------------------------------------------------------------
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
@@ -83,17 +82,11 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >
         <RealtimeSyncProvider>
-          {/*
-           * StandaloneBodyManager applies .standalone-mode and .has-bottom-nav
-           * CSS classes to <body> when the app is running as an installed PWA/TWA.
-           * This is a client component that runs after hydration.
-           */}
-          <StandaloneBodyManager />
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-24 md:pb-0">{children}</main>
           <Footer />
           <PWAInstallBanner />
-          {/* MobileBottomNav self-guards: only renders in standalone mode */}
+          {/* Fixed mobile bottom navigation bar (visible on mobile, hidden on desktop md:hidden) */}
           <MobileBottomNav />
         </RealtimeSyncProvider>
       </body>

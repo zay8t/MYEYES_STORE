@@ -4,7 +4,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingBag, Menu, X, Home, Tag, Glasses, Sun, ChevronDown, Sparkles } from "lucide-react";
+import {
+  ShoppingBag,
+  Menu,
+  X,
+  Home,
+  Tag,
+  Glasses,
+  Sun,
+  ChevronDown,
+  Sparkles,
+  Search,
+  MessageCircle,
+} from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import CartDrawer from "@/components/CartDrawer";
 import { cn } from "@/lib/utils";
@@ -36,6 +48,8 @@ export default function Header() {
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<"eyeglasses" | "sunglasses" | "collections" | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<"eyeglasses" | "sunglasses" | "collections" | null>(null);
@@ -43,6 +57,7 @@ export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // ── Secret triple-tap admin access ────────────────────────────────────────
   // Three taps on the logo within 800ms navigates to /admin.
@@ -80,12 +95,20 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mobile menu & dropdowns on route change
+  // Close mobile menu, search & dropdowns on route change
   useEffect(() => {
     setMobileOpen(false);
+    setSearchOpen(false);
     setActiveDropdown(null);
     setMobileExpanded(null);
   }, [pathname]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -98,6 +121,15 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mobileOpen]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/eyeglasses?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   if (pathname?.startsWith("/admin")) return null;
   if (pathname?.startsWith("/quiz")) return null;
@@ -113,12 +145,12 @@ export default function Header() {
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[72px]">
+          <div className="flex items-center justify-between h-[64px] md:h-[72px]">
             {/* Brand Logo & Title — triple-tap for admin access */}
             <Link
               href="/"
               onClick={handleLogoClick}
-              className="flex items-center gap-2.5 group relative z-10 cursor-pointer"
+              className="flex items-center gap-2.5 group relative z-10 cursor-pointer select-none active:scale-95 transition-transform"
               aria-label="My Eyes — Home"
             >
               <div className="relative w-8 h-8 flex items-center justify-center">
@@ -299,29 +331,54 @@ export default function Header() {
               </Link>
             </nav>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
+            {/* Right Actions: Native App Bar for Mobile & Desktop */}
+            <div className="flex items-center gap-1 md:gap-2">
+              {/* Search Trigger */}
+              <button
+                id="header-search-btn"
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center"
+                aria-label="Search Frames"
+              >
+                <Search className="w-5 h-5 stroke-[1.8]" />
+              </button>
+
+              {/* WhatsApp Support Shortcut */}
+              <a
+                href="https://wa.me/923006694928"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-xl hover:bg-emerald-50 text-emerald-600 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center relative"
+                aria-label="WhatsApp Support"
+              >
+                <MessageCircle className="w-5 h-5 stroke-[1.8]" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
+              </a>
+
+              {/* Cart Button (Desktop & Mobile fallback) */}
               <button
                 id="cart-button"
                 onClick={openCart}
-                className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 cursor-pointer active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center"
                 aria-label="Shopping Cart"
               >
-                <ShoppingBag className="w-5 h-5 stroke-[1.75]" />
+                <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
                 {mounted && totalItems() > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold bg-amber-500 text-slate-950 rounded-full shadow-sm animate-fade-in-up">
+                  <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold bg-[#ff7a00] text-white rounded-full shadow-sm animate-bounce-in">
                     {totalItems()}
                   </span>
                 )}
               </button>
 
-              {/* Share — native Web Share sheet on Android/iOS */}
-              <ShareAppButton variant="icon" />
+              {/* Share */}
+              <div className="hidden sm:block">
+                <ShareAppButton variant="icon" />
+              </div>
 
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 transition-all duration-200 active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="md:hidden p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 transition-all duration-200 active:scale-90 flex items-center justify-center"
                 aria-label="Toggle navigation menu"
               >
                 <div className="relative w-5 h-5">
@@ -337,6 +394,40 @@ export default function Header() {
               </button>
             </div>
           </div>
+
+          {/* Quick Search Drawer */}
+          {searchOpen && (
+            <div className="py-2.5 pb-3 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search frames, shapes, materials, styles..."
+                  className="w-full pl-10 pr-20 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/30 focus:border-[#ff7a00] transition-all"
+                />
+                <div className="absolute right-1.5 flex items-center gap-1">
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition-colors"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* Mobile Nav Drawer — Accordion Category Support */}
@@ -344,7 +435,7 @@ export default function Header() {
           ref={mobileMenuRef}
           className={cn(
             "md:hidden border-t border-slate-100 bg-white overflow-hidden transition-all duration-300 ease-in-out",
-            mobileOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 border-t-0"
+            mobileOpen ? "max-h-[500px] opacity-100 shadow-xl" : "max-h-0 opacity-0 border-t-0"
           )}
         >
           <div className="px-4 py-4 space-y-1.5">
@@ -469,8 +560,8 @@ export default function Header() {
               Style Quiz
             </Link>
 
-            {/* Mobile Share — bottom of drawer, always visible */}
-            <div className="pt-1 border-t border-slate-100 mt-1">
+            {/* Mobile Share */}
+            <div className="pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
               <ShareAppButton variant="row" />
             </div>
           </div>
