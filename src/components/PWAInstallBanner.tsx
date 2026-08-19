@@ -99,15 +99,15 @@ export default function PWAInstallBanner() {
     <aside
       role="region"
       aria-label="Install MyEyes App"
-      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out"
+      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-50 animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out"
     >
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/95 text-white p-4 sm:p-4.5 shadow-2xl backdrop-blur-xl border border-slate-700/60 ring-1 ring-white/10">
-        {/* Glow accent */}
-        <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-amber-500/20 blur-2xl" />
+      <div className="relative overflow-hidden rounded-2xl bg-white/95 text-slate-900 p-4 shadow-xl backdrop-blur-xl border border-slate-200/80 ring-1 ring-black/5">
+        {/* Subtle brand accent line */}
+        <div className="pointer-events-none absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-amber-400 via-[#ff7a00] to-amber-400 opacity-80" />
 
         <div className="flex items-center gap-3.5">
           {/* App Icon */}
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-950 p-1.5 ring-1 ring-slate-800 shadow-inner">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-50 p-1.5 ring-1 ring-slate-200 shadow-sm">
             <Image
               src="/pwa-192x192.png"
               alt="MyEyes App Icon"
@@ -119,10 +119,10 @@ export default function PWAInstallBanner() {
 
           {/* Text Info */}
           <div className="flex-1 min-w-0 pr-1">
-            <h4 className="text-sm font-bold text-white tracking-tight truncate">
+            <h4 className="text-sm font-bold text-slate-900 tracking-tight truncate">
               Install MyEyes App
             </h4>
-            <p className="text-xs text-slate-300 line-clamp-1 mt-0.5">
+            <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
               Fast ordering, instant tracking & offline access
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function PWAInstallBanner() {
           {/* Dismiss button */}
           <button
             onClick={handleDismiss}
-            className="p-1.5 -mr-1 -mt-1 self-start rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+            className="p-1.5 -mr-1 -mt-1 self-start rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             aria-label="Dismiss install prompt"
           >
             <X className="h-4 w-4" />
@@ -141,14 +141,14 @@ export default function PWAInstallBanner() {
         <div className="mt-3.5 flex items-center justify-end gap-2">
           <button
             onClick={handleDismiss}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
           >
             Not now
           </button>
           <button
             id="pwa-floating-install-btn"
             onClick={handleInstall}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 transition-all shadow-md active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#ff7a00] hover:bg-[#e56e00] transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" />
             <span>Install</span>

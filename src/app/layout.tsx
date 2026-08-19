@@ -3,7 +3,9 @@ import { Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/layout/Footer";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
+import StandaloneBodyManager from "@/components/StandaloneBodyManager";
 
 import "./globals.css";
 
@@ -81,13 +83,20 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >
         <RealtimeSyncProvider>
+          {/*
+           * StandaloneBodyManager applies .standalone-mode and .has-bottom-nav
+           * CSS classes to <body> when the app is running as an installed PWA/TWA.
+           * This is a client component that runs after hydration.
+           */}
+          <StandaloneBodyManager />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
           <PWAInstallBanner />
+          {/* MobileBottomNav self-guards: only renders in standalone mode */}
+          <MobileBottomNav />
         </RealtimeSyncProvider>
       </body>
     </html>
   );
 }
-
