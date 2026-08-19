@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
+import StandaloneBodyManager from "@/components/StandaloneBodyManager";
 
 import "./globals.css";
 
@@ -82,11 +83,13 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >
         <RealtimeSyncProvider>
+          {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
+          <StandaloneBodyManager />
           <Header />
-          <main className="flex-1 pb-24 md:pb-0">{children}</main>
+          <main className="flex-1">{children}</main>
           <Footer />
           <PWAInstallBanner />
-          {/* Fixed mobile bottom navigation bar (visible on mobile, hidden on desktop md:hidden) */}
+          {/* MobileBottomNav strictly renders in standalone mode */}
           <MobileBottomNav />
         </RealtimeSyncProvider>
       </body>

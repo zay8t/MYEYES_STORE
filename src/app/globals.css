@@ -369,3 +369,14 @@ main {
 .animate-slide-up-sheet {
   animation: slide-up-sheet 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
+
+/* Bottom-navigation safe-area spacing — applied strictly in standalone mode */
+.has-bottom-nav main {
+  padding-bottom: calc(64px + max(env(safe-area-inset-bottom), 0.75rem));
+}
+
+@media (min-width: 768px) {
+  .has-bottom-nav main {
+    padding-bottom: 0;
+  }
+}

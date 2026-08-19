@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Glasses, Sparkles, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
+import { useIsStandalone } from "@/hooks/useIsStandalone";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const isStandalone = useIsStandalone();
   const [mounted, setMounted] = useState(false);
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -51,6 +53,9 @@ export default function MobileBottomNav() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Hidden on regular web browsers (Chrome/Safari) — strictly standalone only
+  if (!mounted || !isStandalone) return null;
 
   // Hidden on admin pages, quiz fullscreen, and checkout
   if (pathname?.startsWith("/admin")) return null;
@@ -63,7 +68,7 @@ export default function MobileBottomNav() {
     <nav
       aria-label="Mobile Navigation"
       className={cn(
-        "md:hidden fixed bottom-0 left-0 right-0 z-40",
+        "fixed bottom-0 left-0 right-0 z-40",
         "bg-white/95 backdrop-blur-lg border-t border-gray-100",
         "shadow-[0_-4px_20px_rgba(0,0,0,0.03)]",
         "pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-2 px-6",
