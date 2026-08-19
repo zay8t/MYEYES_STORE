@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 /**
- * useIsStandalone
+ * useIsStandalone (v1.2.0)
  *
  * Accurately detects whether the app is running as an installed standalone
  * PWA or APK (TWA), returning true strictly in standalone mode.
