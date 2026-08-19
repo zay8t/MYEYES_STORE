@@ -33,20 +33,6 @@
       "purpose": "maskable"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "Admin Portal",
-      "short_name": "Admin",
-      "description": "Manage products and orders",
-      "url": "/admin",
-      "icons": [
-        {
-          "src": "/pwa-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
   "screenshots": [
     {
       "src": "/placeholder-frame.png",
