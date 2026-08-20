@@ -4,7 +4,7 @@
   "description": "Lab-precision prescription glasses and frames delivered across Pakistan.",
   "start_url": "https://myeyes.pk/",
   "id": "https://myeyes.pk/",
-  "scope": "/",
+  "scope": "https://myeyes.pk/",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
   "background_color": "#ffffff",
