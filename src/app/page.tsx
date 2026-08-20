@@ -9,10 +9,9 @@ import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
 import PrescriptionModal from "@/components/PrescriptionModal";
-import LensVisualizer from "@/components/home/LensVisualizer";
-import PrescriptionSteps from "@/components/home/PrescriptionSteps";
+import FaceShapeMatcher from "@/components/home/FaceShapeMatcher";
+import OrderingJourney from "@/components/home/OrderingJourney";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
-
 
 const Frame3DCanvasWrapper = dynamic(
   () => import("@/components/3d/Frame3DCanvasWrapper"),
@@ -78,28 +77,25 @@ export default function HomePage() {
       {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
       {/* ============================================================ */}
       <section className="w-full bg-white py-10 my-4">
-        {/* Content Container aligned exactly as before */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-xl space-y-4 text-left">
-            
-            {/* 1. Category Pill Badge (Preserved) */}
+            {/* 1. Category Pill Badge */}
             <span className="inline-block text-[11px] sm:text-xs font-bold tracking-wider text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-1 rounded-full uppercase">
               MY EYES COLLECTION
             </span>
 
-            {/* 2. Main Headline (Preserved - Text inverted to Slate-900/Amber) */}
+            {/* 2. Main Headline */}
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase text-[#0F172A]">
               Find Your <span className="text-[#F59E0B]">Frame</span>
             </h2>
 
-            {/* 3. Subtitle (Preserved - Text inverted to Slate-600) */}
+            {/* 3. Subtitle */}
             <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
               Lab-precision optics meets high-fashion hand-crafted frames. Try our 1-minute style quiz or explore our catalog.
             </p>
 
-            {/* 4. Exact 4-Button Arrangement (Preserved with High-Contrast Light Colors) */}
+            {/* 4. 4-Button Arrangement */}
             <div className="pt-2 grid grid-cols-2 gap-2.5 w-full max-w-md sm:flex sm:flex-wrap sm:items-center">
-              
               {/* Button 1: Start with a quiz */}
               <Link 
                 href="/quiz"
@@ -136,7 +132,6 @@ export default function HomePage() {
                 <span className="truncate">Lens Pricing</span>
               </Link>
             </div>
-
           </div>
         </div>
       </section>
@@ -146,7 +141,6 @@ export default function HomePage() {
       {/* ============================================================ */}
       <section className="relative pb-16 sm:pb-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* 3D Eyewear Studio Canvas */}
           <div className="relative w-full max-w-4xl mx-auto min-h-[460px] sm:min-h-[500px] md:h-[520px] mt-6 sm:mt-8 flex items-center justify-center bg-transparent z-10">
             <Frame3DCanvasWrapper />
           </div>
@@ -192,14 +186,20 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  INTERACTIVE LENS VISUALIZER                                 */}
+      {/*  FIND BY FACE SHAPE: PRECISION FIT MATCHER                   */}
       {/* ============================================================ */}
-      <LensVisualizer />
+      <FaceShapeMatcher
+        products={products}
+        onAddLenses={(product) => {
+          setSelectedProduct(product);
+          setRxModalOpen(true);
+        }}
+      />
 
       {/* ============================================================ */}
-      {/*  4-STEP PRESCRIPTION ENGINE                                  */}
+      {/*  4-STEP PRESCRIPTION ORDERING JOURNEY                         */}
       {/* ============================================================ */}
-      <PrescriptionSteps />
+      <OrderingJourney />
 
       {/* ============================================================ */}
       {/*  FEATURED COLLECTION GRID                                    */}
@@ -255,8 +255,6 @@ export default function HomePage() {
       {/*  CATEGORY SPOTLIGHT & LENS PRICING                           */}
       {/* ============================================================ */}
       <CategorySpotlight />
-
-
 
       {/* Prescription Modal for Eyeglasses */}
       {rxModalOpen && selectedProduct && (
