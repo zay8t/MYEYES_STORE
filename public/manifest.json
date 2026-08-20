@@ -48,21 +48,36 @@
       "short_name": "Eyeglasses",
       "description": "Browse prescription eyeglasses",
       "url": "/eyeglasses",
-      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Sunglasses",
       "short_name": "Sunglasses",
       "description": "Browse sunglasses",
       "url": "/sunglasses",
-      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Style Quiz",
       "short_name": "Quiz",
       "description": "Find your perfect frame",
       "url": "/quiz",
-      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "related_applications": [
