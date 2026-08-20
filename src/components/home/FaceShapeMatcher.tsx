@@ -256,19 +256,19 @@ export default function FaceShapeMatcher({
           </p>
         </div>
 
-        {/* Interactive Face Shape Selector (Pill Tabs) */}
-        <div className="flex items-center justify-center">
-          <div className="inline-flex p-1.5 rounded-2xl bg-slate-50 border border-slate-200/80 gap-1.5 sm:gap-2 max-w-full overflow-x-auto">
+        {/* Interactive Face Shape Selector (2x2 Grid on Mobile, Row on Desktop) */}
+        <div className="w-full max-w-xl mx-auto">
+          <div className="grid grid-cols-2 md:flex md:flex-row md:justify-center gap-2.5 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-slate-50 border border-slate-200/80">
             {FACE_SHAPES.map((shape) => {
               const isActive = shape.id === selectedShapeId;
               return (
                 <button
                   key={shape.id}
                   onClick={() => setSelectedShapeId(shape.id)}
-                  className={`relative px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  className={`w-full md:w-auto px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-center border cursor-pointer ${
                     isActive
-                      ? "text-orange-950 font-semibold border border-[#ff7a00] bg-orange-50/50 shadow-xs"
-                      : "text-slate-600 font-medium border border-transparent hover:text-slate-900 hover:bg-white"
+                      ? "bg-orange-50/50 border-[#ff7a00] text-[#ff7a00] font-semibold shadow-xs"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900"
                   }`}
                 >
                   <span>{shape.label} Shape</span>
