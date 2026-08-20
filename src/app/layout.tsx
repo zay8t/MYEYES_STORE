@@ -15,10 +15,13 @@ const inter = Inter({
 });
 
 // ---------------------------------------------------------------------------
-// PWA Viewport — enables safe-area insets & full-screen standalone mode
+// PWA Viewport — pure white #ffffff theme color to prevent orange browser tint
 // ---------------------------------------------------------------------------
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#ffffff" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -64,6 +67,11 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  other: {
+    "theme-color": "#ffffff",
+    "msapplication-TileColor": "#ffffff",
+    "msapplication-navbutton-color": "#ffffff",
   },
   openGraph: {
     title: "MY EYES — Optical Studio & Prescription Eyewear",
@@ -129,6 +137,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="msapplication-TileColor" content="#ffffff" />
+        <meta name="msapplication-navbutton-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
