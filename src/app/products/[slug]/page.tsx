@@ -2,12 +2,13 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles, X } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
+import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
 
 interface Product {
   id: string;
@@ -35,6 +36,7 @@ export default function ProductDetailPage({
 
   // Prescription modal state
   const [rxModalOpen, setRxModalOpen] = useState(false);
+  const [thicknessModalOpen, setThicknessModalOpen] = useState(false);
   const [lensOption, setLensOption] = useState<"standard" | "polarized">("standard");
 
   const addItem = useCartStore((s) => s.addItem);
@@ -99,9 +101,10 @@ export default function ProductDetailPage({
       productId: product.id,
       name: `${product.name} (${details.lensUsage})`,
       price: totalPrice,
-      image: currentImage || "",
+      image: currentImage,
       prescription: details,
     });
+    setRxModalOpen(false);
   };
 
   const handleFrameOnlyAdd = () => {
@@ -109,39 +112,42 @@ export default function ProductDetailPage({
       productId: product.id,
       name: `${product.name} (Frame Only)`,
       price: product.price,
-      image: currentImage || "",
+      image: currentImage,
     });
   };
 
   const handleSunglassesAdd = () => {
-    if (!product) return;
-    const imagesList = parseImages(product.images);
-    const hasPolarized = lensOption === "polarized";
-    const selectedPrice = product.price + (hasPolarized ? 1200 : 0);
+    const isPolarized = lensOption === "polarized";
+    const extraPrice = isPolarized ? 1200 : 0;
     addItem({
       productId: product.id,
-      name: `${product.name} (${hasPolarized ? "Polarized Lenses" : "Standard Sun Lenses"})`,
-      price: selectedPrice,
-      image: imagesList[0] || "",
+      name: `${product.name} (${isPolarized ? "Polarized Sun Lenses" : "Standard Sun Lenses"})`,
+      price: product.price + extraPrice,
+      image: currentImage,
     });
   };
 
   return (
-    <div className="min-h-screen bg-white py-10">
+    <div className="min-h-screen bg-white text-slate-900 py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-8">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-8">
+          <Link href="/" className="hover:text-slate-900 transition-colors">
+            Home
+          </Link>
+          <span>/</span>
           <Link
             href={product.category === "SUNGLASSES" ? "/sunglasses" : "/eyeglasses"}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
+            className="hover:text-slate-900 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to {product.category === "SUNGLASSES" ? "Sunglasses" : "Eyeglasses"} Catalog
+            {product.category === "SUNGLASSES" ? "Sunglasses" : "Eyeglasses"}
           </Link>
+          <span>/</span>
+          <span className="text-slate-900">{product.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* LEFT: Multi-Angle Swipeable Frame Gallery (7 cols) */}
+          {/* LEFT: Multi-Angle Product Gallery (7 cols) */}
           <div className="lg:col-span-7">
             <ProductGallery
               images={imagesList}
@@ -176,7 +182,7 @@ export default function ProductDetailPage({
             {/* Frame Dimension Specs Diagram */}
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-900 block">
-                Frame Specification & Sizing Specs
+                Frame Specification &amp; Sizing Specs
               </span>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 bg-white rounded-xl border border-slate-200/60">
@@ -253,6 +259,18 @@ export default function ProductDetailPage({
               </div>
             )}
 
+            {/* Lens Thickness & Specs Trigger */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setThicknessModalOpen(true)}
+                className="group inline-flex items-center gap-2 text-xs font-semibold text-[#ff7a00] hover:text-amber-700 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Compare Lens Thickness &amp; Index Specs &rarr;</span>
+              </button>
+            </div>
+
             {/* Action Buttons */}
             <div className="space-y-3 pt-2">
               {product.category === "SUNGLASSES" ? (
@@ -270,7 +288,7 @@ export default function ProductDetailPage({
                     className="w-full py-4 px-6 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Glasses className="w-4 h-4" />
-                    Configure Lenses & Add to Cart
+                    Configure Lenses &amp; Add to Cart
                   </button>
 
                   <button
@@ -311,6 +329,43 @@ export default function ProductDetailPage({
           productPrice={product.price}
           onSubmit={handleRxSubmit}
         />
+      )}
+
+      {/* Lens Thickness & Refractive Index Slide-Over / Modal */}
+      {thicknessModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ff7a00]">
+                  OPTICAL LAB SIMULATION
+                </span>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Lens Thickness &amp; Index Specs
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setThicknessModalOpen(false)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-4 sm:p-6 flex-1">
+              <LensThicknessSimulator
+                isModal={true}
+                onSelectIndex={() => {
+                  setThicknessModalOpen(false);
+                  setRxModalOpen(true);
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

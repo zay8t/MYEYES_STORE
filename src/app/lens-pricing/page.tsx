@@ -10,6 +10,7 @@ import {
   BasePriceConfig,
 } from "@/lib/pricingEngine";
 import { formatPrice, cn } from "@/lib/utils";
+import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
 
 // Standard Single Vision Lenses
 const CORE_SINGLE_VISION_LENSES = [
@@ -642,6 +643,13 @@ export default function LensPricingPage() {
 
             </div>
           </div>
+        </div>
+
+        {/* ============================================================ */}
+        {/*  INTERACTIVE LENS THICKNESS & REFRACTIVE INDEX SIMULATOR     */}
+        {/* ============================================================ */}
+        <div className="pt-12">
+          <LensThicknessSimulator />
         </div>
 
       </div>
