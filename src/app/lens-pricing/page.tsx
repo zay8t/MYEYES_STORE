@@ -11,40 +11,10 @@ import {
 } from "@/lib/pricingEngine";
 import { formatPrice, cn } from "@/lib/utils";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
+import { LENS_PACKAGES } from "@/lib/prescription-pricing";
 
 // Standard Single Vision Lenses
-const CORE_SINGLE_VISION_LENSES = [
-  {
-    id: "progressive-freeform",
-    name: "MY EYES CR Hard Crystal Coat",
-    baseKey: "B1",
-    description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
-  },
-  {
-    id: "sv-156-bluecut",
-    name: "MY EYES Blue Light Filter + UV Protection HMC",
-    baseKey: "B2",
-    description: "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.",
-  },
-  {
-    id: "sv-156-photogrey",
-    name: "MY EYES Sun Adaptive Photochromic HMC",
-    baseKey: "B3",
-    description: "Transitions smoothly to dark grey in sunlight. Complete UV protection.",
-  },
-  {
-    id: "sv-156-photogrey-bluecut",
-    name: "MY EYES Dual Shield - Blue Light & Photochromic HMC",
-    baseKey: "B4",
-    description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
-  },
-  {
-    id: "sv-167-shmc",
-    name: "MY EYES Ultra Thin Index",
-    baseKey: "B5",
-    description: "High-index ultra-thin profile for stronger prescriptions. Reduces lens thickness significantly.",
-  },
-];
+const CORE_SINGLE_VISION_LENSES = LENS_PACKAGES;
 
 // Presbyopia (+40) Progressive Lenses (Option 5 excluded)
 const CORE_PROGRESSIVE_LENSES = [

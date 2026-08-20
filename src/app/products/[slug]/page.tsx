@@ -358,7 +358,7 @@ export default function ProductDetailPage({
             <div className="overflow-y-auto p-4 sm:p-6 flex-1">
               <LensThicknessSimulator
                 isModal={true}
-                onSelectIndex={() => {
+                onSelectPackage={() => {
                   setThicknessModalOpen(false);
                   setRxModalOpen(true);
                 }}
