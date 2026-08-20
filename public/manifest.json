@@ -1,13 +1,15 @@
 {
-  "name": "MyEyes",
-  "short_name": "MyEyes",
-  "description": "MyEyes Eyewear Store — Premium prescription eyewear, delivering all across Pakistan.",
+  "name": "MY EYES Optical Studio",
+  "short_name": "MY EYES",
+  "description": "Lab-precision prescription glasses and frames delivered across Pakistan.",
   "start_url": "/",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
+  "orientation": "portrait-primary",
   "lang": "en",
   "categories": [
     "shopping",
@@ -15,7 +17,19 @@
   ],
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
@@ -25,21 +39,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/pwa-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/placeholder-frame.png",
-      "sizes": "640x480",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "MyEyes Eyewear Catalogue"
     }
   ],
   "shortcuts": [
@@ -50,7 +49,7 @@
       "url": "/eyeglasses",
       "icons": [
         {
-          "src": "/pwa-192x192.png",
+          "src": "/icon-192x192.png",
           "sizes": "192x192"
         }
       ]
@@ -62,7 +61,19 @@
       "url": "/sunglasses",
       "icons": [
         {
-          "src": "/pwa-192x192.png",
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Lens Pricing",
+      "short_name": "Pricing",
+      "description": "Transparent lens price matrix",
+      "url": "/lens-pricing",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
           "sizes": "192x192"
         }
       ]
@@ -74,18 +85,10 @@
       "url": "/quiz",
       "icons": [
         {
-          "src": "/pwa-192x192.png",
+          "src": "/icon-192x192.png",
           "sizes": "192x192"
         }
       ]
     }
-  ],
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=app.vercel.myeyes_store_git_main_zay8t1.twa",
-      "id": "app.vercel.myeyes_store_git_main_zay8t1.twa"
-    }
-  ],
-  "prefer_related_applications": false
+  ]
 }

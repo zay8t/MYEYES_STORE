@@ -15,24 +15,25 @@ const inter = Inter({
 });
 
 // ---------------------------------------------------------------------------
-// PWA Viewport — enables safe-area insets for iPhone notch / Dynamic Island
+// PWA Viewport — enables safe-area insets & full-screen standalone mode
 // ---------------------------------------------------------------------------
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
-  minimumScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.myeyes.pk"),
+  metadataBase: new URL("https://myeyes.pk"),
   title: {
-    default: "My Eyes — Pakistan's First Prescription Based Eyewear Store",
-    template: "%s | My Eyes Optical Studio",
+    default: "MY EYES — Optical Studio & Prescription Eyewear",
+    template: "%s | MY EYES Optical Studio",
   },
   description:
-    "Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting delivered anywhere in Pakistan. Features live 3D try-on, 60-second style quiz, and transparent lens pricing.",
+    "Lab-precision prescription glasses and frames delivered across Pakistan. Features live 3D try-on, 60-second style quiz, and transparent lens pricing.",
   keywords: [
     "eyewear Pakistan",
     "prescription glasses online Pakistan",
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     "custom prescription sunglasses",
   ],
   alternates: {
-    canonical: "https://www.myeyes.pk",
+    canonical: "https://myeyes.pk",
   },
   manifest: "/manifest.json",
   icons: {
@@ -59,13 +60,16 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "MyEyes",
+    title: "MY EYES",
+  },
+  formatDetection: {
+    telephone: false,
   },
   openGraph: {
-    title: "My Eyes — Pakistan Prescription Based Eyewear Store",
-    description: "Lab-precision prescription glasses & sunglasses delivered across Pakistan.",
-    url: "https://www.myeyes.pk",
-    siteName: "My Eyes",
+    title: "MY EYES — Optical Studio & Prescription Eyewear",
+    description: "Lab-precision prescription glasses & frames delivered across Pakistan.",
+    url: "https://myeyes.pk",
+    siteName: "MY EYES",
     type: "website",
     locale: "en_US",
     images: [
@@ -73,7 +77,7 @@ export const metadata: Metadata = {
         url: "/icon-192x192.png",
         width: 192,
         height: 192,
-        alt: "My Eyes Optical Studio Logo",
+        alt: "MY EYES Optical Studio Logo",
       },
     ],
   },
@@ -84,18 +88,18 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "OpticalStore",
-      "@id": "https://www.myeyes.pk/#store",
-      name: "My Eyes Optical Studio",
-      url: "https://www.myeyes.pk",
-      logo: "https://www.myeyes.pk/icon-192x192.png",
-      image: "https://www.myeyes.pk/icon-192x192.png",
+      "@id": "https://myeyes.pk/#store",
+      name: "MY EYES Optical Studio",
+      url: "https://myeyes.pk",
+      logo: "https://myeyes.pk/icon-192x192.png",
+      image: "https://myeyes.pk/icon-192x192.png",
       description:
         "Custom prescription lenses, frames, and sunglasses fitted to precision optical parameters.",
       areaServed: "PK",
       priceRange: "PKR",
       potentialAction: {
         "@type": "SearchAction",
-        target: "https://www.myeyes.pk/eyeglasses?q={search_term_string}",
+        target: "https://myeyes.pk/eyeglasses?q={search_term_string}",
         "query-input": "required name=search_term_string",
       },
     },
@@ -108,10 +112,10 @@ const jsonLd = {
         "60-Second Frame Style Quiz",
       ],
       url: [
-        "https://www.myeyes.pk/eyeglasses",
-        "https://www.myeyes.pk/sunglasses",
-        "https://www.myeyes.pk/pricing",
-        "https://www.myeyes.pk/quiz",
+        "https://myeyes.pk/eyeglasses",
+        "https://myeyes.pk/sunglasses",
+        "https://myeyes.pk/lens-pricing",
+        "https://myeyes.pk/quiz",
       ],
     },
   ],
@@ -125,6 +129,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="MY EYES" />
+        <meta name="application-name" content="MY EYES" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
