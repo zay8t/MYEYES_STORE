@@ -26,37 +26,95 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "My Eyes — Pakistan Prescription Based Eyewear Store",
+  metadataBase: new URL("https://www.myeyes.pk"),
+  title: {
+    default: "My Eyes — Pakistan's First Prescription Based Eyewear Store",
+    template: "%s | My Eyes Optical Studio",
+  },
   description:
-    "Order premium prescription eyeglasses & sunglasses online. Pakistan prescription based eyewear store with lab-precision fitting, delivering all across Pakistan.",
-  keywords: ["eyewear", "glasses", "optical", "sunglasses", "prescription lenses", "Pakistan", "online eyewear store", "My Eyes"],
-  // ---------------------------------------------------------------------------
-  // PWA Manifest & Icons
-  // ---------------------------------------------------------------------------
+    "Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting delivered anywhere in Pakistan. Features live 3D try-on, 60-second style quiz, and transparent lens pricing.",
+  keywords: [
+    "eyewear Pakistan",
+    "prescription glasses online Pakistan",
+    "blue cut computer lenses",
+    "progressive lenses Pakistan",
+    "online optical store",
+    "frame style quiz",
+    "custom prescription sunglasses",
+  ],
+  alternates: {
+    canonical: "https://www.myeyes.pk",
+  },
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.svg",
+    icon: [
+      { url: "/icon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/icon-48x48.png",
     apple: "/apple-touch-icon.png",
   },
-  // ---------------------------------------------------------------------------
-  // iOS PWA meta — enables Add to Home Screen with correct name and icon
-  // ---------------------------------------------------------------------------
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "MyEyes",
   },
-  // ---------------------------------------------------------------------------
-  // Open Graph — useful for PWA sharing
-  // ---------------------------------------------------------------------------
   openGraph: {
     title: "My Eyes — Pakistan Prescription Based Eyewear Store",
-    description:
-      "Order premium prescription eyeglasses & sunglasses online in Pakistan.",
+    description: "Lab-precision prescription glasses & sunglasses delivered across Pakistan.",
+    url: "https://www.myeyes.pk",
+    siteName: "My Eyes",
     type: "website",
     locale: "en_US",
-    siteName: "MyEyes",
+    images: [
+      {
+        url: "/icon-192x192.png",
+        width: 192,
+        height: 192,
+        alt: "My Eyes Optical Studio Logo",
+      },
+    ],
   },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "OpticalStore",
+      "@id": "https://www.myeyes.pk/#store",
+      name: "My Eyes Optical Studio",
+      url: "https://www.myeyes.pk",
+      logo: "https://www.myeyes.pk/icon-192x192.png",
+      image: "https://www.myeyes.pk/icon-192x192.png",
+      description:
+        "Custom prescription lenses, frames, and sunglasses fitted to precision optical parameters.",
+      areaServed: "PK",
+      priceRange: "PKR",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://www.myeyes.pk/eyeglasses?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "SiteNavigationElement",
+      name: [
+        "Prescription Eyeglasses",
+        "Polarized Sunglasses",
+        "Lens Pricing Guide",
+        "60-Second Frame Style Quiz",
+      ],
+      url: [
+        "https://www.myeyes.pk/eyeglasses",
+        "https://www.myeyes.pk/sunglasses",
+        "https://www.myeyes.pk/pricing",
+        "https://www.myeyes.pk/quiz",
+      ],
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -67,6 +125,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
