@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Glasses, FileCheck2, Layers, Truck } from "lucide-react";
+import { Glasses, FileCheck2, Sparkles, Truck } from "lucide-react";
 
 interface MilestoneStep {
   step: string;
@@ -14,34 +14,34 @@ interface MilestoneStep {
 const MILESTONES: MilestoneStep[] = [
   {
     step: "01",
-    title: "Select Frame Silhouette",
+    title: "Pick Your Frame",
     description:
-      "Explore handcrafted acetate, titanium, and lightweight metal frames tailored to your style.",
-    microTag: "3D Virtual Fit & Quiz Available",
+      "Browse our stylish frames or take our 1-minute quiz to find the perfect fit for your face.",
+    microTag: "Try 3D Preview or Quiz",
     icon: Glasses,
   },
   {
     step: "02",
-    title: "Upload Rx or Enter SPH / CYL",
+    title: "Add Your Prescription",
     description:
-      "Snap a photo of your doctor's slip or manually input your sphere, cylinder, axis, and PD.",
-    microTag: "Auto-Reading Verification",
+      "Just take a quick photo of your eye slip or type in your numbers. We double-check everything.",
+    microTag: "Photo Upload or Type In",
     icon: FileCheck2,
   },
   {
     step: "03",
-    title: "Lab-Grade Custom Edging",
+    title: "Custom Made in Our Lab",
     description:
-      "Certified optical technicians edge single vision, blue-cut, or progressive lenses to sub-millimeter tolerances.",
-    microTag: "Anti-Scratch & UV400 Standard",
-    icon: Layers,
+      "Our optical experts carefully cut, fit, and polish your lenses for 100% crystal-clear vision.",
+    microTag: "Scratch & UV Protected",
+    icon: Sparkles,
   },
   {
     step: "04",
-    title: "Safe Nationwide Delivery",
+    title: "Delivered to Your Door",
     description:
-      "Dispatched in protective cases with easy tracking and our 100% prescription accuracy guarantee.",
-    microTag: "Delivered Across Pakistan",
+      "Your new glasses arrive safely packed with a protective hard case, cleaning cloth, and warranty.",
+    microTag: "All Across Pakistan",
     icon: Truck,
   },
 ];
@@ -53,13 +53,13 @@ export default function OrderingJourney() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-2 block">
-            TRANSPARENT PROCESS
+            HOW IT WORKS
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-            From Doctor&apos;s Slip to Doorstep in 4 Precise Steps
+            Order in 4 Easy Steps
           </h2>
           <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
-            Hospital-grade lens cutting and certified optometric verification delivered nationwide.
+            Getting custom prescription glasses made and delivered has never been simpler.
           </p>
         </div>
 
