@@ -618,8 +618,14 @@ export default function LensPricingPage() {
         {/* ============================================================ */}
         {/*  INTERACTIVE LENS THICKNESS & REFRACTIVE INDEX SIMULATOR     */}
         {/* ============================================================ */}
-        <div className="pt-12">
-          <LensThicknessSimulator />
+        <div className="pt-8">
+          <LensThicknessSimulator
+            odSph={odSph}
+            osSph={osSph}
+            odCyl={odCyl}
+            osCyl={osCyl}
+            selectedPackageId={selectedLensId}
+          />
         </div>
 
       </div>
