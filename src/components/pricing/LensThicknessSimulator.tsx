@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Sparkles, ArrowRight, ShieldCheck, Check, Layers, Eye } from "lucide-react";
+import { Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
 import {
   LENS_PACKAGES,
   LensPackageDefinition,
@@ -117,71 +116,73 @@ export default function LensThicknessSimulator({
         isModal ? "py-4" : "py-16 md:py-24 border-t border-slate-100"
       } ${className}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Section Header */}
         {!isModal && (
-          <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
             <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-2 block">
-              OPTICAL PRECISION ENGINE
+              LENS PREVIEW
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Interactive Lens Thickness &amp; Index Simulator
+              See Your Lens Thickness &amp; Price
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
-              Adjust your prescription power to preview physical lens profiles, edge thicknesses, and live package prices from our laboratory.
+            <p className="text-slate-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              Slide your eye power below to compare lens thickness, weight, and exact prices before ordering.
             </p>
           </div>
         )}
 
-        {/* Diopter Controls Card */}
-        <div className="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
+        {/* Minimalist Controls & Toggles (All Light Theme) */}
+        <div className="max-w-3xl mx-auto bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Mode Switcher */}
-            <div className="inline-flex rounded-xl p-1 bg-white border border-slate-200 text-xs shadow-2xs w-full sm:w-auto">
+            {/* Segmented Mode Toggle (Distance vs Reading) */}
+            <div className="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 text-xs w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => handleModeChange("minus")}
-                className={`flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   mode === "minus"
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-[#ff7a00] shadow-xs border border-orange-200"
+                    : "text-slate-600 hover:text-slate-900 bg-transparent"
                 }`}
               >
-                Nearsighted / Myopia (- SPH)
+                Distance / Minus (-)
               </button>
               <button
                 type="button"
                 onClick={() => handleModeChange("plus")}
-                className={`flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   mode === "plus"
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-[#ff7a00] shadow-xs border border-orange-200"
+                    : "text-slate-600 hover:text-slate-900 bg-transparent"
                 }`}
               >
-                Farsighted / Hyperopia (+ SPH)
+                Reading / Plus (+)
               </button>
             </div>
 
-            {/* Stepper + Value Display */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Prescription:
+            {/* Power Stepper Badge */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
+              <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+                YOUR POWER:
               </span>
-              <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => stepPower(-0.25)}
-                  className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm flex items-center justify-center cursor-pointer transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#ff7a00] hover:bg-orange-50 border border-slate-200 transition-colors cursor-pointer text-sm font-bold"
+                  aria-label="Decrease power"
                 >
                   -
                 </button>
-                <span className="font-mono text-base font-bold text-slate-900 min-w-[70px] text-center">
+                <span className="font-mono text-base font-bold text-slate-900 min-w-[65px] text-center">
                   {power > 0 ? `+${power.toFixed(2)}` : power.toFixed(2)} D
                 </span>
                 <button
                   type="button"
                   onClick={() => stepPower(0.25)}
-                  className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm flex items-center justify-center cursor-pointer transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#ff7a00] hover:bg-orange-50 border border-slate-200 transition-colors cursor-pointer text-sm font-bold"
+                  aria-label="Increase power"
                 >
                   +
                 </button>
@@ -189,11 +190,14 @@ export default function LensThicknessSimulator({
             </div>
           </div>
 
-          {/* Continuous Slider */}
-          <div className="space-y-2 pt-2">
-            <div className="flex justify-between text-[11px] font-mono text-slate-400">
+          {/* Minimal Continuous Slider */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-xs font-medium text-slate-400 text-center block mb-2">
+              Slide to adjust your eye power
+            </span>
+            <div className="flex justify-between text-[11px] font-mono text-slate-400 px-1">
               <span>{mode === "minus" ? "-8.00 D" : "0.00 D"}</span>
-              <span className="text-slate-600 font-medium">Drag Slider to Calibrate</span>
+              <span className="text-slate-500 font-medium">Drag Slider</span>
               <span>{mode === "minus" ? "0.00 D" : "+6.00 D"}</span>
             </div>
             <input
@@ -203,7 +207,7 @@ export default function LensThicknessSimulator({
               step={0.25}
               value={power}
               onChange={handleSliderChange}
-              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#ff7a00]"
+              className="w-full h-2 bg-slate-100 rounded-full border border-slate-200/60 appearance-none cursor-pointer accent-[#ff7a00]"
             />
           </div>
         </div>
@@ -230,10 +234,10 @@ export default function LensThicknessSimulator({
                 onClick={() => setSelectedPackageId(pkg.id)}
                 className={`relative bg-white rounded-2xl p-6 flex flex-col justify-between space-y-5 transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? "border-2 border-[#ff7a00] shadow-md ring-4 ring-orange-500/10"
+                    ? "border-2 border-[#ff7a00] shadow-sm ring-2 ring-orange-500/10"
                     : isRecommended
-                    ? "border border-amber-300 bg-amber-50/10 hover:border-amber-400"
-                    : "border border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
+                    ? "border border-orange-200 bg-orange-50/20 hover:border-orange-300"
+                    : "border border-slate-200 hover:border-slate-300 hover:shadow-xs"
                 }`}
               >
                 {/* Header Tag */}
@@ -243,7 +247,7 @@ export default function LensThicknessSimulator({
                       Index {pkg.index} · {pkg.badge}
                     </span>
                     {isRecommended && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#ff7a00] px-2.5 py-0.5 rounded-full shadow-2xs uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#ff7a00] bg-orange-50 border border-orange-200/80 px-2.5 py-0.5 rounded-full shadow-2xs uppercase tracking-wider">
                         <Sparkles className="w-3 h-3" /> Recommended
                       </span>
                     )}
@@ -251,7 +255,7 @@ export default function LensThicknessSimulator({
                   <h3 className="text-base font-bold text-slate-900 leading-snug">
                     {pkg.name}
                   </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
                     {pkg.description}
                   </p>
                 </div>
@@ -272,9 +276,9 @@ export default function LensThicknessSimulator({
                         x2="100%"
                         y2="100%"
                       >
-                        <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.12" />
-                        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.08" />
-                        <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.16" />
+                        <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.10" />
+                        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.06" />
+                        <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.12" />
                       </linearGradient>
                     </defs>
 
@@ -307,10 +311,10 @@ export default function LensThicknessSimulator({
                   </svg>
 
                   {/* Dimension Callouts */}
-                  <div className="absolute top-2 right-2 text-[10px] font-mono font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+                  <div className="absolute top-2 right-2 text-[10px] font-mono font-bold text-slate-700 bg-white/95 px-2 py-0.5 rounded border border-slate-200">
                     Edge: ~{edgeThicknessMm} mm
                   </div>
-                  <div className="absolute bottom-2 left-2 text-[10px] font-mono font-medium text-slate-500 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+                  <div className="absolute bottom-2 left-2 text-[10px] font-mono font-medium text-slate-500 bg-white/95 px-2 py-0.5 rounded border border-slate-200">
                     Center: ~{centerThicknessMm} mm
                   </div>
                 </div>
@@ -337,7 +341,7 @@ export default function LensThicknessSimulator({
                         {formatPrice(calculatedPrice)}
                       </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                    <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-md">
                       Pair Price
                     </span>
                   </div>
@@ -352,7 +356,7 @@ export default function LensThicknessSimulator({
                       className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                         isSelected || isRecommended
                           ? "bg-[#ff7a00] hover:bg-[#e56e00] text-white shadow-xs"
-                          : "bg-slate-900 hover:bg-black text-white"
+                          : "bg-slate-50 hover:bg-orange-50 text-slate-700 hover:text-[#ff7a00] border border-slate-200"
                       }`}
                     >
                       <span>Select Package</span>
@@ -365,7 +369,7 @@ export default function LensThicknessSimulator({
                       className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center ${
                         isSelected || isRecommended
                           ? "bg-[#ff7a00] hover:bg-[#e56e00] text-white shadow-xs"
-                          : "bg-slate-900 hover:bg-black text-white"
+                          : "bg-slate-50 hover:bg-orange-50 text-slate-700 hover:text-[#ff7a00] border border-slate-200"
                       }`}
                     >
                       <span>Configure This Package &rarr;</span>
@@ -378,7 +382,7 @@ export default function LensThicknessSimulator({
         </div>
 
         {/* Optical Studio Trust Note */}
-        <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-3 text-xs text-slate-600">
+        <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 flex items-center gap-3 text-xs text-slate-600">
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="leading-relaxed">
             All prices and lens parameters are synchronized directly with our live prescription calculation engine. All lenses are custom cut in our optical laboratory to sub-millimeter tolerances.
