@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight, ShieldCheck, Check } from "lucide-react";
 import {
+  LENS_PACKAGES,
+  LensPackageDefinition,
   calculateLensThickness,
   DEFAULT_BASE_PRICES,
   BasePriceConfig,
@@ -17,6 +19,7 @@ export interface LensThicknessSimulatorProps {
   odCyl?: number | string;
   osCyl?: number | string;
   selectedPackageId?: string;
+  onSelectPackage?: (pkg: LensPackageDefinition) => void;
   className?: string;
   isModal?: boolean;
 }
@@ -33,6 +36,7 @@ export default function LensThicknessSimulator({
   odCyl = "0.00",
   osCyl = "0.00",
   selectedPackageId = "sv-156-bluecut",
+  onSelectPackage,
   className = "",
   isModal = false,
 }: LensThicknessSimulatorProps) {
@@ -68,84 +72,42 @@ export default function LensThicknessSimulator({
     Math.abs(parsedOdSph) >= Math.abs(parsedOsSph) ? parsedOdSph : parsedOsSph;
   const maxAbsSph = Math.max(Math.abs(parsedOdSph), Math.abs(parsedOsSph));
 
-  // Determine automated smart recommendation based on active prescription diopter
-  const recommendedIndex = useMemo(() => {
-    if (maxAbsSph <= 2.0) return "1.56";
-    if (maxAbsSph <= 4.0) return "1.61";
-    return "1.67";
-  }, [maxAbsSph]);
+  // Compute live price and thickness for each of the 5 exact packages
+  const packagesWithCalculations = useMemo(() => {
+    return LENS_PACKAGES.map((pkg) => {
+      const { center, edge } = calculateLensThickness(dominantSph, pkg.indexNumber);
 
-  // Calculate live pair pricing for each index tier based on active OD/OS inputs
-  const indexCardsData = useMemo(() => {
-    // 1.56 Index live pair calculation
-    const package156 =
-      selectedPackageId && selectedPackageId !== "sv-167-shmc"
-        ? selectedPackageId
-        : "sv-156-bluecut";
-    const res156 = calculateTotalLensPrice(
-      package156,
-      { sph: parsedOdSph, cyl: parsedOdCyl },
-      { sph: parsedOsSph, cyl: parsedOsCyl },
-      basePrices
-    );
-    const price156 = res156 ? res156.finalPrice : basePrices.B2;
+      const priceResult = calculateTotalLensPrice(
+        pkg.id,
+        { sph: parsedOdSph, cyl: parsedOdCyl },
+        { sph: parsedOsSph, cyl: parsedOsCyl },
+        basePrices
+      );
 
-    // 1.67 Index live pair calculation
-    const res167 = calculateTotalLensPrice(
-      "sv-167-shmc",
-      { sph: parsedOdSph, cyl: parsedOdCyl },
-      { sph: parsedOsSph, cyl: parsedOsCyl },
-      basePrices
-    );
-    const price167 = res167 ? res167.finalPrice : basePrices.B5;
+      const calculatedPrice = priceResult
+        ? priceResult.finalPrice
+        : basePrices[pkg.baseKey];
 
-    // 1.61 Index interpolated between 1.56 and 1.67
-    const price161 = Math.round((price156 + price167) / 2);
+      // Auto-recommendation logic:
+      // High prescriptions (> 3.50 D) recommend Option 5 Ultra-Thin Index
+      // Standard prescriptions recommend Option 2 Blue Light Filter HMC
+      const isRecommended =
+        maxAbsSph > 3.50 ? pkg.id === "sv-167-shmc" : pkg.id === "sv-156-bluecut";
 
-    const specs156 = calculateLensThickness(dominantSph, 1.56);
-    const specs161 = calculateLensThickness(dominantSph, 1.61);
-    const specs167 = calculateLensThickness(dominantSph, 1.67);
+      const isSelected = selectedPackageId === pkg.id;
 
-    return [
-      {
-        index: "1.56",
-        name: "1.56 Standard Clear",
-        badge: "Everyday Standard",
-        idealRange: "0.00 D to ±2.00 D",
-        abbeValue: "Abbe 38 (High Clarity)",
-        description:
-          "High Abbe optical clarity. Standard edge thickness recommended for mild diopters.",
-        specs: specs156,
-        reductionTag: "Standard Base",
-        price: price156,
-      },
-      {
-        index: "1.61",
-        name: "1.61 High-Index Slim",
-        badge: "20% Slimmer Profile",
-        idealRange: "±2.25 D to ±4.00 D",
-        abbeValue: "Abbe 42 (High Tensile)",
-        description:
-          "20% thinner edge profile with high impact strength. Ideal for daily metal and acetate frames.",
-        specs: specs161,
-        reductionTag: "20% Thinner",
-        price: price161,
-      },
-      {
-        index: "1.67",
-        name: "1.67 Ultra-Thin Aspheric",
-        badge: "35% Ultra-Flat",
-        idealRange: "±4.25 D to ±8.00 D+",
-        abbeValue: "Abbe 32 (Flattest Curve)",
-        description:
-          "35% ultra-flat aspheric profile. Eliminates eye magnification and thick edge bulge.",
-        specs: specs167,
-        reductionTag: "35% Thinner",
-        price: price167,
-      },
-    ];
+      return {
+        ...pkg,
+        centerThicknessMm: center,
+        edgeThicknessMm: edge,
+        calculatedPrice,
+        isRecommended,
+        isSelected,
+      };
+    });
   }, [
     dominantSph,
+    maxAbsSph,
     parsedOdSph,
     parsedOsSph,
     parsedOdCyl,
@@ -155,11 +117,7 @@ export default function LensThicknessSimulator({
   ]);
 
   return (
-    <div
-      className={`w-full bg-white ${
-        isModal ? "py-2" : "pt-8 pb-4"
-      } ${className}`}
-    >
+    <div className={`w-full bg-white ${isModal ? "py-2" : "pt-8 pb-4"} ${className}`}>
       <div className="space-y-8">
         {/* Header & Live RX Callout */}
         <div className="space-y-4">
@@ -197,15 +155,20 @@ export default function LensThicknessSimulator({
           </div>
         </div>
 
-        {/* 3 Index Comparison Cards Matrix */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          {indexCardsData.map((item) => {
-            const isRecommended = item.index === recommendedIndex;
-            const { center, edge } = item.specs;
+        {/* 5 Exact Packages Dynamic Physical Cross-Section Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          {packagesWithCalculations.map((pkg) => {
+            const {
+              centerThicknessMm,
+              edgeThicknessMm,
+              calculatedPrice,
+              isRecommended,
+              isSelected,
+            } = pkg;
 
             // Parametric SVG Curve Heights
-            const visualEdgeH = Math.min(36, Math.max(6, edge * 4.5));
-            const visualCenterH = Math.min(36, Math.max(6, center * 4.5));
+            const visualEdgeH = Math.min(36, Math.max(6, edgeThicknessMm * 4.5));
+            const visualCenterH = Math.min(36, Math.max(6, centerThicknessMm * 4.5));
 
             const topY = 50 - visualCenterH / 2;
             const bottomY = 50 + visualCenterH / 2;
@@ -216,10 +179,12 @@ export default function LensThicknessSimulator({
 
             return (
               <div
-                key={item.index}
+                key={pkg.id}
                 className={`relative bg-white rounded-2xl p-6 flex flex-col justify-between space-y-5 transition-all duration-200 ${
-                  isRecommended
+                  isSelected
                     ? "border-2 border-[#ff7a00] shadow-sm ring-4 ring-orange-500/10"
+                    : isRecommended
+                    ? "border border-orange-200 bg-orange-50/20 hover:border-orange-300"
                     : "border border-slate-200/90 hover:border-slate-300"
                 }`}
               >
@@ -227,19 +192,19 @@ export default function LensThicknessSimulator({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-[#ff7a00] uppercase tracking-wider">
-                      Index {item.index}
+                      Index {pkg.index} · {pkg.badge}
                     </span>
                     {isRecommended && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#ff7a00] bg-orange-50 border border-orange-200/80 px-2.5 py-0.5 rounded-full shadow-2xs uppercase tracking-wider">
-                        <Sparkles className="w-3 h-3" /> Recommended for Rx
+                        <Sparkles className="w-3 h-3" /> Recommended
                       </span>
                     )}
                   </div>
-                  <h4 className="text-base font-bold text-slate-900">
-                    {item.name}
+                  <h4 className="text-base font-bold text-slate-900 leading-snug">
+                    {pkg.name}
                   </h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    {item.description}
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    {pkg.description}
                   </p>
                 </div>
 
@@ -253,7 +218,7 @@ export default function LensThicknessSimulator({
                   >
                     <defs>
                       <linearGradient
-                        id={`grad-${item.index}`}
+                        id={`grad-${pkg.id}`}
                         x1="0%"
                         y1="0%"
                         x2="100%"
@@ -268,8 +233,8 @@ export default function LensThicknessSimulator({
                     {/* Lens Cross-section Profile */}
                     <path
                       d={`M 20 ${leftTopY} Q 90 ${topY} 160 ${rightTopY} L 160 ${rightBottomY} Q 90 ${bottomY} 20 ${leftBottomY} Z`}
-                      fill={`url(#grad-${item.index})`}
-                      stroke={isRecommended ? "#ff7a00" : "#64748b"}
+                      fill={`url(#grad-${pkg.id})`}
+                      stroke={isSelected || isRecommended ? "#ff7a00" : "#64748b"}
                       strokeWidth="2"
                     />
 
@@ -293,21 +258,21 @@ export default function LensThicknessSimulator({
 
                   {/* Absolute Measurement Callouts */}
                   <div className="absolute top-2 right-2 text-[10px] font-mono font-bold text-slate-700 bg-white/95 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
-                    Edge: ~{edge} mm
+                    Edge: ~{edgeThicknessMm} mm
                   </div>
                   <div className="absolute bottom-2 left-2 text-[10px] font-mono font-medium text-slate-500 bg-white/95 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
-                    Center: ~{center} mm
+                    Center: ~{centerThicknessMm} mm
                   </div>
                 </div>
 
                 {/* Specs */}
                 <div className="space-y-1 text-xs text-slate-600 pt-1">
                   <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
-                    <span>{item.abbeValue}</span>
-                    <span className="font-semibold text-emerald-600">{item.reductionTag}</span>
+                    <span>Coating: <strong className="text-slate-700">{pkg.coating}</strong></span>
+                    <span className="font-semibold text-emerald-600">{pkg.reductionTag}</span>
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    Ideal Range: <strong className="text-slate-600">{item.idealRange}</strong>
+                    Ideal Range: <strong className="text-slate-600">{pkg.idealRange}</strong> · {pkg.abbeValue}
                   </div>
                 </div>
 
@@ -316,10 +281,10 @@ export default function LensThicknessSimulator({
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">
-                        Estimated Pair Total
+                        Live Calculated Price
                       </span>
                       <span className="text-xl font-extrabold text-slate-900">
-                        {formatPrice(item.price)}
+                        {formatPrice(calculatedPrice)}
                       </span>
                     </div>
                     <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-md">
@@ -327,17 +292,31 @@ export default function LensThicknessSimulator({
                     </span>
                   </div>
 
-                  <Link
-                    href="/eyeglasses"
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center ${
-                      isRecommended
-                        ? "bg-[#ff7a00] hover:bg-[#e56e00] text-white shadow-xs"
-                        : "bg-slate-50 hover:bg-orange-50 text-slate-700 hover:text-[#ff7a00] border border-slate-200"
-                    }`}
-                  >
-                    <span>Order In This Index</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  {onSelectPackage ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectPackage(pkg)}
+                      className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        isSelected || isRecommended
+                          ? "bg-[#ff7a00] hover:bg-[#e56e00] text-white shadow-xs"
+                          : "bg-slate-50 hover:bg-orange-50 text-slate-700 hover:text-[#ff7a00] border border-slate-200"
+                      }`}
+                    >
+                      <span>Select Package</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <Link
+                      href="/eyeglasses"
+                      className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center ${
+                        isSelected || isRecommended
+                          ? "bg-[#ff7a00] hover:bg-[#e56e00] text-white shadow-xs"
+                          : "bg-slate-50 hover:bg-orange-50 text-slate-700 hover:text-[#ff7a00] border border-slate-200"
+                      }`}
+                    >
+                      <span>Configure This Package &rarr;</span>
+                    </Link>
+                  )}
                 </div>
               </div>
             );
@@ -348,7 +327,7 @@ export default function LensThicknessSimulator({
         <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 flex items-center gap-3 text-xs text-slate-600">
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="leading-relaxed">
-            All lenses are custom-beveled using computer-controlled CNC edging machines to match your selected frame geometry with sub-millimeter precision.
+            All prices and lens parameters are synchronized directly with our live prescription calculation engine. All lenses are custom cut in our optical laboratory to sub-millimeter tolerances.
           </p>
         </div>
       </div>

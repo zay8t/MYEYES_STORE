@@ -625,6 +625,7 @@ export default function LensPricingPage() {
             odCyl={odCyl}
             osCyl={osCyl}
             selectedPackageId={selectedLensId}
+            onSelectPackage={(pkg) => setSelectedLensId(pkg.id)}
           />
         </div>
 
