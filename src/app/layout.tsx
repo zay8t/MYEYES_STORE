@@ -150,10 +150,10 @@ export default function RootLayout({
           {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
           <StandaloneBodyManager />
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-16 md:pb-0">{children}</main>
           <Footer />
           <PWAInstallBanner />
-          {/* MobileBottomNav strictly renders in standalone mode */}
+          {/* MobileBottomNav renders fixed on mobile viewports */}
           <MobileBottomNav />
         </RealtimeSyncProvider>
       </body>
