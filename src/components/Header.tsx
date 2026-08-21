@@ -170,14 +170,14 @@ export default function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 left-0 right-0 z-40 transition-all duration-300",
+          "sticky top-0 left-0 right-0 z-50 transition-all duration-200",
           scrolled
-            ? "bg-white/95 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-            : "bg-white border-b border-slate-100"
+            ? "bg-white/95 backdrop-blur-md border-b border-slate-100/90 shadow-2xs"
+            : "bg-white/95 backdrop-blur-md border-b border-slate-100/80"
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[60px] md:h-[72px]">
+          <div className="flex items-center justify-between h-16 md:h-20">
             {/* Brand Logo & Title */}
             <Link
               href="/"
@@ -196,7 +196,7 @@ export default function Header() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-base font-extrabold tracking-wider text-amber-600 uppercase group-hover:text-amber-700 transition-colors duration-200">
+                <span className="text-base font-extrabold tracking-wider text-[#ff7a00] uppercase group-hover:text-amber-600 transition-colors duration-200">
                   MY EYES
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
@@ -206,17 +206,17 @@ export default function Header() {
             </Link>
 
             {/* Desktop Nav Links */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1.5">
               <Link
                 href="/"
                 className={cn(
-                  "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-2 py-2 px-4 rounded-xl",
+                  "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
                   pathname === "/"
-                    ? "text-amber-600 bg-amber-50 font-bold"
-                    : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                    ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                 )}
               >
-                <Home className="w-4 h-4 text-slate-400" />
+                <Home className="w-3.5 h-3.5 opacity-70" />
                 Home
               </Link>
 
@@ -229,17 +229,17 @@ export default function Header() {
                 <Link
                   href="/eyeglasses"
                   className={cn(
-                    "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl",
+                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
                     pathname.startsWith("/eyeglasses")
-                      ? "text-amber-600 bg-amber-50 font-bold"
-                      : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
+                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                   )}
                 >
-                  <Glasses className="w-4 h-4 text-slate-400" />
+                  <Glasses className="w-3.5 h-3.5 opacity-70" />
                   <span>Eyeglasses</span>
                   <ChevronDown
                     className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200",
+                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
                       activeDropdown === "eyeglasses" && "rotate-180"
                     )}
                   />
@@ -272,17 +272,17 @@ export default function Header() {
                 <Link
                   href="/sunglasses"
                   className={cn(
-                    "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl",
+                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
                     pathname.startsWith("/sunglasses")
-                      ? "text-amber-600 bg-amber-50 font-bold"
-                      : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
+                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                   )}
                 >
-                  <Sun className="w-4 h-4 text-slate-400" />
+                  <Sun className="w-3.5 h-3.5 opacity-70" />
                   <span>Sunglasses</span>
                   <ChevronDown
                     className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200",
+                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
                       activeDropdown === "sunglasses" && "rotate-180"
                     )}
                   />
@@ -314,19 +314,19 @@ export default function Header() {
               >
                 <div
                   className={cn(
-                    "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl cursor-pointer select-none",
+                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full cursor-pointer select-none",
                     pathname.startsWith("/men") ||
                       pathname.startsWith("/women") ||
                       pathname.startsWith("/kids")
-                      ? "text-amber-600 bg-amber-50 font-bold"
-                      : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
+                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                   )}
                 >
-                  <Tag className="w-4 h-4 text-slate-400" />
+                  <Tag className="w-3.5 h-3.5 opacity-70" />
                   <span>Collections</span>
                   <ChevronDown
                     className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200",
+                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
                       activeDropdown === "collections" && "rotate-180"
                     )}
                   />
@@ -354,54 +354,54 @@ export default function Header() {
               <Link
                 href="/lens-pricing"
                 className={cn(
-                  "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-2 py-2 px-4 rounded-xl",
+                  "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
                   pathname.startsWith("/lens-pricing") || pathname === "/pricing"
-                    ? "text-amber-600 bg-amber-50 font-bold"
-                    : "text-slate-600 hover:text-amber-600 hover:bg-slate-50"
+                    ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                 )}
               >
-                <Tag className="w-4 h-4 text-slate-400" />
+                <Tag className="w-3.5 h-3.5 opacity-70" />
                 Lens Pricing
               </Link>
 
-              {/* Style Quiz Link */}
+              {/* Style Quiz Pill */}
               <Link
                 href="/quiz"
                 id="nav-style-quiz-link"
                 className={cn(
-                  "text-sm font-semibold tracking-wide transition-all duration-200 flex items-center gap-1.5 py-2 px-4 rounded-xl",
+                  "text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-amber-200/40",
                   pathname.startsWith("/quiz")
-                    ? "text-[#F59E0B] bg-amber-50/50 font-bold"
-                    : "text-slate-600 hover:text-[#F59E0B] hover:bg-slate-50"
+                    ? "text-amber-700 bg-amber-100/70 border-amber-300/60 font-bold"
+                    : "text-amber-600 hover:text-amber-700 bg-amber-50/60 hover:bg-amber-50"
                 )}
               >
-                <Sparkles className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 Style Quiz
               </Link>
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 md:gap-2">
+            <div className="flex items-center gap-1 md:gap-1.5">
               {/* Search Trigger */}
               <button
                 id="header-search-btn"
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center"
+                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
                 aria-label="Search Frames"
               >
-                <Search className="w-5 h-5 stroke-[1.8]" />
+                <Search className="w-4.5 h-4.5 stroke-[1.8]" />
               </button>
 
               {/* Wishlist Button (Opens Saved Frames Drawer) */}
               <button
                 id="header-wishlist-btn"
                 onClick={openWishlist}
-                className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-90"
+                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
                 aria-label="Saved Frames Wishlist"
               >
-                <Heart className="w-5 h-5 stroke-[1.8]" />
+                <Heart className="w-4.5 h-4.5 stroke-[1.8]" />
                 {mounted && wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold bg-rose-500 text-white rounded-full shadow-xs animate-bounce-in">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff7a00] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs animate-bounce-in">
                     {wishlistCount}
                   </span>
                 )}
@@ -411,12 +411,12 @@ export default function Header() {
               <button
                 id="cart-button"
                 onClick={openCart}
-                className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 cursor-pointer active:scale-90 flex items-center justify-center"
+                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
                 aria-label="Shopping Cart"
               >
-                <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
+                <ShoppingBag className="w-4.5 h-4.5 stroke-[1.8]" />
                 {mounted && totalItems() > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold bg-[#ff7a00] text-white rounded-full shadow-xs animate-bounce-in">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff7a00] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs animate-bounce-in">
                     {totalItems()}
                   </span>
                 )}
@@ -436,15 +436,15 @@ export default function Header() {
                       <Link
                         href="/login"
                         id="header-signin-btn"
-                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-800 hover:border-[#ff7a00] hover:text-[#ff7a00] transition-all shadow-xs"
+                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
                       >
-                        <User className="w-3.5 h-3.5" />
+                        <User className="w-3.5 h-3.5 text-slate-500" />
                         Sign In
                       </Link>
                       <button
                         type="button"
                         onClick={openAccountDrawer}
-                        className="sm:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-90"
+                        className="sm:hidden p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
                         aria-label="Account"
                       >
                         <User className="w-5 h-5 stroke-[1.8]" />
@@ -470,10 +470,10 @@ export default function Header() {
                         <button
                           id="header-user-menu"
                           onClick={() => setUserDropdownOpen((v) => !v)}
-                          className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-slate-200 bg-white hover:border-[#ff7a00]/50 transition-all shadow-xs cursor-pointer select-none"
+                          className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
                         >
                           {/* Avatar initials */}
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[10px] font-extrabold shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[10px] font-extrabold shrink-0">
                             {initials}
                           </div>
                           <span className="text-xs font-bold text-slate-800">{firstName}</span>

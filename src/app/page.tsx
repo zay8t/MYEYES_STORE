@@ -48,18 +48,18 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 pb-20">
+    <div className="bg-white text-slate-900 pb-8">
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
-      <section className="relative pt-24 pb-4 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand/10 to-brand/5 border border-brand/20 text-[11px] font-bold uppercase tracking-widest text-brand-dark shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-brand animate-pulse" />
+      <section className="relative pt-6 sm:pt-10 pb-6 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+          <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#ff7a00] animate-pulse" />
             Pakistan&apos;s #1 Online Eyewear Store
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight">
             Pakistan&apos;s First
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
@@ -67,7 +67,7 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
             Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
       {/* ============================================================ */}
-      <section className="w-full bg-white py-10 my-4">
+      <section className="w-full bg-white py-6 sm:py-8 my-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-xl space-y-4 text-left">
             {/* 1. Category Pill Badge */}
@@ -204,7 +204,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  FEATURED COLLECTION GRID                                    */}
       {/* ============================================================ */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 bg-white">
+      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 bg-white">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             SEASONAL EDIT

@@ -32,8 +32,8 @@ const LENS_PRICING = [
 
 export default function CategorySpotlight() {
   return (
-    <section className="py-20 bg-white border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+    <section className="py-12 sm:py-16 bg-white border-t border-slate-100/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* ---- Category Banners ---- */}
         <div className="space-y-8">
           <div className="text-center space-y-2">
@@ -157,7 +157,7 @@ export default function CategorySpotlight() {
             </div>
 
             {/* Footnote */}
-            <p className="text-center text-[10px] text-slate-400 mt-4 font-medium">
+            <p className="text-center text-xs text-slate-400 mt-4 font-medium">
               All lenses include anti-reflective coating &amp; UV400 protection as standard.
             </p>
           </div>
