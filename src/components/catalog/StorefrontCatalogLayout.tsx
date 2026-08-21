@@ -75,7 +75,7 @@ export default function StorefrontCatalogLayout({
 
   return (
     <div className="min-h-screen bg-white py-8 sm:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-100 pb-6 mb-6 gap-4">
           <div>

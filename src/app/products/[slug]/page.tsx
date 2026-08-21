@@ -128,8 +128,8 @@ export default function ProductDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white text-slate-900 py-10 sm:py-14">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-8">
           <Link href="/" className="hover:text-slate-900 transition-colors">
@@ -146,7 +146,7 @@ export default function ProductDetailPage({
           <span className="text-slate-900">{product.name}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* LEFT: Multi-Angle Product Gallery (7 cols) */}
           <div className="lg:col-span-7">
             <ProductGallery

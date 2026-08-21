@@ -52,8 +52,8 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
-      <section className="relative pt-6 sm:pt-10 pb-6 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+      <section className="relative pt-8 sm:pt-12 pb-8 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 bg-white">
+        <div className="max-w-5xl mx-auto text-center space-y-4">
           <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#ff7a00] animate-pulse" />
             Pakistan&apos;s #1 Online Eyewear Store
@@ -76,8 +76,8 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
       {/* ============================================================ */}
-      <section className="w-full bg-white py-6 sm:py-8 my-2">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="w-full bg-white py-8 sm:py-12 my-2">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div className="max-w-xl space-y-4 text-left">
             {/* 1. Category Pill Badge */}
             <span className="inline-block text-[11px] sm:text-xs font-bold tracking-wider text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-1 rounded-full uppercase">
@@ -204,7 +204,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  FEATURED COLLECTION GRID                                    */}
       {/* ============================================================ */}
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 bg-white">
+      <section className="py-16 sm:py-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-10 bg-white">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             SEASONAL EDIT
@@ -218,7 +218,7 @@ export default function HomePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-[340px] bg-slate-50 rounded-2xl border border-slate-100 animate-pulse" />
             ))}
@@ -228,7 +228,7 @@ export default function HomePage() {
             No frames currently in catalog. Check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             {products.slice(0, 6).map((product) => (
               <ProductCard
                 key={product.id}

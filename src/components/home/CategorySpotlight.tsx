@@ -32,8 +32,8 @@ const LENS_PRICING = [
 
 export default function CategorySpotlight() {
   return (
-    <section className="py-12 sm:py-16 bg-white border-t border-slate-100/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <section className="py-16 sm:py-20 bg-white border-t border-slate-100/80">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-12">
         {/* ---- Category Banners ---- */}
         <div className="space-y-8">
           <div className="text-center space-y-2">

@@ -247,8 +247,8 @@ export default function LensPricingPage() {
   }, [isPresbyopiaMode, selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, basePrices]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-white to-neutral-50/50 py-12 text-neutral-900 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-white to-neutral-50/50 py-12 sm:py-16 text-neutral-900 font-sans">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-12">
         {/* Page Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-neutral-200/60 pb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold uppercase tracking-widest text-amber-700">

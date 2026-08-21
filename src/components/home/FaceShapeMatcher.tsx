@@ -242,8 +242,8 @@ export default function FaceShapeMatcher({
   }, [products, currentShape]);
 
   return (
-    <section className="w-full bg-white py-16 md:py-24 border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <section className="w-full bg-white py-16 sm:py-20 border-t border-slate-100">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-12">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-2 block">

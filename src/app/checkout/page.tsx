@@ -274,8 +274,8 @@ export default function CheckoutPage() {
   const isConfirmDisabled = submitting || uploadingProof || (isOnlinePayment && (!paymentReceiptUrl || !transactionId || tidCheckStatus === "duplicate"));
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50/50 py-12 sm:py-16">
+      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Navigation Link */}
         <div className="mb-6">
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* LEFT COLUMN: Customer & Payment Info (7 cols) */}
           <div className="lg:col-span-7 space-y-6">

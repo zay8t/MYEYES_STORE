@@ -303,8 +303,8 @@ export default function CustomerOrderTrackingView({
   );
 
   return (
-    <div className="min-h-screen bg-[#ffffff] py-8 sm:py-12 text-slate-900 selection:bg-orange-100 selection:text-orange-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen bg-[#ffffff] py-10 sm:py-14 text-slate-900 selection:bg-orange-100 selection:text-orange-900">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
         
         {/* Navigation & Header Actions */}
         <div className="flex items-center justify-between gap-3 mb-6">
