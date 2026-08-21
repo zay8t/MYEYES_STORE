@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { name: "Frames Catalog", label: "Frames Catalog", href: "/admin/products", icon: Glasses },
   { name: "Inventory Control", label: "Inventory Control", href: "/admin/inventory", icon: Boxes },
   { name: "Customer CRM", label: "Customer CRM", href: "/admin/customers", icon: Users },
+  { name: "Users & Customers", label: "Users & Customers", href: "/admin/users", icon: Users },
   { name: "Partial Leads", label: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
   { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
   { name: "Base Price Matrix ($B)", label: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },

@@ -6,6 +6,7 @@ import PWAInstallBanner from "@/components/PWAInstallBanner";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
 import StandaloneBodyManager from "@/components/StandaloneBodyManager";
+import { AuthProvider } from "@/components/AuthProvider";
 
 import "./globals.css";
 
@@ -166,16 +167,18 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased bg-white text-slate-900 min-h-screen flex flex-col`}
       >
-        <RealtimeSyncProvider>
-          {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
-          <StandaloneBodyManager />
-          <Header />
-          <main className="flex-1 pb-16 md:pb-0">{children}</main>
-          <Footer />
-          <PWAInstallBanner />
-          {/* MobileBottomNav renders fixed on mobile viewports */}
-          <MobileBottomNav />
-        </RealtimeSyncProvider>
+        <AuthProvider>
+          <RealtimeSyncProvider>
+            {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
+            <StandaloneBodyManager />
+            <Header />
+            <main className="flex-1 pb-16 md:pb-0">{children}</main>
+            <Footer />
+            <PWAInstallBanner />
+            {/* MobileBottomNav renders fixed on mobile viewports */}
+            <MobileBottomNav />
+          </RealtimeSyncProvider>
+        </AuthProvider>
       </body>
     </html>
   );

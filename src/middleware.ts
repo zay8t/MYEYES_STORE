@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth/jwt";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
 
-  // If traffic lands on a *.vercel.app domain in production, 301-redirect to canonical domain
+  // ── 1. Canonical domain redirect (Vercel → myeyes.pk) ───────────────────
   if (
     process.env.NODE_ENV === "production" &&
     host.includes(".vercel.app") &&
@@ -17,18 +19,60 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // ── 2. Read & verify JWT session ─────────────────────────────────────────
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = token ? await verifySession(token) : null;
+
+  // ── 3. Protect /profile/* — require authenticated customer ───────────────
+  if (pathname.startsWith("/profile")) {
+    if (!session) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // ── 4. Protect /admin/* — require ADMIN or SUPER_ADMIN role ─────────────
+  if (pathname.startsWith("/admin")) {
+    if (!session) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN") {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = "/";
+      homeUrl.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(homeUrl, 303);
+    }
+    return NextResponse.next();
+  }
+
+  // ── 5. Redirect authenticated users away from /login & /signup ──────────
+  if (pathname === "/login" || pathname === "/signup") {
+    if (session) {
+      const redirectTo = request.nextUrl.searchParams.get("redirect") || "/profile";
+      const targetUrl = request.nextUrl.clone();
+      targetUrl.pathname = redirectTo;
+      targetUrl.search = "";
+      return NextResponse.redirect(targetUrl);
+    }
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - icons / manifest.json / sw.js
+     * Match all request paths except for:
+     * - api routes
+     * - _next/static & _next/image
+     * - favicon, icons, manifest, service worker
      */
     "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|icons|sw.js).*)",
   ],

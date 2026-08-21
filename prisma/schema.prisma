@@ -1,14 +1,25 @@
-// This is your Prisma schema file,
+// MY EYES — Prisma Schema
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  OPTICIAN
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum PaymentStatus {
@@ -57,6 +68,14 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  ORDER_PLACED
+  ADVANCE_PENDING
+  ADVANCE_VERIFIED
+  LAB_QUEUED
+  LENS_SURFACING_EDGING
+  QUALITY_INSPECTION_PASSED
+  DISPATCHED_WITH_COURIER
+  CANCELLED
 }
 
 enum Category {
@@ -66,6 +85,120 @@ enum Category {
   CONTACT_LENSES
   ACCESSORIES
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Customer & Account Models
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String  @id @default(cuid())
+  name           String
+  email          String  @unique
+  phone          String? @unique
+  passwordHash   String
+  role           Role    @default(CUSTOMER)
+  avatarUrl      String?
+  savedFaceShape String? // "OVAL", "SQUARE", "ROUND", "HEART", "DIAMOND"
+  isVerified     Boolean @default(false)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relational nodes
+  cartItems     CartItem[]
+  wishlist      WishlistItem[]
+  prescriptions SavedPrescription[]
+  orders        Order[]             @relation("UserOrders")
+  addresses     Address[]
+
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+model CartItem {
+  id               String  @id @default(cuid())
+  userId           String
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId        String
+  quantity         Int     @default(1)
+  selectedColor    String?
+  lensPackageId    String? // "cr-crystal", "blue-defense", "sun-adaptive", "ultra-thin-167"
+  prescriptionData Json?   // { odSph, odCyl, odAxis, osSph, osCyl, osAxis, pd, addPower, lensType }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId, lensPackageId])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
+}
+
+model SavedPrescription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String  @default("My Everyday Prescription")
+  isDefault Boolean @default(false)
+
+  // Right Eye (OD)
+  odSph Decimal? @db.Decimal(4, 2)
+  odCyl Decimal? @db.Decimal(4, 2)
+  odAxis Int?
+
+  // Left Eye (OS)
+  osSph Decimal? @db.Decimal(4, 2)
+  osCyl Decimal? @db.Decimal(4, 2)
+  osAxis Int?
+
+  pd               Decimal? @db.Decimal(4, 1)
+  addPower         Decimal? @db.Decimal(4, 2)
+  prescriptionType String   @default("SINGLE_VISION") // "SINGLE_VISION", "PROGRESSIVE", "BIFOCAL"
+  slipImageUrl     String?
+  notes            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("saved_prescriptions")
+}
+
+model Address {
+  id            String  @id @default(cuid())
+  userId        String
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipientName String
+  phoneNumber   String
+  streetAddress String
+  city          String
+  province      String
+  postalCode    String?
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Product & Order Models (Existing, Preserved)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Product {
   id          String     @id @default(uuid())
@@ -84,46 +217,52 @@ model Product {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   items       OrderItem[]
-  image_url   String?
-  image_public_id String?
+  image_url           String?
+  image_public_id     String?
 }
 
 model Order {
-  id                  String         @id @default(uuid())
-  orderNumber         String?        @unique
+  id                  String        @id @default(uuid())
+  orderNumber         String?       @unique
   customerName        String
   customerEmail       String
   customerPhone       String?
   shippingAddress     String?
   shippingCity        String?
-  paymentMethod       PaymentMethod  @default(BANK_TRANSFER)
-  paymentStatus       PaymentStatus  @default(PENDING_VERIFICATION)
+  paymentMethod       PaymentMethod @default(BANK_TRANSFER)
+  paymentStatus       PaymentStatus @default(PENDING_VERIFICATION)
   paymentReceiptUrl   String?
   transactionProofUrl String?
-  shippingFee         Float?         @default(250)
+  shippingFee         Float?        @default(250)
   stripeSessionId     String?
   totalAmount         Float
-  currency            String         @default("PKR")
-  status              OrderStatus    @default(PROCESSING)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  currency            String        @default("PKR")
+  status              OrderStatus   @default(PROCESSING)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
   items               OrderItem[]
 
+  // Optional link to registered User
+  userId String?
+  user   User?   @relation("UserOrders", fields: [userId], references: [id], onDelete: SetNull)
+
   // ── Payment Verification Fields ──────────────────────────────────
-  transactionId        String?  @unique        // Unique → prevents duplicate TID fraud
-  paymentSenderName    String?
-  paymentSenderPhone   String?
-  ocrExtractedTid      String?                 // TID extracted by OCR parser
-  ocrConfidenceScore   Float?                  // OCR confidence 0–100
-  isOcrMatched         Boolean  @default(false) // OCR TID matches customer-entered TID
-  flaggedSuspicious    Boolean  @default(false)
+  transactionId      String?  @unique
+  paymentSenderName  String?
+  paymentSenderPhone String?
+  ocrExtractedTid    String?
+  ocrConfidenceScore Float?
+  isOcrMatched       Boolean  @default(false)
+  flaggedSuspicious  Boolean  @default(false)
 
   // ── Admin Audit Trail ─────────────────────────────────────────────
-  verifiedBy           String?                 // Admin email / ID
-  verifiedAt           DateTime?
-  rejectionReason      String?
-  customerNotified     Boolean  @default(false)
-  auditLogs            PaymentAuditLog[]
+  verifiedBy       String?
+  verifiedAt       DateTime?
+  rejectionReason  String?
+  customerNotified Boolean         @default(false)
+  auditLogs        PaymentAuditLog[]
+
+  @@index([userId])
 }
 
 model PaymentAuditLog {
@@ -136,18 +275,16 @@ model PaymentAuditLog {
   createdAt DateTime @default(now())
 }
 
-
-
 model LensOption {
-  id                     String   @id @default(uuid())
-  name                   String
-  description            String
-  price                  Float
-  pricePlus40            Float    @default(0)
-  type                   String
-  index                  String?
-  isConfiguratorVisible  Boolean  @default(true)
-  createdAt              DateTime @default(now())
+  id                    String   @id @default(uuid())
+  name                  String
+  description           String
+  price                 Float
+  pricePlus40           Float    @default(0)
+  type                  String
+  index                 String?
+  isConfiguratorVisible Boolean  @default(true)
+  createdAt             DateTime @default(now())
 }
 
 model OrderSequence {
@@ -157,32 +294,32 @@ model OrderSequence {
 }
 
 model OrderItem {
-  id             String        @id @default(uuid())
+  id             String  @id @default(uuid())
   orderId        String
   productId      String
   prescriptionId String?
   price          Float
-  quantity       Int           @default(1)
+  quantity       Int     @default(1)
 
   framePrice         Float?
   lensBasePriceKey   String?
   lensBasePriceValue Float?
   lensMultiplier     Float?
   lensFinalPrice     Float?
-  
-  isAsymmetricRx     Boolean?      @default(false)
-  rightEyeLensPrice  Float?
-  leftEyeLensPrice   Float?
-  rightMultiplier    Float?
-  leftMultiplier     Float?
+
+  isAsymmetricRx    Boolean? @default(false)
+  rightEyeLensPrice Float?
+  leftEyeLensPrice  Float?
+  rightMultiplier   Float?
+  leftMultiplier    Float?
 
   selectedLensName    String?
   calculatedLensPrice Float?
   totalAmount         Float?
 
-  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prescription Prescription? @relation(fields: [prescriptionId], references: [id])
 }
 
 model Prescription {
@@ -199,7 +336,7 @@ model Prescription {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt @default(now())
   OrderItem OrderItem[]
-  prescription_url String?
+  prescription_url       String?
   prescription_public_id String?
 }
 
@@ -231,4 +368,3 @@ model BasePriceSetting {
   value     Float
   updatedAt DateTime @updatedAt
 }
-
