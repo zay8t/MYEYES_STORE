@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 interface GuestCartItem {
   productId: string;
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
               selectedColor: selectedColor || null,
               lensPackageId: lensPackageId || null,
               prescriptionData: prescriptionData
-                ? (prescriptionData as Record<string, unknown>)
+                ? (prescriptionData as Prisma.InputJsonValue)
                 : undefined,
             },
           });

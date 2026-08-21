@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { Glasses, FileCheck2, Sparkles, Truck } from "lucide-react";
+import { Glasses, FileCheck2, Sparkles, Truck, type LucideIcon } from "lucide-react";
 
 interface MilestoneStep {
   step: string;
   title: string;
   description: string;
   microTag: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }
 
 const MILESTONES: MilestoneStep[] = [
