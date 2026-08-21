@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getActiveBasePrices, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
 import { revalidatePath } from "next/cache";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const prices = await getActiveBasePrices();
     return NextResponse.json({
@@ -35,6 +41,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const keys = ["P1", "P2", "P3", "P4", "P1_tier2", "P2_tier2", "P3_tier2", "P4_tier2"];

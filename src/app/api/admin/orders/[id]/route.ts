@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,6 +10,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();

@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 // GET all products (optionally filtered by category)
 export async function GET(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
@@ -33,6 +39,11 @@ export async function GET(request: NextRequest) {
 
 // CREATE a new product with multi-image array stringified in `images`
 export async function POST(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const {

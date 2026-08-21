@@ -2,6 +2,10 @@ import { NextRequest } from "next/server";
 import { verifySession, SESSION_COOKIE_NAME, SessionPayload } from "./jwt";
 import prisma from "@/lib/prisma";
 
+export function isAdminRole(role?: string | null): boolean {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
+}
+
 /**
  * Extract and verify the session from a request's cookies
  */
@@ -9,6 +13,17 @@ export async function getSession(request: NextRequest): Promise<SessionPayload |
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
   return await verifySession(token);
+}
+
+/**
+ * Validate admin session or return null
+ */
+export async function requireAdminSession(request: NextRequest): Promise<SessionPayload | null> {
+  const session = await getSession(request);
+  if (!session || !isAdminRole(session.role)) {
+    return null;
+  }
+  return session;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPaymentAction, rejectPaymentAction } from "@/app/actions/admin";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,9 +10,14 @@ export const revalidate = 0;
  * Payload: { orderId: string, action: "APPROVE" | "REJECT", rejectionReason?: string, adminEmail?: string }
  */
 export async function POST(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
-    const { orderId, action, rejectionReason, adminEmail = "admin@myeyes.pk" } = body;
+    const { orderId, action, rejectionReason, adminEmail = session.email || "admin@myeyes.pk" } = body;
 
     if (!orderId || !action) {
       return NextResponse.json(

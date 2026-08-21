@@ -19,20 +19,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  // ── 2. Read & verify JWT session ─────────────────────────────────────────
+  // ── 2. Deprecate /profile — permanently redirect to / ─────────────────
+  if (pathname.startsWith("/profile")) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl, 308);
+  }
+
+  // ── 3. Read & verify JWT session ─────────────────────────────────────────
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = token ? await verifySession(token) : null;
-
-  // ── 3. Protect /profile/* — require authenticated customer ───────────────
-  if (pathname.startsWith("/profile")) {
-    if (!session) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/login";
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
-  }
 
   // ── 4. Protect /admin/* — require ADMIN or SUPER_ADMIN role ─────────────
   if (pathname.startsWith("/admin")) {
@@ -54,9 +51,13 @@ export async function middleware(request: NextRequest) {
   // ── 5. Redirect authenticated users away from /login & /signup ──────────
   if (pathname === "/login" || pathname === "/signup") {
     if (session) {
-      const redirectTo = request.nextUrl.searchParams.get("redirect") || "/profile";
       const targetUrl = request.nextUrl.clone();
-      targetUrl.pathname = redirectTo;
+      if (session.role === "ADMIN" || session.role === "SUPER_ADMIN") {
+        targetUrl.pathname = "/admin";
+      } else {
+        const redirectTo = request.nextUrl.searchParams.get("redirect") || "/";
+        targetUrl.pathname = redirectTo === "/profile" ? "/" : redirectTo;
+      }
       targetUrl.search = "";
       return NextResponse.redirect(targetUrl);
     }

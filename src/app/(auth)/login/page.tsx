@@ -71,8 +71,15 @@ export default function LoginPage() {
 
       await refetch();
 
-      const redirectTo = searchParams.get("redirect") || "/profile";
-      router.push(redirectTo);
+      // Role-based auto redirection
+      const role = data.user?.role;
+      if (role === "ADMIN" || role === "SUPER_ADMIN") {
+        router.push("/admin");
+      } else {
+        const rawRedirect = searchParams.get("redirect");
+        const redirectTo = rawRedirect && rawRedirect !== "/profile" ? rawRedirect : "/";
+        router.push(redirectTo);
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -101,7 +108,7 @@ export default function LoginPage() {
       </div>
 
       {/* Card */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+      <div className="bg-white border border-slate-200 shadow-xs rounded-2xl p-8 sm:p-10">
         {/* Eyebrow Pill */}
         <div className="flex justify-center mb-5">
           <span className="bg-orange-50 border border-orange-200 text-[#ff7a00] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
@@ -116,7 +123,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-            Sign in to your MY EYES account to manage orders, prescriptions & saved frames.
+            Sign in to your MY EYES account to manage orders, wishlist & checkout seamlessly.
           </p>
         </div>
 
@@ -188,7 +195,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                Sign In to Studio
+                Sign In
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

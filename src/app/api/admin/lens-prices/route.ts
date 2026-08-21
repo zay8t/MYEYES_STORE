@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SOLEX_LENS_OPTIONS, CORE_FIVE_LENS_IDS } from "@/lib/solex-lens-pricing";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CORE_SET = new Set<string>(CORE_FIVE_LENS_IDS);
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const count = await prisma.lensOption.count();
     if (count === 0) {
@@ -56,7 +62,12 @@ export async function GET() {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const { id, basePrice, pricePlus40 } = body;

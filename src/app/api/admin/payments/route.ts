@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { verifyPaymentAction, rejectPaymentAction } from "@/app/actions/admin";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,6 +20,11 @@ const PREPAID_METHODS: PaymentMethod[] = [
  * Completely excludes Cash on Delivery (COD) orders.
  */
 export async function GET(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const paymentStatusParam = searchParams.get("paymentStatus") || searchParams.get("status");
@@ -182,9 +188,14 @@ export async function GET(request: NextRequest) {
  * Body: { orderId: string, action: "APPROVE" | "REJECT", rejectionReason?: string, adminEmail?: string }
  */
 export async function POST(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
-    const { orderId, action, rejectionReason, adminEmail = "admin@myeyes.pk" } = body;
+    const { orderId, action, rejectionReason, adminEmail = session.email || "admin@myeyes.pk" } = body;
 
     if (!orderId || !action) {
       return NextResponse.json(

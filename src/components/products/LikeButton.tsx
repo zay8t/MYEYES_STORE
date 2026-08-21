@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
 
 interface LikeButtonProps {
@@ -20,6 +21,7 @@ export default function LikeButton({
   className,
 }: LikeButtonProps) {
   const { user, refetch } = useAuth();
+  const { triggerRefresh } = useWishlistStore();
   const [liked, setLiked] = useState(
     initialLiked || (user?.wishedProductIds?.includes(productId) ?? false)
   );
@@ -47,6 +49,7 @@ export default function LikeButton({
             : ids.filter((id) => id !== productId);
           localStorage.setItem("myeyes_guest_wishlist", JSON.stringify(updated));
         } catch {}
+        triggerRefresh();
         setIsPending(false);
         return;
       }
@@ -63,6 +66,7 @@ export default function LikeButton({
           setLiked((prev) => !prev);
         } else {
           await refetch();
+          triggerRefresh();
         }
       } catch {
         setLiked((prev) => !prev);
@@ -70,12 +74,10 @@ export default function LikeButton({
         setIsPending(false);
       }
     },
-    [isPending, liked, productId, user, refetch]
+    [isPending, liked, productId, user, refetch, triggerRefresh]
   );
 
-  const sizeClasses = size === "sm"
-    ? "w-8 h-8"
-    : "w-9 h-9";
+  const sizeClasses = size === "sm" ? "w-8 h-8" : "w-9 h-9";
 
   return (
     <motion.button

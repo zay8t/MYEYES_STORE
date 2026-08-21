@@ -3,11 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { getActiveBasePrices, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
 import { revalidatePath } from "next/cache";
 import { SOLEX_LENS_OPTIONS } from "@/lib/solex-lens-pricing";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const prices = await getActiveBasePrices();
     return NextResponse.json(prices);
@@ -18,6 +24,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const { B1, B2, B3, B4, B5 } = body;

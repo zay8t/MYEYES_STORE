@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Loader2, User, Mail, Phone, Lock } from "lucide-react";
-import type { Metadata } from "next";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function SignupPage() {
@@ -91,7 +90,8 @@ export default function SignupPage() {
       await refetch();
 
       // Redirect
-      const redirectTo = searchParams.get("redirect") || "/profile";
+      const rawRedirect = searchParams.get("redirect");
+      const redirectTo = rawRedirect && rawRedirect !== "/profile" ? rawRedirect : "/";
       router.push(redirectTo);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -121,12 +121,12 @@ export default function SignupPage() {
       </div>
 
       {/* Card */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+      <div className="bg-white border border-slate-200 shadow-xs rounded-2xl p-8 sm:p-10">
         {/* Eyebrow Pill */}
         <div className="flex justify-center mb-5">
           <span className="bg-orange-50 border border-orange-200 text-[#ff7a00] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#ff7a00] animate-pulse" />
-            MY EYES STUDIO PORTAL
+            CREATE ACCOUNT
           </span>
         </div>
 
@@ -136,7 +136,7 @@ export default function SignupPage() {
             Join MY EYES
           </h1>
           <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-            Track custom lab-crafted orders, save prescriptions, and access 1-tap reordering.
+            Create an account to save your favorite frames and enjoy faster checkout.
           </p>
         </div>
 
@@ -260,7 +260,7 @@ export default function SignupPage() {
               </>
             ) : (
               <>
-                Create Studio Account
+                Create Account
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
