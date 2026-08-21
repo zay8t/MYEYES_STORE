@@ -10,14 +10,13 @@ function KidsCatalogContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/products", { cache: "no-store" })
+    fetch("/api/products?gender=Kids", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         const list = safeProductList(data);
         const kidsList = list.filter(
           (p) => (p.gender || "").toLowerCase() === "kids" || (p.gender || "").toLowerCase() === "juniors"
         );
-        // If kids collection is small, fallback to including unisex petite frames
         setProducts(kidsList.length > 0 ? kidsList : list);
         setLoading(false);
       })

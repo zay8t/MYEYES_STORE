@@ -30,7 +30,7 @@ export default function HomePage() {
 
   useEffect(() => {
     try {
-      fetch("/api/admin/products", { cache: "no-store" })
+      fetch("/api/products", { cache: "no-store" })
         .then((res) => res.json())
         .then((data) => {
           setProducts(safeProductList(data));
@@ -97,38 +97,38 @@ export default function HomePage() {
             {/* 4. 4-Button Arrangement */}
             <div className="pt-2 grid grid-cols-2 gap-2.5 w-full max-w-md sm:flex sm:flex-wrap sm:items-center">
               {/* Button 1: Start with a quiz */}
-              <Link 
+              <Link
                 href="/quiz"
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sparkles className="w-3.5 h-3.5 shrink-0"/>
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Start with a quiz</span>
               </Link>
 
               {/* Button 2: Shop eyeglasses */}
-              <Link 
+              <Link
                 href="/eyeglasses"
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Glasses className="w-3.5 h-3.5 shrink-0"/>
+                <Glasses className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Shop eyeglasses</span>
               </Link>
 
               {/* Button 3: Shop sunglasses */}
-              <Link 
+              <Link
                 href="/sunglasses"
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sun className="w-3.5 h-3.5 shrink-0"/>
+                <Sun className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Shop sunglasses</span>
               </Link>
 
               {/* Button 4: Lens Pricing */}
-              <Link 
+              <Link
                 href="/lens-pricing"
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-white text-slate-900 border-2 border-slate-800 hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Calculator className="w-3.5 h-3.5 shrink-0"/>
+                <Calculator className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Lens Pricing</span>
               </Link>
             </div>

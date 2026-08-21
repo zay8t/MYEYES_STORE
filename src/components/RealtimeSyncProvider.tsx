@@ -33,7 +33,7 @@ export default function RealtimeSyncProvider({ children }: RealtimeSyncProviderP
 
         // 3. If cart has items, validate against live products to ensure zero stale pricing/stock
         if (items.length > 0) {
-          const res = await fetch("/api/admin/products", {
+          const res = await fetch("/api/products", {
             cache: "no-store",
             headers: { "Cache-Control": "no-cache" },
           });

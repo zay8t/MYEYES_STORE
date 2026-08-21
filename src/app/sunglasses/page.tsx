@@ -10,7 +10,7 @@ function SunglassesCatalogContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/products?category=SUNGLASSES", { cache: "no-store" })
+    fetch("/api/products?category=SUNGLASSES", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setProducts(safeProductList(data));

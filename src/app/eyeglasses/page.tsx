@@ -10,7 +10,7 @@ function EyeglassesCatalogContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/products?category=EYEGLASSES", { cache: "no-store" })
+    fetch("/api/products?category=EYEGLASSES", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setProducts(safeProductList(data));

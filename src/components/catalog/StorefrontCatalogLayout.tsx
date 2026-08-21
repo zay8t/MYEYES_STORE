@@ -124,20 +124,33 @@ export default function StorefrontCatalogLayout({
                   <EyeOff className="w-7 h-7 text-slate-400" />
                 </div>
                 <h3 className="text-base font-extrabold text-slate-900 mb-1">
-                  No matching frames found
+                  {initialProducts.length === 0
+                    ? "No products currently available"
+                    : "No matching frames found"}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
-                  We could not find any frames matching your exact combination of active filters. Try broadening your criteria or reset all filters.
+                  {initialProducts.length === 0
+                    ? "New prescription frames are being added regularly. Please check back shortly or explore our other collections."
+                    : "We could not find any frames matching your exact combination of active filters. Try broadening your criteria or reset all filters."}
                 </p>
                 <div className="flex items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset All Filters</span>
-                  </button>
+                  {initialProducts.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset All Filters</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/collections"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    >
+                      <span>Browse All Collections</span>
+                    </Link>
+                  )}
                   <Link
                     href="/quiz"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold transition-all cursor-pointer"

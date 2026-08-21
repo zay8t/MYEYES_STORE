@@ -10,7 +10,7 @@ function CollectionsCatalogContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/products", { cache: "no-store" })
+    fetch("/api/products", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setProducts(safeProductList(data));

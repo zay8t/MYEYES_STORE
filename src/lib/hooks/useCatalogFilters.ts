@@ -17,8 +17,8 @@ export interface CatalogFilterState {
   search: string;
 }
 
-export const DEFAULT_MIN_PRICE = 1000;
-export const DEFAULT_MAX_PRICE = 30000;
+export const DEFAULT_MIN_PRICE = 0;
+export const DEFAULT_MAX_PRICE = 100000;
 export const DEFAULT_SORT = "featured";
 
 export function useCatalogFilters() {
@@ -41,13 +41,15 @@ export function useCatalogFilters() {
     const minPriceRaw = searchParams.get("minPrice");
     const maxPriceRaw = searchParams.get("maxPrice");
 
-    const minPrice = minPriceRaw && !isNaN(Number(minPriceRaw))
-      ? Math.max(0, Number(minPriceRaw))
-      : DEFAULT_MIN_PRICE;
+    const minPrice =
+      minPriceRaw && !isNaN(Number(minPriceRaw))
+        ? Math.max(0, Number(minPriceRaw))
+        : DEFAULT_MIN_PRICE;
 
-    const maxPrice = maxPriceRaw && !isNaN(Number(maxPriceRaw))
-      ? Math.min(100000, Number(maxPriceRaw))
-      : DEFAULT_MAX_PRICE;
+    const maxPrice =
+      maxPriceRaw && !isNaN(Number(maxPriceRaw))
+        ? Math.min(100000, Number(maxPriceRaw))
+        : DEFAULT_MAX_PRICE;
 
     return {
       gender: parseArray("gender"),

@@ -10,14 +10,14 @@ function MenCatalogContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/products", { cache: "no-store" })
+    fetch("/api/products?gender=Men", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         const list = safeProductList(data);
         const menList = list.filter(
           (p) => (p.gender || "").toLowerCase() === "men" || (p.gender || "").toLowerCase() === "unisex"
         );
-        setProducts(menList);
+        setProducts(menList.length > 0 ? menList : list);
         setLoading(false);
       })
       .catch(() => {
