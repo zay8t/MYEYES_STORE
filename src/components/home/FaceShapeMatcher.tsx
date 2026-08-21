@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { SafeProduct } from "@/lib/data-guards";
-import { formatPrice, formatMaterial } from "@/lib/utils";
+import { formatPrice, formatMaterial, formatFrameShape } from "@/lib/utils";
 import { ArrowRight, Sparkles, CheckCircle2, Glasses } from "lucide-react";
+import LikeButton from "@/components/products/LikeButton";
 
 export type FaceShapeId = "oval" | "round" | "square" | "heart";
 
@@ -383,7 +384,7 @@ export default function FaceShapeMatcher({
                   Loading verified optical frames...
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                   {matchedProducts.map((product) => {
                     const imgUrl =
                       product.images && product.images.length > 0 && product.images[0] !== "/logo.png"
@@ -393,60 +394,82 @@ export default function FaceShapeMatcher({
                     return (
                       <div
                         key={product.id}
-                        className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between space-y-3 transition-all duration-200 hover:border-slate-300 hover:shadow-xs active:scale-[0.98]"
+                        className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group app-card-press"
                       >
-                        <Link
-                          href={`/products/${product.slug}`}
-                          className="block relative w-full aspect-[4/3] bg-slate-50 rounded-xl overflow-hidden group"
-                        >
-                          <Image
-                            src={imgUrl}
-                            alt={product.name}
-                            fill
-                            quality={85}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw"
-                            className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-xs border border-slate-200 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded text-slate-700">
+                        {/* 100% Full-width top image container */}
+                        <div className="relative w-full aspect-[4/3] bg-neutral-100 overflow-hidden group/img">
+                          <Link
+                            href={`/products/${product.slug}`}
+                            className="block absolute inset-0 w-full h-full"
+                          >
+                            <Image
+                              src={imgUrl}
+                              alt={product.name}
+                              fill
+                              quality={90}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw"
+                              className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+                            />
+                          </Link>
+
+                          {/* Material / Category Pill Badge pinned top left */}
+                          <span className="absolute top-2.5 left-2.5 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm pointer-events-none">
                             {formatMaterial(product.material)}
                           </span>
-                        </Link>
 
-                        <div className="space-y-1">
-                          <Link href={`/products/${product.slug}`}>
-                            <h5 className="text-xs font-bold text-slate-900 line-clamp-1 hover:text-[#ff7a00] transition-colors">
-                              {product.name}
-                            </h5>
-                          </Link>
-                          <div className="flex items-center justify-between text-xs pt-1">
-                            <span className="font-extrabold text-slate-900">
-                              {formatPrice(product.price)}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                              {product.formattedShape || "Classic"}
-                            </span>
+                          {/* Save / Wishlist Heart Button pinned top right */}
+                          <div className="absolute top-2.5 right-2.5 z-20">
+                            <LikeButton productId={product.id} size="sm" />
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-100">
-                          {onAddLenses ? (
-                            <button
-                              type="button"
-                              onClick={() => onAddLenses(product)}
-                              className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <Glasses className="w-3.5 h-3.5" />
-                              <span>Configure Rx</span>
-                            </button>
-                          ) : (
-                            <Link
-                              href={`/products/${product.slug}`}
-                              className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors text-center"
-                            >
-                              <Glasses className="w-3.5 h-3.5" />
-                              <span>Select Frame</span>
+                        {/* Content Container with isolated padding */}
+                        <div className="p-4 flex flex-col justify-between flex-1 space-y-2.5">
+                          {/* Shape / Subtitle Row */}
+                          <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                            <span>{formatFrameShape(product.frameShape)}</span>
+                            <span>{product.gender || "Unisex"}</span>
+                          </div>
+
+                          {/* Title & Description */}
+                          <div>
+                            <Link href={`/products/${product.slug}`}>
+                              <h5 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#ff7a00] transition-colors">
+                                {product.name}
+                              </h5>
                             </Link>
-                          )}
+                            {product.description && (
+                              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                {product.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Price & Action Button */}
+                          <div className="pt-2 border-t border-neutral-100 flex items-center justify-between gap-2">
+                            <span className="text-sm font-extrabold text-slate-900">
+                              {formatPrice(product.price)}
+                            </span>
+
+                            {onAddLenses ? (
+                              <button
+                                type="button"
+                                onClick={() => onAddLenses(product)}
+                                className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <Glasses className="w-3.5 h-3.5" />
+                                <span>Configure Rx</span>
+                              </button>
+                            ) : (
+                              <Link
+                                href={`/products/${product.slug}`}
+                                className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
+                              >
+                                <Glasses className="w-3.5 h-3.5" />
+                                <span>Configure Rx</span>
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

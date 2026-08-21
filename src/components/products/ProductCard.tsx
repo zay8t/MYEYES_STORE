@@ -6,6 +6,7 @@ import Image from "next/image";
 import { formatPrice, formatMaterial, formatFrameShape, cn } from "@/lib/utils";
 import { Glasses } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
+import LikeButton from "@/components/products/LikeButton";
 
 const COLOR_MAP: Record<string, string> = {
   black: "#18181B",
@@ -119,31 +120,38 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group app-card-press">
       {/* 100% Full-width top image container */}
-      <Link
-        href={`/products/${product.slug}`}
-        className="block relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden"
-      >
-        <Image
-          src={activeImageUrl || "/placeholder-frame.png"}
-          alt={product.name}
-          fill
-          quality={90}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
-        />
+      <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden group/img">
+        <Link
+          href={`/products/${product.slug}`}
+          className="block absolute inset-0 w-full h-full"
+        >
+          <Image
+            src={activeImageUrl || "/placeholder-frame.png"}
+            alt={product.name}
+            fill
+            quality={90}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+          />
+        </Link>
 
-        {/* Category Pill Badge pinned inside top right */}
-        <span className="absolute top-3 right-3 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+        {/* Category Pill Badge pinned inside top left */}
+        <span className="absolute top-3 left-3 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm pointer-events-none">
           {product.category || "Eyeglasses"}
         </span>
 
+        {/* Wishlist Heart Button pinned inside top right */}
+        <div className="absolute top-2.5 right-2.5 z-20">
+          <LikeButton productId={product.id} size="sm" />
+        </div>
+
         {/* Variant Indicator if multiple images exist */}
         {imagesList.length > 1 && (
-          <div className="absolute bottom-2.5 right-2.5 z-10 bg-black/60 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2.5 right-2.5 z-10 bg-black/60 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.5 rounded pointer-events-none">
             {selectedVariantIdx + 1}/{imagesList.length}
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Content Container with isolated padding */}
       <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 space-y-3">

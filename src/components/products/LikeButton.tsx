@@ -91,8 +91,8 @@ export default function LikeButton({
       className={cn(
         "relative rounded-full flex items-center justify-center transition-all duration-200 shadow-xs z-10 cursor-pointer",
         liked
-          ? "bg-rose-50/80 border border-rose-200 text-rose-500"
-          : "bg-white/95 backdrop-blur-sm border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300",
+          ? "bg-orange-50/90 border border-orange-200 text-[#ff7a00]"
+          : "bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-400 hover:text-[#ff7a00] hover:border-orange-200 shadow-2xs",
         sizeClasses,
         className
       )}
@@ -100,7 +100,7 @@ export default function LikeButton({
       <Heart
         className={cn(
           "w-4 h-4 transition-all duration-200",
-          liked ? "fill-rose-500 text-rose-500" : "fill-none"
+          liked ? "fill-[#ff7a00] text-[#ff7a00]" : "fill-none"
         )}
       />
 
