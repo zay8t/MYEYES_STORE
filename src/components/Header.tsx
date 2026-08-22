@@ -26,12 +26,7 @@ import { cn } from "@/lib/utils";
 import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
 import PDMeasurementModal from "@/components/PDTool/PDMeasurementModal";
-import dynamic from "next/dynamic";
 
-const ARTryOnModal = dynamic(() => import("@/components/ARTryOn/ARTryOnModal"), {
-  ssr: false,
-  loading: () => null,
-});
 
 export default function Header() {
   const pathname = usePathname();
@@ -47,7 +42,6 @@ export default function Header() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
   const [pdModalOpen, setPdModalOpen] = useState(false);
-  const [tryOnModalOpen, setTryOnModalOpen] = useState(false);
 
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -404,7 +398,6 @@ export default function Header() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onOpenPDModal={() => setPdModalOpen(true)}
-        onOpenTryOnModal={() => setTryOnModalOpen(true)}
       />
 
       {/* PD Measurement Studio Modal */}
@@ -412,12 +405,6 @@ export default function Header() {
         isOpen={pdModalOpen}
         onClose={() => setPdModalOpen(false)}
         onConfirm={() => setPdModalOpen(false)}
-      />
-
-      {/* Virtual 3D Try-On Modal */}
-      <ARTryOnModal
-        isOpen={tryOnModalOpen}
-        onClose={() => setTryOnModalOpen(false)}
       />
     </>
   );

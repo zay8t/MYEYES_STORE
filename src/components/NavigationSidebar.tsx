@@ -10,7 +10,6 @@ import {
   Percent,
   Sparkles,
   Ruler,
-  Camera,
   ChevronRight,
 } from "lucide-react";
 
@@ -18,14 +17,12 @@ export interface NavigationSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenPDModal?: () => void;
-  onOpenTryOnModal?: () => void;
 }
 
 export function NavigationSidebar({
   isOpen,
   onClose,
   onOpenPDModal,
-  onOpenTryOnModal,
 }: NavigationSidebarProps) {
   // Lock body scroll with scrollbar compensation
   useEffect(() => {
@@ -136,7 +133,7 @@ export function NavigationSidebar({
 
             <Link
               className="flex items-center justify-between p-3 rounded-xl text-slate-800 hover:text-[#ff7a00] hover:bg-amber-50/50 active:bg-amber-100/60 transition group cursor-pointer"
-              href="/lens-pricing"
+              href="/pricing"
               onClick={onClose}
             >
               <div className="flex items-center gap-3.5">
@@ -177,22 +174,6 @@ export function NavigationSidebar({
               <div className="flex items-center gap-3.5">
                 <Ruler className="w-4 h-4 text-slate-500 group-hover:text-[#ff7a00] transition-colors" />
                 <span className="text-sm font-medium">Measure PD</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ff7a00] transition-colors" />
-            </button>
-
-            <button
-              type="button"
-              id="sidebar-virtual-tryon-btn"
-              onClick={() => {
-                onClose();
-                onOpenTryOnModal?.();
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-xl text-slate-800 hover:text-[#ff7a00] hover:bg-amber-50/50 active:bg-amber-100/60 transition group cursor-pointer text-left"
-            >
-              <div className="flex items-center gap-3.5">
-                <Camera className="w-4 h-4 text-slate-500 group-hover:text-[#ff7a00] transition-colors" />
-                <span className="text-sm font-medium">Virtual 3D Try-On</span>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ff7a00] transition-colors" />
             </button>

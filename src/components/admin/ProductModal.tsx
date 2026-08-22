@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Category, FrameShape, Material, Product } from "@prisma/client";
 import ImageUploader from "./ImageUploader";
-import GLBAssetManager from "./GLBAssetManager";
 
 export interface ProductModalProps {
   product?: Product | null;
@@ -115,7 +114,6 @@ export default function ProductModal({
     return [];
   });
   const [featured, setFeatured] = useState<boolean>(product?.featured ?? false);
-  const [modelGlbUrl, setModelGlbUrl] = useState<string | null>(product?.modelGlbUrl || null);
 
   const [images, setImages] = useState<string[]>(parseExistingImages(product?.images));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,7 +156,6 @@ export default function ProductModal({
       colors: selectedColors,
       images,
       featured,
-      modelGlbUrl,
     };
 
     try {
@@ -439,13 +436,6 @@ export default function ProductModal({
               onChange={(newImgs) => setImages(newImgs)}
             />
           </div>
-
-          {/* 3D CAD Model (.glb) Manager */}
-          <GLBAssetManager
-            productId={product?.id}
-            initialGlbUrl={modelGlbUrl}
-            onUrlUpdated={(url: string | null) => setModelGlbUrl(url)}
-          />
 
           {/* Form Actions Footer */}
           <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
