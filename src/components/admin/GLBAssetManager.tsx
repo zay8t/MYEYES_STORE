@@ -25,16 +25,23 @@ export function GLBAssetManager({
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".glb")) {
-      setUploadError("Only binary .glb 3D files are supported.");
+      setUploadError("Please select a valid .glb 3D CAD file.");
+      return;
+    }
+
+    // Check file size (< 25MB)
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadError("File size exceeds the 25 MB limit.");
       return;
     }
 
     setUploadError(null);
     setIsUploading(true);
+
     const formData = new FormData();
     formData.append("file", file);
-    if (productId) {
-      formData.append("productId", productId);
+    if (productId && productId.trim()) {
+      formData.append("productId", productId.trim());
     }
 
     try {
@@ -42,18 +49,23 @@ export function GLBAssetManager({
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
-      if (data.success && data.modelUrl) {
-        setGlbUrl(data.modelUrl);
-        onUrlUpdated(data.modelUrl);
-      } else {
-        setUploadError(data.error || "3D model upload failed");
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || `Upload failed with status ${res.status}`);
       }
-    } catch (err) {
-      console.error("GLB upload failed:", err);
-      setUploadError("Network connection error during 3D model upload.");
+
+      setGlbUrl(data.modelUrl);
+      onUrlUpdated(data.modelUrl);
+    } catch (err: unknown) {
+      console.error("3D Upload caught error:", err);
+      const msg = err instanceof Error ? err.message : "Network connection error during 3D model upload.";
+      setUploadError(msg);
     } finally {
       setIsUploading(false);
+      // Reset input value so re-uploading the same file works
+      e.target.value = "";
     }
   };
 
