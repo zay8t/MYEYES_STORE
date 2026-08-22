@@ -18,6 +18,7 @@ import {
   User,
   LogOut,
   Shield,
+  Ruler,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -28,6 +29,7 @@ import MobileAccountDrawer from "@/components/customer/MobileAccountDrawer";
 import { cn } from "@/lib/utils";
 import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
+import PDMeasurementModal from "@/components/PDTool/PDMeasurementModal";
 
 const EYEGLASSES_DROPDOWN = [
   { label: "All Eyeglasses", href: "/eyeglasses" },
@@ -64,6 +66,7 @@ export default function Header() {
   >(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
+  const [pdModalOpen, setPdModalOpen] = useState(false);
 
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -378,6 +381,18 @@ export default function Header() {
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 Style Quiz
               </Link>
+
+              {/* PD Measurement Studio */}
+              <button
+                id="nav-pd-measure-btn"
+                type="button"
+                onClick={() => setPdModalOpen(true)}
+                className="text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-slate-200/60 text-slate-600 hover:text-slate-950 hover:bg-slate-50"
+                aria-label="Measure Pupillary Distance"
+              >
+                <Ruler className="w-3.5 h-3.5 opacity-70" />
+                PD Measure
+              </button>
             </nav>
 
             {/* Right Actions */}
@@ -426,6 +441,17 @@ export default function Header() {
               <div className="hidden sm:block">
                 <ShareAppButton variant="icon" />
               </div>
+
+              {/* Mobile PD measure icon */}
+              <button
+                id="mobile-pd-measure-btn"
+                type="button"
+                onClick={() => setPdModalOpen(true)}
+                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center sm:hidden"
+                aria-label="Measure Pupillary Distance"
+              >
+                <Ruler className="w-4.5 h-4.5 stroke-[1.8]" />
+              </button>
 
               {/* Auth State */}
               {mounted && !isLoading && (
@@ -580,6 +606,13 @@ export default function Header() {
       <CartDrawer />
       <WishlistDrawer />
       <MobileAccountDrawer />
+
+      {/* PD Measurement Studio */}
+      <PDMeasurementModal
+        isOpen={pdModalOpen}
+        onClose={() => setPdModalOpen(false)}
+        onConfirm={() => setPdModalOpen(false)}
+      />
     </>
   );
 }

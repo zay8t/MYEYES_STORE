@@ -3,8 +3,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   X, Check, ChevronRight, ArrowLeft, Camera, ImageIcon,
-  Trash2, User, Phone, Scan, Sparkles, AlertCircle, Loader2, Pencil
+  Trash2, User, Phone, Scan, Sparkles, AlertCircle, Loader2, Pencil, Ruler
 } from "lucide-react";
+import PDMeasurementModal, { PDMeasurementResult } from "@/components/PDTool/PDMeasurementModal";
 import Image from "next/image";
 import { cn, formatPrice } from "@/lib/utils";
 import { compressImage } from "@/lib/nativeStorage";
@@ -263,6 +264,10 @@ export default function PrescriptionModal({
   const [ocrSanityOpen, setOcrSanityOpen] = useState(false);
   const [extractedValues, setExtractedValues] = useState<ExtractedPrescription | null>(null);
 
+  // PD Measurement Studio
+  const [pdModalOpen, setPdModalOpen] = useState(false);
+  const [pdMeasured, setPdMeasured] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -287,8 +292,16 @@ export default function PrescriptionModal({
       setExtractedValues(null);
       setRx({ odSph: "+0.00", odCyl: "+0.00", odAxis: "", osSph: "+0.00", osCyl: "+0.00", osAxis: "", pd: "63", add: "", rxFileUrl: "", notes: "" });
       setSelectedLensId("progressive-freeform");
+      setPdMeasured(false);
+      setPdModalOpen(false);
     }
   }, [isOpen]);
+
+  const handlePDConfirm = useCallback((result: PDMeasurementResult) => {
+    setRx(prev => ({ ...prev, pd: String(result.binocularPD) }));
+    setPdMeasured(true);
+    setPdModalOpen(false);
+  }, []);
 
   // Load and strictly order the 5 Core Options for customer selection
   useEffect(() => {
@@ -1064,15 +1077,43 @@ export default function PrescriptionModal({
                   {/* PD and ADD */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">PD (mm)</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        value={rx.pd}
-                        onChange={e => setRx(prev => ({ ...prev, pd: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 text-xs font-bold text-center focus:ring-2 focus:ring-amber-400 bg-white"
-                        placeholder="63"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">PD (mm)</label>
+                        <button
+                          type="button"
+                          id="pd-studio-trigger-btn"
+                          onClick={() => setPdModalOpen(true)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200/60 text-[9px] font-bold text-[#ff7a00] uppercase tracking-wider transition-colors"
+                        >
+                          <Ruler className="w-2.5 h-2.5" />
+                          Measure
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={rx.pd}
+                          onChange={e => { setRx(prev => ({ ...prev, pd: e.target.value })); setPdMeasured(false); }}
+                          className={cn("w-full px-3 py-2 rounded-xl border text-slate-900 text-xs font-bold text-center focus:ring-2 focus:outline-none bg-white transition-all",
+                            pdMeasured
+                              ? "border-emerald-300 focus:ring-emerald-200 bg-emerald-50/40"
+                              : "border-slate-200 focus:ring-amber-400"
+                          )}
+                          placeholder="63"
+                        />
+                        {pdMeasured && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
+                            <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                          </span>
+                        )}
+                      </div>
+                      {pdMeasured && (
+                        <p className="text-[9px] text-emerald-600 font-semibold mt-1 flex items-center gap-0.5">
+                          <Check className="w-2.5 h-2.5" />
+                          Optically measured
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">ADD Power</label>
@@ -1260,6 +1301,13 @@ export default function PrescriptionModal({
           </div>
         </div>
       )}
+
+      {/* PD Measurement Studio Modal */}
+      <PDMeasurementModal
+        isOpen={pdModalOpen}
+        onClose={() => setPdModalOpen(false)}
+        onConfirm={handlePDConfirm}
+      />
     </div>
   );
 }
