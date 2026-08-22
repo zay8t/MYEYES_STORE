@@ -10,6 +10,7 @@ import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
 import dynamic from "next/dynamic";
+import { getFrontFacingProductImage } from "@/lib/optical/productImageHelper";
 
 const ARTryOnModal = dynamic(() => import("@/components/ARTryOn/ARTryOnModal"), {
   ssr: false,
@@ -390,7 +391,7 @@ export default function ProductDetailPage({
       <ARTryOnModal
         isOpen={isTryOnOpen}
         onClose={() => setIsTryOnOpen(false)}
-        initialImageUrl={currentImage}
+        initialImageUrl={getFrontFacingProductImage(product)}
         initialProductId={product.id}
       />
     </div>

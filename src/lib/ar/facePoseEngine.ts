@@ -1,6 +1,6 @@
-﻿/**
+/**
  * Face Pose Engine — Laboratory Optical AR Module
- * MediaPipe 468-point Face Mesh spatial pose extraction
+ * MediaPipe 468-point Face Mesh spatial pose extraction & eye-bridge alignment.
  * Landmark references: https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker
  *
  * Outputs THREE-compatible position / quaternion / scale for frame overlay.
@@ -10,20 +10,20 @@ import * as THREE from "three";
 
 // ─── Landmark Indices ──────────────────────────────────────────────────────────
 
-/** Nasal bridge / sellion anchor */
-const LM_SELLION       = 6;
+/** Nasal bridge / sellion center (Datum) */
+export const LM_SELLION       = 6;
 /** Nasal root (bridge midpoint) */
-const LM_NASAL_ROOT    = 168;
+export const LM_NASAL_ROOT    = 168;
 /** Nasal tip */
-const LM_NASAL_TIP     = 1;
+export const LM_NASAL_TIP     = 1;
 /** Left eye outer corner */
-const LM_LEFT_EYE      = 33;
+export const LM_LEFT_EYE      = 33;
 /** Right eye outer corner */
-const LM_RIGHT_EYE     = 263;
+export const LM_RIGHT_EYE     = 263;
 /** Left zygomatic temple */
-const LM_LEFT_TEMPLE   = 127;
+export const LM_LEFT_TEMPLE   = 127;
 /** Right zygomatic temple */
-const LM_RIGHT_TEMPLE  = 356;
+export const LM_RIGHT_TEMPLE  = 356;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,7 +32,9 @@ export interface FacePose {
   position: THREE.Vector3;
   /** Head orientation quaternion (yaw, pitch, roll) */
   quaternion: THREE.Quaternion;
-  /** Uniform scale derived from inter-pupillary / zygomatic distance */
+  /** Calibrated frame width based on eye-span (W_frame = ||P263 - P33|| * 1.40) */
+  frameWidth: number;
+  /** Normalized scale factor */
   scale: number;
   /** Whether the face is detected */
   detected: boolean;
@@ -49,8 +51,9 @@ export interface NormalizedLandmark {
 
 const ALPHA = 0.70; // EMA smoothing coefficient (0 = lag, 1 = raw)
 
-let smoothPos  = new THREE.Vector3();
-let smoothQuat = new THREE.Quaternion();
+let smoothPos   = new THREE.Vector3();
+let smoothQuat  = new THREE.Quaternion();
+let smoothWidth = 140;
 let smoothScale = 1;
 let firstFrame  = true;
 
@@ -66,20 +69,20 @@ function emaQuat(current: THREE.Quaternion, target: THREE.Quaternion): THREE.Qua
 
 /**
  * Transforms a normalized MediaPipe landmark into a Three.js Vector3.
- * Converts from image-space [0,1] to a centered [-0.5, 0.5] NDC space,
- * then scales to approximate head-size world units.
+ * Converts from image-space [0,1] to a centered coordinate space,
+ * with X flipped for the mirrored webcam feed.
  */
 function toVec3(lm: NormalizedLandmark, width: number, height: number): THREE.Vector3 {
   return new THREE.Vector3(
     (0.5 - lm.x) * width,      // Flip X (mirrored camera)
-    (0.5 - lm.y) * height,     // Flip Y (NDC)
+    (0.5 - lm.y) * height,     // Flip Y
     -lm.z * width              // Depth
   );
 }
 
 /**
- * Extracts a FacePose from a single MediaPipe Face Mesh result.
- * Applies Exponential Moving Average smoothing for stable 60FPS rendering.
+ * Extracts a calibrated FacePose from a single MediaPipe Face Mesh result.
+ * Anchors directly to the eye bridge and nasal sellion (Landmarks 168 & 6).
  */
 export function extractFacePose(
   landmarks: NormalizedLandmark[],
@@ -90,6 +93,7 @@ export function extractFacePose(
     return {
       position: smoothPos.clone(),
       quaternion: smoothQuat.clone(),
+      frameWidth: smoothWidth,
       scale: smoothScale,
       detected: false,
     };
@@ -98,55 +102,61 @@ export function extractFacePose(
   const W = videoWidth;
   const H = videoHeight;
 
-  // Anchor point: nasal bridge / sellion
-  const sellion    = toVec3(landmarks[LM_SELLION],    W, H);
-  const nasalRoot  = toVec3(landmarks[LM_NASAL_ROOT], W, H);
-  const anchor     = sellion.clone().lerp(nasalRoot, 0.5);
+  // 1. Nasal Sellion Datum: Landmark 168 (Nasal Root) and Landmark 6 (Bridge Center)
+  const sellion   = toVec3(landmarks[LM_SELLION],    W, H);
+  const nasalRoot = toVec3(landmarks[LM_NASAL_ROOT], W, H);
+  // Target Eye-Line Midpoint: Y_anchor = (Y_168 + Y_6) / 2
+  const anchor    = sellion.clone().lerp(nasalRoot, 0.5);
 
-  // Eye line vector (basis X)
-  const leftEye    = toVec3(landmarks[LM_LEFT_EYE],  W, H);
-  const rightEye   = toVec3(landmarks[LM_RIGHT_EYE], W, H);
-  const eyeVec     = leftEye.clone().sub(rightEye).normalize();
+  // 2. Eye line vector & orientation
+  const leftEye   = toVec3(landmarks[LM_LEFT_EYE],  W, H);
+  const rightEye  = toVec3(landmarks[LM_RIGHT_EYE], W, H);
+  const eyeVec    = leftEye.clone().sub(rightEye);
+  const eyeSpan   = eyeVec.length();
+  const eyeDir    = eyeVec.clone().normalize();
 
-  // Nose down vector (basis Y estimate)
-  const nasalTip   = toVec3(landmarks[LM_NASAL_TIP], W, H);
-  const noseVec    = nasalTip.clone().sub(nasalRoot).normalize();
+  // 3. Nose down vector
+  const nasalTip  = toVec3(landmarks[LM_NASAL_TIP], W, H);
+  const noseVec   = nasalTip.clone().sub(nasalRoot).normalize();
 
-  // Face normal (basis Z) via cross product
-  const faceNormal = eyeVec.clone().cross(noseVec).normalize();
+  // 4. Face normal vector via cross product
+  const faceNormal = eyeDir.clone().cross(noseVec).normalize();
 
-  // Orthonormal frame
-  const basisX = eyeVec;
+  // 5. Orthonormal basis
+  const basisX = eyeDir;
   const basisZ = faceNormal;
   const basisY = basisZ.clone().cross(basisX).normalize();
 
-  // Build rotation matrix and quaternion
   const rotMat = new THREE.Matrix4().makeBasis(basisX, basisY, basisZ);
   const targetQuat = new THREE.Quaternion().setFromRotationMatrix(rotMat);
 
-  // Scale from zygomatic temple span
+  // 6. Width Scaling: W_frame = ||P263 - P33|| * 1.40
+  const targetFrameWidth = Math.max(eyeSpan * 1.40, 20);
+
+  // Zygomatic baseline for uniform scale reference
   const leftTemple  = toVec3(landmarks[LM_LEFT_TEMPLE],  W, H);
   const rightTemple = toVec3(landmarks[LM_RIGHT_TEMPLE], W, H);
   const templeSpan  = leftTemple.distanceTo(rightTemple);
-
-  // Normalize: typical zygomatic span is ~140mm face width
   const targetScale = templeSpan / 140;
 
-  // EMA Smoothing
+  // 7. Temporal Smoothing (EMA alpha = 0.70)
   if (firstFrame) {
     smoothPos.copy(anchor);
     smoothQuat.copy(targetQuat);
+    smoothWidth = targetFrameWidth;
     smoothScale = targetScale;
     firstFrame = false;
   } else {
     emaVec3(smoothPos, anchor);
     emaQuat(smoothQuat, targetQuat);
+    smoothWidth = smoothWidth + ALPHA * (targetFrameWidth - smoothWidth);
     smoothScale = smoothScale + ALPHA * (targetScale - smoothScale);
   }
 
   return {
     position: smoothPos.clone(),
     quaternion: smoothQuat.clone(),
+    frameWidth: smoothWidth,
     scale: smoothScale,
     detected: true,
   };
@@ -156,6 +166,7 @@ export function extractFacePose(
 export function resetPoseSmoothing(): void {
   smoothPos   = new THREE.Vector3();
   smoothQuat  = new THREE.Quaternion();
+  smoothWidth = 140;
   smoothScale = 1;
   firstFrame  = true;
 }

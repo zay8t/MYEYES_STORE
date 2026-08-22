@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -8,10 +8,11 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Camera, Download, Loader2, AlertCircle, SlidersHorizontal } from "lucide-react";
+import { Camera, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as THREE from "three";
 import type { NormalizedLandmark } from "@/lib/ar/facePoseEngine";
+import { loadTransparentFrameTexture } from "@/lib/ar/textureLoader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,9 +21,9 @@ export interface ARTryOnCanvasHandle {
 }
 
 interface ARTryOnCanvasProps {
-  /** URL of the product image to map onto the curved frame mesh */
+  /** URL of the front-facing product image to map onto the 3D frame mesh */
   imageUrl: string;
-  /** Optional vertical offset in world units (nasal bridge adjustment) */
+  /** Vertical micro-adjustment in mm (nasal bridge height) */
   fitOffset?: number;
   /** Lens tint override */
   lensTint?: "clear" | "blue" | "amber";
@@ -37,19 +38,21 @@ type ARStatus =
   | "no-face"
   | "error";
 
-// ─── Tint configs ─────────────────────────────────────────────────────────────
+// ─── Tint Configs ─────────────────────────────────────────────────────────────
 
 const TINT_COLORS: Record<string, number> = {
-  clear:  0xffffff,
-  blue:   0x90caf9,
-  amber:  0xffcc02,
+  clear: 0xffffff,
+  blue: 0x38bdf8,
+  amber: 0xf59e0b,
 };
 
 const TINT_OPACITY: Record<string, number> = {
   clear: 0.0,
-  blue:  0.22,
-  amber: 0.30,
+  blue: 0.22,
+  amber: 0.32,
 };
+
+const BASE_FRAME_WIDTH = 100;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -66,13 +69,16 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
     const sceneRef      = useRef<THREE.Scene | null>(null);
     const cameraRef     = useRef<THREE.PerspectiveCamera | null>(null);
     const frameGroupRef = useRef<THREE.Group | null>(null);
-    const textureRef    = useRef<THREE.Texture | null>(null);
+    const frameMeshRef  = useRef<THREE.Mesh | null>(null);
+    const tintMeshRef   = useRef<THREE.Mesh | null>(null);
+
     const streamRef     = useRef<MediaStream | null>(null);
     const rafRef        = useRef<number>(0);
     const faceMeshRef   = useRef<unknown>(null);
     const latestPoseRef = useRef<{
       position: THREE.Vector3;
       quaternion: THREE.Quaternion;
+      frameWidth: number;
       scale: number;
       detected: boolean;
     } | null>(null);
@@ -80,124 +86,149 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
     const [status, setStatus] = useState<ARStatus>("idle");
     const [errorMsg, setErrorMsg] = useState("");
 
-    // ── Three.js scene setup ──────────────────────────────────────────────
+    // ── Three.js Scene Setup ──────────────────────────────────────────────
 
     const setupScene = useCallback((canvas: HTMLCanvasElement) => {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
+      const w = canvas.clientWidth || 640;
+      const h = canvas.clientHeight || 480;
 
       const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
         antialias: true,
         premultipliedAlpha: false,
+        preserveDrawingBuffer: true,
       });
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(w, h, false);
       renderer.setClearColor(0x000000, 0);
-      renderer.shadowMap.enabled = false;
 
       const scene = new THREE.Scene();
 
-      // Camera matches a rough "face distance" FOV
-      const cam = new THREE.PerspectiveCamera(38, w / h, 0.1, 2000);
-      cam.position.set(0, 0, 600);
+      // Camera matches standard webcam FOV
+      const cam = new THREE.PerspectiveCamera(40, w / h, 1, 3000);
+      cam.position.set(0, 0, 700);
       scene.add(cam);
 
-      // Studio lighting — directional key + ambient
-      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+      // Studio lighting for metallic / acetate frame highlights
+      const ambient = new THREE.AmbientLight(0xffffff, 1.0);
       scene.add(ambient);
+
       const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-      keyLight.position.set(2, 3, 5);
+      keyLight.position.set(100, 200, 300);
       scene.add(keyLight);
-      const fillLight = new THREE.DirectionalLight(0xf8f0e8, 0.4);
-      fillLight.position.set(-3, 1, 2);
-      scene.add(fillLight);
 
       // Frame group anchor
       const group = new THREE.Group();
       scene.add(group);
 
-      rendererRef.current  = renderer;
-      sceneRef.current     = scene;
-      cameraRef.current    = cam;
+      rendererRef.current   = renderer;
+      sceneRef.current      = scene;
+      cameraRef.current     = cam;
       frameGroupRef.current = group;
 
       return { renderer, scene, cam, group };
     }, []);
 
-    // ── Build curved eyewear mesh ─────────────────────────────────────────
+    // ── Update Texture & Mesh Dynamically ──────────────────────────────────
 
-    const buildFrameMesh = useCallback(
-      (imageUrl: string, tint: string): THREE.Group => {
-        const group = new THREE.Group();
+    const updateFrameTexture = useCallback(
+      async (url: string, tint: string) => {
+        const group = frameGroupRef.current;
+        if (!group) return;
 
-        const loader = new THREE.TextureLoader();
-        const tex = loader.load(imageUrl, () => {
-          tex.needsUpdate = true;
-        });
-        tex.colorSpace = THREE.SRGBColorSpace;
-        textureRef.current = tex;
+        try {
+          const { texture, aspectRatio } = await loadTransparentFrameTexture(url);
 
-        // Curved cylinder segment — simulates optical wrap (approx 100-deg arc)
-        const geo = new THREE.CylinderGeometry(
-          200, 200, 75,
-          64, 1,
-          true,
-          -Math.PI * 0.28,
-          Math.PI * 0.56
-        );
+          const frameW = BASE_FRAME_WIDTH;
+          const frameH = frameW / Math.max(aspectRatio, 0.5);
 
-        // Rotate so the arc faces the camera (Z-axis)
-        geo.rotateX(Math.PI / 2);
+          // Remove previous mesh
+          if (frameMeshRef.current) {
+            group.remove(frameMeshRef.current);
+            frameMeshRef.current.geometry.dispose();
+            if (Array.isArray(frameMeshRef.current.material)) {
+              frameMeshRef.current.material.forEach((m) => m.dispose());
+            } else {
+              frameMeshRef.current.material.dispose();
+            }
+            frameMeshRef.current = null;
+          }
 
-        const tintColor   = TINT_COLORS[tint]   ?? 0xffffff;
-        const tintOpacity = TINT_OPACITY[tint]   ?? 0;
+          if (tintMeshRef.current) {
+            group.remove(tintMeshRef.current);
+            tintMeshRef.current.geometry.dispose();
+            if (Array.isArray(tintMeshRef.current.material)) {
+              tintMeshRef.current.material.forEach((m) => m.dispose());
+            } else {
+              tintMeshRef.current.material.dispose();
+            }
+            tintMeshRef.current = null;
+          }
 
-        const mat = new THREE.MeshPhysicalMaterial({
-          map: tex,
-          transparent: true,
-          alphaTest: 0.01,
-          side: THREE.FrontSide,
-          roughness: 0.18,
-          metalness: 0.10,
-          ior: 1.5,
-          color: new THREE.Color(tintColor),
-          opacity: 1.0,
-        });
+          // Curved frame geometry matching optical wrap
+          const geo = new THREE.PlaneGeometry(frameW, frameH, 16, 4);
 
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.name  = "frame_mesh";
-        group.add(mesh);
+          // Add slight optical wrap curvature along X axis
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            const x = pos.getX(i);
+            // Slight backward curve at the temples
+            const zCurve = -Math.pow(x / (frameW * 0.5), 2) * 5;
+            pos.setZ(i, zCurve);
+          }
+          geo.computeVertexNormals();
 
-        // Tint overlay plane (lens color simulation)
-        if (tintOpacity > 0) {
-          const lensGeo = new THREE.PlaneGeometry(160, 60);
-          const lensMat = new THREE.MeshBasicMaterial({
-            color: tintColor,
+          // High-precision transparent material with alphaTest to eliminate bounding box
+          const frameMat = new THREE.MeshBasicMaterial({
+            map: texture,
             transparent: true,
-            opacity: tintOpacity,
-            blending: THREE.AdditiveBlending,
+            alphaTest: 0.05,
             depthWrite: false,
+            side: THREE.DoubleSide,
           });
-          const lensMesh = new THREE.Mesh(lensGeo, lensMat);
-          lensMesh.position.z = 5;
-          lensMesh.name = "tint_overlay";
-          group.add(lensMesh);
-        }
 
-        return group;
+          const mesh = new THREE.Mesh(geo, frameMat);
+          mesh.name = "eyewear_frame_mesh";
+          group.add(mesh);
+          frameMeshRef.current = mesh;
+
+          // Add optional lens tint overlay
+          const tintOpacity = TINT_OPACITY[tint] ?? 0;
+          if (tintOpacity > 0) {
+            const tintColor = TINT_COLORS[tint] ?? 0xffffff;
+            const tintGeo = new THREE.PlaneGeometry(frameW * 0.88, frameH * 0.82);
+            const tintMat = new THREE.MeshBasicMaterial({
+              color: tintColor,
+              transparent: true,
+              opacity: tintOpacity,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+            });
+            const tintMesh = new THREE.Mesh(tintGeo, tintMat);
+            tintMesh.position.z = 1.5;
+            group.add(tintMesh);
+            tintMeshRef.current = tintMesh;
+          }
+        } catch (err) {
+          console.error("Failed to load transparent frame texture:", err);
+        }
       },
       []
     );
 
-    // ── Start webcam ──────────────────────────────────────────────────────
+    // ── Start Webcam ──────────────────────────────────────────────────────
 
     const startCamera = useCallback(async () => {
       setStatus("requesting");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         streamRef.current = stream;
@@ -209,8 +240,8 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
       } catch (err) {
         const msg =
           err instanceof DOMException && err.name === "NotAllowedError"
-            ? "Camera access denied. Please allow camera permission and reload."
-            : "Camera unavailable. Please check your device settings.";
+            ? "Camera access denied. Please allow camera permission in browser settings."
+            : "Camera sensor unavailable. Please check your device.";
         setErrorMsg(msg);
         setStatus("error");
         return null;
@@ -220,7 +251,6 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
     // ── Initialize MediaPipe FaceMesh ─────────────────────────────────────
 
     const initFaceMesh = useCallback(async () => {
-      // Dynamic import to avoid SSR issues
       const { FaceMesh } = await import("@mediapipe/face_mesh");
       const { extractFacePose, resetPoseSmoothing } = await import(
         "@/lib/ar/facePoseEngine"
@@ -245,7 +275,11 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
 
         if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
           const landmarks = results.multiFaceLandmarks[0];
-          const pose = extractFacePose(landmarks, video.videoWidth || 640, video.videoHeight || 480);
+          const pose = extractFacePose(
+            landmarks,
+            video.videoWidth || 640,
+            video.videoHeight || 480
+          );
           latestPoseRef.current = pose;
           if (status !== "active") setStatus("active");
         } else {
@@ -259,7 +293,7 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
       return faceMesh;
     }, [status]);
 
-    // ── Render loop ───────────────────────────────────────────────────────
+    // ── Render Loop ───────────────────────────────────────────────────────
 
     const startRenderLoop = useCallback(() => {
       let lastSend = 0;
@@ -271,29 +305,37 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
         const scene    = sceneRef.current;
         const cam      = cameraRef.current;
         const group    = frameGroupRef.current;
-        const faceMesh = faceMeshRef.current as { send: (opts: { image: HTMLVideoElement }) => Promise<void> } | null;
+        const faceMesh = faceMeshRef.current as {
+          send: (opts: { image: HTMLVideoElement }) => Promise<void>;
+        } | null;
 
         if (!renderer || !scene || !cam || !group) return;
 
-        // Send video frame to MediaPipe every ~33ms (30fps cap for perf)
+        // Send video frame to MediaPipe at 30 FPS cap
         if (video && faceMesh && video.readyState >= 2 && now - lastSend > 33) {
           lastSend = now;
           try {
             await faceMesh.send({ image: video });
           } catch {
-            // non-fatal
+            // non-fatal frame skip
           }
         }
 
-        // Apply pose to frame group
+        // Apply calibrated pose to 3D frame group
         const pose = latestPoseRef.current;
         if (pose?.detected && group) {
+          group.visible = true;
           group.position.copy(pose.position);
           group.quaternion.copy(pose.quaternion);
-          group.scale.setScalar(pose.scale);
 
-          // Apply fit offset (vertical nasal bridge adjustment)
-          group.position.y += fitOffset * 10;
+          // Calibrated scaling relative to base frame width
+          const scaleFactor = (pose.frameWidth / BASE_FRAME_WIDTH);
+          group.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+          // Vertical micro-adjustment for nasal bridge height (+/- 5mm)
+          group.position.y += fitOffset * 4;
+        } else if (group) {
+          group.visible = false;
         }
 
         renderer.render(scene, cam);
@@ -302,7 +344,7 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
       rafRef.current = requestAnimationFrame(tick);
     }, [fitOffset]);
 
-    // ── Handle resize ─────────────────────────────────────────────────────
+    // ── Handle Resize ─────────────────────────────────────────────────────
 
     useEffect(() => {
       const onResize = () => {
@@ -310,8 +352,8 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
         const renderer = rendererRef.current;
         const cam      = cameraRef.current;
         if (!canvas || !renderer || !cam) return;
-        const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
+        const w = canvas.clientWidth || 640;
+        const h = canvas.clientHeight || 480;
         renderer.setSize(w, h, false);
         cam.aspect = w / h;
         cam.updateProjectionMatrix();
@@ -320,7 +362,7 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
       return () => window.removeEventListener("resize", onResize);
     }, []);
 
-    // ── Main init ─────────────────────────────────────────────────────────
+    // ── Initial Mount & Lifecycle ─────────────────────────────────────────
 
     useEffect(() => {
       let cancelled = false;
@@ -333,12 +375,10 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
         if (!canvas) return;
 
         setStatus("initializing");
-        const { scene, group } = setupScene(canvas);
+        setupScene(canvas);
 
-        // Build frame mesh and add to scene
-        const frameGroup = buildFrameMesh(imageUrl, lensTint);
-        group.add(frameGroup);
-        scene.add(group);
+        await updateFrameTexture(imageUrl, lensTint);
+        if (cancelled) return;
 
         await initFaceMesh();
         if (cancelled) return;
@@ -354,29 +394,19 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
         cancelAnimationFrame(rafRef.current);
         streamRef.current?.getTracks().forEach((t) => t.stop());
         rendererRef.current?.dispose();
-        textureRef.current?.dispose();
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [imageUrl]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    // Update lens tint dynamically (without restarting camera)
+    // ── React to Image or Lens Tint Changes Seamlessly ─────────────────────
+
     useEffect(() => {
-      const group = frameGroupRef.current;
-      if (!group || !sceneRef.current) return;
+      if (status === "active" || status === "initializing") {
+        updateFrameTexture(imageUrl, lensTint);
+      }
+    }, [imageUrl, lensTint, updateFrameTexture, status]);
 
-      // Remove old frame meshes
-      const children = [...group.children];
-      children.forEach((c) => {
-        if (c.name === "frame_group") group.remove(c);
-      });
-
-      const newGroup = buildFrameMesh(imageUrl, lensTint);
-      newGroup.name = "frame_group";
-      group.add(newGroup);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lensTint]);
-
-    // ── Capture photo ─────────────────────────────────────────────────────
+    // ── Capture Photo ─────────────────────────────────────────────────────
 
     const capturePhoto = useCallback(() => {
       const video    = videoRef.current;
@@ -384,26 +414,25 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
       const renderer = rendererRef.current;
       if (!video || !canvas || !renderer) return;
 
-      // Composite video + WebGL overlay
       const out = document.createElement("canvas");
-      out.width  = video.videoWidth;
-      out.height = video.videoHeight;
+      out.width  = video.videoWidth || 1280;
+      out.height = video.videoHeight || 720;
       const ctx = out.getContext("2d");
       if (!ctx) return;
 
-      // Draw mirrored video
+      // Draw mirrored webcam frame
       ctx.save();
       ctx.scale(-1, 1);
       ctx.drawImage(video, -out.width, 0, out.width, out.height);
       ctx.restore();
 
-      // Draw WebGL overlay
+      // Draw WebGL AR frame overlay
       renderer.render(sceneRef.current!, cameraRef.current!);
       ctx.drawImage(renderer.domElement, 0, 0, out.width, out.height);
 
-      // Download
+      // Trigger instant snapshot download
       const link = document.createElement("a");
-      link.href     = out.toDataURL("image/jpeg", 0.92);
+      link.href     = out.toDataURL("image/jpeg", 0.95);
       link.download = `my-eyes-tryon-${Date.now()}.jpg`;
       link.click();
     }, []);
@@ -415,10 +444,13 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
     return (
       <div
         ref={containerRef}
-        className={cn("relative w-full overflow-hidden rounded-2xl bg-slate-900", className)}
+        className={cn(
+          "relative w-full overflow-hidden rounded-2xl bg-slate-900 border border-slate-200/80 shadow-md",
+          className
+        )}
         style={{ aspectRatio: "4/3" }}
       >
-        {/* Mirrored webcam feed */}
+        {/* Mirrored live video */}
         <video
           ref={videoRef}
           playsInline
@@ -428,18 +460,18 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
           style={{ transform: "scaleX(-1)" }}
         />
 
-        {/* Transparent Three.js AR overlay */}
+        {/* Transparent Three.js WebGL overlay */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ zIndex: 2 }}
         />
 
-        {/* Loading / Status overlays */}
+        {/* Loading / Status overlay */}
         {(status === "requesting" || status === "initializing") && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900/80 backdrop-blur-sm z-10">
             <Loader2 className="w-7 h-7 text-[#ff7a00] animate-spin" />
-            <p className="text-xs font-semibold text-white/80 tracking-wide">
+            <p className="text-xs font-semibold text-white/90 tracking-wide">
               {status === "requesting"
                 ? "Requesting optical sensor access\u2026"
                 : "Initializing 3D Optical Matrix\u2026"}
@@ -448,45 +480,40 @@ const ARTryOnCanvas = forwardRef<ARTryOnCanvasHandle, ARTryOnCanvasProps>(
         )}
 
         {status === "error" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900/90 z-10 p-6">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900/95 z-10 p-6">
             <AlertCircle className="w-7 h-7 text-rose-400" />
-            <p className="text-xs font-semibold text-white/80 text-center">{errorMsg}</p>
-          </div>
-        )}
-
-        {/* Face tracking guide (shown when active but no face detected) */}
-        {status === "no-face" && (
-          <div className="absolute bottom-16 inset-x-0 flex justify-center z-10 pointer-events-none">
-            <span className="text-[10px] font-semibold text-white/70 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full tracking-wider uppercase">
-              Position face in frame
-            </span>
+            <p className="text-xs font-semibold text-white/90 text-center max-w-xs">{errorMsg}</p>
           </div>
         )}
 
         {/* Corner guide brackets */}
         {status === "active" && (
           <>
-            {["top-3 left-3 border-t-2 border-l-2 rounded-tl-xl",
+            {[
+              "top-3 left-3 border-t-2 border-l-2 rounded-tl-xl",
               "top-3 right-3 border-t-2 border-r-2 rounded-tr-xl",
               "bottom-3 left-3 border-b-2 border-l-2 rounded-bl-xl",
               "bottom-3 right-3 border-b-2 border-r-2 rounded-br-xl",
             ].map((cls, i) => (
-              <div key={i} className={cn("absolute w-5 h-5 border-[#ff7a00]/60 z-10 pointer-events-none", cls)} />
+              <div
+                key={i}
+                className={cn("absolute w-5 h-5 border-[#ff7a00]/60 z-10 pointer-events-none", cls)}
+              />
             ))}
           </>
         )}
 
-        {/* Capture button overlay */}
+        {/* Floating Capture Trigger */}
         {status === "active" && (
           <div className="absolute bottom-3 inset-x-0 flex justify-center z-10">
             <button
-              id="ar-capture-btn"
+              id="ar-canvas-capture-btn"
               type="button"
               onClick={capturePhoto}
-              className="flex items-center gap-2 px-5 py-2 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold rounded-full shadow-lg backdrop-blur-sm transition-all active:scale-95"
+              className="flex items-center gap-2 px-5 py-2 bg-white/95 hover:bg-white text-slate-900 text-xs font-bold rounded-full shadow-lg backdrop-blur-sm transition-all active:scale-95 cursor-pointer"
             >
               <Camera className="w-3.5 h-3.5 text-[#ff7a00]" />
-              Capture Photo
+              <span>Capture Photo</span>
             </button>
           </div>
         )}
