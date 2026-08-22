@@ -73,7 +73,7 @@ export default function ARTryOnModal({
   const [frames, setFrames]         = useState<ProductFrame[]>([]);
   const [selectedId, setSelectedId] = useState<string>(initialProductId ?? "");
   const [currentImage, setCurrentImage] = useState<string>(
-    initialImageUrl || "/placeholder-frame.png"
+    initialImageUrl || "/placeholder-glasses.png"
   );
   const [fitOffset, setFitOffset]   = useState<number>(0);
   const [lensTint, setLensTint]     = useState<LensTint>("clear");
@@ -110,7 +110,7 @@ export default function ARTryOnModal({
               imageUrl: frontUrl,
             };
           })
-          .filter((f) => f.imageUrl && f.imageUrl !== "/placeholder-frame.png");
+          .filter((f) => f.imageUrl && f.imageUrl.trim().length > 0);
 
         setFrames(mapped);
 
