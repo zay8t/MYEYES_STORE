@@ -2,13 +2,19 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles, X } from "lucide-react";
+import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles, X, Camera } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
+import dynamic from "next/dynamic";
+
+const ARTryOnModal = dynamic(() => import("@/components/ARTryOn/ARTryOnModal"), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface Product {
   id: string;
@@ -38,6 +44,7 @@ export default function ProductDetailPage({
   const [rxModalOpen, setRxModalOpen] = useState(false);
   const [thicknessModalOpen, setThicknessModalOpen] = useState(false);
   const [lensOption, setLensOption] = useState<"standard" | "polarized">("standard");
+  const [isTryOnOpen, setIsTryOnOpen] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -299,6 +306,17 @@ export default function ProductDetailPage({
                   </button>
                 </>
               )}
+
+              {/* Virtual 3D Try-On */}
+              <button
+                type="button"
+                id="product-tryon-btn"
+                onClick={() => setIsTryOnOpen(true)}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-[#ff7a00] bg-amber-50/60 text-[#ff7a00] hover:bg-amber-100 font-semibold text-xs uppercase tracking-wider transition-all shadow-2xs cursor-pointer"
+              >
+                <Camera className="w-4 h-4" />
+                Virtual 3D Try-On
+              </button>
             </div>
 
             {/* Value Props */}
@@ -367,6 +385,14 @@ export default function ProductDetailPage({
           </div>
         </div>
       )}
+
+      {/* Virtual 3D Try-On Modal */}
+      <ARTryOnModal
+        isOpen={isTryOnOpen}
+        onClose={() => setIsTryOnOpen(false)}
+        initialImageUrl={currentImage}
+        initialProductId={product.id}
+      />
     </div>
   );
 }

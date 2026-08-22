@@ -19,6 +19,7 @@ import {
   LogOut,
   Shield,
   Ruler,
+  Camera,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -30,6 +31,12 @@ import { cn } from "@/lib/utils";
 import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
 import PDMeasurementModal from "@/components/PDTool/PDMeasurementModal";
+import dynamic from "next/dynamic";
+
+const ARTryOnModal = dynamic(() => import("@/components/ARTryOn/ARTryOnModal"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const EYEGLASSES_DROPDOWN = [
   { label: "All Eyeglasses", href: "/eyeglasses" },
@@ -67,6 +74,7 @@ export default function Header() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
   const [pdModalOpen, setPdModalOpen] = useState(false);
+  const [tryOnModalOpen, setTryOnModalOpen] = useState(false);
 
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -393,6 +401,18 @@ export default function Header() {
                 <Ruler className="w-3.5 h-3.5 opacity-70" />
                 PD Measure
               </button>
+
+              {/* 3D Try-On */}
+              <button
+                id="nav-tryon-btn"
+                type="button"
+                onClick={() => setTryOnModalOpen(true)}
+                className="text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-slate-200/60 text-slate-600 hover:text-[#ff7a00] hover:border-amber-200/60 hover:bg-amber-50/50"
+                aria-label="Virtual 3D Try-On"
+              >
+                <Camera className="w-3.5 h-3.5 opacity-70" />
+                3D Try-On
+              </button>
             </nav>
 
             {/* Right Actions */}
@@ -451,6 +471,17 @@ export default function Header() {
                 aria-label="Measure Pupillary Distance"
               >
                 <Ruler className="w-4.5 h-4.5 stroke-[1.8]" />
+              </button>
+
+              {/* Mobile 3D Try-On icon */}
+              <button
+                id="mobile-tryon-btn"
+                type="button"
+                onClick={() => setTryOnModalOpen(true)}
+                className="p-2.5 rounded-full text-slate-600 hover:text-[#ff7a00] hover:bg-amber-50 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center sm:hidden"
+                aria-label="Virtual 3D Try-On"
+              >
+                <Camera className="w-4.5 h-4.5 stroke-[1.8]" />
               </button>
 
               {/* Auth State */}
@@ -612,6 +643,12 @@ export default function Header() {
         isOpen={pdModalOpen}
         onClose={() => setPdModalOpen(false)}
         onConfirm={() => setPdModalOpen(false)}
+      />
+
+      {/* Virtual 3D Try-On */}
+      <ARTryOnModal
+        isOpen={tryOnModalOpen}
+        onClose={() => setTryOnModalOpen(false)}
       />
     </>
   );
