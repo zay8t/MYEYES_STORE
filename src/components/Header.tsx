@@ -5,21 +5,15 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
-  ShoppingBag,
-  Home,
-  Tag,
-  Glasses,
-  Sun,
-  ChevronDown,
-  Sparkles,
+  Menu,
   Search,
-  X,
   Heart,
+  ShoppingBag,
   User,
   LogOut,
   Shield,
-  Ruler,
-  Camera,
+  ChevronDown,
+  X,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -27,6 +21,7 @@ import { useAccountDrawerStore } from "@/store/useAccountDrawerStore";
 import CartDrawer from "@/components/CartDrawer";
 import WishlistDrawer from "@/components/WishlistDrawer";
 import MobileAccountDrawer from "@/components/customer/MobileAccountDrawer";
+import NavigationSidebar from "@/components/NavigationSidebar";
 import { cn } from "@/lib/utils";
 import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
@@ -38,26 +33,6 @@ const ARTryOnModal = dynamic(() => import("@/components/ARTryOn/ARTryOnModal"), 
   loading: () => null,
 });
 
-const EYEGLASSES_DROPDOWN = [
-  { label: "All Eyeglasses", href: "/eyeglasses" },
-  { label: "Men's Eyeglasses", href: "/eyeglasses?gender=Men" },
-  { label: "Women's Eyeglasses", href: "/eyeglasses?gender=Women" },
-  { label: "Kids' Eyeglasses", href: "/eyeglasses?gender=Kids" },
-];
-
-const SUNGLASSES_DROPDOWN = [
-  { label: "All Sunglasses", href: "/sunglasses" },
-  { label: "Men's Sunglasses", href: "/sunglasses?gender=Men" },
-  { label: "Women's Sunglasses", href: "/sunglasses?gender=Women" },
-  { label: "Kids' Sunglasses", href: "/sunglasses?gender=Kids" },
-];
-
-const COLLECTIONS_DROPDOWN = [
-  { label: "Men's Collection", href: "/men" },
-  { label: "Women's Collection", href: "/women" },
-  { label: "Kids' Collection", href: "/kids" },
-];
-
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -68,9 +43,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<
-    "eyeglasses" | "sunglasses" | "collections" | null
-  >(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
   const [pdModalOpen, setPdModalOpen] = useState(false);
@@ -130,8 +103,8 @@ export default function Header() {
   // Close search & dropdowns on route change
   useEffect(() => {
     setSearchOpen(false);
-    setActiveDropdown(null);
     setUserDropdownOpen(false);
+    setSidebarOpen(false);
   }, [pathname]);
 
   // Focus search input when opened
@@ -181,242 +154,55 @@ export default function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 left-0 right-0 z-50 transition-all duration-200",
+          "sticky top-0 left-0 right-0 z-40 transition-all duration-200",
           scrolled
             ? "bg-white/95 backdrop-blur-md border-b border-slate-100/90 shadow-2xs"
             : "bg-white/95 backdrop-blur-md border-b border-slate-100/80"
         )}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Brand Logo & Title */}
-            <Link
-              href="/"
-              onClick={handleLogoClick}
-              className="flex items-center gap-2.5 group relative z-10 cursor-pointer select-none active:scale-95 transition-transform"
-              aria-label="My Eyes — Home"
-            >
-              <div className="relative w-8 h-8 flex items-center justify-center">
-                <Image
-                  src="/logo.svg"
-                  alt="My Eyes Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base font-extrabold tracking-wider text-[#ff7a00] uppercase group-hover:text-amber-600 transition-colors duration-200">
-                  MY EYES
-                </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
-                  OPTICAL STUDIO
-                </span>
-              </div>
-            </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            {/* Left: 3-Bar Hamburger Menu + Brand Logo */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                type="button"
+                id="header-hamburger-menu-btn"
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 -ml-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 transition cursor-pointer flex items-center justify-center active:scale-95"
+                aria-label="Open Navigation Menu"
+              >
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
 
-            {/* Desktop Nav Links */}
-            <nav className="hidden md:flex items-center gap-1.5">
               <Link
                 href="/"
-                className={cn(
-                  "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
-                  pathname === "/"
-                    ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
-                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                )}
+                onClick={handleLogoClick}
+                className="flex items-center gap-2.5 group relative z-10 cursor-pointer select-none active:scale-95 transition-transform"
+                aria-label="My Eyes — Home"
               >
-                <Home className="w-3.5 h-3.5 opacity-70" />
-                Home
-              </Link>
-
-              {/* Eyeglasses Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown("eyeglasses")}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link
-                  href="/eyeglasses"
-                  className={cn(
-                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
-                    pathname.startsWith("/eyeglasses")
-                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
-                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                  )}
-                >
-                  <Glasses className="w-3.5 h-3.5 opacity-70" />
-                  <span>Eyeglasses</span>
-                  <ChevronDown
-                    className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
-                      activeDropdown === "eyeglasses" && "rotate-180"
-                    )}
-                  />
-                </Link>
-
-                {activeDropdown === "eyeglasses" && (
-                  <div className="absolute top-full left-0 w-52 pt-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    <div className="p-2 rounded-2xl bg-white border border-slate-200/80 shadow-xl space-y-1">
-                      {EYEGLASSES_DROPDOWN.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setActiveDropdown(null)}
-                          className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sunglasses Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown("sunglasses")}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link
-                  href="/sunglasses"
-                  className={cn(
-                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
-                    pathname.startsWith("/sunglasses")
-                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
-                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                  )}
-                >
-                  <Sun className="w-3.5 h-3.5 opacity-70" />
-                  <span>Sunglasses</span>
-                  <ChevronDown
-                    className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
-                      activeDropdown === "sunglasses" && "rotate-180"
-                    )}
-                  />
-                </Link>
-
-                {activeDropdown === "sunglasses" && (
-                  <div className="absolute top-full left-0 w-52 pt-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    <div className="p-2 rounded-2xl bg-white border border-slate-200/80 shadow-xl space-y-1">
-                      {SUNGLASSES_DROPDOWN.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setActiveDropdown(null)}
-                          className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Collections Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown("collections")}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <div
-                  className={cn(
-                    "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full cursor-pointer select-none",
-                    pathname.startsWith("/men") ||
-                      pathname.startsWith("/women") ||
-                      pathname.startsWith("/kids")
-                      ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
-                      : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                  )}
-                >
-                  <Tag className="w-3.5 h-3.5 opacity-70" />
-                  <span>Collections</span>
-                  <ChevronDown
-                    className={cn(
-                      "w-3.5 h-3.5 transition-transform duration-200 opacity-60",
-                      activeDropdown === "collections" && "rotate-180"
-                    )}
+                <div className="relative w-8 h-8 flex items-center justify-center">
+                  <Image
+                    src="/logo.svg"
+                    alt="My Eyes Logo"
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                    priority
                   />
                 </div>
-
-                {activeDropdown === "collections" && (
-                  <div className="absolute top-full left-0 w-52 pt-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    <div className="p-2 rounded-2xl bg-white border border-slate-200/80 shadow-xl space-y-1">
-                      {COLLECTIONS_DROPDOWN.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setActiveDropdown(null)}
-                          className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Lens Pricing */}
-              <Link
-                href="/lens-pricing"
-                className={cn(
-                  "text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full",
-                  pathname.startsWith("/lens-pricing") || pathname === "/pricing"
-                    ? "bg-amber-50/80 text-amber-950 font-semibold border border-amber-200/50"
-                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                )}
-              >
-                <Tag className="w-3.5 h-3.5 opacity-70" />
-                Lens Pricing
+                <div className="flex flex-col">
+                  <span className="text-base font-extrabold tracking-wider text-[#ff7a00] uppercase group-hover:text-amber-600 transition-colors duration-200">
+                    MY EYES
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
+                    OPTICAL STUDIO
+                  </span>
+                </div>
               </Link>
+            </div>
 
-              {/* Style Quiz Pill */}
-              <Link
-                href="/quiz"
-                id="nav-style-quiz-link"
-                className={cn(
-                  "text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-amber-200/40",
-                  pathname.startsWith("/quiz")
-                    ? "text-amber-700 bg-amber-100/70 border-amber-300/60 font-bold"
-                    : "text-amber-600 hover:text-amber-700 bg-amber-50/60 hover:bg-amber-50"
-                )}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                Style Quiz
-              </Link>
-
-              {/* PD Measurement Studio */}
-              <button
-                id="nav-pd-measure-btn"
-                type="button"
-                onClick={() => setPdModalOpen(true)}
-                className="text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-slate-200/60 text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                aria-label="Measure Pupillary Distance"
-              >
-                <Ruler className="w-3.5 h-3.5 opacity-70" />
-                PD Measure
-              </button>
-
-              {/* 3D Try-On */}
-              <button
-                id="nav-tryon-btn"
-                type="button"
-                onClick={() => setTryOnModalOpen(true)}
-                className="text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-slate-200/60 text-slate-600 hover:text-[#ff7a00] hover:border-amber-200/60 hover:bg-amber-50/50"
-                aria-label="Virtual 3D Try-On"
-              >
-                <Camera className="w-3.5 h-3.5 opacity-70" />
-                3D Try-On
-              </button>
-            </nav>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-1 md:gap-1.5">
+            {/* Right: Quick Actions Cluster */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
               {/* Search Trigger */}
               <button
                 id="header-search-btn"
@@ -457,32 +243,8 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Desktop Share Button */}
-              <div className="hidden sm:block">
-                <ShareAppButton variant="icon" />
-              </div>
-
-              {/* Mobile PD measure icon */}
-              <button
-                id="mobile-pd-measure-btn"
-                type="button"
-                onClick={() => setPdModalOpen(true)}
-                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center sm:hidden"
-                aria-label="Measure Pupillary Distance"
-              >
-                <Ruler className="w-4.5 h-4.5 stroke-[1.8]" />
-              </button>
-
-              {/* Mobile 3D Try-On icon */}
-              <button
-                id="mobile-tryon-btn"
-                type="button"
-                onClick={() => setTryOnModalOpen(true)}
-                className="p-2.5 rounded-full text-slate-600 hover:text-[#ff7a00] hover:bg-amber-50 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center sm:hidden"
-                aria-label="Virtual 3D Try-On"
-              >
-                <Camera className="w-4.5 h-4.5 stroke-[1.8]" />
-              </button>
+              {/* Share Button */}
+              <ShareAppButton variant="icon" />
 
               {/* Auth State */}
               {mounted && !isLoading && (
@@ -580,7 +342,7 @@ export default function Header() {
                                 onClick={() => {
                                   setUserDropdownOpen(false);
                                   logout();
-                                }}
+                                  }}
                                 className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
                               >
                                 <LogOut className="w-3.5 h-3.5 shrink-0" />
@@ -637,6 +399,12 @@ export default function Header() {
       <CartDrawer />
       <WishlistDrawer />
       <MobileAccountDrawer />
+      <NavigationSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenPDModal={() => setPdModalOpen(true)}
+        onOpenTryOnModal={() => setTryOnModalOpen(true)}
+      />
 
       {/* PD Measurement Studio */}
       <PDMeasurementModal
