@@ -21,7 +21,7 @@ import { useAccountDrawerStore } from "@/store/useAccountDrawerStore";
 import CartDrawer from "@/components/CartDrawer";
 import WishlistDrawer from "@/components/WishlistDrawer";
 import MobileAccountDrawer from "@/components/customer/MobileAccountDrawer";
-import NavigationSidebar from "@/components/NavigationSidebar";
+import { NavigationSidebar } from "@/components/NavigationSidebar";
 import { cn } from "@/lib/utils";
 import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
@@ -43,7 +43,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
   const [pdModalOpen, setPdModalOpen] = useState(false);
@@ -104,7 +104,7 @@ export default function Header() {
   useEffect(() => {
     setSearchOpen(false);
     setUserDropdownOpen(false);
-    setSidebarOpen(false);
+    setIsSidebarOpen(false);
   }, [pathname]);
 
   // Focus search input when opened
@@ -154,266 +154,267 @@ export default function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 left-0 right-0 z-40 transition-all duration-200",
+          "sticky top-0 left-0 right-0 z-40 w-full transition-all duration-200",
           scrolled
             ? "bg-white/95 backdrop-blur-md border-b border-slate-100/90 shadow-2xs"
             : "bg-white/95 backdrop-blur-md border-b border-slate-100/80"
         )}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Left: 3-Bar Hamburger Menu + Brand Logo */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <button
-                type="button"
-                id="header-hamburger-menu-btn"
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 -ml-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 transition cursor-pointer flex items-center justify-center active:scale-95"
-                aria-label="Open Navigation Menu"
-              >
-                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2">
+          {/* Left Cluster: 3-Bar Menu + Brand Logo */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0 min-w-0">
+            <button
+              type="button"
+              id="header-hamburger-menu-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition cursor-pointer shrink-0 flex items-center justify-center"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
 
-              <Link
-                href="/"
-                onClick={handleLogoClick}
-                className="flex items-center gap-2.5 group relative z-10 cursor-pointer select-none active:scale-95 transition-transform"
-                aria-label="My Eyes — Home"
-              >
-                <div className="relative w-8 h-8 flex items-center justify-center">
-                  <Image
-                    src="/logo.svg"
-                    alt="My Eyes Logo"
-                    width={32}
-                    height={32}
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-extrabold tracking-wider text-[#ff7a00] uppercase group-hover:text-amber-600 transition-colors duration-200">
-                    MY EYES
-                  </span>
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-semibold -mt-1">
-                    OPTICAL STUDIO
-                  </span>
-                </div>
-              </Link>
-            </div>
-
-            {/* Right: Quick Actions Cluster */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Search Trigger */}
-              <button
-                id="header-search-btn"
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
-                aria-label="Search Frames"
-              >
-                <Search className="w-4.5 h-4.5 stroke-[1.8]" />
-              </button>
-
-              {/* Wishlist Button (Opens Saved Frames Drawer) */}
-              <button
-                id="header-wishlist-btn"
-                onClick={openWishlist}
-                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
-                aria-label="Saved Frames Wishlist"
-              >
-                <Heart className="w-4.5 h-4.5 stroke-[1.8]" />
-                {mounted && wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff7a00] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs animate-bounce-in">
-                    {wishlistCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Cart Button */}
-              <button
-                id="cart-button"
-                onClick={openCart}
-                className="p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
-                aria-label="Shopping Cart"
-              >
-                <ShoppingBag className="w-4.5 h-4.5 stroke-[1.8]" />
-                {mounted && totalItems() > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff7a00] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs animate-bounce-in">
-                    {totalItems()}
-                  </span>
-                )}
-              </button>
-
-              {/* Share Button */}
-              <ShareAppButton variant="icon" />
-
-              {/* Auth State */}
-              {mounted && !isLoading && (
-                <>
-                  {/* Guest → Sign In Pill (Desktop) & Icon Button (Mobile) */}
-                  {!user && (
-                    <>
-                      <Link
-                        href="/login"
-                        id="header-signin-btn"
-                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
-                      >
-                        <User className="w-3.5 h-3.5 text-slate-500" />
-                        Sign In
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={openAccountDrawer}
-                        className="sm:hidden p-2.5 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition duration-150 relative cursor-pointer active:scale-95 flex items-center justify-center"
-                        aria-label="Account"
-                      >
-                        <User className="w-5 h-5 stroke-[1.8]" />
-                      </button>
-                    </>
-                  )}
-
-                  {/* Authenticated → Minimalist Avatar Pill + Dropdown (Desktop) & Interactive Avatar (Mobile) */}
-                  {user && (
-                    <>
-                      {/* Mobile Touch Avatar */}
-                      <button
-                        type="button"
-                        onClick={openAccountDrawer}
-                        className="sm:hidden w-8 h-8 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[11px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0"
-                        aria-label="Open Mobile Account Menu"
-                      >
-                        {initials || <User className="w-4 h-4" />}
-                      </button>
-
-                      {/* Desktop Dropdown */}
-                      <div className="relative hidden sm:block" ref={userDropdownRef}>
-                        <button
-                          id="header-user-menu"
-                          onClick={() => setUserDropdownOpen((v) => !v)}
-                          className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
-                        >
-                          {/* Avatar initials */}
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[10px] font-extrabold shrink-0">
-                            {initials}
-                          </div>
-                          <span className="text-xs font-bold text-slate-800">{firstName}</span>
-                          <ChevronDown
-                            className={cn(
-                              "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
-                              userDropdownOpen && "rotate-180"
-                            )}
-                          />
-                        </button>
-
-                        {/* Minified User Dropdown Container */}
-                        {userDropdownOpen && (
-                          <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                            <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
-                              {/* Customer Info */}
-                              <div className="px-1 py-0.5">
-                                <p className="text-sm font-bold text-slate-900 leading-tight">
-                                  {user.name}
-                                </p>
-                                <p className="text-xs text-slate-500 truncate mt-0.5">
-                                  {user.email}
-                                </p>
-                              </div>
-
-                              {/* Admin Shortcut (if admin) */}
-                              {isAdmin && (
-                                <>
-                                  <div className="border-t border-slate-100 my-1.5" />
-                                  <Link
-                                    href="/admin"
-                                    onClick={() => setUserDropdownOpen(false)}
-                                    className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
-                                  >
-                                    <Shield className="w-3.5 h-3.5" />
-                                    Admin Dashboard
-                                  </Link>
-                                </>
-                              )}
-
-                              {/* Subtle Separator Line */}
-                              <div className="border-t border-slate-100 my-2" />
-
-                              {/* Action Button: Sign Out */}
-                              <button
-                                id="header-signout-btn"
-                                onClick={() => {
-                                  setUserDropdownOpen(false);
-                                  logout();
-                                  }}
-                                className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
-                              >
-                                <LogOut className="w-3.5 h-3.5 shrink-0" />
-                                Sign Out
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
+            <Link
+              href="/"
+              onClick={handleLogoClick}
+              className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 select-none group active:scale-95 transition-transform"
+              aria-label="My Eyes — Home"
+            >
+              <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
+                <Image
+                  src="/logo.svg"
+                  alt="My Eyes Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain w-full h-full"
+                  priority
+                />
+              </div>
+              <div className="flex flex-col justify-center shrink-0">
+                <span className="text-xs sm:text-base font-extrabold tracking-tight text-[#ff7a00] leading-tight group-hover:text-amber-600 transition-colors">
+                  MY EYES
+                </span>
+                <span className="text-[8px] sm:text-[10px] font-semibold tracking-widest text-slate-400 leading-none uppercase">
+                  OPTICAL STUDIO
+                </span>
+              </div>
+            </Link>
           </div>
 
-          {/* Quick Search Drawer */}
-          {searchOpen && (
-            <div className="py-2.5 pb-3 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
-              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search frames, shapes, materials, styles..."
-                  className="w-full pl-10 pr-20 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/30 focus:border-[#ff7a00] transition-all"
-                />
-                <div className="absolute right-1.5 flex items-center gap-1">
-                  {searchQuery && (
+          {/* Right Cluster: Action Icons */}
+          <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
+            {/* Search Trigger */}
+            <button
+              id="header-search-btn"
+              type="button"
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            {/* Saved Items / Wishlist */}
+            <button
+              id="header-wishlist-btn"
+              type="button"
+              onClick={openWishlist}
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              aria-label="Saved Items"
+            >
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+              {mounted && wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-2xs">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
+            {/* Shopping Bag / Cart */}
+            <button
+              id="cart-button"
+              type="button"
+              onClick={openCart}
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              aria-label="Shopping Bag"
+            >
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+              {mounted && totalItems() > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-2xs">
+                  {totalItems()}
+                </span>
+              )}
+            </button>
+
+            {/* Share App Button */}
+            <div className="hidden xs:flex items-center">
+              <ShareAppButton variant="icon" />
+            </div>
+
+            {/* Auth State */}
+            {mounted && !isLoading && (
+              <>
+                {/* Guest → Sign In */}
+                {!user && (
+                  <>
+                    <Link
+                      href="/login"
+                      id="header-signin-btn"
+                      className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
+                    >
+                      <User className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Sign In</span>
+                    </Link>
                     <button
                       type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
+                      onClick={openAccountDrawer}
+                      className="sm:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition cursor-pointer flex items-center justify-center"
+                      aria-label="Account"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <User className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition-colors"
-                  >
-                    Search
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+                  </>
+                )}
+
+                {/* Authenticated → Profile Dropdown (Desktop) & Avatar (Mobile) */}
+                {user && (
+                  <>
+                    {/* Mobile Touch Avatar */}
+                    <button
+                      type="button"
+                      onClick={openAccountDrawer}
+                      className="sm:hidden w-7 h-7 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0 ml-1"
+                      aria-label="Open Mobile Account Menu"
+                    >
+                      {initials || <User className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {/* Desktop Dropdown */}
+                    <div className="relative hidden sm:block" ref={userDropdownRef}>
+                      <button
+                        id="header-user-menu"
+                        type="button"
+                        onClick={() => setUserDropdownOpen((v) => !v)}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
+                          {initials}
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">{firstName}</span>
+                        <ChevronDown
+                          className={cn(
+                            "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
+                            userDropdownOpen && "rotate-180"
+                          )}
+                        />
+                      </button>
+
+                      {userDropdownOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                          <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
+                            <div className="px-1 py-0.5">
+                              <p className="text-sm font-bold text-slate-900 leading-tight">
+                                {user.name}
+                              </p>
+                              <p className="text-xs text-slate-500 truncate mt-0.5">
+                                {user.email}
+                              </p>
+                            </div>
+
+                            {isAdmin && (
+                              <>
+                                <div className="border-t border-slate-100 my-1.5" />
+                                <Link
+                                  href="/admin"
+                                  onClick={() => setUserDropdownOpen(false)}
+                                  className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
+                                >
+                                  <Shield className="w-3.5 h-3.5" />
+                                  <span>Admin Dashboard</span>
+                                </Link>
+                              </>
+                            )}
+
+                            <div className="border-t border-slate-100 my-2" />
+
+                            <button
+                              id="header-signout-btn"
+                              type="button"
+                              onClick={() => {
+                                setUserDropdownOpen(false);
+                                logout();
+                              }}
+                              className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                            >
+                              <LogOut className="w-3.5 h-3.5 shrink-0" />
+                              <span>Sign Out</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Quick Search Drawer */}
+        {searchOpen && (
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 pb-3 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search frames, shapes, materials, styles..."
+                className="w-full pl-10 pr-20 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/30 focus:border-[#ff7a00] transition-all"
+              />
+              <div className="absolute right-1.5 flex items-center gap-1">
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-md cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition-colors cursor-pointer"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </header>
 
       {/* Slide-Out Drawers */}
       <CartDrawer />
       <WishlistDrawer />
       <MobileAccountDrawer />
+
+      {/* Slide-Out Navigation Sidebar */}
       <NavigationSidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         onOpenPDModal={() => setPdModalOpen(true)}
         onOpenTryOnModal={() => setTryOnModalOpen(true)}
       />
 
-      {/* PD Measurement Studio */}
+      {/* PD Measurement Studio Modal */}
       <PDMeasurementModal
         isOpen={pdModalOpen}
         onClose={() => setPdModalOpen(false)}
         onConfirm={() => setPdModalOpen(false)}
       />
 
-      {/* Virtual 3D Try-On */}
+      {/* Virtual 3D Try-On Modal */}
       <ARTryOnModal
         isOpen={tryOnModalOpen}
         onClose={() => setTryOnModalOpen(false)}
@@ -421,3 +422,5 @@ export default function Header() {
     </>
   );
 }
+
+export { Header };
