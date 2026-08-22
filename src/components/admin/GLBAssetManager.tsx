@@ -25,46 +25,94 @@ export function GLBAssetManager({
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".glb")) {
-      setUploadError("Please select a valid .glb 3D CAD file.");
+      setUploadError("Please select a valid .glb 3D CAD model file.");
       return;
     }
 
-    // Check file size (< 25MB)
-    if (file.size > 25 * 1024 * 1024) {
-      setUploadError("File size exceeds the 25 MB limit.");
+    // Check file size (< 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError("File size exceeds 50 MB limit.");
       return;
     }
 
     setUploadError(null);
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    if (productId && productId.trim()) {
-      formData.append("productId", productId.trim());
-    }
-
     try {
-      const res = await fetch("/api/admin/upload-3d-model", {
+      const sanitizedName = file.name
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[^a-zA-Z0-9_-]/g, "_");
+      const publicId = `frame_${productId || Date.now()}_${sanitizedName}`;
+
+      // 1. Fetch secure signature from lightweight API (~50 bytes payload, never 413)
+      const signRes = await fetch("/api/admin/cloudinary-sign", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          folder: "myeyes/3d-models",
+          public_id: publicId,
+        }),
       });
 
-      const data = await res.json().catch(() => null);
+      const signData = await signRes.json().catch(() => null);
 
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || `Upload failed with status ${res.status}`);
+      if (signRes.ok && signData?.signature && signData?.cloudName) {
+        // 2. Direct browser upload straight to Cloudinary RAW endpoint (bypasses serverless body limit)
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", signData.apiKey);
+        formData.append("timestamp", String(signData.timestamp));
+        formData.append("signature", signData.signature);
+        formData.append("folder", signData.folder);
+        if (signData.public_id) {
+          formData.append("public_id", signData.public_id);
+        }
+
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${signData.cloudName}/raw/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json().catch(() => null);
+
+        if (!uploadRes.ok || !uploadData?.secure_url) {
+          throw new Error(uploadData?.error?.message || "Cloudinary rejected the 3D raw upload.");
+        }
+
+        const finalGlbUrl = uploadData.secure_url;
+        setGlbUrl(finalGlbUrl);
+        onUrlUpdated(finalGlbUrl);
+      } else {
+        // Fallback to server route if direct signing is unavailable in local environment
+        const formData = new FormData();
+        formData.append("file", file);
+        if (productId && productId.trim()) {
+          formData.append("productId", productId.trim());
+        }
+
+        const serverRes = await fetch("/api/admin/upload-3d-model", {
+          method: "POST",
+          body: formData,
+        });
+        const serverData = await serverRes.json().catch(() => null);
+
+        if (!serverRes.ok || !serverData?.success || !serverData?.modelUrl) {
+          throw new Error(serverData?.error || `Upload failed with status ${serverRes.status}`);
+        }
+
+        const finalGlbUrl = serverData.modelUrl;
+        setGlbUrl(finalGlbUrl);
+        onUrlUpdated(finalGlbUrl);
       }
-
-      setGlbUrl(data.modelUrl);
-      onUrlUpdated(data.modelUrl);
     } catch (err: unknown) {
-      console.error("3D Upload caught error:", err);
-      const msg = err instanceof Error ? err.message : "Network connection error during 3D model upload.";
+      console.error("Direct 3D GLB upload caught error:", err);
+      const msg = err instanceof Error ? err.message : "Upload failed. Please check network and file size.";
       setUploadError(msg);
     } finally {
       setIsUploading(false);
-      // Reset input value so re-uploading the same file works
       e.target.value = "";
     }
   };
@@ -85,7 +133,7 @@ export function GLBAssetManager({
           <div>
             <h3 className="text-sm font-bold text-slate-900 leading-tight">3D CAD Model (.glb)</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Upload a binary GLTF 3D asset for real-time optical frame rendering.
+              Direct-to-Cloudinary raw binary upload bypassing server limits.
             </p>
           </div>
         </div>
@@ -111,9 +159,9 @@ export function GLBAssetManager({
             <div className="flex flex-col items-center gap-2 text-center">
               <Loader2 className="w-6 h-6 animate-spin text-[#ff7a00]" />
               <span className="text-xs font-bold text-slate-800">
-                Uploading 3D Model to Cloudinary&hellip;
+                Streaming 3D CAD Binary to Cloudinary&hellip;
               </span>
-              <span className="text-[11px] text-slate-400">Processing binary CAD asset</span>
+              <span className="text-[11px] text-slate-400">Direct client-to-CDN raw transfer</span>
             </div>
           ) : (
             <div className="flex flex-col items-center text-center">
@@ -122,7 +170,7 @@ export function GLBAssetManager({
                 Click to select or drag &amp; drop .glb model
               </span>
               <span className="text-[11px] text-slate-400 mt-0.5">
-                Supports standard Draco/Meshopt .glb files (up to 25 MB)
+                Direct Cloudinary upload (supports up to 50 MB files)
               </span>
             </div>
           )}
