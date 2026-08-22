@@ -40,6 +40,7 @@ interface ProductFrame {
   id: string;
   name: string;
   imageUrl: string;
+  modelGlbUrl?: string | null;
 }
 
 interface ARTryOnModalProps {
@@ -49,6 +50,8 @@ interface ARTryOnModalProps {
   initialImageUrl?: string;
   /** Pre-selected product ID */
   initialProductId?: string;
+  /** Pre-selected 3D GLB model URL */
+  initialModelGlbUrl?: string | null;
 }
 
 type LensTint = "clear" | "blue" | "amber";
@@ -66,6 +69,7 @@ export default function ARTryOnModal({
   onClose,
   initialImageUrl,
   initialProductId,
+  initialModelGlbUrl,
 }: ARTryOnModalProps) {
   const canvasRef  = useRef<ARTryOnCanvasHandle>(null);
   const dockRef    = useRef<HTMLDivElement>(null);
@@ -74,6 +78,9 @@ export default function ARTryOnModal({
   const [selectedId, setSelectedId] = useState<string>(initialProductId ?? "");
   const [currentImage, setCurrentImage] = useState<string>(
     initialImageUrl || "/placeholder-glasses.png"
+  );
+  const [currentModelGlbUrl, setCurrentModelGlbUrl] = useState<string | null>(
+    initialModelGlbUrl || null
   );
   const [fitOffset, setFitOffset]   = useState<number>(0);
   const [lensTint, setLensTint]     = useState<LensTint>("clear");
@@ -89,8 +96,11 @@ export default function ARTryOnModal({
       if (initialImageUrl) {
         setCurrentImage(getFrontFacingProductImage({ images: initialImageUrl }));
       }
+      if (initialModelGlbUrl !== undefined) {
+        setCurrentModelGlbUrl(initialModelGlbUrl);
+      }
     }
-  }, [isOpen, initialProductId, initialImageUrl]);
+  }, [isOpen, initialProductId, initialImageUrl, initialModelGlbUrl]);
 
   // Load product catalog for frame switcher
   useEffect(() => {
@@ -99,7 +109,7 @@ export default function ARTryOnModal({
 
     fetch("/api/products", { cache: "no-store" })
       .then((r) => r.json())
-      .then((data: Array<{ id: string; name: string; images?: string | string[]; frontImage?: string; imageUrl?: string }>) => {
+      .then((data: Array<{ id: string; name: string; images?: string | string[]; frontImage?: string; imageUrl?: string; modelGlbUrl?: string | null }>) => {
         if (!Array.isArray(data)) return;
         const mapped: ProductFrame[] = data
           .map((p) => {
@@ -108,6 +118,7 @@ export default function ARTryOnModal({
               id: p.id,
               name: p.name,
               imageUrl: frontUrl,
+              modelGlbUrl: p.modelGlbUrl || null,
             };
           })
           .filter((f) => f.imageUrl && f.imageUrl.trim().length > 0);
@@ -118,6 +129,7 @@ export default function ARTryOnModal({
         if (!initialProductId && mapped.length > 0 && !initialImageUrl) {
           setSelectedId(mapped[0].id);
           setCurrentImage(mapped[0].imageUrl);
+          setCurrentModelGlbUrl(mapped[0].modelGlbUrl || null);
         }
       })
       .catch((err) => {
@@ -138,6 +150,7 @@ export default function ARTryOnModal({
   const handleSelectFrame = useCallback((frame: ProductFrame) => {
     setSelectedId(frame.id);
     setCurrentImage(frame.imageUrl);
+    setCurrentModelGlbUrl(frame.modelGlbUrl || null);
   }, []);
 
   // Capture
@@ -203,6 +216,7 @@ export default function ARTryOnModal({
           <ARTryOnCanvas
             ref={canvasRef}
             imageUrl={currentImage}
+            modelGlbUrl={currentModelGlbUrl}
             fitOffset={fitOffset}
             lensTint={lensTint}
             className="w-full"

@@ -36,6 +36,7 @@ export async function PATCH(
     if (body.frameShape !== undefined) updateData.frameShape = body.frameShape;
     if (body.material !== undefined) updateData.material = body.material;
     if (body.gender !== undefined) updateData.gender = body.gender;
+    if (body.modelGlbUrl !== undefined) updateData.modelGlbUrl = body.modelGlbUrl;
     if (body.colors !== undefined) {
       updateData.colors = Array.isArray(body.colors) ? body.colors : [];
     }

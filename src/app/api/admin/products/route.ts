@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       frameShape,
       material,
       gender,
+      modelGlbUrl,
     } = body;
 
     if (!name || !price || !description) {
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
         category: category || "EYEGLASSES",
         image_url: firstUrl || (uploadedUrls[0] || null),
         image_public_id: firstPublicId || null,
+        modelGlbUrl: modelGlbUrl || null,
       },
     });
 

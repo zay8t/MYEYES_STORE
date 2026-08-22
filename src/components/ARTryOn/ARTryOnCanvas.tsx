@@ -21,6 +21,7 @@ export interface ARTryOnCanvasHandle {
 export interface ARTryOnCanvasProps {
   productImageUrl?: string;
   imageUrl?: string;
+  modelGlbUrl?: string | null;
   fitOffset?: number;
   lensTint?: "clear" | "blue" | "amber" | "sun";
   activeTint?: "clear" | "blue" | "amber" | "sun";

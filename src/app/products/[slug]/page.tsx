@@ -30,6 +30,7 @@ interface Product {
   images: string;
   category: string;
   featured: boolean;
+  modelGlbUrl?: string | null;
 }
 
 export default function ProductDetailPage({
@@ -393,6 +394,7 @@ export default function ProductDetailPage({
         onClose={() => setIsTryOnOpen(false)}
         initialImageUrl={getFrontFacingProductImage(product)}
         initialProductId={product.id}
+        initialModelGlbUrl={product.modelGlbUrl}
       />
     </div>
   );

@@ -219,6 +219,7 @@ model Product {
   items       OrderItem[]
   image_url           String?
   image_public_id     String?
+  modelGlbUrl         String?
 }
 
 model Order {
