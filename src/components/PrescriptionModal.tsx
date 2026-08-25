@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   X, Check, ChevronRight, ArrowLeft, Camera, ImageIcon,
-  Trash2, User, Phone, Scan, Sparkles, AlertCircle, Loader2, Pencil, Ruler
+  Trash2, User, Phone, Scan, Sparkles, AlertCircle, Loader2, Pencil, Ruler,
+  Lock, Edit2, UserCheck, LogIn, Calendar,
 } from "lucide-react";
 import PDMeasurementModal, { PDMeasurementResult } from "@/components/PDTool/PDMeasurementModal";
 import Image from "next/image";
@@ -21,6 +22,7 @@ import {
   parseOpticalPrescription,
   ExtractedPrescription,
 } from "@/lib/ocrScanner";
+import { useAuth } from "@/components/AuthProvider";
 
 export interface PrescriptionDetails {
   lensUsage: string;
@@ -56,6 +58,13 @@ interface PrescriptionModalProps {
   productPrice: number;
   productId?: string;
   onSubmit: (details: PrescriptionDetails, totalPrice: number) => void;
+  /** Optional: pass a known user profile to auto-skip Step 1 */
+  currentUser?: {
+    name?: string;
+    phone?: string | null;
+    age?: number | string | null;
+    addPower?: string | null;
+  } | null;
 }
 
 // Consumer-friendly display names & luxury badges for the 5 Core Options
@@ -219,8 +228,11 @@ function StepDot({ n, current, label }: { n: number; current: number; label: str
 }
 
 export default function PrescriptionModal({
-  isOpen, onClose, productName, productPrice, productId, onSubmit,
+  isOpen, onClose, productName, productPrice, productId, onSubmit, currentUser,
 }: PrescriptionModalProps) {
+  // Auth context — used for pre-fill and auto-skip
+  const { user: authUser } = useAuth();
+
   // Step Sequence: 1 = Your Info, 2 = Choose Lenses, 3 = Prescription & Review
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
@@ -228,6 +240,18 @@ export default function PrescriptionModal({
   const [lead, setLead] = useState({ name: "", age: "", whatsapp: "" });
   const [leadSaving, setLeadSaving] = useState(false);
   const leadValid = lead.name.trim().length > 1 && Number(lead.age) > 0 && lead.whatsapp.replace(/\D/g, "").length >= 10;
+
+  // Step 1: Sign-in / guest toggle
+  const [isSignInView, setIsSignInView] = useState(false);
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [step1Error, setStep1Error] = useState("");
+
+  // Step 1: Age 40+ reading power
+  const [needsReadingLenses, setNeedsReadingLenses] = useState(false);
+  const [addPowerValue, setAddPowerValue] = useState("+1.50");
+  const READING_ADD_VALUES = ["+0.75", "+1.00", "+1.25", "+1.50", "+1.75", "+2.00", "+2.25", "+2.50", "+2.75", "+3.00"];
   
   const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
   const [basePricesLoaded, setBasePricesLoaded] = useState(false);
@@ -277,12 +301,17 @@ export default function PrescriptionModal({
     pd: "63", add: "", rxFileUrl: "", notes: "",
   });
 
-  // Reset state on modal open/close
+  // Reset state on modal close
   useEffect(() => {
     if (!isOpen) {
       setStep(1);
       setLead({ name: "", age: "", whatsapp: "" });
-
+      setIsSignInView(false);
+      setLoginPhone("");
+      setLoginPassword("");
+      setStep1Error("");
+      setNeedsReadingLenses(false);
+      setAddPowerValue("+1.50");
       setUploadMode("upload");
       setRxFile(null);
       setRxPreview("");
@@ -295,6 +324,37 @@ export default function PrescriptionModal({
       setPdMeasured(false);
       setPdModalOpen(false);
     }
+  }, [isOpen]);
+
+  // Auto-skip Step 1 for authenticated / known users when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Priority 1: currentUser prop (full profile — age + addPower enable routing)
+    if (currentUser?.name && currentUser?.phone) {
+      const uAge = parseInt(String(currentUser.age ?? "0"), 10) || 0;
+      const uAddPower = currentUser.addPower ?? "";
+      const uHasAdd = uAddPower !== "" && parseFloat(uAddPower) >= 0.5;
+      const cleanPhone = String(currentUser.phone).replace(/^\+92/, "");
+      setLead({ name: currentUser.name, age: uAge > 0 ? String(uAge) : "", whatsapp: cleanPhone });
+      if (uHasAdd && uAge >= 40) {
+        setNeedsReadingLenses(true);
+        setAddPowerValue(uAddPower);
+        setRx(prev => ({ ...prev, add: uAddPower }));
+      }
+      setStep(2);
+      return;
+    }
+
+    // Priority 2: Auth hook (pre-fill name + phone; user still enters age)
+    if (authUser?.name && authUser?.phone) {
+      setLead(prev => ({
+        ...prev,
+        name: authUser.name,
+        whatsapp: (authUser.phone ?? "").replace(/^\+92/, ""),
+      }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handlePDConfirm = useCallback((result: PDMeasurementResult) => {
@@ -514,6 +574,10 @@ export default function PrescriptionModal({
   // Step 1 → submit lead & advance to Step 2 (Choose Lenses)
   const handleProceedFromStep1 = async () => {
     if (!leadValid) return;
+    // Write ADD power into rx state before advancing so flowMode is correct in Step 2
+    if (needsReadingLenses && userAge >= 40) {
+      setRx(prev => ({ ...prev, add: addPowerValue }));
+    }
     setLeadSaving(true);
     try {
       await fetch("/api/leads", {
@@ -524,6 +588,39 @@ export default function PrescriptionModal({
     } catch { /* fire-and-forget */ }
     setLeadSaving(false);
     setStep(2);
+  };
+
+  // Sign-in handler for returning customers
+  const handleSignIn = async () => {
+    if (!loginPhone.trim() || !loginPassword.trim()) return;
+    setStep1Error("");
+    setIsSigningIn(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: loginPhone, whatsapp: loginPhone, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        const uAge = parseInt(data.user.age || "30", 10) || 30;
+        const uAddPower: string = data.user.addPower || "";
+        const uHasAdd = uAddPower !== "" && parseFloat(uAddPower) >= 0.5;
+        setLead({ name: data.user.name || "", age: String(uAge), whatsapp: (data.user.phone || loginPhone).replace(/^\+92/, "") });
+        if (uHasAdd && uAge >= 40) {
+          setNeedsReadingLenses(true);
+          setAddPowerValue(uAddPower);
+          setRx(prev => ({ ...prev, add: uAddPower }));
+        }
+        setStep(2);
+      } else {
+        setStep1Error(data.error || "Invalid credentials. Please check your number and password.");
+      }
+    } catch {
+      setStep1Error("Connection error. Please try again.");
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   // Final submit
@@ -624,110 +721,249 @@ export default function PrescriptionModal({
         {/* Body */}
         <div className="p-5 overflow-y-auto flex-1 space-y-5">
 
-          {/* STEP 1: YOUR INFO (LEAD CAPTURE) */}
+          {/* STEP 1: YOUR INFO (GUEST FIRST + AGE 40+ READING TOGGLE) */}
           {step === 1 && (
             <div className="space-y-5">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">Your Contact Details</h4>
-                <p className="text-xs text-slate-500 mt-0.5">We&apos;ll send your order updates and prescription confirmation via WhatsApp.</p>
+
+              {/* Header row with sign-in toggle */}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {isSignInView ? "Welcome Back" : "Your Info"}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {isSignInView
+                      ? "Sign in to load your saved profile and skip ahead."
+                      : "Quick details so we can match the right lenses for you."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setIsSignInView(!isSignInView); setStep1Error(""); }}
+                  className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1.5 transition cursor-pointer hover:underline flex-shrink-0 pt-0.5"
+                >
+                  {isSignInView ? (
+                    <><User className="w-3.5 h-3.5" /><span>New Customer?</span></>
+                  ) : (
+                    <><LogIn className="w-3.5 h-3.5" /><span>Already have an account? Sign In</span></>
+                  )}
+                </button>
               </div>
 
-              <div className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      value={lead.name}
-                      onChange={e => setLead({ ...lead, name: e.target.value })}
-                      placeholder="e.g. Ahmed Khan"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
-                    />
-                  </div>
+              {/* Error message */}
+              {step1Error && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                  {step1Error}
                 </div>
+              )}
 
-                {/* Age + ADD side by side */}
-                <div className="grid grid-cols-2 gap-3">
+              {!isSignInView ? (
+                /* GUEST FORM — no password required */
+                <div className="space-y-3.5">
+
+                  {/* Full Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Age <span className="text-slate-400 font-normal">(tailors lenses)</span></label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      value={lead.age}
-                      onChange={e => setLead({ ...lead, age: e.target.value })}
-                      placeholder="e.g. 42"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name *</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={lead.name}
+                        onChange={e => setLead({ ...lead, name: e.target.value })}
+                        placeholder="e.g. Ahmed Khan"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                      />
+                    </div>
                   </div>
+
+                  {/* Age */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      ADD Power
-                      {userAge >= 40 ? (
-                        <span className="ml-1 text-[9px] font-extrabold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded tracking-wider">+40 Required</span>
-                      ) : (
-                        <span className="text-slate-400 font-normal"> (if applicable)</span>
-                      )}
+                      Age * <span className="text-slate-400 font-normal">(tailors lenses)</span>
                     </label>
-                    <input
-                      type="text"
-                      value={rx.add}
-                      onChange={e => setRx(prev => ({ ...prev, add: e.target.value }))}
-                      onBlur={() => {
-                        const raw = rx.add.trim();
-                        if (raw && !isNaN(parseFloat(raw))) {
-                          const val = parseFloat(raw);
-                          setRx(prev => ({ ...prev, add: (val >= 0 ? "+" : "") + val.toFixed(2) }));
-                        }
-                      }}
-                      placeholder="+1.50"
-                      className={cn(
-                        "w-full px-4 py-3 rounded-xl border text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all",
-                        userAge >= 40 ? "border-amber-300 bg-amber-50/30" : "border-slate-200"
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number</label>
-                  <div className="flex gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 flex-shrink-0">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
-                      +92
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={lead.age}
+                        onChange={e => setLead({ ...lead, age: e.target.value })}
+                        placeholder="e.g. 42"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                      />
                     </div>
-                    <input
-                      type="tel"
-                      value={lead.whatsapp}
-                      onChange={e => setLead({ ...lead, whatsapp: e.target.value })}
-                      placeholder="3xx-xxxxxxx"
-                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
-                    />
                   </div>
-                </div>
-              </div>
 
-              <button
-                onClick={handleProceedFromStep1}
-                disabled={!leadValid || leadSaving}
-                className={cn(
-                  "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer",
-                  leadValid && !leadSaving
-                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
-                    : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                )}
-              >
-                {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {leadSaving ? "Saving..." : "Proceed to Choose Lenses"}
-                {!leadSaving && <ChevronRight className="w-4 h-4" />}
-              </button>
+                  {/* WhatsApp */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number *</label>
+                    <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-amber-400/50 focus-within:border-amber-400 overflow-hidden transition-all">
+                      <span className="px-3 py-3 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        +92
+                      </span>
+                      <input
+                        type="tel"
+                        value={lead.whatsapp}
+                        onChange={e => setLead({ ...lead, whatsapp: e.target.value })}
+                        placeholder="3xx-xxxxxxx"
+                        className="flex-1 px-3 py-3 text-slate-900 text-sm focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Age 40+ Reading Power Section — renders ONLY when age >= 40 */}
+                  {userAge >= 40 && (
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">
+                            Do you need reading / progressive lenses?
+                          </span>
+                          <span className="text-[11px] text-slate-500 block mt-0.5">
+                            For distance + close-up reading in one pair.
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-200/80 rounded-xl flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setNeedsReadingLenses(false)}
+                            className={cn(
+                              "px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer",
+                              !needsReadingLenses ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            No
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNeedsReadingLenses(true)}
+                            className={cn(
+                              "px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer",
+                              needsReadingLenses ? "bg-amber-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            {needsReadingLenses && <Check className="w-3 h-3" />}
+                            <span>Yes</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {needsReadingLenses && (
+                        <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+                          <span className="text-xs font-semibold text-slate-700">Select Reading Power (+ADD):</span>
+                          <select
+                            value={addPowerValue}
+                            onChange={e => setAddPowerValue(e.target.value)}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-400 cursor-pointer"
+                          >
+                            {READING_ADD_VALUES.map(v => (
+                              <option key={v} value={v}>{v}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleProceedFromStep1}
+                    disabled={!leadValid || leadSaving}
+                    className={cn(
+                      "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer",
+                      leadValid && !leadSaving
+                        ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    )}
+                  >
+                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {leadSaving ? "Saving..." : "Choose Lenses"}
+                    {!leadSaving && <ChevronRight className="w-4 h-4" />}
+                  </button>
+                </div>
+              ) : (
+                /* RETURNING CUSTOMER SIGN-IN */
+                <div className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number</label>
+                    <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-amber-400/50 focus-within:border-amber-400 overflow-hidden transition-all">
+                      <span className="px-3 py-3 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        +92
+                      </span>
+                      <input
+                        type="tel"
+                        value={loginPhone}
+                        onChange={e => setLoginPhone(e.target.value.replace(/\D/g, ""))}
+                        placeholder="3xx-xxxxxxx"
+                        className="flex-1 px-3 py-3 text-slate-900 text-sm focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={e => setLoginPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSignIn}
+                    disabled={isSigningIn}
+                    className={cn(
+                      "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2",
+                      isSigningIn
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm cursor-pointer"
+                    )}
+                  >
+                    {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {isSigningIn ? "Signing in..." : "Sign In & Continue"}
+                    {!isSigningIn && <ChevronRight className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* STEP 2: CHOOSE LENSES (STRICTLY 5 CORE OPTIONS) */}
           {step === 2 && (
             <div className="space-y-5">
+
+              {/* Identity banner — shown when lead data is populated */}
+              {lead.name && (
+                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900 block leading-tight">{lead.name}</span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Age: {lead.age} yrs{needsReadingLenses ? ` | Reading ADD: ${addPowerValue}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Edit2 className="w-3 h-3 text-amber-600" />
+                    <span>Edit</span>
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Select Frame Lens Package</h4>
