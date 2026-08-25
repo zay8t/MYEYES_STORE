@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { createSession, setSessionCookie } from "@/lib/auth/jwt";
 
 const LoginSchema = z.object({
-  identifier: z.string().min(1, "Email or phone number is required"),
+  identifier: z.string().min(1, "WhatsApp number or identifier is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -16,27 +16,57 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Please provide your email/phone and password." },
+        { error: "Please provide your WhatsApp number and password." },
         { status: 400 }
       );
     }
 
     const { identifier, password } = validation.data;
-    const normalizedIdentifier = identifier.trim().toLowerCase();
+    const rawIdentifier = identifier.trim();
+    const isEmail = rawIdentifier.includes("@");
+    const normalizedIdentifier = rawIdentifier.toLowerCase();
 
-    // Find user by email or phone
+    // Prepare phone search variants if not an email
+    const digitsOnly = rawIdentifier.replace(/\D/g, "");
+    const phoneVariants: string[] = [rawIdentifier];
+    if (digitsOnly.length >= 9) {
+      const localPhone = digitsOnly.startsWith("92")
+        ? "0" + digitsOnly.slice(2)
+        : digitsOnly.startsWith("0")
+        ? digitsOnly
+        : "0" + digitsOnly;
+      const intlPhone = digitsOnly.startsWith("92")
+        ? "+" + digitsOnly
+        : "+92" + (digitsOnly.startsWith("0") ? digitsOnly.slice(1) : digitsOnly);
+      const raw92 = digitsOnly.startsWith("92")
+        ? digitsOnly
+        : "92" + (digitsOnly.startsWith("0") ? digitsOnly.slice(1) : digitsOnly);
+      const rawWithoutCountry = digitsOnly.startsWith("92")
+        ? digitsOnly.slice(2)
+        : digitsOnly.startsWith("0")
+        ? digitsOnly.slice(1)
+        : digitsOnly;
+
+      phoneVariants.push(digitsOnly, localPhone, intlPhone, raw92, rawWithoutCountry);
+    }
+
+    // Find user by email or phone variants
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: normalizedIdentifier },
-          { phone: identifier.trim() }, // phone is case-sensitive so use original
+          ...phoneVariants.map((p) => ({ phone: p })),
         ],
       },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "No account found with this email or phone number." },
+        {
+          error: isEmail
+            ? "No account found with this email address. Please check your credentials."
+            : "No account found with this WhatsApp number. Please check your number or password.",
+        },
         { status: 401 }
       );
     }

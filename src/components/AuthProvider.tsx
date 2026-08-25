@@ -17,6 +17,8 @@ export interface AuthUser {
   role: string;
   avatarUrl?: string | null;
   savedFaceShape?: string | null;
+  age?: number | string | null;
+  addPower?: string | null;
   isVerified: boolean;
   prescriptionCount: number;
   wishlistCount: number;

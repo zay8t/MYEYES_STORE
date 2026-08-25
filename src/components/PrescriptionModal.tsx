@@ -251,7 +251,7 @@ export default function PrescriptionModal({
   // Step 1: Age 40+ reading power
   const [needsReadingLenses, setNeedsReadingLenses] = useState(false);
   const [addPowerValue, setAddPowerValue] = useState("+1.50");
-  const READING_ADD_VALUES = ["+0.75", "+1.00", "+1.25", "+1.50", "+1.75", "+2.00", "+2.25", "+2.50", "+2.75", "+3.00"];
+  const READING_ADD_VALUES = ["+0.50", "+0.75", "+1.00", "+1.25", "+1.50", "+1.75", "+2.00", "+2.25", "+2.50", "+2.75", "+3.00"];
   
   const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
   const [basePricesLoaded, setBasePricesLoaded] = useState(false);
@@ -590,34 +590,38 @@ export default function PrescriptionModal({
     setStep(2);
   };
 
-  // Sign-in handler for returning customers
+  // Sign-in handler for returning customers with phone sanitization
   const handleSignIn = async () => {
     if (!loginPhone.trim() || !loginPassword.trim()) return;
     setStep1Error("");
     setIsSigningIn(true);
+
+    const cleanIdentifier = loginPhone.replace(/\D/g, "");
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: loginPhone, whatsapp: loginPhone, password: loginPassword }),
+        body: JSON.stringify({ identifier: cleanIdentifier, whatsapp: cleanIdentifier, password: loginPassword }),
       });
       const data = await res.json();
       if (res.ok && data.user) {
         const uAge = parseInt(data.user.age || "30", 10) || 30;
         const uAddPower: string = data.user.addPower || "";
         const uHasAdd = uAddPower !== "" && parseFloat(uAddPower) >= 0.5;
-        setLead({ name: data.user.name || "", age: String(uAge), whatsapp: (data.user.phone || loginPhone).replace(/^\+92/, "") });
+        setLead({ name: data.user.name || "", age: String(uAge), whatsapp: (data.user.phone || cleanIdentifier).replace(/^\+92/, "") });
         if (uHasAdd && uAge >= 40) {
           setNeedsReadingLenses(true);
           setAddPowerValue(uAddPower);
           setRx(prev => ({ ...prev, add: uAddPower }));
         }
+        setIsSignInView(false);
         setStep(2);
       } else {
-        setStep1Error(data.error || "Invalid credentials. Please check your number and password.");
+        setStep1Error(data.error || "No account found with this WhatsApp number. Please check your number or password.");
       }
     } catch {
-      setStep1Error("Connection error. Please try again.");
+      setStep1Error("Connection error. Please check your internet and try again.");
     } finally {
       setIsSigningIn(false);
     }
@@ -657,12 +661,12 @@ export default function PrescriptionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      {/* Frosted Glass Backdrop */}
+      <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200" onClick={onClose} />
 
-      {/* Modal Card */}
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[93vh] animate-fade-in-up">
+      {/* Modal Card with pop-in animation & modern studio layout */}
+      <div className="relative w-full max-w-2xl bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-in fade-in zoom-in-95 duration-200 ease-out">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
@@ -757,21 +761,126 @@ export default function PrescriptionModal({
                 </div>
               )}
 
-              {!isSignInView ? (
-                /* GUEST FORM — no password required */
+              {/* LOGGED-IN GREETING VIEW: Display customer name ONLY (no phone number) */}
+              {lead.name && !isSignInView ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-[#ff7a00] text-white flex items-center justify-center shadow-xs shrink-0">
+                        <UserCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
+                          Welcome back, {lead.name}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Enter your age below to automatically tailor your lens options.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Your Age * <span className="text-slate-400 font-normal">(determines single-vision vs progressive options)</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={lead.age}
+                        onChange={e => setLead({ ...lead, age: e.target.value })}
+                        placeholder="e.g. 42"
+                        className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none transition-all duration-150 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {userAge >= 40 && (
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">
+                            Do you need reading / progressive lenses?
+                          </span>
+                          <span className="text-[11px] text-slate-500 block mt-0.5">
+                            For distance + close-up reading in one pair.
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-200/80 rounded-xl flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setNeedsReadingLenses(false)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer",
+                              !needsReadingLenses ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            No
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNeedsReadingLenses(true)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer",
+                              needsReadingLenses ? "bg-[#ff7a00] text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            {needsReadingLenses && <Check className="w-3 h-3" />}
+                            <span>Yes</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {needsReadingLenses && (
+                        <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+                          <span className="text-xs font-semibold text-slate-700">Select Reading Power (+ADD):</span>
+                          <select
+                            value={addPowerValue}
+                            onChange={e => setAddPowerValue(e.target.value)}
+                            className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:border-[#ff7a00] focus:ring-2 focus:ring-[#ff7a00]/20 focus:outline-none cursor-pointer"
+                          >
+                            {READING_ADD_VALUES.map(v => (
+                              <option key={v} value={v}>{v}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleProceedFromStep1}
+                    disabled={!leadValid || leadSaving}
+                    className={cn(
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
+                      leadValid && !leadSaving
+                        ? "bg-slate-900 hover:bg-slate-800 text-white"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    )}
+                  >
+                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {leadSaving ? "Saving..." : "Proceed to Choose Lenses"}
+                    {!leadSaving && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
+                  </button>
+                </div>
+              ) : !isSignInView ? (
+                /* GUEST FORM — 3 clean fields */
                 <div className="space-y-3.5">
 
                   {/* Full Name */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name *</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
                         type="text"
                         value={lead.name}
                         onChange={e => setLead({ ...lead, name: e.target.value })}
                         placeholder="e.g. Ahmed Khan"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none bg-white transition-all duration-150"
                       />
                     </div>
                   </div>
@@ -782,7 +891,7 @@ export default function PrescriptionModal({
                       Age * <span className="text-slate-400 font-normal">(tailors lenses)</span>
                     </label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
                         type="number"
                         min="1"
@@ -790,7 +899,7 @@ export default function PrescriptionModal({
                         value={lead.age}
                         onChange={e => setLead({ ...lead, age: e.target.value })}
                         placeholder="e.g. 42"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none bg-white transition-all duration-150"
                       />
                     </div>
                   </div>
@@ -798,17 +907,17 @@ export default function PrescriptionModal({
                   {/* WhatsApp */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number *</label>
-                    <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-amber-400/50 focus-within:border-amber-400 overflow-hidden transition-all">
-                      <span className="px-3 py-3 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                    <div className="flex items-center rounded-2xl border border-slate-200 focus-within:border-[#ff7a00] focus-within:ring-4 focus-within:ring-[#ff7a00]/10 overflow-hidden transition-all duration-150 min-h-[48px]">
+                      <span className="px-3.5 py-3.5 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
+                        <Phone className="w-3.5 h-3.5 text-slate-400" />
                         +92
                       </span>
                       <input
                         type="tel"
                         value={lead.whatsapp}
-                        onChange={e => setLead({ ...lead, whatsapp: e.target.value })}
+                        onChange={e => setLead({ ...lead, whatsapp: e.target.value.replace(/\D/g, "") })}
                         placeholder="3xx-xxxxxxx"
-                        className="flex-1 px-3 py-3 text-slate-900 text-sm focus:outline-none bg-white"
+                        className="flex-1 px-3.5 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none bg-white"
                       />
                     </div>
                   </div>
@@ -830,8 +939,8 @@ export default function PrescriptionModal({
                             type="button"
                             onClick={() => setNeedsReadingLenses(false)}
                             className={cn(
-                              "px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer",
-                              !needsReadingLenses ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                              "px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer",
+                              !needsReadingLenses ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
                             )}
                           >
                             No
@@ -840,8 +949,8 @@ export default function PrescriptionModal({
                             type="button"
                             onClick={() => setNeedsReadingLenses(true)}
                             className={cn(
-                              "px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer",
-                              needsReadingLenses ? "bg-amber-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+                              "px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer",
+                              needsReadingLenses ? "bg-[#ff7a00] text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
                             )}
                           >
                             {needsReadingLenses && <Check className="w-3 h-3" />}
@@ -856,7 +965,7 @@ export default function PrescriptionModal({
                           <select
                             value={addPowerValue}
                             onChange={e => setAddPowerValue(e.target.value)}
-                            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-400 cursor-pointer"
+                            className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:border-[#ff7a00] focus:ring-2 focus:ring-[#ff7a00]/20 focus:outline-none cursor-pointer"
                           >
                             {READING_ADD_VALUES.map(v => (
                               <option key={v} value={v}>{v}</option>
@@ -871,15 +980,15 @@ export default function PrescriptionModal({
                     onClick={handleProceedFromStep1}
                     disabled={!leadValid || leadSaving}
                     className={cn(
-                      "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer",
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
                       leadValid && !leadSaving
-                        ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
+                        ? "bg-slate-900 hover:bg-slate-800 text-white"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     )}
                   >
                     {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {leadSaving ? "Saving..." : "Choose Lenses"}
-                    {!leadSaving && <ChevronRight className="w-4 h-4" />}
+                    {!leadSaving && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
                   </button>
                 </div>
               ) : (
@@ -887,9 +996,9 @@ export default function PrescriptionModal({
                 <div className="space-y-3.5">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number</label>
-                    <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-amber-400/50 focus-within:border-amber-400 overflow-hidden transition-all">
-                      <span className="px-3 py-3 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                    <div className="flex items-center rounded-2xl border border-slate-200 focus-within:border-[#ff7a00] focus-within:ring-4 focus-within:ring-[#ff7a00]/10 overflow-hidden transition-all duration-150 min-h-[48px]">
+                      <span className="px-3.5 py-3.5 bg-slate-50 border-r border-slate-200 text-xs text-slate-600 font-semibold flex items-center gap-1 flex-shrink-0">
+                        <Phone className="w-3.5 h-3.5 text-slate-400" />
                         +92
                       </span>
                       <input
@@ -897,7 +1006,7 @@ export default function PrescriptionModal({
                         value={loginPhone}
                         onChange={e => setLoginPhone(e.target.value.replace(/\D/g, ""))}
                         placeholder="3xx-xxxxxxx"
-                        className="flex-1 px-3 py-3 text-slate-900 text-sm focus:outline-none bg-white"
+                        className="flex-1 px-3.5 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none bg-white"
                       />
                     </div>
                   </div>
@@ -905,13 +1014,13 @@ export default function PrescriptionModal({
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
                         type="password"
                         value={loginPassword}
                         onChange={e => setLoginPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 focus:outline-none bg-white transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none bg-white transition-all duration-150"
                       />
                     </div>
                   </div>
@@ -920,15 +1029,15 @@ export default function PrescriptionModal({
                     onClick={handleSignIn}
                     disabled={isSigningIn}
                     className={cn(
-                      "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2",
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
                       isSigningIn
                         ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm cursor-pointer"
+                        : "bg-slate-900 hover:bg-slate-800 text-white"
                     )}
                   >
-                    {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin text-[#ff7a00]" /> : null}
                     {isSigningIn ? "Signing in..." : "Sign In & Continue"}
-                    {!isSigningIn && <ChevronRight className="w-4 h-4" />}
+                    {!isSigningIn && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
                   </button>
                 </div>
               )}
@@ -939,26 +1048,26 @@ export default function PrescriptionModal({
           {step === 2 && (
             <div className="space-y-5">
 
-              {/* Identity banner — shown when lead data is populated */}
+              {/* Identity banner — shown when lead data is populated (NO phone number displayed) */}
               {lead.name && (
-                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between text-xs">
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between text-xs shadow-2xs">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-7 h-7 rounded-lg bg-[#ff7a00] text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
                       <UserCheck className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-slate-900 block leading-tight">{lead.name}</span>
+                      <span className="font-bold text-slate-900 block leading-tight">Logged in as {lead.name}</span>
                       <span className="text-[11px] text-slate-500 font-medium">
-                        Age: {lead.age} yrs{needsReadingLenses ? ` | Reading ADD: ${addPowerValue}` : ""}
+                        Age: {lead.age} yrs{needsReadingLenses ? ` | Reading ADD: ${addPowerValue}` : " | Single-Vision"}
                       </span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1 shadow-sm cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
-                    <Edit2 className="w-3 h-3 text-amber-600" />
+                    <Edit2 className="w-3 h-3 text-[#ff7a00]" />
                     <span>Edit</span>
                   </button>
                 </div>
