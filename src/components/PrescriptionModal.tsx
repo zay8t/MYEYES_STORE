@@ -60,6 +60,7 @@ interface PrescriptionModalProps {
   onSubmit: (details: PrescriptionDetails, totalPrice: number) => void;
   /** Optional: pass a known user profile to auto-skip Step 1 */
   currentUser?: {
+    id?: string;
     name?: string;
     phone?: string | null;
     age?: number | string | null;
@@ -231,15 +232,30 @@ export default function PrescriptionModal({
   isOpen, onClose, productName, productPrice, productId, onSubmit, currentUser,
 }: PrescriptionModalProps) {
   // Auth context — used for pre-fill and auto-skip
-  const { user: authUser } = useAuth();
+  const { user: authUser, refetch: refetchAuth } = useAuth();
+
+  // Strict sessionUser resolution: prioritize currentUser prop if valid ID & phone, else authUser if valid ID & phone
+  const sessionUser = (currentUser?.id && currentUser?.phone)
+    ? currentUser
+    : (authUser?.id && authUser?.phone ? authUser : null);
+
+  // Authenticated session detection strictly relies on immutable unique identifiers
+  const isAuthenticated = Boolean(sessionUser?.id && sessionUser?.phone);
 
   // Step Sequence: 1 = Your Info, 2 = Choose Lenses, 3 = Prescription & Review
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Step 1: Lead capture
+  // Step 1: Distinct Guest State (isolated — keystrokes never mutate session or auth state)
+  const [guestFullName, setGuestFullName] = useState("");
+  const [guestAge, setGuestAge] = useState("");
+  const [guestWhatsapp, setGuestWhatsapp] = useState("");
+
+  // Step 1: Logged-in editable age state
+  const [loggedInAge, setLoggedInAge] = useState("");
+
+  // Lead capture (populated upon Step 1 submission)
   const [lead, setLead] = useState({ name: "", age: "", whatsapp: "" });
   const [leadSaving, setLeadSaving] = useState(false);
-  const leadValid = lead.name.trim().length > 1 && Number(lead.age) > 0 && lead.whatsapp.replace(/\D/g, "").length >= 10;
 
   // Step 1: Sign-in / guest toggle
   const [isSignInView, setIsSignInView] = useState(false);
@@ -306,6 +322,10 @@ export default function PrescriptionModal({
     if (!isOpen) {
       setStep(1);
       setLead({ name: "", age: "", whatsapp: "" });
+      setGuestFullName("");
+      setGuestAge("");
+      setGuestWhatsapp("");
+      setLoggedInAge("");
       setIsSignInView(false);
       setLoginPhone("");
       setLoginPassword("");
@@ -326,36 +346,29 @@ export default function PrescriptionModal({
     }
   }, [isOpen]);
 
-  // Auto-skip Step 1 for authenticated / known users when modal opens
+  // Sync state for authenticated users when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
-    // Priority 1: currentUser prop (full profile — age + addPower enable routing)
-    if (currentUser?.name && currentUser?.phone) {
-      const uAge = parseInt(String(currentUser.age ?? "0"), 10) || 0;
-      const uAddPower = currentUser.addPower ?? "";
+    if (isAuthenticated && sessionUser) {
+      const uAge = parseInt(String(sessionUser.age ?? "0"), 10) || 0;
+      const uAddPower = sessionUser.addPower ?? "";
       const uHasAdd = uAddPower !== "" && parseFloat(uAddPower) >= 0.5;
-      const cleanPhone = String(currentUser.phone).replace(/^\+92/, "");
-      setLead({ name: currentUser.name, age: uAge > 0 ? String(uAge) : "", whatsapp: cleanPhone });
+      if (uAge > 0) {
+        setLoggedInAge(String(uAge));
+      }
       if (uHasAdd && uAge >= 40) {
         setNeedsReadingLenses(true);
         setAddPowerValue(uAddPower);
         setRx(prev => ({ ...prev, add: uAddPower }));
       }
-      setStep(2);
-      return;
+    } else {
+      setGuestFullName("");
+      setGuestAge("");
+      setGuestWhatsapp("");
+      setLoggedInAge("");
     }
-
-    // Priority 2: Auth hook (pre-fill name + phone; user still enters age)
-    if (authUser?.name && authUser?.phone) {
-      setLead(prev => ({
-        ...prev,
-        name: authUser.name,
-        whatsapp: (authUser.phone ?? "").replace(/^\+92/, ""),
-      }));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated, sessionUser]);
 
   const handlePDConfirm = useCallback((result: PDMeasurementResult) => {
     setRx(prev => ({ ...prev, pd: String(result.binocularPD) }));
@@ -405,7 +418,10 @@ export default function PrescriptionModal({
   const totalSelectedFrames = useMemo(() => 1 + cartFramesCount, [cartFramesCount]);
 
   // Strict numeric parsing — guards against empty string and NaN
-  const userAge = useMemo(() => parseInt(String(lead.age || "0"), 10) || 0, [lead.age]);
+  const userAge = useMemo(() => {
+    const raw = isAuthenticated ? loggedInAge : (step > 1 ? lead.age : guestAge);
+    return parseInt(String(raw || "0"), 10) || 0;
+  }, [isAuthenticated, loggedInAge, step, lead.age, guestAge]);
   const parsedAdd = useMemo(() => {
     const raw = rx.add.trim();
     if (!raw) return 0;
@@ -573,9 +589,30 @@ export default function PrescriptionModal({
 
   // Step 1 → submit lead & advance to Step 2 (Choose Lenses)
   const handleProceedFromStep1 = async () => {
-    if (!leadValid) return;
+    setStep1Error("");
+    const resolvedName = isAuthenticated ? sessionUser?.name || "" : guestFullName.trim();
+    const resolvedPhone = isAuthenticated
+      ? (sessionUser?.phone ? sessionUser.phone.replace(/\D/g, "") : "")
+      : guestWhatsapp.trim();
+    const resolvedAge = isAuthenticated ? parseInt(loggedInAge, 10) : parseInt(guestAge, 10);
+
+    if (!resolvedName || resolvedName.length < 2) {
+      setStep1Error("Please provide your full name.");
+      return;
+    }
+    if (isNaN(resolvedAge) || resolvedAge < 5 || resolvedAge > 120) {
+      setStep1Error("Please enter a valid age to tailor your lenses.");
+      return;
+    }
+    if (!isAuthenticated && resolvedPhone.length < 10) {
+      setStep1Error("Please provide a valid WhatsApp number for order updates.");
+      return;
+    }
+
+    setLead({ name: resolvedName, age: String(resolvedAge), whatsapp: resolvedPhone });
+
     // Write ADD power into rx state before advancing so flowMode is correct in Step 2
-    if (needsReadingLenses && userAge >= 40) {
+    if (needsReadingLenses && resolvedAge >= 40) {
       setRx(prev => ({ ...prev, add: addPowerValue }));
     }
     setLeadSaving(true);
@@ -583,7 +620,7 @@ export default function PrescriptionModal({
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: lead.name, age: parseInt(lead.age), whatsapp: lead.whatsapp, frameId: productId }),
+        body: JSON.stringify({ name: resolvedName, age: resolvedAge, whatsapp: resolvedPhone, frameId: productId }),
       });
     } catch { /* fire-and-forget */ }
     setLeadSaving(false);
@@ -606,17 +643,8 @@ export default function PrescriptionModal({
       });
       const data = await res.json();
       if (res.ok && data.user) {
-        const uAge = parseInt(data.user.age || "30", 10) || 30;
-        const uAddPower: string = data.user.addPower || "";
-        const uHasAdd = uAddPower !== "" && parseFloat(uAddPower) >= 0.5;
-        setLead({ name: data.user.name || "", age: String(uAge), whatsapp: (data.user.phone || cleanIdentifier).replace(/^\+92/, "") });
-        if (uHasAdd && uAge >= 40) {
-          setNeedsReadingLenses(true);
-          setAddPowerValue(uAddPower);
-          setRx(prev => ({ ...prev, add: uAddPower }));
-        }
+        await refetchAuth();
         setIsSignInView(false);
-        setStep(2);
       } else {
         setStep1Error(data.error || "No account found with this WhatsApp number. Please check your number or password.");
       }
@@ -661,17 +689,17 @@ export default function PrescriptionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden">
       {/* Frosted Glass Backdrop */}
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200" onClick={onClose} />
 
-      {/* Modal Card with pop-in animation & modern studio layout */}
-      <div className="relative w-full max-w-2xl bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] z-10 animate-in fade-in zoom-in-95 duration-200 ease-out">
+      {/* Modal Card with pop-in animation & modern studio layout (responsive bottom sheet on mobile) */}
+      <div className="relative w-full max-w-2xl bg-white border border-slate-100 rounded-t-[28px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[92vh] z-10 animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 ease-out">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-50 border border-amber-200/60 p-1">
+        {/* Header: Fixed/Sticky at top so keyboard never pushes it off-screen */}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 bg-white sticky top-0 z-10 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-50 border border-amber-200/60 p-1">
               <Image
                 src="/logo.svg"
                 alt="MY EYES Logo"
@@ -681,29 +709,29 @@ export default function PrescriptionModal({
                 priority
               />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-extrabold tracking-wider text-amber-600 uppercase">
+            <div className="min-w-0">
+              <div className="flex items-center flex-wrap sm:flex-nowrap gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm font-extrabold tracking-wider text-amber-600 uppercase shrink-0">
                   MY EYES
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                   CONFIGURATOR
                 </span>
               </div>
-              <h3 className="text-xs font-semibold text-slate-500 mt-0.5 leading-tight">{productName}</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5 leading-tight truncate max-w-[180px] sm:max-w-none">{productName}</h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Prominent Luxury Back Button in Header (visible on Steps 2 and 3) */}
             {step > 1 && (
               <button
                 type="button"
                 onClick={() => setStep(prev => (prev - 1) as 1 | 2)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer hover:border-slate-300"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer hover:border-slate-300"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-amber-600" />
-                Back
+                <span>Back</span>
               </button>
             )}
 
@@ -714,7 +742,7 @@ export default function PrescriptionModal({
         </div>
 
         {/* Step Progress Bar (1: Your Info -> 2: Choose Lenses -> 3: Prescription & Review) */}
-        <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+        <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0">
           <StepDot n={1} current={step} label="Your Info" />
           <div className="h-px flex-1 bg-slate-200 min-w-[12px]" />
           <StepDot n={2} current={step} label="Choose Lenses" />
@@ -723,46 +751,48 @@ export default function PrescriptionModal({
         </div>
 
         {/* Body */}
-        <div className="p-5 overflow-y-auto flex-1 space-y-5">
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-5 pb-6 sm:pb-8 overscroll-contain">
 
           {/* STEP 1: YOUR INFO (GUEST FIRST + AGE 40+ READING TOGGLE) */}
           {step === 1 && (
             <div className="space-y-5">
 
               {/* Header row with sign-in toggle */}
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">
-                    {isSignInView ? "Welcome Back" : "Your Info"}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-slate-900 whitespace-nowrap">
+                    {isSignInView ? "Welcome Back" : isAuthenticated ? "Your Profile" : "Your Info"}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5 leading-snug">
                     {isSignInView
                       ? "Sign in to load your saved profile and skip ahead."
                       : "Quick details so we can match the right lenses for you."}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { setIsSignInView(!isSignInView); setStep1Error(""); }}
-                  className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1.5 transition cursor-pointer hover:underline flex-shrink-0 pt-0.5"
-                >
-                  {isSignInView ? (
-                    <><User className="w-3.5 h-3.5" /><span>New Customer?</span></>
-                  ) : (
-                    <><LogIn className="w-3.5 h-3.5" /><span>Already have an account? Sign In</span></>
-                  )}
-                </button>
+                {!isAuthenticated && (
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignInView(!isSignInView); setStep1Error(""); }}
+                    className="text-[11px] sm:text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition cursor-pointer hover:underline shrink-0 pt-0.5 whitespace-nowrap"
+                  >
+                    {isSignInView ? (
+                      <><User className="w-3.5 h-3.5" /><span>Guest Checkout</span></>
+                    ) : (
+                      <><LogIn className="w-3.5 h-3.5" /><span>Already have an account? Sign In</span></>
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Error message */}
               {step1Error && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium animate-in fade-in duration-150">
                   {step1Error}
                 </div>
               )}
 
               {/* LOGGED-IN GREETING VIEW: Display customer name ONLY (no phone number) */}
-              {lead.name && !isSignInView ? (
+              {isAuthenticated && !isSignInView ? (
                 <div className="space-y-4">
                   <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between shadow-2xs">
                     <div className="flex items-center gap-3">
@@ -771,7 +801,7 @@ export default function PrescriptionModal({
                       </div>
                       <div>
                         <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
-                          Welcome back, {lead.name}
+                          Welcome back, {sessionUser?.name}
                         </span>
                         <span className="text-[11px] text-slate-500 font-medium">
                           Enter your age below to automatically tailor your lens options.
@@ -790,8 +820,8 @@ export default function PrescriptionModal({
                         type="number"
                         min="1"
                         max="120"
-                        value={lead.age}
-                        onChange={e => setLead({ ...lead, age: e.target.value })}
+                        value={loggedInAge}
+                        onChange={e => setLoggedInAge(e.target.value)}
                         placeholder="e.g. 42"
                         className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none transition-all duration-150 bg-white"
                       />
@@ -853,10 +883,10 @@ export default function PrescriptionModal({
 
                   <button
                     onClick={handleProceedFromStep1}
-                    disabled={!leadValid || leadSaving}
+                    disabled={leadSaving}
                     className={cn(
                       "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
-                      leadValid && !leadSaving
+                      !leadSaving
                         ? "bg-slate-900 hover:bg-slate-800 text-white"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     )}
@@ -867,7 +897,7 @@ export default function PrescriptionModal({
                   </button>
                 </div>
               ) : !isSignInView ? (
-                /* GUEST FORM — 3 clean fields */
+                /* GUEST FORM — 3 clean fields (typing here NEVER touches auth or shows Welcome Back card) */
                 <div className="space-y-3.5">
 
                   {/* Full Name */}
@@ -877,8 +907,8 @@ export default function PrescriptionModal({
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
                         type="text"
-                        value={lead.name}
-                        onChange={e => setLead({ ...lead, name: e.target.value })}
+                        value={guestFullName}
+                        onChange={e => setGuestFullName(e.target.value)}
                         placeholder="e.g. Ahmed Khan"
                         className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none bg-white transition-all duration-150"
                       />
@@ -896,8 +926,8 @@ export default function PrescriptionModal({
                         type="number"
                         min="1"
                         max="120"
-                        value={lead.age}
-                        onChange={e => setLead({ ...lead, age: e.target.value })}
+                        value={guestAge}
+                        onChange={e => setGuestAge(e.target.value)}
                         placeholder="e.g. 42"
                         className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:border-[#ff7a00] focus:ring-4 focus:ring-[#ff7a00]/10 focus:outline-none bg-white transition-all duration-150"
                       />
@@ -914,8 +944,8 @@ export default function PrescriptionModal({
                       </span>
                       <input
                         type="tel"
-                        value={lead.whatsapp}
-                        onChange={e => setLead({ ...lead, whatsapp: e.target.value.replace(/\D/g, "") })}
+                        value={guestWhatsapp}
+                        onChange={e => setGuestWhatsapp(e.target.value.replace(/\D/g, ""))}
                         placeholder="3xx-xxxxxxx"
                         className="flex-1 px-3.5 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none bg-white"
                       />
@@ -978,10 +1008,10 @@ export default function PrescriptionModal({
 
                   <button
                     onClick={handleProceedFromStep1}
-                    disabled={!leadValid || leadSaving}
+                    disabled={leadSaving}
                     className={cn(
                       "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
-                      leadValid && !leadSaving
+                      !leadSaving
                         ? "bg-slate-900 hover:bg-slate-800 text-white"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     )}
@@ -1056,7 +1086,9 @@ export default function PrescriptionModal({
                       <UserCheck className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-slate-900 block leading-tight">Logged in as {lead.name}</span>
+                      <span className="font-bold text-slate-900 block leading-tight">
+                        {isAuthenticated ? `Logged in as ${lead.name}` : `Profile: ${lead.name}`}
+                      </span>
                       <span className="text-[11px] text-slate-500 font-medium">
                         Age: {lead.age} yrs{needsReadingLenses ? ` | Reading ADD: ${addPowerValue}` : " | Single-Vision"}
                       </span>

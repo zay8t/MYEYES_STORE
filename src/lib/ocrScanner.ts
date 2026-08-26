@@ -133,11 +133,11 @@ function isValidPd(numStr: string): boolean {
 }
 
 /**
- * Validates ADD value: strictly +0.75 to +4.00
+ * Validates ADD value: strictly +0.50 to +4.00
  */
 function isValidAdd(numStr: string): boolean {
   const val = parseFloat(numStr);
-  return !isNaN(val) && val >= 0.75 && val <= 4.0;
+  return !isNaN(val) && val >= 0.50 && val <= 4.0;
 }
 
 /**
