@@ -495,10 +495,10 @@ export function LensConfiguratorModal({
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
+                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-[#ff7a00] hover:bg-[#e06c00] text-white font-bold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
                   >
                     <span>Proceed to Choose Lenses</span>
-                    <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 </form>
               ) : !isSignInView ? (
@@ -623,10 +623,10 @@ export function LensConfiguratorModal({
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
+                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-[#ff7a00] hover:bg-[#e06c00] text-white font-bold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
                   >
                     <span>Choose Lenses</span>
-                    <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 </form>
               ) : (
@@ -672,17 +672,17 @@ export function LensConfiguratorModal({
                   <button
                     type="submit"
                     disabled={isSigningIn}
-                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
+                    className="w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-[#ff7a00] hover:bg-[#e06c00] disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer mt-2"
                   >
                     {isSigningIn ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin text-[#ff7a00]" />
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
                         <span>Verifying Account...</span>
                       </>
                     ) : (
                       <>
                         <span>Sign In & Continue</span>
-                        <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+                        <ArrowRight className="w-4 h-4 text-white" />
                       </>
                     )}
                   </button>
@@ -845,10 +845,10 @@ export function LensConfiguratorModal({
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center gap-2 cursor-pointer active:scale-[0.99]"
+                className="px-6 py-2.5 rounded-xl bg-[#ff7a00] hover:bg-[#e06c00] text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer active:scale-[0.99] shadow-sm"
               >
                 <span>Next: Prescription</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#ff7a00]" />
+                <ArrowRight className="w-3.5 h-3.5 text-white" />
               </button>
             </div>
           </div>

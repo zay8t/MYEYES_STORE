@@ -885,15 +885,15 @@ export default function PrescriptionModal({
                     onClick={handleProceedFromStep1}
                     disabled={leadSaving}
                     className={cn(
-                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-bold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
                       !leadSaving
-                        ? "bg-slate-900 hover:bg-slate-800 text-white"
+                        ? "bg-[#ff7a00] hover:bg-[#e06c00] text-white"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     )}
                   >
-                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : null}
                     {leadSaving ? "Saving..." : "Proceed to Choose Lenses"}
-                    {!leadSaving && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
+                    {!leadSaving && <ChevronRight className="w-4 h-4 text-white" />}
                   </button>
                 </div>
               ) : !isSignInView ? (
@@ -1010,15 +1010,15 @@ export default function PrescriptionModal({
                     onClick={handleProceedFromStep1}
                     disabled={leadSaving}
                     className={cn(
-                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-bold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
                       !leadSaving
-                        ? "bg-slate-900 hover:bg-slate-800 text-white"
+                        ? "bg-[#ff7a00] hover:bg-[#e06c00] text-white"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     )}
                   >
-                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {leadSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : null}
                     {leadSaving ? "Saving..." : "Choose Lenses"}
-                    {!leadSaving && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
+                    {!leadSaving && <ChevronRight className="w-4 h-4 text-white" />}
                   </button>
                 </div>
               ) : (
@@ -1059,15 +1059,15 @@ export default function PrescriptionModal({
                     onClick={handleSignIn}
                     disabled={isSigningIn}
                     className={cn(
-                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
+                      "w-full py-3.5 px-6 min-h-[48px] rounded-2xl text-xs sm:text-sm font-bold tracking-wide transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99] mt-2",
                       isSigningIn
                         ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-slate-900 hover:bg-slate-800 text-white"
+                        : "bg-[#ff7a00] hover:bg-[#e06c00] text-white"
                     )}
                   >
-                    {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin text-[#ff7a00]" /> : null}
+                    {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : null}
                     {isSigningIn ? "Signing in..." : "Sign In & Continue"}
-                    {!isSigningIn && <ChevronRight className="w-4 h-4 text-[#ff7a00]" />}
+                    {!isSigningIn && <ChevronRight className="w-4 h-4 text-white" />}
                   </button>
                 </div>
               )}
@@ -1262,7 +1262,7 @@ export default function PrescriptionModal({
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#ff7a00] hover:bg-[#e06c00] text-white text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 Proceed to Prescription & Review <ChevronRight className="w-4 h-4" />
               </button>
@@ -1611,7 +1611,7 @@ export default function PrescriptionModal({
                 disabled={isOutOfRange}
                 className={cn(
                   "w-full py-3.5 px-4 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-sm",
-                  isOutOfRange ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-amber-500 hover:bg-amber-600 text-white cursor-pointer"
+                  isOutOfRange ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-[#ff7a00] hover:bg-[#e06c00] text-white cursor-pointer"
                 )}
               >
                 <Check className="w-4.5 h-4.5" />
