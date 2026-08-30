@@ -189,7 +189,7 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                     </div>
                   </div>
                   <p className="text-[10px] text-slate-500 pt-1">
-                    Website: www.myeyes.pk · Email: myeyes2026@gmail.com · Phone: +92 300 6694928
+                    Website: www.myeyes.pk · Email: myeyes2026@gmail.com · Phone: +92 339 0103262
                   </p>
                 </div>
 

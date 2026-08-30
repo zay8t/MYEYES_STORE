@@ -74,7 +74,7 @@ export async function sendApprovalNotification(order: NotificationOrder): Promis
   const orderNum = order.orderNumber || order.id.slice(0, 8).toUpperCase();
   const amount = `PKR ${order.totalAmount.toLocaleString("en-PK")}`;
 
-  const message = `✅ *My Eyes — Payment Verified!*\n\nDear ${order.customerName},\n\nYour payment of *${amount}* for Order *#${orderNum}* has been successfully verified! ✨\n\nYour custom eyewear is now in lab production. We'll notify you once it's dispatched.\n\nThank you for choosing My Eyes! 🕶️\n\nFor queries: wa.me/923006694928`;
+  const message = `✅ *My Eyes — Payment Verified!*\n\nDear ${order.customerName},\n\nYour payment of *${amount}* for Order *#${orderNum}* has been successfully verified! ✨\n\nYour custom eyewear is now in lab production. We'll notify you once it's dispatched.\n\nThank you for choosing My Eyes! 🕶️\n\nFor queries: wa.me/923390103262`;
 
   if (order.customerPhone) {
     await sendWhatsAppMessage(order.customerPhone, message);
@@ -93,7 +93,7 @@ export async function sendRejectionNotification(
   const orderNum = order.orderNumber || order.id.slice(0, 8).toUpperCase();
   const reuploadLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://myeyes.pk"}/orders/${orderNum}/verify`;
 
-  const message = `⚠️ *My Eyes — Action Required*\n\nDear ${order.customerName},\n\nPayment verification for Order *#${orderNum}* could not be completed.\n\n*Reason:* ${reason}\n\nPlease re-upload your valid payment receipt here:\n${reuploadLink}\n\nNeed help? Contact us on WhatsApp: wa.me/923006694928`;
+  const message = `⚠️ *My Eyes — Action Required*\n\nDear ${order.customerName},\n\nPayment verification for Order *#${orderNum}* could not be completed.\n\n*Reason:* ${reason}\n\nPlease re-upload your valid payment receipt here:\n${reuploadLink}\n\nNeed help? Contact us on WhatsApp: wa.me/923390103262`;
 
   if (order.customerPhone) {
     await sendWhatsAppMessage(order.customerPhone, message);

@@ -62,7 +62,7 @@ export async function GET(
       .fontSize(8)
       .font("Helvetica")
       .fillColor("#94a3b8")
-      .text("Website: www.myeyes.pk  |  Email: myeyes2026@gmail.com  |  Phone: +92 300 6694928", 40, 78);
+      .text("Website: www.myeyes.pk  |  Email: myeyes2026@gmail.com  |  Phone: +92 339 0103262", 40, 78);
 
     // Right Header - Title & Order No
     doc

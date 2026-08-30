@@ -68,12 +68,12 @@ export default function TermsOfServicePage() {
               </a>{" "}
               or message us on WhatsApp at{" "}
               <a
-                href="https://wa.me/923006694928"
+                href="https://wa.me/923390103262"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#ff7a00] hover:underline font-medium"
               >
-                +92 300 6694928
+                +92 339 0103262
               </a>.
             </p>
           </section>
