@@ -25,77 +25,77 @@ const FACE_SHAPES: FaceShapeData[] = [
   {
     id: "oval",
     label: "Oval",
-    tagline: "Naturally balanced facial geometry with softly curved jawline",
+    tagline: "Balanced face with a soft, rounded jaw",
     characteristics: [
-      "Forehead is slightly wider than curved jaw",
-      "Balanced facial length to width ratio (1.5 : 1)",
-      "High, softly rounded cheekbone contours",
+      "Forehead is slightly wider than your chin",
+      "Face is slightly longer than it is wide",
+      "Soft, high cheekbones",
     ],
     recommendedFrames: [
-      "Geometric & Architectural",
-      "Wide Rectangular",
+      "Sharp Geometric",
+      "Wide Rectangle",
       "Classic Square",
-      "Teardrop Aviator",
+      "Classic Aviator",
     ],
     stylingPrinciple:
-      "Maintain natural facial equilibrium with frames that are as wide as or slightly wider than the broadest part of your face.",
+      "Pick frames that are just as wide as or slightly wider than your face.",
     targetShapeKeys: ["RECTANGLE", "GEOMETRIC", "SQUARE", "AVIATOR", "WAYFARER"],
   },
   {
     id: "round",
     label: "Round",
-    tagline: "Soft circular curves with equal width and cheek fullness",
+    tagline: "Soft, curved cheeks with equal width and height",
     characteristics: [
-      "Equal facial width and vertical height",
-      "Soft, curved jawline without sharp angularity",
-      "Fuller cheek contours creating youthful softness",
+      "Face is about as wide as it is long",
+      "Soft, rounded jaw with no sharp corners",
+      "Fuller, round cheeks",
     ],
     recommendedFrames: [
-      "Angular Rectangular",
-      "Deep Square Frames",
-      "Sharp Geometric Silhouettes",
-      "Structured Wayfarers",
+      "Sharp Rectangle",
+      "Wide Square",
+      "Geometric Shapes",
+      "Classic Wayfarer",
     ],
     stylingPrinciple:
-      "Introduce sharp, angular contours and rectangular lines to visually elongate facial symmetry and add architectural definition.",
+      "Choose angular and rectangular frames to add sharp lines and make your face look slimmer.",
     targetShapeKeys: ["RECTANGLE", "SQUARE", "WAYFARER", "GEOMETRIC"],
   },
   {
     id: "square",
     label: "Square",
-    tagline: "Strong horizontal jawline with bold, architectural symmetry",
+    tagline: "Strong, wide jaw with balanced angles",
     characteristics: [
-      "Distinct, chiseled horizontal jawline",
-      "Forehead, cheekbones, and jaw are equal width",
-      "Straight, defined vertical facial edges",
+      "Strong, sharp jawline",
+      "Forehead, cheeks, and jaw are all the same width",
+      "Straight sides with clear lines",
     ],
     recommendedFrames: [
-      "Round Optical Silhouettes",
-      "Soft Oval Frames",
-      "Teardrop Aviators",
-      "Ultra-thin Curved Wireframes",
+      "Round Frames",
+      "Soft Oval",
+      "Classic Aviator",
+      "Thin Metal Wireframes",
     ],
     stylingPrinciple:
-      "Soften chiseled jaw angles with circular, oval, and curved rim profiles that sit higher on the nasal bridge.",
+      "Pick round or oval frames to soften strong jawlines and balance your look.",
     targetShapeKeys: ["ROUND", "OVAL", "AVIATOR", "RIMLESS"],
   },
   {
     id: "heart",
     label: "Heart",
-    tagline: "Broad forehead tapering gracefully to an inverted triangular chin",
+    tagline: "Wider forehead with a neat, pointed chin",
     characteristics: [
-      "Widest at browline and high cheekbones",
-      "Tapers delicately downward to a pointed chin",
-      "Delicate, sculpted lower facial geometry",
+      "Widest at your forehead and cheekbones",
+      "Narrows down gently to your chin",
+      "Small, tapered chin",
     ],
     recommendedFrames: [
-      "Bottom-Heavy Oval Frames",
-      "Curved Round Wireframes",
-      "Subtle Cat-Eye Accents",
-      "Lightweight Rimless Designs",
+      "Round Wireframes",
+      "Soft Oval",
+      "Subtle Cat-Eye",
+      "Light Rimless Frames",
     ],
     stylingPrinciple:
-      "Balance brow width and delicate chin proportions using frames with low-sitting bridges and bottom-weighted curvature.",
+      "Pick round or bottom-wider frames to balance your forehead and chin.",
     targetShapeKeys: ["ROUND", "CAT_EYE", "OVAL", "RIMLESS", "AVIATOR"],
   },
 ];
@@ -247,13 +247,13 @@ export default function FaceShapeMatcher({
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-2 block">
-            PRECISION FIT SYSTEM
+            FIND YOUR FIT
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-            Curated Optics for Your Facial Geometry
+            Find the Best Glasses for Your Face Shape
           </h2>
           <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
-            Select your face silhouette to unlock optically balanced frame geometries and tailored styling recommendations.
+            Pick your face shape below to see which frame styles look best on you.
           </p>
         </div>
 
@@ -297,7 +297,7 @@ export default function FaceShapeMatcher({
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">
-                    {currentShape.label} Facial Silhouette
+                    {currentShape.label} Face Shape
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {currentShape.tagline}
@@ -307,7 +307,7 @@ export default function FaceShapeMatcher({
                 {/* Characteristics */}
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Facial Characteristics
+                    How to tell if this is you:
                   </span>
                   <ul className="space-y-1.5">
                     {currentShape.characteristics.map((c, i) => (
@@ -322,7 +322,7 @@ export default function FaceShapeMatcher({
                 {/* Recommended Frame Silhouettes */}
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Recommended Frame Silhouettes
+                    Best Glasses Shapes for You
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {currentShape.recommendedFrames.map((frame, i) => (
@@ -340,7 +340,7 @@ export default function FaceShapeMatcher({
                 <div className="p-3.5 rounded-xl bg-orange-50/40 border border-orange-200/50 space-y-1">
                   <div className="flex items-center gap-1.5 text-orange-900 font-semibold text-xs">
                     <Sparkles className="w-3.5 h-3.5 text-[#ff7a00]" />
-                    <span>Optical Fitting Rule</span>
+                    <span>Styling Tip</span>
                   </div>
                   <p className="text-xs text-slate-700 leading-relaxed font-normal">
                     {currentShape.stylingPrinciple}
@@ -353,7 +353,7 @@ export default function FaceShapeMatcher({
                     href="/quiz"
                     className="group inline-flex items-center gap-2 text-xs font-semibold text-[#ff7a00] hover:text-amber-700 transition-colors"
                   >
-                    <span>Uncertain of your facial geometry? Take the 60-Second Fit Quiz</span>
+                    <span>Not sure about your face shape? Take our quick 1-minute quiz</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
@@ -365,10 +365,10 @@ export default function FaceShapeMatcher({
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div>
                   <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-                    Optically Matched Inventory
+                    Frames That Fit Your Face
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Handcrafted frames balanced for {currentShape.label} geometry
+                    Handcrafted styles chosen for {currentShape.label.toLowerCase()} faces
                   </p>
                 </div>
                 <Link
@@ -458,7 +458,7 @@ export default function FaceShapeMatcher({
                                 className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                               >
                                 <Glasses className="w-3.5 h-3.5" />
-                                <span>Configure Rx</span>
+                                <span>Add Lenses</span>
                               </button>
                             ) : (
                               <Link
@@ -466,7 +466,7 @@ export default function FaceShapeMatcher({
                                 className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
                               >
                                 <Glasses className="w-3.5 h-3.5" />
-                                <span>Configure Rx</span>
+                                <span>Add Lenses</span>
                               </Link>
                             )}
                           </div>

@@ -68,7 +68,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
-            Lab-precision prescription eyeglasses and sunglasses with custom SPH, CYL, and PD fitting — delivered anywhere in Pakistan.
+            Custom glasses made to your exact eye numbers — delivered to your doorstep anywhere in Pakistan.
           </p>
         </div>
       </section>
@@ -81,17 +81,17 @@ export default function HomePage() {
           <div className="max-w-xl space-y-4 text-left">
             {/* 1. Category Pill Badge */}
             <span className="inline-block text-[11px] sm:text-xs font-bold tracking-wider text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-1 rounded-full uppercase">
-              MY EYES COLLECTION
+              FIND YOUR LOOK
             </span>
 
             {/* 2. Main Headline */}
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase text-[#0F172A]">
-              Find Your <span className="text-[#F59E0B]">Frame</span>
+              Find Your <span className="text-[#F59E0B]">Perfect Pair</span>
             </h2>
 
             {/* 3. Subtitle */}
             <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
-              Lab-precision optics meets high-fashion hand-crafted frames. Try our 1-minute style quiz or explore our catalog.
+              Great-looking glasses made with clear, high-quality lenses. Take our quick 1-minute quiz or browse all styles.
             </p>
 
             {/* 4. 4-Button Arrangement */}
@@ -102,7 +102,7 @@ export default function HomePage() {
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Start with a quiz</span>
+                <span className="truncate">Take 1-Min Quiz</span>
               </Link>
 
               {/* Button 2: Shop eyeglasses */}
@@ -111,7 +111,7 @@ export default function HomePage() {
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Glasses className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Shop eyeglasses</span>
+                <span className="truncate">Shop Eyeglasses</span>
               </Link>
 
               {/* Button 3: Shop sunglasses */}
@@ -120,7 +120,7 @@ export default function HomePage() {
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Sun className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Shop sunglasses</span>
+                <span className="truncate">Shop Sunglasses</span>
               </Link>
 
               {/* Button 4: Lens Pricing */}
@@ -129,7 +129,7 @@ export default function HomePage() {
                 className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-white text-slate-900 border-2 border-slate-800 hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Calculator className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Lens Pricing</span>
+                <span className="truncate">See Lens Prices</span>
               </Link>
             </div>
           </div>
@@ -157,29 +157,29 @@ export default function HomePage() {
               <div className="flex justify-center text-slate-800 mb-1">
                 <Box className="w-4 h-4" />
               </div>
-              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Lab Rates</span>
-              <span className="block text-xs font-bold text-slate-900">Precision Prescription Lab</span>
+              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Lab Prices</span>
+              <span className="block text-xs font-bold text-slate-900">Quality Lenses for Less</span>
             </div>
             <div className="space-y-1">
               <div className="flex justify-center text-slate-800 mb-1">
                 <Truck className="w-4 h-4" />
               </div>
-              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Shipping</span>
-              <span className="block text-xs font-bold text-slate-900">Flat 250 PKR Delivery</span>
+              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Delivery</span>
+              <span className="block text-xs font-bold text-slate-900">Rs. 250 Flat Rate</span>
             </div>
             <div className="space-y-1">
               <div className="flex justify-center text-slate-800 mb-1">
                 <CreditCard className="w-4 h-4" />
               </div>
-              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Payments</span>
-              <span className="block text-xs font-bold text-slate-900">EasyPaisa / Bank Transfer</span>
+              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Easy Pay</span>
+              <span className="block text-xs font-bold text-slate-900">EasyPaisa, JazzCash & Cards</span>
             </div>
             <div className="space-y-1">
               <div className="flex justify-center text-slate-800 mb-1">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Virtual Engine</span>
-              <span className="block text-xs font-bold text-slate-900">3D Virtual Try-On</span>
+              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">3D Try-On</span>
+              <span className="block text-xs font-bold text-slate-900">See How Frames Look on You</span>
             </div>
           </div>
         </div>
@@ -207,13 +207,13 @@ export default function HomePage() {
       <section className="py-16 sm:py-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-10 bg-white">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            SEASONAL EDIT
+            TOP PICKS
           </span>
           <h2 className="text-3xl font-extrabold text-slate-900">
-            Featured Frame Catalog
+            Popular Frames
           </h2>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-            Explore our most coveted shapes handcrafted with lightweight bio-acetate and premium titanium alloys.
+            Explore our most loved eyeglasses and sunglasses, made with lightweight, long-lasting materials.
           </p>
         </div>
 

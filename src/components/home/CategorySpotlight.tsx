@@ -59,13 +59,12 @@ export default function CategorySpotlight() {
                   Prescription Eyeglasses
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
-                  Lightweight Japanese titanium & bio-acetate frames with custom
-                  single vision, bifocal, or progressive prescriptions. Anti-reflective
-                  & blue-light coatings available.
+                  Lightweight, all-day comfortable frames for distance, reading,
+                  or progressive vision. Add blue-light or anti-glare protection at checkout.
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-brand-dark group-hover:gap-3.5 transition-all duration-300">
-                Browse Eyeglasses
+                Shop Eyeglasses
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </div>
             </Link>
@@ -83,13 +82,12 @@ export default function CategorySpotlight() {
                   Polarized Sunglasses
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-                  Premium polarized lenses with 100% UV400 protection. Glare-free
-                  vision for driving, outdoor sports, and everyday sun shielding.
-                  Gray, brown, and mirror finishes.
+                  100% UV-blocking sunglasses that stop blinding sun glare
+                  while driving, working outdoors, or enjoying sunny days.
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-brand group-hover:text-white group-hover:gap-3.5 transition-all duration-300">
-                Browse Sunglasses
+                Shop Sunglasses
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </div>
             </Link>
@@ -100,13 +98,13 @@ export default function CategorySpotlight() {
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              TRANSPARENT PRICING
+              SIMPLE PRICING
             </span>
             <h2 className="text-3xl font-extrabold text-slate-900">
-              Lens Pricing Guide
+              Lens Price Guide
             </h2>
             <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              All frames include standard single-vision lenses. Upgrade to premium coatings below.
+              Every frame includes standard clear prescription lenses for free. Upgrade to special coatings below.
             </p>
           </div>
 
@@ -115,7 +113,7 @@ export default function CategorySpotlight() {
               {/* Table Header */}
               <div className="grid grid-cols-3 bg-slate-50 px-6 py-3 border-b border-slate-200/80">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest col-span-2">
-                  Lens Type
+                  Lens Option
                 </span>
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest text-right">
                   Price
@@ -158,7 +156,7 @@ export default function CategorySpotlight() {
 
             {/* Footnote */}
             <p className="text-center text-xs text-slate-400 mt-4 font-medium">
-              All lenses include anti-reflective coating &amp; UV400 protection as standard.
+              All lenses come with free anti-glare coating and 100% UV protection.
             </p>
           </div>
         </div>

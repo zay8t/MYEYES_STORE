@@ -213,14 +213,14 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
               className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Glasses className="w-3.5 h-3.5" />
-              <span>ADD LENSES</span>
+              <span>Add Lenses</span>
             </button>
           ) : (
             <button
               onClick={() => onAddToCart && onAddToCart(product)}
               className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <span>ADD TO BAG</span>
+              <span>Add to Cart</span>
             </button>
           )}
         </div>

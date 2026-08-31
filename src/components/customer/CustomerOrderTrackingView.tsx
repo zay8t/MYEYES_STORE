@@ -133,8 +133,8 @@ export default function CustomerOrderTrackingView({
   const lensTierLabel = isProgressive
     ? "Progressive Custom Prescription"
     : hasAnyPrescription
-    ? "Standard Custom Prescription"
-    : "Standard Optical Assembly";
+      ? "Standard Custom Prescription"
+      : "Standard Optical Assembly";
 
   const advanceRequired = Math.round(order.totalAmount * advancePercentage);
   const remainingAtDoorstep = order.totalAmount - advanceRequired;
@@ -282,18 +282,18 @@ export default function CustomerOrderTrackingView({
       },
       prescription: item.prescription
         ? {
-            id: item.prescription.id,
-            lensType: item.prescription.lensType,
-            odSph: item.prescription.odSph,
-            odCyl: item.prescription.odCyl,
-            odAxis: item.prescription.odAxis,
-            osSph: item.prescription.osSph,
-            osCyl: item.prescription.osCyl,
-            osAxis: item.prescription.osAxis,
-            pd: item.prescription.pd,
-            fileUrl: item.prescription.fileUrl,
-            createdAt: order.createdAt,
-          }
+          id: item.prescription.id,
+          lensType: item.prescription.lensType,
+          odSph: item.prescription.odSph,
+          odCyl: item.prescription.odCyl,
+          odAxis: item.prescription.odAxis,
+          osSph: item.prescription.osSph,
+          osCyl: item.prescription.osCyl,
+          osAxis: item.prescription.osAxis,
+          pd: item.prescription.pd,
+          fileUrl: item.prescription.fileUrl,
+          createdAt: order.createdAt,
+        }
         : null,
     })),
   };
@@ -305,7 +305,7 @@ export default function CustomerOrderTrackingView({
   return (
     <div className="min-h-screen bg-[#ffffff] py-10 sm:py-14 text-slate-900 selection:bg-orange-100 selection:text-orange-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
-        
+
         {/* Navigation & Header Actions */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <Link
@@ -807,10 +807,10 @@ export default function CustomerOrderTrackingView({
         {/* 4. ORDER OVERVIEW & ITEM DETAILS (CLEAN WHITE CARDS)              */}
         {/* ================================================================ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Main Column: Items & Prescription */}
           <div className="lg:col-span-8 space-y-6">
-            
+
             {/* Products Card */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xs space-y-4">
               <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
@@ -877,8 +877,8 @@ export default function CustomerOrderTrackingView({
                     order.paymentStatus === "PAID" || isCOD
                       ? "bg-emerald-50/70 border-emerald-200"
                       : order.paymentStatus === "FAILED"
-                      ? "bg-rose-50/70 border-rose-200"
-                      : "bg-amber-50/70 border-amber-200"
+                        ? "bg-rose-50/70 border-rose-200"
+                        : "bg-amber-50/70 border-amber-200"
                   )}
                 >
                   <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Step 2</span>
@@ -911,7 +911,7 @@ export default function CustomerOrderTrackingView({
 
           {/* Sidebar Column: Summary & Invoice Info */}
           <div className="lg:col-span-4 space-y-6">
-            
+
             {/* Payment Summary */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
               <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
@@ -934,10 +934,10 @@ export default function CustomerOrderTrackingView({
                       order.paymentStatus === "PAID"
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         : order.paymentStatus === "FAILED"
-                        ? "bg-rose-50 text-rose-800 border border-rose-200"
-                        : isCOD
-                        ? "bg-orange-50 text-[#ff7a00] border border-orange-200/80"
-                        : "bg-amber-50 text-amber-800 border border-amber-200"
+                          ? "bg-rose-50 text-rose-800 border border-rose-200"
+                          : isCOD
+                            ? "bg-orange-50 text-[#ff7a00] border border-orange-200/80"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
                     )}
                   >
                     {isCOD ? `COD (${advancePercentageLabel} ADVANCE)` : getDigitalInvoiceStatus()}
