@@ -18,7 +18,6 @@
     "@react-three/postprocessing": "^3.0.4",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/bcryptjs": "^2.4.6",
-    "@types/multer": "^2.2.0",
     "@types/node": "^20",
     "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.20.0",
@@ -28,23 +27,22 @@
     "@vercel/speed-insights": "^2.0.0",
     "autoprefixer": "^10.4.18",
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.11.0",
     "clsx": "^2.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "framer-motion": "^12.42.2",
     "jose": "^6.2.9",
     "lucide-react": "^1.26.0",
-    "multer": "^2.2.0",
-    "multer-storage-cloudinary": "^4.0.0",
     "next": "^15.2.0",
     "next-cloudinary": "^6.17.5",
     "pdfkit": "^0.19.1",
     "pg": "^8.22.0",
-    "postcss": "^8.4.35",
+    "postcss": "^8.5.26",
     "prisma": "^6.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sharp": "^0.35.4",
     "stripe": "^22.3.2",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.0.0",
@@ -56,5 +54,13 @@
   },
   "devDependencies": {
     "@ducanh2912/next-pwa": "^10.2.9"
+  },
+  "overrides": {
+    "postcss": "^8.5.26",
+    "sharp": "^0.35.4",
+    "serialize-javascript": "^7.1.1",
+    "brace-expansion": ">=1.1.18",
+    "js-yaml": "^4.3.1",
+    "nanoid": ">=3.3.18"
   }
 }
