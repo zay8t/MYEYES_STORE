@@ -8,6 +8,7 @@ import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice, formatMaterial, formatFrameShape } from "@/lib/utils";
 import { ArrowRight, Sparkles, CheckCircle2, Glasses } from "lucide-react";
 import LikeButton from "@/components/products/LikeButton";
+import { useDiscount } from "@/hooks/useDiscount";
 
 export type FaceShapeId = "oval" | "round" | "square" | "heart";
 
@@ -203,6 +204,116 @@ function FaceGeometryWireframe({ shape }: { shape: FaceShapeId }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  FaceShapeProductCard Component                                    */
+/* ------------------------------------------------------------------ */
+export function FaceShapeProductCard({
+  product,
+  onAddLenses,
+}: {
+  product: SafeProduct;
+  onAddLenses?: (product: SafeProduct) => void;
+}) {
+  const { getPricing } = useDiscount();
+  const pricing = getPricing(product.price);
+
+  const imgUrl =
+    product.images && product.images.length > 0 && product.images[0] !== "/logo.png"
+      ? product.images[0]
+      : "/placeholder-frame.png";
+
+  return (
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group app-card-press">
+      {/* 100% Full-width top image container */}
+      <div className="relative w-full aspect-[4/3] bg-neutral-100 overflow-hidden group/img">
+        <Link href={`/products/${product.slug}`} className="block absolute inset-0 w-full h-full">
+          <Image
+            src={imgUrl}
+            alt={product.name}
+            fill
+            quality={90}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+          />
+        </Link>
+
+        {/* Category Pill Badge & Promotional OFF Badge pinned top left */}
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none flex-wrap max-w-[75%]">
+          <span className="bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+            {product.category || "Eyeglasses"}
+          </span>
+          {pricing.hasDiscount && pricing.badgeText && (
+            <span className="bg-neutral-900/90 text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded shadow-sm">
+              {pricing.badgeText}
+            </span>
+          )}
+        </div>
+
+        {/* Save / Wishlist Heart Button pinned top right */}
+        <div className="absolute top-2.5 right-2.5 z-20">
+          <LikeButton productId={product.id} size="sm" />
+        </div>
+      </div>
+
+      {/* Content Container with isolated padding */}
+      <div className="p-4 flex flex-col justify-between flex-1 space-y-2.5">
+        {/* Shape / Subtitle Row */}
+        <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+          <span>{formatFrameShape(product.frameShape)}</span>
+          <span>{product.gender || "Unisex"}</span>
+        </div>
+
+        {/* Title & Description */}
+        <div>
+          <Link href={`/products/${product.slug}`}>
+            <h5 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#ff7a00] transition-colors">
+              {product.name}
+            </h5>
+          </Link>
+          {product.description && (
+            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+              {product.description}
+            </p>
+          )}
+        </div>
+
+        {/* Price & Action Button */}
+        <div className="pt-2 border-t border-neutral-100 flex items-center justify-between gap-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-extrabold text-slate-900">
+              {pricing.formattedFinalPrice}
+            </span>
+            {pricing.hasDiscount && pricing.formattedOriginalPrice && (
+              <span className="text-neutral-400 text-xs line-through">
+                {pricing.formattedOriginalPrice}
+              </span>
+            )}
+          </div>
+
+          {onAddLenses ? (
+            <button
+              type="button"
+              onClick={() => onAddLenses(product)}
+              className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Glasses className="w-3.5 h-3.5" />
+              <span>Add Lenses</span>
+            </button>
+          ) : (
+            <Link
+              href={`/products/${product.slug}`}
+              className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
+            >
+              <Glasses className="w-3.5 h-3.5" />
+              <span>Add Lenses</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Component                                                    */
 /* ------------------------------------------------------------------ */
 interface FaceShapeMatcherProps {
@@ -385,95 +496,13 @@ export default function FaceShapeMatcher({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                  {matchedProducts.map((product) => {
-                    const imgUrl =
-                      product.images && product.images.length > 0 && product.images[0] !== "/logo.png"
-                        ? product.images[0]
-                        : "/placeholder-frame.png";
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group app-card-press"
-                      >
-                        {/* 100% Full-width top image container */}
-                        <div className="relative w-full aspect-[4/3] bg-neutral-100 overflow-hidden group/img">
-                          <Link
-                            href={`/products/${product.slug}`}
-                            className="block absolute inset-0 w-full h-full"
-                          >
-                            <Image
-                              src={imgUrl}
-                              alt={product.name}
-                              fill
-                              quality={90}
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw"
-                              className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
-                            />
-                          </Link>
-
-                          {/* Material / Category Pill Badge pinned top left */}
-                          <span className="absolute top-2.5 left-2.5 z-10 bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm pointer-events-none">
-                            {formatMaterial(product.material)}
-                          </span>
-
-                          {/* Save / Wishlist Heart Button pinned top right */}
-                          <div className="absolute top-2.5 right-2.5 z-20">
-                            <LikeButton productId={product.id} size="sm" />
-                          </div>
-                        </div>
-
-                        {/* Content Container with isolated padding */}
-                        <div className="p-4 flex flex-col justify-between flex-1 space-y-2.5">
-                          {/* Shape / Subtitle Row */}
-                          <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                            <span>{formatFrameShape(product.frameShape)}</span>
-                            <span>{product.gender || "Unisex"}</span>
-                          </div>
-
-                          {/* Title & Description */}
-                          <div>
-                            <Link href={`/products/${product.slug}`}>
-                              <h5 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#ff7a00] transition-colors">
-                                {product.name}
-                              </h5>
-                            </Link>
-                            {product.description && (
-                              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                                {product.description}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Price & Action Button */}
-                          <div className="pt-2 border-t border-neutral-100 flex items-center justify-between gap-2">
-                            <span className="text-sm font-extrabold text-slate-900">
-                              {formatPrice(product.price)}
-                            </span>
-
-                            {onAddLenses ? (
-                              <button
-                                type="button"
-                                onClick={() => onAddLenses(product)}
-                                className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                              >
-                                <Glasses className="w-3.5 h-3.5" />
-                                <span>Add Lenses</span>
-                              </button>
-                            ) : (
-                              <Link
-                                href={`/products/${product.slug}`}
-                                className="h-[32px] px-3.5 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
-                              >
-                                <Glasses className="w-3.5 h-3.5" />
-                                <span>Add Lenses</span>
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {matchedProducts.map((product) => (
+                    <FaceShapeProductCard
+                      key={product.id}
+                      product={product}
+                      onAddLenses={onAddLenses}
+                    />
+                  ))}
                 </div>
               )}
             </div>

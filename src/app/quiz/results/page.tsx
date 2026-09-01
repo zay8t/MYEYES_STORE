@@ -18,7 +18,7 @@ import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice } from "@/lib/utils";
 import PrescriptionModal from "@/components/PrescriptionModal";
 import { useCartStore } from "@/store/useCartStore";
-import { useActivePromotion } from "@/hooks/useActivePromotion";
+import { useDiscount } from "@/hooks/useDiscount";
 
 interface ScoredProduct extends SafeProduct {
   matchScore: number;
@@ -56,18 +56,18 @@ function ResultProductCard({
   product: ScoredProduct;
   onCustomize: (p: ScoredProduct) => void;
 }) {
-  const { promotion, calculateDiscountedPrice } = useActivePromotion();
-  const { originalPrice, promotionalPrice, hasDiscount } = calculateDiscountedPrice(product.price);
+  const { getPricing } = useDiscount();
+  const pricing = getPricing(product.price);
   const imgUrl = product.firstImage || "/placeholder-frame.png";
 
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group">
-      {/* Match badge overlay */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[70%]">
+      {/* Match badge & Promotional OFF badge overlay */}
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[75%]">
         <MatchBadge percent={product.matchPercent} />
-        {hasDiscount && promotion?.showProductBadge && (
-          <span className="bg-neutral-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase shadow-xs">
-            {promotion.badgeLabel}
+        {pricing.hasDiscount && pricing.badgeText && (
+          <span className="bg-neutral-900/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase shadow-sm">
+            {pricing.badgeText}
           </span>
         )}
       </div>
@@ -110,18 +110,12 @@ function ResultProductCard({
         <div className="pt-3 border-t border-slate-100 mt-auto space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-2">
-              {hasDiscount ? (
-                <>
-                  <span className="font-bold text-slate-900 text-sm">
-                    {formatPrice(promotionalPrice)}
-                  </span>
-                  <span className="line-through text-neutral-400 text-xs">
-                    {formatPrice(originalPrice)}
-                  </span>
-                </>
-              ) : (
-                <span className="font-extrabold text-slate-900 text-sm">
-                  {formatPrice(product.price)}
+              <span className="font-bold text-slate-900 text-sm sm:text-base">
+                {pricing.formattedFinalPrice}
+              </span>
+              {pricing.hasDiscount && pricing.formattedOriginalPrice && (
+                <span className="line-through text-neutral-400 text-xs">
+                  {pricing.formattedOriginalPrice}
                 </span>
               )}
             </div>

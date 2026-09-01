@@ -9,8 +9,7 @@ import PrescriptionModal, { PrescriptionDetails } from "@/components/Prescriptio
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
-import { useActivePromotion } from "@/hooks/useActivePromotion";
-
+import { useDiscount } from "@/hooks/useDiscount";
 
 interface Product {
   id: string;
@@ -43,8 +42,8 @@ export default function ProductDetailPage({
   const [lensOption, setLensOption] = useState<"standard" | "polarized">("standard");
 
   const addItem = useCartStore((s) => s.addItem);
-  const { promotion, calculateDiscountedPrice } = useActivePromotion();
-  const { originalPrice, promotionalPrice, hasDiscount } = calculateDiscountedPrice(product?.price || 0);
+  const { activeDiscount, getPricing } = useDiscount();
+  const pricing = getPricing(product?.price || 0);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -168,47 +167,48 @@ export default function ProductDetailPage({
                 <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
                   {product.category}
                 </span>
-                {hasDiscount && promotion?.showProductBadge && (
+                {pricing.hasDiscount && pricing.badgeText && (
                   <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 text-white text-[10px] font-semibold uppercase tracking-wider shadow-xs">
-                    {promotion.badgeLabel}
+                    {pricing.badgeText}
                   </span>
                 )}
                 <span className="text-xs text-slate-400 font-medium">
                   {product.gender} · {product.material.replace("_", " ")}
                 </span>
               </div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                {product.name}
-              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {product.name}
+                </h1>
+                {pricing.hasDiscount && pricing.badgeText && (
+                  <span className="inline-block bg-neutral-900 text-white text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                    {pricing.badgeText}
+                  </span>
+                )}
+              </div>
               <div className="flex items-baseline gap-3 mt-2">
-                {hasDiscount ? (
-                  <>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                      {formatPrice(promotionalPrice)}
-                    </p>
-                    <span className="line-through text-neutral-400 text-base sm:text-lg font-medium">
-                      {formatPrice(originalPrice)}
-                    </span>
-                  </>
-                ) : (
-                  <p className="text-2xl font-bold text-slate-900">
-                    {formatPrice(product.price)}
-                  </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {pricing.formattedFinalPrice}
+                </p>
+                {pricing.hasDiscount && pricing.formattedOriginalPrice && (
+                  <span className="line-through text-neutral-400 text-base sm:text-lg font-medium">
+                    {pricing.formattedOriginalPrice}
+                  </span>
                 )}
               </div>
             </div>
 
             {/* Inline Promotional Note Banner */}
-            {hasDiscount && promotion && (
+            {pricing.hasDiscount && activeDiscount && (
               <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-950 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 font-medium">
                   <TicketPercent className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
-                    Apply code <strong className="font-mono font-bold uppercase">{promotion.code}</strong> at checkout for {promotion.type === "percentage" ? `${promotion.amount}% off` : `Rs. ${promotion.amount} off`}.
+                    Apply code <strong className="font-mono font-bold uppercase">{activeDiscount.code}</strong> at checkout for {activeDiscount.type === "percentage" ? `${activeDiscount.amount}% off` : `Rs. ${activeDiscount.amount} off`}.
                   </span>
                 </div>
                 <span className="shrink-0 px-2 py-0.5 rounded bg-amber-200/60 font-mono font-bold text-[10px] text-amber-900">
-                  {promotion.code}
+                  {activeDiscount.code}
                 </span>
               </div>
             )}

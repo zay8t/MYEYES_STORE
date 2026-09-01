@@ -7,7 +7,7 @@ import { formatPrice, formatMaterial, formatFrameShape, cn } from "@/lib/utils";
 import { Glasses } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
 import LikeButton from "@/components/products/LikeButton";
-import { useActivePromotion } from "@/hooks/useActivePromotion";
+import { useDiscount } from "@/hooks/useDiscount";
 
 const COLOR_MAP: Record<string, string> = {
   black: "#18181B",
@@ -56,8 +56,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddLenses, onAddToCart }: ProductCardProps) {
-  const { promotion, calculateDiscountedPrice } = useActivePromotion();
-  const { originalPrice, promotionalPrice, hasDiscount } = calculateDiscountedPrice(product.price);
+  const { getPricing } = useDiscount();
+  const pricing = getPricing(product.price);
 
   // Parse all product images
   const getAllProductImages = (): string[] => {
@@ -141,12 +141,12 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
 
         {/* Category Pill Badge & Promotional OFF Badge pinned inside top left */}
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 pointer-events-none flex-wrap max-w-[75%]">
-          <span className="bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+          <span className="bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
             {product.category || "Eyeglasses"}
           </span>
-          {hasDiscount && promotion?.showProductBadge && (
-            <span className="bg-neutral-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase shadow-xs">
-              {promotion.badgeLabel}
+          {pricing.hasDiscount && pricing.badgeText && (
+            <span className="bg-neutral-900/90 text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded shadow-sm">
+              {pricing.badgeText}
             </span>
           )}
         </div>
@@ -215,18 +215,12 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
         {/* Price & Add Lenses CTA Button */}
         <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
           <div className="flex items-baseline gap-2">
-            {hasDiscount ? (
-              <>
-                <span className="text-neutral-900 font-bold text-sm sm:text-base">
-                  {formatPrice(promotionalPrice)}
-                </span>
-                <span className="line-through text-neutral-400 text-sm">
-                  {formatPrice(originalPrice)}
-                </span>
-              </>
-            ) : (
-              <span className="text-sm sm:text-base font-extrabold text-slate-900">
-                {formatPrice(product.price)}
+            <span className="text-neutral-900 font-bold text-sm sm:text-base">
+              {pricing.formattedFinalPrice}
+            </span>
+            {pricing.hasDiscount && pricing.formattedOriginalPrice && (
+              <span className="text-neutral-400 text-xs line-through">
+                {pricing.formattedOriginalPrice}
               </span>
             )}
           </div>
