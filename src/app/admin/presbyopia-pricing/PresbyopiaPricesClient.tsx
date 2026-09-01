@@ -20,10 +20,10 @@ export default function PresbyopiaPricesClient({ initialPrices }: { initialPrice
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: "" });
 
   const LENS_MAPPING = {
-    P1: "Progressive Free Form 1.56 HMC",
+    P1: "MY EYES CR Hard Crystal Coat",
     P2: "MY EYES Blue Light Filter + UV Protection HMC",
     P3: "MY EYES Sun Adaptive Photochromic HMC",
-    P4: "MY EYES Dual Shield - Blue Light & Photochromic HMC",
+    P4: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER",
   };
 
   const handleSave = async () => {

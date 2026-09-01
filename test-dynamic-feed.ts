@@ -22,6 +22,20 @@ const expectedCodes = ["B1", "B2", "B3", "B4", "B5"];
 const actualCodes = LENS_PACKAGES.map((p) => p.baseKey);
 assert("All 5 codes match B1-B5", JSON.stringify(actualCodes) === JSON.stringify(expectedCodes));
 
+// Verify 1:1 Names
+assert("B1 Name match", LENS_PACKAGES[0].name === "MY EYES CR Hard Crystal Coat");
+assert("B2 Name match", LENS_PACKAGES[1].name === "MY EYES Blue Light Filter + UV Protection HMC");
+assert("B3 Name match", LENS_PACKAGES[2].name === "MY EYES Sun Adaptive Photochromic HMC");
+assert("B4 Name match (Renamed)", LENS_PACKAGES[3].name === "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER");
+assert("B5 Name match", LENS_PACKAGES[4].name === "MY EYES Ultra Thin Index");
+
+// Verify 1:1 Descriptions
+assert("B1 Description match", LENS_PACKAGES[0].description === "Single-vision clarity with standard hard crystal coating for daily scratch resistance.");
+assert("B2 Description match", LENS_PACKAGES[1].description === "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.");
+assert("B3 Description match", LENS_PACKAGES[2].description === "Transitions smoothly to dark grey in sunlight. Complete UV protection.");
+assert("B4 Description match", LENS_PACKAGES[3].description === "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.");
+assert("B5 Description match", LENS_PACKAGES[4].description === "High-index ultra-thin profile for stronger prescriptions. Reduces lens thickness significantly.");
+
 // 2. Verify Single Vision starting prices
 const expectedStd = [850, 1850, 1950, 3250, 1950];
 const actualStd = LENS_PACKAGES.map((p) => p.standardBasePrice);

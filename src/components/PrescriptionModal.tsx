@@ -77,24 +77,24 @@ const CORE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; de
     description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
   },
   "sv-156-bluecut": {
-    title: "MY EYES Blue Light Filter + UV Protection",
-    subtitle: "Digital Shield",
-    description: "Digital protection blocking harmful screen blue light and 100% UV rays.",
+    title: "MY EYES Blue Light Filter + UV Protection HMC",
+    subtitle: "Digital Screen Shield",
+    description: "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.",
   },
   "sv-156-photogrey": {
-    title: "MY EYES Sun Adaptive Photochromic",
-    subtitle: "Smart Tint",
-    description: "Darkens outdoors in sunlight and turns clear indoors automatically.",
+    title: "MY EYES Sun Adaptive Photochromic HMC",
+    subtitle: "Sun Adaptive",
+    description: "Transitions smoothly to dark grey in sunlight. Complete UV protection.",
   },
   "sv-156-photogrey-bluecut": {
-    title: "MY EYES Dual Shield",
-    subtitle: "Blue Light & Photochromic",
-    description: "Ultimate dual protection: Photochromic tint outdoors with screen blue light filter indoors.",
+    title: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER",
+    subtitle: "Hybrid Protection",
+    description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
   },
   "sv-167-shmc": {
     title: "MY EYES Ultra Thin Index",
     subtitle: "Ultra Thin Profile",
-    description: "Ultra-thin profile engineered for stronger prescriptions to significantly reduce lens thickness.",
+    description: "High-index ultra-thin profile for stronger prescriptions. Reduces lens thickness significantly.",
   },
 };
 
@@ -1135,24 +1135,24 @@ export default function PrescriptionModal({
                   // Progressive mode: override titles to clearly label as progressive lenses
                   const PROGRESSIVE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; description: string }> = {
                     "progressive-freeform": {
-                      title: "MY EYES Progressive Standard",
+                      title: "MY EYES CR Hard Crystal Coat (Progressive)",
                       subtitle: "Progressive",
-                      description: "No-line seamless transition between distance, intermediate, and near vision with hard crystal coating.",
+                      description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
                     },
                     "sv-156-bluecut": {
-                      title: "MY EYES Progressive Blue Light Filter",
-                      subtitle: "Progressive + Blue Shield",
-                      description: "Progressive distance-to-reading vision with full digital screen blue light & UV protection.",
+                      title: "MY EYES Blue Light Filter + UV Protection HMC (Progressive)",
+                      subtitle: "Progressive + Screen Shield",
+                      description: "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.",
                     },
                     "sv-156-photogrey": {
-                      title: "MY EYES Progressive Sun Adaptive",
-                      subtitle: "Progressive + Smart Tint",
-                      description: "Progressive lens that darkens automatically outdoors and clears indoors — distance to near.",
+                      title: "MY EYES Sun Adaptive Photochromic HMC (Progressive)",
+                      subtitle: "Progressive + Sun Adaptive",
+                      description: "Transitions smoothly to dark grey in sunlight. Complete UV protection.",
                     },
                     "sv-156-photogrey-bluecut": {
-                      title: "MY EYES Progressive Dual Shield",
-                      subtitle: "Progressive + Blue + Photochromic",
-                      description: "Ultimate progressive protection: sun-adaptive tint + blue light filter across full vision range.",
+                      title: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER (Progressive)",
+                      subtitle: "Progressive + Hybrid Protection",
+                      description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
                     },
                   };
 

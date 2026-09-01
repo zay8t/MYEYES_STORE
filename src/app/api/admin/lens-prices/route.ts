@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
       const staticMatch = SOLEX_LENS_OPTIONS.find((s) => s.id === lens.id);
       return {
         id: lens.id,
-        name: lens.name || staticMatch?.name || "",
+        name: staticMatch?.name || lens.name || "",
         basePrice: lens.price,
         pricePlus40: lens.pricePlus40 && lens.pricePlus40 > 0 ? lens.pricePlus40 : lens.price + 400,
         category: lens.type ?? staticMatch?.category ?? "single_vision",
         index: lens.index ?? staticMatch?.index ?? "1.56",
-        description: lens.description ?? staticMatch?.description ?? "",
+        description: staticMatch?.description || lens.description || "",
         coating: staticMatch?.coating ?? "Standard",
         isConfiguratorVisible: CORE_SET.has(lens.id),
       };

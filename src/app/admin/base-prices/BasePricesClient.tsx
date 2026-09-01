@@ -13,7 +13,7 @@ export default function BasePricesClient({ initialPrices }: { initialPrices: Bas
     B1: "MY EYES CR Hard Crystal Coat",
     B2: "MY EYES Blue Light Filter + UV Protection HMC",
     B3: "MY EYES Sun Adaptive Photochromic HMC",
-    B4: "MY EYES Dual Shield - Blue Light & Photochromic HMC",
+    B4: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER",
     B5: "MY EYES Ultra Thin Index",
   };
 
