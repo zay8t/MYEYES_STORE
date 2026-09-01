@@ -18,6 +18,7 @@ import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice } from "@/lib/utils";
 import PrescriptionModal from "@/components/PrescriptionModal";
 import { useCartStore } from "@/store/useCartStore";
+import { useActivePromotion } from "@/hooks/useActivePromotion";
 
 interface ScoredProduct extends SafeProduct {
   matchScore: number;
@@ -55,13 +56,20 @@ function ResultProductCard({
   product: ScoredProduct;
   onCustomize: (p: ScoredProduct) => void;
 }) {
+  const { promotion, calculateDiscountedPrice } = useActivePromotion();
+  const { originalPrice, promotionalPrice, hasDiscount } = calculateDiscountedPrice(product.price);
   const imgUrl = product.firstImage || "/placeholder-frame.png";
 
   return (
     <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/80 bg-white hover:shadow-lg transition-all duration-300 group">
       {/* Match badge overlay */}
-      <div className="absolute top-3 left-3 z-10">
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[70%]">
         <MatchBadge percent={product.matchPercent} />
+        {hasDiscount && promotion?.showProductBadge && (
+          <span className="bg-neutral-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase shadow-xs">
+            {promotion.badgeLabel}
+          </span>
+        )}
       </div>
 
       {/* 1. PRODUCT CARD IMAGE CONTAINER */}
@@ -101,9 +109,22 @@ function ResultProductCard({
         {/* Price + CTAs */}
         <div className="pt-3 border-t border-slate-100 mt-auto space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-extrabold text-slate-900 text-sm">
-              {formatPrice(product.price)}
-            </span>
+            <div className="flex items-baseline gap-2">
+              {hasDiscount ? (
+                <>
+                  <span className="font-bold text-slate-900 text-sm">
+                    {formatPrice(promotionalPrice)}
+                  </span>
+                  <span className="line-through text-neutral-400 text-xs">
+                    {formatPrice(originalPrice)}
+                  </span>
+                </>
+              ) : (
+                <span className="font-extrabold text-slate-900 text-sm">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] text-slate-400">
               {product.gender}
             </span>

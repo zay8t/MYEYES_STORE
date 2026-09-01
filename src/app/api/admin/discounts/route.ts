@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
       showAnnouncementBanner = false,
       bannerText = "",
       bannerTheme = "dark",
+      showProductBadge = true,
+      badgeLabel = "",
+      badgeType = "percentage",
     } = body;
 
     if (!code || !title || !type || amount == null || !startsAt) {
@@ -78,6 +81,9 @@ export async function POST(request: NextRequest) {
         showAnnouncementBanner,
         bannerText,
         bannerTheme,
+        showProductBadge,
+        badgeLabel,
+        badgeType,
       },
     });
 

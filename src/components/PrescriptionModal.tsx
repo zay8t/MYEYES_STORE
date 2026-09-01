@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   X, Check, ChevronRight, ArrowLeft, Camera, ImageIcon,
   Trash2, User, Phone, Scan, Sparkles, AlertCircle, Loader2, Pencil, Ruler,
-  Lock, Edit2, UserCheck, LogIn, Calendar,
+  Lock, Edit2, UserCheck, LogIn, Calendar, TicketPercent,
 } from "lucide-react";
 import PDMeasurementModal, { PDMeasurementResult } from "@/components/PDTool/PDMeasurementModal";
 import Image from "next/image";
@@ -24,6 +24,7 @@ import {
   ExtractedPrescription,
 } from "@/lib/ocrScanner";
 import { useAuth } from "@/components/AuthProvider";
+import { useActivePromotion } from "@/hooks/useActivePromotion";
 
 export interface PrescriptionDetails {
   lensUsage: string;
@@ -232,6 +233,7 @@ function StepDot({ n, current, label }: { n: number; current: number; label: str
 export default function PrescriptionModal({
   isOpen, onClose, productName, productPrice, productId, onSubmit, currentUser,
 }: PrescriptionModalProps) {
+  const { promotion } = useActivePromotion();
   // Auth context — used for pre-fill and auto-skip
   const { user: authUser, refetch: refetchAuth } = useAuth();
 
@@ -1565,6 +1567,21 @@ export default function PrescriptionModal({
                   <span className="text-base font-extrabold text-slate-900">{formatPrice(totalPrice)}</span>
                 </div>
               </div>
+
+              {/* Promotional Campaign Note */}
+              {promotion && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-950 flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <TicketPercent className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Apply code <strong className="font-mono font-bold uppercase">{promotion.code}</strong> at checkout for {promotion.type === "percentage" ? `${promotion.amount}% off` : `Rs. ${promotion.amount} off`}.
+                    </span>
+                  </div>
+                  <span className="shrink-0 px-2 py-0.5 rounded bg-amber-200/60 font-mono font-bold text-[10px] text-amber-900">
+                    {promotion.code}
+                  </span>
+                </div>
+              )}
 
               {/* Cash on Delivery Advance Payment Notice Banner */}
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-bold shadow-2xs">

@@ -398,6 +398,11 @@ model DiscountCode {
   bannerText             String  @default("")
   bannerTheme            String  @default("dark") // "dark" | "amber" | "emerald" | "crimson"
 
+  // Promotional Catalog Badge Controls
+  showProductBadge Boolean @default(true)
+  badgeLabel       String  @default("") // e.g. "20% OFF", "SALE", or auto-derived
+  badgeType        String  @default("percentage") // "percentage" | "fixed_cart" | "custom"
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

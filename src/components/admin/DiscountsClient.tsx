@@ -18,11 +18,12 @@ import {
   BadgePercent,
   Coins,
   Users2,
-  ChevronDown,
-  ChevronUp,
+  Tag,
+  Sparkles,
 } from "lucide-react";
-import type { DiscountCode, BannerTheme, DiscountType } from "@/types/discounts";
+import type { DiscountCode, BannerTheme, DiscountType, DiscountBadgeType } from "@/types/discounts";
 import { formatPrice } from "@/lib/utils";
+import { invalidatePromotionCache } from "@/hooks/useActivePromotion";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,9 @@ const emptyForm = {
   showAnnouncementBanner: false,
   bannerText: "",
   bannerTheme: "dark" as BannerTheme,
+  showProductBadge: true,
+  badgeLabel: "",
+  badgeType: "percentage" as DiscountBadgeType,
 };
 
 type FormState = typeof emptyForm;
@@ -93,6 +97,15 @@ function DiscountFormModal({
 
   const set = (key: keyof FormState, value: unknown) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const computedDefaultBadge =
+    form.amount !== ""
+      ? form.type === "percentage"
+        ? `${form.amount}% OFF`
+        : `RS. ${form.amount} OFF`
+      : "20% OFF";
+
+  const effectiveBadgeLabel = form.badgeLabel.trim() || computedDefaultBadge;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,7 +271,7 @@ function DiscountFormModal({
           <div className="flex items-center justify-between py-2">
             <div>
               <p className="text-sm font-bold text-slate-800">Active Status</p>
-              <p className="text-[11px] text-slate-500">Enable this code for customer use</p>
+              <p className="text-[11px] text-slate-500">Enable this code for customer checkout</p>
             </div>
             <button
               type="button"
@@ -272,12 +285,86 @@ function DiscountFormModal({
             </button>
           </div>
 
-          {/* ── Announcement Banner Section ──────────────────────────────── */}
+          {/* ── 1. Promotional Catalog Badge Section ─────────────────────── */}
+          <div className="border border-slate-200 rounded-xl p-4 space-y-4 bg-slate-50/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-slate-900" />
+                <div>
+                  <p className="text-sm font-bold text-slate-800">Catalog Promotional Badge</p>
+                  <p className="text-[11px] text-slate-500">Show dynamic "OFF" badge &amp; strikethrough price on product cards</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => set("showProductBadge", !form.showProductBadge)}
+                className="cursor-pointer"
+              >
+                {form.showProductBadge
+                  ? <ToggleRight className="w-8 h-8 text-slate-900" />
+                  : <ToggleLeft className="w-8 h-8 text-slate-300" />
+                }
+              </button>
+            </div>
+
+            {form.showProductBadge && (
+              <div className="space-y-3 pt-2 border-t border-slate-200/80">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Badge Type
+                    </label>
+                    <select
+                      value={form.badgeType}
+                      onChange={(e) => set("badgeType", e.target.value as DiscountBadgeType)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                    >
+                      <option value="percentage">Percentage (e.g. 20% OFF)</option>
+                      <option value="fixed_cart">Fixed Amount (e.g. Rs. 500 OFF)</option>
+                      <option value="custom">Custom Label</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Badge Label Override (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.badgeLabel}
+                      onChange={(e) => set("badgeLabel", e.target.value)}
+                      placeholder={`Default: ${computedDefaultBadge}`}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white font-mono uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* Badge Preview */}
+                <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium text-[11px]">Card Preview:</span>
+                    <span className="bg-neutral-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase shadow-xs">
+                      {effectiveBadgeLabel}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 font-mono text-xs">
+                    <span className="text-neutral-900 font-bold">Rs. 2,800</span>
+                    <span className="line-through text-neutral-400 text-[10px]">Rs. 3,500</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 2. Announcement Banner Section ──────────────────────────── */}
           <div className="border border-slate-200 rounded-xl p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Megaphone className="w-4 h-4 text-amber-500" />
-                <p className="text-sm font-bold text-slate-800">Announcement Banner</p>
+                <div>
+                  <p className="text-sm font-bold text-slate-800">Announcement Banner</p>
+                  <p className="text-[11px] text-slate-500">Broadcast sticky top ribbon across customer store</p>
+                </div>
               </div>
               <button
                 type="button"
@@ -324,7 +411,7 @@ function DiscountFormModal({
                   </div>
                 </div>
 
-                {/* Preview */}
+                {/* Banner Preview */}
                 {form.bannerText && (
                   <div className={`py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 ${THEME_CLASSES[form.bannerTheme]}`}>
                     <Megaphone className="w-3.5 h-3.5 opacity-80 flex-shrink-0" />
@@ -366,7 +453,7 @@ function DiscountFormModal({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function AdminDiscountsClient() {
+export default function DiscountsClient() {
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -413,6 +500,7 @@ export default function AdminDiscountsClient() {
         maxDiscountLimit: form.maxDiscountLimit !== "" ? Number(form.maxDiscountLimit) : null,
         usageLimitTotal: form.usageLimitTotal !== "" ? Number(form.usageLimitTotal) : null,
         endsAt: form.endsAt || null,
+        badgeLabel: form.badgeLabel.trim(),
       };
 
       let res: Response;
@@ -435,6 +523,7 @@ export default function AdminDiscountsClient() {
         throw new Error(err.error || "Save failed");
       }
 
+      invalidatePromotionCache();
       toast(editTarget ? "Code updated successfully!" : "Code created successfully!");
       setShowModal(false);
       setEditTarget(null);
@@ -450,6 +539,7 @@ export default function AdminDiscountsClient() {
     try {
       const res = await fetch(`/api/admin/discounts?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
+      invalidatePromotionCache();
       toast("Code deleted.");
       setDeleteConfirm(null);
       fetchCodes();
@@ -465,6 +555,7 @@ export default function AdminDiscountsClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !code.isActive }),
       });
+      invalidatePromotionCache();
       fetchCodes();
     } catch {
       toast("Failed to update status.", false);
@@ -504,6 +595,9 @@ export default function AdminDiscountsClient() {
         showAnnouncementBanner: editTarget.showAnnouncementBanner,
         bannerText: editTarget.bannerText,
         bannerTheme: editTarget.bannerTheme,
+        showProductBadge: editTarget.showProductBadge ?? true,
+        badgeLabel: editTarget.badgeLabel ?? "",
+        badgeType: editTarget.badgeType ?? "percentage",
       }
     : emptyForm;
 
@@ -516,7 +610,7 @@ export default function AdminDiscountsClient() {
             <TicketPercent className="w-5 h-5 text-amber-500" />
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Discounts &amp; Offers</h1>
           </div>
-          <p className="text-xs text-slate-500">Manage promo codes, discount rules, and site-wide announcement banners.</p>
+          <p className="text-xs text-slate-500">Manage promo codes, discount rules, catalog badges, and site-wide announcement banners.</p>
         </div>
         <button
           id="btn-new-discount"
@@ -543,9 +637,9 @@ export default function AdminDiscountsClient() {
               val: codes.filter((c) => c.isActive && !isExpired(c) && !isScheduled(c)).length,
             },
             {
-              icon: <Users2 className="w-4 h-4 text-sky-500" />,
-              label: "Total Uses",
-              val: codes.reduce((s, c) => s + c.timesUsed, 0),
+              icon: <Tag className="w-4 h-4 text-slate-900" />,
+              label: "Catalog Badges",
+              val: codes.filter((c) => (c.showProductBadge ?? true) && c.isActive).length,
             },
             {
               icon: <Megaphone className="w-4 h-4 text-violet-500" />,
@@ -594,6 +688,12 @@ export default function AdminDiscountsClient() {
               ? "bg-sky-50 text-sky-600"
               : "bg-emerald-50 text-emerald-700";
 
+            const badgeText = dc.badgeLabel?.trim()
+              ? dc.badgeLabel.trim()
+              : dc.type === "percentage"
+              ? `${dc.amount}% OFF`
+              : `Rs. ${dc.amount} OFF`;
+
             return (
               <div
                 key={dc.id}
@@ -632,6 +732,14 @@ export default function AdminDiscountsClient() {
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${statusCls}`}>
                     {statusLabel}
                   </span>
+
+                  {/* Catalog Badge indicator */}
+                  {(dc.showProductBadge ?? true) && dc.isActive && (
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-neutral-900 text-white flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      {badgeText}
+                    </span>
+                  )}
 
                   {/* Banner indicator */}
                   {dc.showAnnouncementBanner && dc.isActive && (
