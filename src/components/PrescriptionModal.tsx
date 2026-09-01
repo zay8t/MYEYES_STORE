@@ -16,6 +16,7 @@ import {
   SolexLensOption,
 } from "@/lib/solex-lens-pricing";
 import { calculateTotalLensPrice, calculateTotalProgressivePrice, BasePriceConfig, DEFAULT_BASE_PRICES } from "@/lib/pricingEngine";
+import { useLensPricing } from "@/hooks/useLensPricing";
 import { useCartStore } from "@/store/useCartStore";
 import {
   preprocessPrescriptionImage,
@@ -269,25 +270,10 @@ export default function PrescriptionModal({
   const [addPowerValue, setAddPowerValue] = useState("+1.50");
   const READING_ADD_VALUES = ["+0.50", "+0.75", "+1.00", "+1.25", "+1.50", "+1.75", "+2.00", "+2.25", "+2.50", "+2.75", "+3.00"];
   
-  const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
-  const [basePricesLoaded, setBasePricesLoaded] = useState(false);
-
-  useEffect(() => {
-    async function fetchBasePrices() {
-      try {
-        const res = await fetch("/api/admin/base-prices", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          setBasePrices(data);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setBasePricesLoaded(true);
-      }
-    }
-    fetchBasePrices();
-  }, []);
+  // Live dynamic lens pricing hook
+  const { packages: dynamicPackages, basePrices: liveBasePrices, refresh: refreshLensPricing, isLoading: pricingLoading } = useLensPricing();
+  const basePrices = liveBasePrices || DEFAULT_BASE_PRICES;
+  const basePricesLoaded = !pricingLoading;
 
   // Step 2: Lens selection (Default to #1 Progressive or #2 Blue Cut)
   const [selectedLensId, setSelectedLensId] = useState<string>("progressive-freeform");
@@ -376,35 +362,38 @@ export default function PrescriptionModal({
     setPdModalOpen(false);
   }, []);
 
-  // Load and strictly order the 5 Core Options for customer selection
+  // Load and strictly order the 5 Core Options with live dynamic pricing
   useEffect(() => {
-    async function loadLensOptions() {
-      try {
-        const res = await fetch("/api/admin/lens-prices", { cache: "no-store" });
-        if (res.ok) {
-          const data: SolexLensOption[] = await res.json();
-          // Filter to strictly the 5 Core Options in exact order
-          const coreOrdered = CORE_FIVE_LENS_IDS.map(id => {
-            const found = data.find(l => l.id === id);
-            const staticMatch = SOLEX_LENS_OPTIONS.find(l => l.id === id);
-            return found || staticMatch;
-          }).filter((l): l is SolexLensOption => Boolean(l));
-
-          if (coreOrdered.length > 0) {
-            setLensOptions(coreOrdered);
-            return;
-          }
-        }
-      } catch { /* fallback to static */ }
-
-      // Fallback to static 5 core options in exact order
-      const staticCore = CORE_FIVE_LENS_IDS.map(id =>
-        SOLEX_LENS_OPTIONS.find(l => l.id === id)
-      ).filter((l): l is SolexLensOption => Boolean(l));
-      setLensOptions(staticCore);
+    if (isOpen) {
+      refreshLensPricing();
     }
-    if (isOpen) loadLensOptions();
-  }, [isOpen]);
+  }, [isOpen, refreshLensPricing]);
+
+  useEffect(() => {
+    if (dynamicPackages && dynamicPackages.length > 0) {
+      const coreOrdered = CORE_FIVE_LENS_IDS.map(id => {
+        const found = dynamicPackages.find(l => l.id === id);
+        const staticMatch = SOLEX_LENS_OPTIONS.find(l => l.id === id);
+        if (found) {
+          return {
+            id: found.id,
+            name: found.cleanName || found.name,
+            coating: found.coating,
+            index: found.index,
+            description: found.description,
+            category: (found.id === "progressive-freeform" ? "progressive" : "single_vision") as any,
+            basePrice: found.standardBasePrice,
+            pricePlus40: found.presbyopiaBasePrice,
+          };
+        }
+        return staticMatch;
+      }).filter((l): l is SolexLensOption => Boolean(l));
+
+      if (coreOrdered.length > 0) {
+        setLensOptions(coreOrdered);
+      }
+    }
+  }, [dynamicPackages]);
 
   // Cart items count — only count prescription-configured frames for multi-frame detection
   const cartItems = useCartStore((s) => s.items);
@@ -1171,13 +1160,10 @@ export default function PrescriptionModal({
                     ? (PROGRESSIVE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "Progressive", description: lens.description })
                     : (CORE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "", description: lens.description });
 
-                  // In FLOW_3 before prescription is entered: show Tier 1 base price (P-rate) as starting price
-                  const PROGRESSIVE_BASE_PRICES: Record<string, keyof typeof basePrices> = {
-                    "progressive-freeform": "P1",
-                    "sv-156-bluecut": "P2",
-                    "sv-156-photogrey": "P3",
-                    "sv-156-photogrey-bluecut": "P4",
-                  };
+                  const dynamicMatch = dynamicPackages.find(p => p.id === lens.id);
+                  const activeBaseStartingPrice = flowMode === "FLOW_3"
+                    ? (dynamicMatch?.presbyopiaBasePrice ?? (lens.pricePlus40 || lens.basePrice + 400))
+                    : (dynamicMatch?.standardBasePrice ?? lens.basePrice);
 
                   const lensPricingResult = flowMode === "FLOW_3"
                     ? calculateTotalProgressivePrice(
@@ -1194,13 +1180,9 @@ export default function PrescriptionModal({
                         basePrices
                       );
 
-                  // Fallback to P-base price if no prescription power entered yet
-                  const progressiveFallbackPrice = flowMode === "FLOW_3" && PROGRESSIVE_BASE_PRICES[lens.id]
-                    ? basePrices[PROGRESSIVE_BASE_PRICES[lens.id]] as number
-                    : 0;
                   const calcPrice = lensPricingResult
                     ? lensPricingResult.finalPrice
-                    : progressiveFallbackPrice;
+                    : activeBaseStartingPrice;
                   const isLensOutOfRange = lensPricingResult === null && basePricesLoaded && flowMode !== "FLOW_3";
 
                   return (

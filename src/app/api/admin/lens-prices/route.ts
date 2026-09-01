@@ -117,8 +117,14 @@ export async function PATCH(request: NextRequest) {
       revalidatePath("/pricing");
       revalidatePath("/admin/lens-pricing");
       revalidatePath("/admin/base-prices");
+      revalidatePath("/api/lens-pricing");
+      revalidatePath("/api/admin/lens-pricing");
       revalidatePath("/api/admin/base-prices");
       revalidatePath("/api/base-prices");
+      revalidatePath("/products/[slug]", "page");
+      revalidatePath("/eyeglasses", "page");
+      revalidatePath("/quiz/results", "page");
+      revalidatePath("/", "page");
     } catch (err) {
       console.warn("revalidatePath warning:", err);
     }

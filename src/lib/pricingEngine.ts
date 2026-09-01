@@ -4,6 +4,11 @@ export interface BasePriceConfig {
   B3: number;
   B4: number;
   B5: number;
+  B1_plus40?: number;
+  B2_plus40?: number;
+  B3_plus40?: number;
+  B4_plus40?: number;
+  B5_plus40?: number;
   P1: number;
   P2: number;
   P3: number;
@@ -20,6 +25,11 @@ export const DEFAULT_BASE_PRICES: BasePriceConfig = {
   B3: 1950,
   B4: 3250,
   B5: 1950,
+  B1_plus40: 1250,
+  B2_plus40: 2250,
+  B3_plus40: 2350,
+  B4_plus40: 3650,
+  B5_plus40: 2350,
   P1: 2250,
   P2: 2850,
   P3: 3250,
@@ -55,34 +65,39 @@ export function parsePower(val: string | number | null | undefined): number {
 }
 
 export async function getActiveBasePrices(): Promise<BasePriceConfig> {
-  const prices = { ...DEFAULT_BASE_PRICES };
+  const prices: BasePriceConfig = { ...DEFAULT_BASE_PRICES };
   try {
     const { prisma } = await import("@/lib/prisma");
-    const settings = await prisma.basePriceSetting.findMany();
+    const [settings, lensOptions] = await Promise.all([
+      prisma.basePriceSetting.findMany(),
+      prisma.lensOption.findMany(),
+    ]);
     
-    const dbKeys = new Set(settings.map(s => s.key));
-    const missingKeys = Object.keys(prices).filter(k => !dbKeys.has(k));
-    
-    if (missingKeys.length > 0) {
-      const createData = missingKeys.map(key => ({
-        key,
-        value: prices[key as keyof BasePriceConfig],
-      }));
-      await prisma.basePriceSetting.createMany({
-        data: createData,
-      });
-      const newSettings = await prisma.basePriceSetting.findMany();
-      for (const setting of newSettings) {
-        if (setting.key in prices) {
-          prices[setting.key as keyof typeof prices] = setting.value;
-        }
-      }
-      return prices;
-    }
-
     for (const setting of settings) {
       if (setting.key in prices) {
-        prices[setting.key as keyof typeof prices] = setting.value;
+        prices[setting.key as keyof BasePriceConfig] = setting.value;
+      }
+    }
+
+    const lensMapping: Record<string, { std: keyof BasePriceConfig; plus40: keyof BasePriceConfig; legacyP?: keyof BasePriceConfig }> = {
+      "progressive-freeform": { std: "B1", plus40: "B1_plus40", legacyP: "P1" },
+      "sv-156-bluecut": { std: "B2", plus40: "B2_plus40", legacyP: "P2" },
+      "sv-156-photogrey": { std: "B3", plus40: "B3_plus40", legacyP: "P3" },
+      "sv-156-photogrey-bluecut": { std: "B4", plus40: "B4_plus40", legacyP: "P4" },
+      "sv-167-shmc": { std: "B5", plus40: "B5_plus40" },
+    };
+
+    for (const opt of lensOptions) {
+      const map = lensMapping[opt.id];
+      if (map) {
+        if (typeof opt.price === "number" && !isNaN(opt.price)) {
+          prices[map.std] = opt.price;
+        }
+        if (typeof opt.pricePlus40 === "number" && opt.pricePlus40 > 0) {
+          prices[map.plus40] = opt.pricePlus40;
+        } else if (typeof opt.price === "number") {
+          prices[map.plus40] = opt.price + 400;
+        }
       }
     }
   } catch (error) {
@@ -285,13 +300,13 @@ export function calculateProgressivePrice(
   // Tier 1 (Base Range): SPH 0.00–3.00, CYL ≈ 0, ADD 0.50–3.00
   if (parsedSph >= 0.00 && parsedSph <= 3.00 && cylIsZero && parsedAdd >= 0.50 && parsedAdd <= 3.00) {
     baseKey = pIndex;
-    baseValue = basePrices[pIndex as keyof BasePriceConfig];
+    baseValue = (basePrices[pIndex as keyof BasePriceConfig] as number) ?? DEFAULT_BASE_PRICES[pIndex as keyof BasePriceConfig];
     multiplier = 1.00;
   }
   // Tier 2 (Hyperopic High SPH): SPH 3.25–6.00, CYL ≈ 0, ADD 0.50–3.50
   else if (parsedSph >= 3.25 && parsedSph <= 6.00 && cylIsZero && parsedAdd >= 0.50 && parsedAdd <= 3.50) {
     baseKey = `${pIndex}_tier2`;
-    baseValue = basePrices[baseKey as keyof BasePriceConfig];
+    baseValue = (basePrices[baseKey as keyof BasePriceConfig] as number) ?? DEFAULT_BASE_PRICES[baseKey as keyof BasePriceConfig];
     multiplier = 1.00;
   }
   // Tier 3 (Myopic Standard SPH / High SPH Low CYL): ((SPH >= -4.00 && SPH <= 0.00 && |CYL| >= 0.00 && |CYL| <= 2.00) OR (SPH >= -8.00 && SPH <= -4.25 && |CYL| >= 0.00 && |CYL| <= 2.00)) WITH ADD >= 0.50 && ADD <= 3.50
@@ -301,7 +316,7 @@ export function calculateProgressivePrice(
     parsedAdd >= 0.50 && parsedAdd <= 3.50
   ) {
     baseKey = `${pIndex}_tier2`;
-    baseValue = basePrices[baseKey as keyof BasePriceConfig];
+    baseValue = (basePrices[baseKey as keyof BasePriceConfig] as number) ?? DEFAULT_BASE_PRICES[baseKey as keyof BasePriceConfig];
     multiplier = 1.25;
   }
   // Tier 4 (Myopic Standard SPH High CYL): SPH >= -4.00 && SPH <= 0.00 && |CYL| >= 2.25 && |CYL| <= 4.00 WITH ADD >= 0.50 && ADD <= 3.50
@@ -311,7 +326,7 @@ export function calculateProgressivePrice(
     parsedAdd >= 0.50 && parsedAdd <= 3.50
   ) {
     baseKey = `${pIndex}_tier2`;
-    baseValue = basePrices[baseKey as keyof BasePriceConfig];
+    baseValue = (basePrices[baseKey as keyof BasePriceConfig] as number) ?? DEFAULT_BASE_PRICES[baseKey as keyof BasePriceConfig];
     multiplier = 1.75;
   }
   // Tier 5 (Myopic High SPH High CYL): SPH >= -8.00 && SPH <= -4.25 && |CYL| >= 2.25 && |CYL| <= 4.00 WITH ADD >= 0.50 && ADD <= 3.50
@@ -321,7 +336,7 @@ export function calculateProgressivePrice(
     parsedAdd >= 0.50 && parsedAdd <= 3.50
   ) {
     baseKey = `${pIndex}_tier2`;
-    baseValue = basePrices[baseKey as keyof BasePriceConfig];
+    baseValue = (basePrices[baseKey as keyof BasePriceConfig] as number) ?? DEFAULT_BASE_PRICES[baseKey as keyof BasePriceConfig];
     multiplier = 2.25;
   }
   else {

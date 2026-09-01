@@ -18,6 +18,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
+import { useLensPricing } from '@/hooks/useLensPricing';
 
 export interface FrameDetails {
   id: string;
@@ -76,6 +77,7 @@ export function LensConfiguratorModal({
 }: LensConfiguratorModalProps) {
   // Global auth hook
   const { user: authUser, refetch: refetchAuth } = useAuth();
+  const { packages: dynamicPackages, refresh: refreshLensPricing } = useLensPricing();
 
   // Strict sessionUser resolution: prioritize currentUser prop if valid ID & phone, else authUser if valid ID & phone
   const sessionUser: UserSessionProfile | null = (currentUser?.id && currentUser?.phone)
@@ -128,6 +130,7 @@ export function LensConfiguratorModal({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setErrorMessage('');
+      refreshLensPricing();
 
       if (isAuthenticated && sessionUser) {
         if (sessionUser.age) {
@@ -211,7 +214,7 @@ export function LensConfiguratorModal({
     });
 
     setIsPresbyopiaCatalog(isPresbyopia);
-    setSelectedLensId(isPresbyopia ? 'progressive_hd' : 'single_vision_blue');
+    setSelectedLensId(isPresbyopia ? 'progressive-freeform' : 'sv-156-bluecut');
     setCurrentStep(2);
   };
 
@@ -741,97 +744,42 @@ export function LensConfiguratorModal({
               </span>
             </div>
 
-            {/* Lens Catalog Options (100% PRESERVED NAMES, SKUs & PKR PRICES) */}
+            {/* Lens Catalog Options (100% PRESERVED NAMES & DYNAMIC PKR PRICES) */}
             <div className="grid grid-cols-1 gap-3">
-              {isPresbyopiaCatalog ? (
-                <>
-                  <div
-                    onClick={() => setSelectedLensId('progressive_std')}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
-                      selectedLensId === 'progressive_std'
-                        ? 'border-[#ff7a00] bg-amber-50/40 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                        Digital Freeform Progressive (Standard Corridor)
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Smooth transition between distance, screen, and reading zones.
-                      </p>
+              {dynamicPackages
+                .filter(pkg => !isPresbyopiaCatalog || pkg.id !== 'sv-167-shmc')
+                .map((pkg) => {
+                  const isSelected = selectedLensId === pkg.id;
+                  const price = isPresbyopiaCatalog ? pkg.presbyopiaBasePrice : pkg.standardBasePrice;
+                  return (
+                    <div
+                      key={pkg.id}
+                      onClick={() => setSelectedLensId(pkg.id)}
+                      className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
+                        isSelected
+                          ? 'border-[#ff7a00] bg-amber-50/40 shadow-xs'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                            {pkg.cleanName || pkg.name}
+                          </h4>
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                            {pkg.index} Index
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {pkg.description}
+                        </p>
+                      </div>
+                      <span className="text-xs sm:text-sm font-bold text-[#ff7a00] whitespace-nowrap pl-3">
+                        Rs. {price.toLocaleString()}
+                      </span>
                     </div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap pl-3">
-                      Rs. 6,500
-                    </span>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedLensId('progressive_hd')}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
-                      selectedLensId === 'progressive_hd'
-                        ? 'border-[#ff7a00] bg-amber-50/40 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                        Ultra-Wide Corridor HD Progressive (Blue Filter)
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Maximum reading corridor with minimal peripheral swim distortion.
-                      </p>
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-[#ff7a00] whitespace-nowrap pl-3">
-                      Rs. 9,500
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div
-                    onClick={() => setSelectedLensId('single_vision_ar')}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
-                      selectedLensId === 'single_vision_ar'
-                        ? 'border-[#ff7a00] bg-amber-50/40 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                        Standard Anti-Glare 1.56
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Clean multi-coated lenses with scratch-resistant surface.
-                      </p>
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap pl-3">
-                      Rs. 2,000
-                    </span>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedLensId('single_vision_blue')}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
-                      selectedLensId === 'single_vision_blue'
-                        ? 'border-[#ff7a00] bg-amber-50/40 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                        Blue Light Shield 1.61 (High Index)
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Cuts 95% of digital screen glare with 100% UV400 protection.
-                      </p>
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-[#ff7a00] whitespace-nowrap pl-3">
-                      Rs. 3,500
-                    </span>
-                  </div>
-                </>
-              )}
+                  );
+                })}
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-slate-100">
@@ -874,9 +822,29 @@ export function LensConfiguratorModal({
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t border-slate-200">
-                <span className="text-slate-500">Lens Type:</span>
+                <span className="text-slate-500">Lens Selection:</span>
                 <span className="font-bold text-[#ff7a00]">
-                  {isPresbyopiaCatalog ? 'Progressive & Multi-Focal Lenses' : 'Standard Single-Vision Lenses'}
+                  {dynamicPackages.find(p => p.id === selectedLensId)?.cleanName || selectedLensId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Frame Price:</span>
+                <span className="font-semibold text-slate-900">Rs. {frame.price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Lens Price:</span>
+                <span className="font-semibold text-slate-900">
+                  Rs. {((isPresbyopiaCatalog
+                    ? dynamicPackages.find(p => p.id === selectedLensId)?.presbyopiaBasePrice
+                    : dynamicPackages.find(p => p.id === selectedLensId)?.standardBasePrice) || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-black text-slate-900">
+                <span>Total Amount:</span>
+                <span className="text-[#ff7a00]">
+                  Rs. {(frame.price + ((isPresbyopiaCatalog
+                    ? dynamicPackages.find(p => p.id === selectedLensId)?.presbyopiaBasePrice
+                    : dynamicPackages.find(p => p.id === selectedLensId)?.standardBasePrice) || 0)).toLocaleString()}
                 </span>
               </div>
             </div>
