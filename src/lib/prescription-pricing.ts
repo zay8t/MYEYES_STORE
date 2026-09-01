@@ -13,6 +13,8 @@ export interface LensPackageDefinition {
   id: string;
   name: string;
   baseKey: "B1" | "B2" | "B3" | "B4" | "B5";
+  standardBasePrice: number;
+  presbyopiaBasePrice: number;
   index: "1.56" | "1.67";
   indexNumber: number;
   badge: string;
@@ -28,6 +30,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
     id: "progressive-freeform",
     name: "Standard Clear",
     baseKey: "B1",
+    standardBasePrice: 850,
+    presbyopiaBasePrice: 1250,
     index: "1.56",
     indexNumber: 1.56,
     badge: "Scratch Defense",
@@ -41,6 +45,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
     id: "sv-156-bluecut",
     name: "Screen Protection",
     baseKey: "B2",
+    standardBasePrice: 1850,
+    presbyopiaBasePrice: 2250,
     index: "1.56",
     indexNumber: 1.56,
     badge: "Blue Light Filter",
@@ -54,6 +60,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
     id: "sv-156-photogrey",
     name: "Color Changing (Sun Adaptive)",
     baseKey: "B3",
+    standardBasePrice: 1950,
+    presbyopiaBasePrice: 2350,
     index: "1.56",
     indexNumber: 1.56,
     badge: "Sun Adaptive",
@@ -67,6 +75,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
     id: "sv-156-photogrey-bluecut",
     name: "All-Day Blue Light & Sun Guard",
     baseKey: "B4",
+    standardBasePrice: 3250,
+    presbyopiaBasePrice: 3650,
     index: "1.56",
     indexNumber: 1.56,
     badge: "2-in-1 Protection",
@@ -80,6 +90,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
     id: "sv-167-shmc",
     name: "Extra Thin & Lightweight",
     baseKey: "B5",
+    standardBasePrice: 1950,
+    presbyopiaBasePrice: 2350,
     index: "1.67",
     indexNumber: 1.67,
     badge: "Extra Thin",
@@ -124,13 +136,20 @@ export function calculateLensPrice({
   packageId,
   sph = 0,
   cyl = 0,
+  add = 0,
+  visionType = "single_vision",
   basePrices = DEFAULT_BASE_PRICES,
 }: {
   packageId: string;
   sph?: number | string;
   cyl?: number | string;
+  add?: number | string;
+  visionType?: "single_vision" | "progressive";
   basePrices?: BasePriceConfig;
 }): PricingResult | null {
+  if (visionType === "progressive") {
+    return calculateProgressivePrice(packageId, sph, cyl, add, basePrices);
+  }
   return calculateSingleEyePrice(packageId, sph, cyl, basePrices);
 }
 

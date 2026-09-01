@@ -10,7 +10,7 @@ import {
   DEFAULT_BASE_PRICES,
   BasePriceConfig,
 } from "@/lib/prescription-pricing";
-import { calculateTotalLensPrice } from "@/lib/pricingEngine";
+import { calculateTotalLensPrice, calculateTotalProgressivePrice } from "@/lib/pricingEngine";
 import { formatPrice } from "@/lib/utils";
 
 export interface LensThicknessSimulatorProps {
@@ -18,14 +18,20 @@ export interface LensThicknessSimulatorProps {
   osSph?: number | string;
   odCyl?: number | string;
   osCyl?: number | string;
+  add?: number | string;
+  visionType?: "single_vision" | "progressive";
   selectedPackageId?: string;
   onSelectPackage?: (pkg: LensPackageDefinition) => void;
   className?: string;
   isModal?: boolean;
 }
 
+function parseDiopter(val: number | string | undefined): number {
+  return typeof val === "number" ? val : parseFloat(String(val || 0)) || 0;
+}
+
 function formatDiopter(val: number | string | undefined): string {
-  const num = typeof val === "number" ? val : parseFloat(String(val || 0)) || 0;
+  const num = parseDiopter(val);
   if (num === 0) return "+0.00";
   return num > 0 ? `+${num.toFixed(2)}` : num.toFixed(2);
 }
@@ -35,6 +41,8 @@ export default function LensThicknessSimulator({
   osSph = "-2.00",
   odCyl = "0.00",
   osCyl = "0.00",
+  add = "+1.50",
+  visionType = "single_vision",
   selectedPackageId = "sv-156-bluecut",
   onSelectPackage,
   className = "",
@@ -42,60 +50,60 @@ export default function LensThicknessSimulator({
 }: LensThicknessSimulatorProps) {
   const [basePrices, setBasePrices] = useState<BasePriceConfig>(DEFAULT_BASE_PRICES);
 
-  // Fetch real-time active base prices from the database / API
   useEffect(() => {
-    let isMounted = true;
     async function loadPrices() {
       try {
         const res = await fetch("/api/base-prices", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (isMounted) setBasePrices(data);
+          setBasePrices(data);
         }
-      } catch (err) {
-        console.warn("Using default base prices for thickness simulator:", err);
+      } catch (error) {
+        console.error("Failed to load base prices in simulator:", error);
       }
     }
     loadPrices();
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  const parsedOdSph = typeof odSph === "number" ? odSph : parseFloat(String(odSph || 0)) || 0;
-  const parsedOsSph = typeof osSph === "number" ? osSph : parseFloat(String(osSph || 0)) || 0;
-  const parsedOdCyl = typeof odCyl === "number" ? odCyl : parseFloat(String(odCyl || 0)) || 0;
-  const parsedOsCyl = typeof osCyl === "number" ? osCyl : parseFloat(String(osCyl || 0)) || 0;
+  const parsedOdSph = parseDiopter(odSph);
+  const parsedOsSph = parseDiopter(osSph);
+  const parsedOdCyl = parseDiopter(odCyl);
+  const parsedOsCyl = parseDiopter(osCyl);
 
-  // Selected package from the 5 official packages
+  // Active Package Lookup
   const activePackage = useMemo(() => {
-    const found = LENS_PACKAGES.find((p) => p.id === selectedPackageId);
-    return found || LENS_PACKAGES[1]; // default to Blue Cut
+    return (
+      LENS_PACKAGES.find((p) => p.id === selectedPackageId) ||
+      LENS_PACKAGES[1]
+    );
   }, [selectedPackageId]);
 
-  // Dominant eye calculations (considering spherical equivalent: SPH + 0.5 * CYL)
-  const absOdSph = Math.abs(parsedOdSph);
-  const absOsSph = Math.abs(parsedOsSph);
-  const maxAbsSph = Math.max(absOdSph, absOsSph);
-  const dominantSph = absOdSph >= absOsSph ? parsedOdSph : parsedOsSph;
-  const dominantCyl = absOdSph >= absOsSph ? parsedOdCyl : parsedOsCyl;
-  
-  // Spherical equivalent power for accurate optical thickness
-  const effectiveDiopter = maxAbsSph + 0.5 * Math.abs(dominantCyl);
-  const signedEffectiveDiopter = dominantSph <= 0 ? -effectiveDiopter : effectiveDiopter;
+  // Optical physics calculations
+  const maxAbsSph = Math.max(Math.abs(parsedOdSph), Math.abs(parsedOsSph));
+  const dominantSph = Math.abs(parsedOdSph) >= Math.abs(parsedOsSph) ? parsedOdSph : parsedOsSph;
+  const signedEffectiveDiopter = dominantSph <= 0 ? -maxAbsSph : maxAbsSph;
 
-  // Real-time thickness calculations for the chosen package
   const { center, edge } = useMemo(() => {
     return calculateLensThickness(signedEffectiveDiopter, activePackage.indexNumber);
   }, [signedEffectiveDiopter, activePackage.indexNumber]);
 
-  // Comparison specs for 1.67 ultra thin to compute reduction percentage
+  // Benchmark against 1.67 Aspheric
   const specs167 = useMemo(() => {
     return calculateLensThickness(signedEffectiveDiopter, 1.67);
   }, [signedEffectiveDiopter]);
 
   // Live pair pricing calculation
   const calculatedPrice = useMemo(() => {
+    if (visionType === "progressive") {
+      const res = calculateTotalProgressivePrice(
+        activePackage.id,
+        { sph: parsedOdSph, cyl: parsedOdCyl },
+        { sph: parsedOsSph, cyl: parsedOsCyl },
+        add,
+        basePrices
+      );
+      if (res) return res.finalPrice;
+    }
     const res = calculateTotalLensPrice(
       activePackage.id,
       { sph: parsedOdSph, cyl: parsedOdCyl },
@@ -103,7 +111,7 @@ export default function LensThicknessSimulator({
       basePrices
     );
     return res ? res.finalPrice : basePrices[activePackage.baseKey];
-  }, [activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, basePrices]);
+  }, [activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, add, visionType, basePrices]);
 
   // High-diopter condition: |SPH| >= 4.00 D
   const isHighDiopter = maxAbsSph >= 4.00;

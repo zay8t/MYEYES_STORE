@@ -111,14 +111,33 @@ function StepBadge({ step, label }: { step: number; label: string }) {
   );
 }
 
-function LensCard({ lens, selected, basePrices, onClick }: {
-  lens: LensPackageDefinition; selected: boolean; basePrices: BasePriceConfig; onClick: () => void;
+function LensCard({
+  lens,
+  selected,
+  basePrices,
+  isProgressive = false,
+  onClick,
+}: {
+  lens: LensPackageDefinition;
+  selected: boolean;
+  basePrices: BasePriceConfig;
+  isProgressive?: boolean;
+  onClick: () => void;
 }) {
+  const stdPrice = basePrices[lens.baseKey as keyof BasePriceConfig] || lens.standardBasePrice;
+  const displayPrice = isProgressive ? stdPrice + 400 : stdPrice;
+
   return (
-    <button type="button" onClick={onClick}
-      className={cn("relative text-left p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer shadow-xs hover:-translate-y-0.5 w-full",
-        selected ? "border-amber-500 bg-white ring-2 ring-amber-500/15" : "border-neutral-200 bg-white hover:border-neutral-300"
-      )}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative text-left p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer shadow-xs hover:-translate-y-0.5 w-full",
+        selected
+          ? "border-amber-500 bg-white ring-2 ring-amber-500/15"
+          : "border-neutral-200 bg-white hover:border-neutral-300"
+      )}
+    >
       {selected && (
         <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
           <Check className="w-3 h-3 text-slate-950" />
@@ -126,7 +145,7 @@ function LensCard({ lens, selected, basePrices, onClick }: {
       )}
       <div className="text-xs font-extrabold text-neutral-900 mb-1 leading-tight pr-6">{lens.name}</div>
       <div className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg inline-block mb-2">
-        From Rs. {(basePrices[lens.baseKey as keyof BasePriceConfig] || 0).toLocaleString()}/-
+        From Rs. {displayPrice.toLocaleString()}/-
       </div>
       <p className="text-[11px] text-neutral-500 font-normal leading-relaxed line-clamp-2">{lens.description}</p>
     </button>
@@ -175,7 +194,7 @@ export default function LensPricingPage() {
 
   const isProgressive = state.visionType === "progressive";
   const parsedAge = parseInt(state.age || "0", 10);
-  const showAgeAdvisory = parsedAge >= 40;
+  const showAgeAdvisory = parsedAge >= 40 && !isProgressive;
   const activeLenses = isProgressive ? CORE_PROGRESSIVE_LENSES : LENS_PACKAGES;
 
   const effOd = state.noRxFallback ? { sph: "+0.00", cyl: "+0.00", axis: "90" } : state.od;
@@ -345,13 +364,13 @@ export default function LensPricingPage() {
 
             <div className={cn("grid gap-3", isProgressive ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
               {activeLenses.slice(0, isProgressive ? 4 : 3).map((lens) => (
-                <LensCard key={lens.id} lens={lens} selected={state.selectedLensId === lens.id} basePrices={basePrices} onClick={() => set("selectedLensId", lens.id)} />
+                <LensCard key={lens.id} lens={lens} selected={state.selectedLensId === lens.id} basePrices={basePrices} isProgressive={isProgressive} onClick={() => set("selectedLensId", lens.id)} />
               ))}
             </div>
             {!isProgressive && activeLenses.slice(3).length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 max-w-2xl">
                 {activeLenses.slice(3).map((lens) => (
-                  <LensCard key={lens.id} lens={lens} selected={state.selectedLensId === lens.id} basePrices={basePrices} onClick={() => set("selectedLensId", lens.id)} />
+                  <LensCard key={lens.id} lens={lens} selected={state.selectedLensId === lens.id} basePrices={basePrices} isProgressive={isProgressive} onClick={() => set("selectedLensId", lens.id)} />
                 ))}
               </div>
             )}
@@ -588,6 +607,8 @@ export default function LensPricingPage() {
             osSph={state.noRxFallback ? "+0.00" : state.os.sph}
             odCyl={state.noRxFallback ? "+0.00" : state.od.cyl}
             osCyl={state.noRxFallback ? "+0.00" : state.os.cyl}
+            add={effectiveAdd}
+            visionType={state.visionType}
             selectedPackageId={state.selectedLensId}
             onSelectPackage={(pkg) => set("selectedLensId", pkg.id)}
           />
