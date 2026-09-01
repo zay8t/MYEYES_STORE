@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Header from "@/components/Header";
@@ -6,6 +7,7 @@ import PWAInstallBanner from "@/components/PWAInstallBanner";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
 import StandaloneBodyManager from "@/components/StandaloneBodyManager";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 import { AuthProvider } from "@/components/AuthProvider";
 
 import "./globals.css";
@@ -169,6 +171,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <RealtimeSyncProvider>
+            <Suspense fallback={null}>
+              <ScrollToTop />
+            </Suspense>
             {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
             <StandaloneBodyManager />
             <Header />
