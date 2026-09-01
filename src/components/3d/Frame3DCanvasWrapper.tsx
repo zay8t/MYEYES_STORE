@@ -40,9 +40,6 @@ export default function Frame3DCanvasWrapper() {
   // ─── Shared rotation ref written by overlay, read by useFrame ───────────
   const targetRotationY = useRef<number>(0);
 
-  // ─── Affordance badge state ──────────────────────────────────────────────
-  const [showBadge, setShowBadge] = useState(true);
-
   // ─── DOM overlay drag-to-rotate (mobile only) ───────────────────────────
   const isDragging   = useRef(false);
   const autoRotating = useRef(true); // disable idle spin once user interacts
@@ -80,10 +77,9 @@ export default function Frame3DCanvasWrapper() {
     lastX.current    = e.clientX;
     lastTime.current = now;
 
-    // Dismiss badge and stop idle auto-spin on first horizontal drag
-    if (showBadge) setShowBadge(false);
+    // Stop idle auto-spin on first horizontal drag
     autoRotating.current = false;
-  }, [showBadge]);
+  }, []);
 
   const onPointerUp = useCallback(() => {
     if (!isDragging.current) return;
@@ -161,31 +157,6 @@ export default function Frame3DCanvasWrapper() {
             aria-label="Drag left or right to rotate eyewear frame"
           />
         )}
-
-        {/* Glassmorphic affordance pill — mobile only, fades on first drag */}
-        <div
-          className={`
-            absolute bottom-3.5 left-1/2 -translate-x-1/2 md:hidden
-            backdrop-blur-md bg-black/70 border border-white/10
-            text-white text-[11px] uppercase tracking-wider font-medium
-            px-4 py-1.5 rounded-full shadow-2xl
-            flex items-center gap-2
-            pointer-events-none z-20
-            transition-opacity duration-500 select-none
-            ${showBadge ? 'opacity-100' : 'opacity-0'}
-          `}
-          aria-hidden
-        >
-          {/* Rotate icon */}
-          <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-            <path d="M21 21v-5h-5" />
-          </svg>
-          <span>Swipe sideways to rotate 360°</span>
-        </div>
       </div>
 
       {/* ─── UI Controls Dock ──────────────────────────────────────────────── */}
