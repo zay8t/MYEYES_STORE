@@ -38,6 +38,7 @@ export interface LensThicknessSimulatorProps {
   add?: number | string;
   visionType?: "single_vision" | "progressive";
   selectedPackageId?: string;
+  finalCalculatedPrice?: number;
   onSelectPackage?: (pkg: LensPackageDefinition) => void;
   className?: string;
   isModal?: boolean;
@@ -146,11 +147,11 @@ function LensCrossSectionSVG({ center, edge, isProgressive, readingCenter, index
           />
 
           {/* Reading zone label */}
-          <text x="90" y="70" textAnchor="middle" fontSize="5" fill="#7c3aed" fontFamily="monospace" opacity="0.85">
-            Near Zone
+          <text x="90" y="70" textAnchor="middle" fontSize="5" fill="#7c3aed" fontFamily="sans-serif" fontWeight="bold" opacity="0.85">
+            Reading Area
           </text>
-          <text x="90" y="40" textAnchor="middle" fontSize="5" fill="#ff7a00" fontFamily="monospace" opacity="0.85">
-            Distance Zone
+          <text x="90" y="40" textAnchor="middle" fontSize="5" fill="#ff7a00" fontFamily="sans-serif" fontWeight="bold" opacity="0.85">
+            Distance View
           </text>
 
           {/* Reading center caliper */}
@@ -192,6 +193,7 @@ export default function LensThicknessSimulator({
   add = "+1.50",
   visionType = "single_vision",
   selectedPackageId = "sv-156-bluecut",
+  finalCalculatedPrice,
   onSelectPackage,
   className = "",
   isModal = false,
@@ -224,12 +226,6 @@ export default function LensThicknessSimulator({
   const activePackage = useMemo(
     () => LENS_PACKAGES.find((p) => p.id === selectedPackageId) ?? LENS_PACKAGES[1],
     [selectedPackageId]
-  );
-
-  // ── Index Profile from Registry ────────────────────────────────────────────
-  const indexProfile = useMemo(
-    () => INDEX_REGISTRY[activePackage.baseKey] ?? INDEX_REGISTRY["B2"],
-    [activePackage.baseKey]
   );
 
   // ── Physics Simulation ─────────────────────────────────────────────────────
@@ -274,12 +270,12 @@ export default function LensThicknessSimulator({
 
   // Progressive derived values
   const readingPower = isProgressive ? parsedAdd + dominantSph : null;
-  const fMax = simResult.mode === "progressive"
-    ? (simResult as ProgressiveZoneThickness).fMax
-    : null;
 
-  // ── Live Price ─────────────────────────────────────────────────────────────
+  // ── Live Price — Single Source of Truth ─────────────────────────────────────
   const calculatedPrice = useMemo(() => {
+    if (finalCalculatedPrice !== undefined) {
+      return finalCalculatedPrice;
+    }
     if (isProgressive) {
       const res = calculateTotalProgressivePrice(
         activePackage.id,
@@ -297,29 +293,32 @@ export default function LensThicknessSimulator({
       basePrices
     );
     return res ? res.finalPrice : basePrices[activePackage.baseKey];
-  }, [activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, isProgressive, basePrices]);
+  }, [finalCalculatedPrice, activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, isProgressive, basePrices]);
 
   // ── Recommendation flags ───────────────────────────────────────────────────
   const isHighDiopter = maxAbsSph >= 4.00;
   const is156Index = activePackage.index === "1.56";
   const ultraThinPkg = LENS_PACKAGES.find((p) => p.id === "sv-167-shmc");
 
+  // Simplified badge labels
+  const indexBadgeLabel = activePackage.index === "1.67" ? "1.67 Extra Thin" : "1.56 Standard Thin";
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={`w-full bg-white ${isModal ? "py-2" : "pt-8 pb-4"} ${className}`}>
       <div className="space-y-6">
 
-        {/* ── Page Header ─────────────────────────────────────────────────── */}
+        {/* ── Page Header with Simplified Copy ────────────────────────────── */}
         {!isModal && (
           <div className="space-y-1">
             <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-1.5 block">
-              LENS PROFILE &amp; THICKNESS
+              LENS THICKNESS PREVIEW
             </span>
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Estimated Lens Thickness
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 font-normal">
-              A real optical cross-section preview modeled to your prescription and lens tier.
+              See how thin and light your lenses will look in your frames.
             </p>
           </div>
         )}
@@ -358,7 +357,7 @@ export default function LensThicknessSimulator({
           </div>
 
           <span className="text-[11px] font-medium text-slate-500">
-            {isProgressive ? "Progressive" : "Single Vision"}{" "}
+            {isProgressive ? "Near & Far View" : "Single Vision"}{" "}
             ·{" "}
             <strong className="text-[#ff7a00] font-bold font-mono">
               {formatDiopter(dominantSph)} D
@@ -373,18 +372,18 @@ export default function LensThicknessSimulator({
             {/* LEFT: Lens Details & Specs */}
             <div className="lg:col-span-7 space-y-5">
               <div className="space-y-2">
-                {/* Index + Material badge */}
+                {/* Simplified Feature Badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-mono font-bold text-[#ff7a00] uppercase tracking-wider bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200/70">
-                    Index {activePackage.index} · {indexProfile.material}
+                    {indexBadgeLabel}
                   </span>
                   <span className="text-xs font-medium text-slate-400">
                     {activePackage.idealRange}
                   </span>
                   {isProgressive && (
-                    <span className="text-[10px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                       <Layers className="w-3 h-3" />
-                      Progressive Multi-Zone
+                      Near &amp; Far View
                     </span>
                   )}
                 </div>
@@ -397,19 +396,19 @@ export default function LensThicknessSimulator({
                 </p>
               </div>
 
-              {/* ── Progressive Zone Breakdown ─────────────────────── */}
+              {/* ── Simplified Prescription Summary Box ─────────────────────── */}
               {isProgressive && simResult.mode === "progressive" && (
                 <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-3 space-y-2">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-violet-700 flex items-center gap-1.5">
                     <BookOpen className="w-3 h-3" />
-                    Progressive Zone Physics
+                    Prescription Summary
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-[11px]">
                     <div className="bg-white rounded-lg border border-violet-100 p-2 text-center">
                       <div className="font-bold text-violet-700 font-mono">
                         {formatDiopter((simResult as ProgressiveZoneThickness).fMax)} D
                       </div>
-                      <div className="text-slate-500 text-[9px] mt-0.5">Peak Power (Fmax)</div>
+                      <div className="text-slate-500 text-[9px] mt-0.5">Max Strength</div>
                     </div>
                     <div className="bg-white rounded-lg border border-violet-100 p-2 text-center">
                       <div className="font-bold text-emerald-700 font-mono">
@@ -421,7 +420,7 @@ export default function LensThicknessSimulator({
                       <div className="font-bold text-slate-700 font-mono">
                         {(simResult as ProgressiveZoneThickness).readingCenter} mm
                       </div>
-                      <div className="text-slate-500 text-[9px] mt-0.5">Near Zone CT</div>
+                      <div className="text-slate-500 text-[9px] mt-0.5">Reading Thickness</div>
                     </div>
                   </div>
                 </div>
@@ -443,7 +442,7 @@ export default function LensThicknessSimulator({
                 </span>
               </div>
 
-              {/* Live Price */}
+              {/* Live Price — Guaranteed 100% Synchronized */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-slate-400 block font-bold uppercase tracking-wider">
@@ -471,7 +470,7 @@ export default function LensThicknessSimulator({
                   packageId={activePackage.id}
                 />
 
-                {/* Measurement Callouts */}
+                {/* Simplified Measurement Callouts */}
                 <div className="absolute top-3 right-3 text-xs font-mono font-bold text-slate-800 bg-white/95 px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
                   Edge: ~{edgeMm} mm
                 </div>
@@ -480,19 +479,19 @@ export default function LensThicknessSimulator({
                 </div>
                 {isProgressive && readingCenterMm !== undefined && (
                   <div className="absolute bottom-3 right-3 text-[10px] font-mono font-bold text-violet-700 bg-violet-50/95 px-2 py-1 rounded-lg border border-violet-200 shadow-xs">
-                    Near CT: ~{readingCenterMm} mm
+                    Reading Area: ~{readingCenterMm} mm
                   </div>
                 )}
 
-                {/* Index badge overlay */}
-                <div className="absolute top-3 left-3 text-[9px] font-mono font-bold text-slate-500 bg-white/80 px-2 py-0.5 rounded border border-slate-200">
-                  n = {activePackage.index}
+                {/* Simplified Index badge overlay */}
+                <div className="absolute top-3 left-3 text-[9px] font-mono font-bold text-slate-600 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+                  {indexBadgeLabel}
                 </div>
               </div>
               <span className="text-[11px] text-slate-400 mt-2 font-medium text-center">
-                {isProgressive
-                  ? `Progressive cross-section · Index ${activePackage.index} · ${indexProfile.material}`
-                  : `Physical cross-section modeled for index ${activePackage.index}`}
+                {activePackage.index === "1.67"
+                  ? "Modeled for extra thin 1.67 index lenses."
+                  : "Modeled for standard 1.56 index lenses."}
               </span>
             </div>
           </div>
@@ -525,7 +524,7 @@ export default function LensThicknessSimulator({
             <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5 text-xs text-emerald-900 font-medium">
               <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                <strong>✨ Optimal Choice:</strong> You have selected our Extra Thin lenses (n=1.67), giving you the thinnest and lightest look for your numbers.
+                <strong>✨ Optimal Choice:</strong> You have selected our Extra Thin lenses (1.67), giving you the thinnest and lightest look for your numbers.
               </span>
             </div>
           )}
@@ -536,7 +535,6 @@ export default function LensThicknessSimulator({
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="leading-relaxed">
             Every lens is carefully cut and fitted in our lab to match your frame perfectly.
-            Progressive lenses are manufactured with free-form digital surfacing.
           </p>
         </div>
       </div>

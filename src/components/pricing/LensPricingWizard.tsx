@@ -330,6 +330,7 @@ export function LensPricingWizard() {
             add={effectiveAdd}
             visionType={state.visionType}
             selectedPackageId={state.selectedLensId}
+            finalCalculatedPrice={result?.finalPrice}
             onSelectPackage={(pkg) => set("selectedLensId", pkg.id)}
           />
         </div>
