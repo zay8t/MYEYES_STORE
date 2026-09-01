@@ -15,8 +15,7 @@ import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator"
 import { useLensPricing, LensPricingTier } from "@/hooks/useLensPricing";
 import Step1VisionType, { VisionType } from "@/components/pricing/Step1VisionType";
 import Step2LensPackages from "@/components/pricing/Step2LensPackages";
-
-interface EyeRx { sph: string; cyl: string; axis: string; }
+import Step3Prescription, { EyeRx, SPH_ALL, CYL_ALL, AXIS_OPTIONS } from "@/components/pricing/Step3Prescription";
 
 interface WizardState {
   visionType: VisionType;
@@ -30,117 +29,19 @@ interface WizardState {
   noRxFallback: boolean;
 }
 
-const SPH_MINUS = Array.from({ length: 48 }, (_, i) => (-12.0 + i * 0.25).toFixed(2)).reverse();
-const SPH_PLUS  = Array.from({ length: 64 }, (_, i) => `+${(0.25 + i * 0.25).toFixed(2)}`);
-const SPH_ALL   = [...SPH_MINUS, "+0.00", ...SPH_PLUS];
-const CYL_MINUS = Array.from({ length: 24 }, (_, i) => (-6.0 + i * 0.25).toFixed(2)).reverse();
-const CYL_PLUS  = Array.from({ length: 16 }, (_, i) => `+${(0.25 + i * 0.25).toFixed(2)}`);
-const CYL_ALL   = [...CYL_MINUS, "+0.00", ...CYL_PLUS];
-const ADD_OPTIONS = Array.from({ length: 12 }, (_, i) => `+${(0.75 + i * 0.25).toFixed(2)}`);
-const AXIS_OPTIONS = Array.from({ length: 180 }, (_, i) => String(i + 1));
-
-function formatDiopter(v: string): string {
-  const n = parseFloat(v);
-  if (isNaN(n) || n === 0) return "+0.00";
-  return n > 0 ? `+${n.toFixed(2)}` : n.toFixed(2);
-}
-function toggleSign(v: string, sign: "+" | "-"): string {
-  return `${sign}${Math.abs(parseFloat(v) || 0).toFixed(2)}`;
-}
-function getSign(v: string): "+" | "-" {
-  return String(v || "").trim().startsWith("-") ? "-" : "+";
-}
 function parsePow(v: string): number {
-  const n = parseFloat(v); return isNaN(n) ? 0 : n;
-}
-
-interface PIGProps {
-  label: string; value: string; onChange: (v: string) => void;
-  options: string[]; isAxis?: boolean; disabled?: boolean;
-}
-
-function PrescriptionInputGroup({ label, value, onChange, options, isAxis = false, disabled = false }: PIGProps) {
-  const sign = getSign(value);
-  return (
-    <div className={cn("space-y-2", disabled && "opacity-40 pointer-events-none")}>
-      <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">{label}</label>
-        {!isAxis && (
-          <div className="inline-flex rounded-xl p-1 bg-neutral-100 border border-neutral-200/60 text-xs shadow-2xs">
-            {(["+", "-"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => onChange(toggleSign(value, s))}
-                className={cn("px-3 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer",
-                  sign === s ? "bg-amber-500 text-slate-950 shadow-xs" : "text-neutral-500 hover:text-neutral-900 font-medium"
-                )}>{s}</button>
-            ))}
-          </div>
-        )}
-      </div>
-      <select value={isAxis ? value : formatDiopter(value)} onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-mono font-bold transition-all outline-none">
-        {isAxis ? (
-          options.map((o) => <option key={o} value={o}>{o}&deg;</option>)
-        ) : (
-          <>
-            <optgroup label="Minus (-) Diopters">
-              {options.filter((o) => o.startsWith("-")).map((o) => <option key={o} value={o}>{o}</option>)}
-            </optgroup>
-            <optgroup label="Plano / Zero"><option value="+0.00">+0.00 (Plano)</option></optgroup>
-            <optgroup label="Plus (+) Diopters">
-              {options.filter((o) => o.startsWith("+") && o !== "+0.00").map((o) => <option key={o} value={o}>{o}</option>)}
-            </optgroup>
-          </>
-        )}
-      </select>
-    </div>
-  );
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
 }
 
 function StepBadge({ step, label }: { step: number; label: string }) {
   return (
     <div className="flex items-center gap-2 text-xs font-semibold text-amber-600">
-      <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black bg-amber-500 text-slate-950 border border-amber-500 shadow-xs">{step}</span>
+      <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black bg-amber-500 text-slate-950 border border-amber-500 shadow-xs">
+        {step}
+      </span>
       <span className="hidden sm:block">{label}</span>
     </div>
-  );
-}
-
-function LensCard({
-  pkg,
-  selected,
-  isProgressive = false,
-  onClick,
-}: {
-  pkg: LensPricingTier;
-  selected: boolean;
-  isProgressive?: boolean;
-  onClick: () => void;
-}) {
-  // Live dynamic baseline pricing binding
-  const startingPrice = isProgressive ? pkg.presbyopiaBasePrice : pkg.standardBasePrice;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative text-left p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer shadow-xs hover:-translate-y-0.5 w-full",
-        selected
-          ? "border-amber-500 bg-white ring-2 ring-amber-500/15"
-          : "border-neutral-200 bg-white hover:border-neutral-300"
-      )}
-    >
-      {selected && (
-        <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
-          <Check className="w-3 h-3 text-slate-950" />
-        </span>
-      )}
-      <div className="text-xs font-extrabold text-neutral-900 mb-1 leading-tight pr-6">{pkg.name}</div>
-      <div className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg inline-block mb-2">
-        From Rs. {startingPrice.toLocaleString()}/-
-      </div>
-      <p className="text-[11px] text-neutral-500 font-normal leading-relaxed line-clamp-2">{pkg.description}</p>
-    </button>
   );
 }
 
@@ -151,8 +52,8 @@ export function LensPricingWizard() {
     visionType: "single_vision",
     age: "",
     selectedLensId: "sv-156-bluecut",
-    od: { sph: "-2.00", cyl: "-0.50", axis: "90" },
-    os: { sph: "-2.00", cyl: "-0.50", axis: "90" },
+    od: { sph: "0.00", cyl: "0.00", axis: "90" },
+    os: { sph: "0.00", cyl: "0.00", axis: "90" },
     odAdd: "+1.50",
     osAdd: "+1.50",
     addLinked: true,
@@ -291,115 +192,20 @@ export function LensPricingWizard() {
           />
 
           {/* STEP 3: Eye Numbers + Conditional ADD */}
-          <div className="p-6 sm:p-8 border-b border-neutral-100">
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
-                  <Calculator className="w-4.5 h-4.5 text-amber-600" />
-                </div>
-                <div>
-                  <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">
-                    Step 3 — Enter Your Eye Numbers
-                  </h2>
-                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                    Copy the numbers from your prescription slip.{isProgressive ? " Reading number (ADD) required for all-in-one lenses." : ""}
-                  </p>
-                </div>
-              </div>
-              <button type="button" onClick={() => set("noRxFallback", !state.noRxFallback)}
-                className={cn("inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
-                  state.noRxFallback ? "bg-amber-500/10 border-amber-500/40 text-amber-700" : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                )}>
-                <BookOpen className="w-3.5 h-3.5" />
-                {state.noRxFallback ? "Using Estimated Numbers" : "Don't have your slip?"}
-              </button>
-            </div>
-
-            {state.noRxFallback && (
-              <div className="mb-5 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs text-amber-900 flex items-start gap-2 font-medium">
-                <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Using estimated numbers:</strong>{" "}
-                  {isProgressive ? "Standard baseline applied with entry reading addition (+1.50). Your final price may adjust when you enter your slip." : "Standard baseline applied (zero power). Enter your actual slip numbers for your exact price."}
-                </span>
-              </div>
-            )}
-
-            {isProgressive && (
-              <div className="mb-5 p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs text-amber-900 font-medium">
-                <strong>Pupillary Distance (PD):</strong> For all-in-one lenses, our team will message you on WhatsApp after your order to help measure your eye distance easily.
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className={cn("p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4", state.noRxFallback && "opacity-50")}>
-                <div className="flex items-center gap-2 border-b border-neutral-200/60 pb-3">
-                  <Eye className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Right Eye</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <PrescriptionInputGroup label="Number / Power (SPH)" value={state.od.sph} onChange={(v) => setEye("od", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
-                  <PrescriptionInputGroup label="Cylinder (CYL)" value={state.od.cyl} onChange={(v) => setEye("od", "cyl", v)} options={CYL_ALL} disabled={state.noRxFallback} />
-                </div>
-                <PrescriptionInputGroup label="Angle (AXIS)" value={state.od.axis} onChange={(v) => setEye("od", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
-              </div>
-
-              <div className={cn("p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4", state.noRxFallback && "opacity-50")}>
-                <div className="flex items-center gap-2 border-b border-neutral-200/60 pb-3">
-                  <Eye className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Left Eye</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <PrescriptionInputGroup label="Number / Power (SPH)" value={state.os.sph} onChange={(v) => setEye("os", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
-                  <PrescriptionInputGroup label="Cylinder (CYL)" value={state.os.cyl} onChange={(v) => setEye("os", "cyl", v)} options={CYL_ALL} disabled={state.noRxFallback} />
-                </div>
-                <PrescriptionInputGroup label="Angle (AXIS)" value={state.os.axis} onChange={(v) => setEye("os", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
-              </div>
-            </div>
-
-            {/* Conditional ADD Block */}
-            {isProgressive && (
-              <div className="mt-6 p-5 rounded-2xl border-2 border-amber-400/40 bg-amber-50/30 space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Reading Number (ADD) — All-in-One Only</span>
-                  </div>
-                  <button type="button" onClick={() => set("addLinked", !state.addLinked)}
-                    className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer",
-                      state.addLinked ? "bg-emerald-50 border-emerald-300/70 text-emerald-700" : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                    )}>
-                    {state.addLinked ? <><Link2 className="w-3.5 h-3.5" /> Both Eyes Same</> : <><Unlink className="w-3.5 h-3.5" /> Set Separately</>}
-                  </button>
-                </div>
-                <p className="text-[11px] text-amber-800/70 font-normal leading-relaxed">
-                  Reading addition (+0.75 to +3.50). Usually the same for both eyes. Toggle <strong>Set Separately</strong> to adjust each eye independently if needed.
-                </p>
-                <div className={cn("grid gap-4", state.addLinked ? "grid-cols-1 max-w-xs" : "grid-cols-1 sm:grid-cols-2")}>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">
-                      {state.addLinked ? "Reading Number (ADD)" : "Right Eye — Reading Number"}
-                    </label>
-                    <select value={state.noRxFallback ? "+1.50" : state.odAdd} onChange={(e) => setAdd("od", e.target.value)} disabled={state.noRxFallback}
-                      className={cn("w-full bg-white border border-amber-300/60 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold font-mono transition-all outline-none", state.noRxFallback && "opacity-50")}>
-                      {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  {!state.addLinked && (
-                    <div className="space-y-2">
-                      <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">Left Eye — Reading Number</label>
-                      <select value={state.noRxFallback ? "+1.50" : state.osAdd} onChange={(e) => setAdd("os", e.target.value)} disabled={state.noRxFallback}
-                        className={cn("w-full bg-white border border-amber-300/60 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold font-mono transition-all outline-none", state.noRxFallback && "opacity-50")}>
-                        {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                  )}
-                </div>
-                {!state.addLinked && (
-                  <p className="text-[10px] text-amber-700 font-medium">Average reading addition: <strong>+{effectiveAdd.toFixed(2)}</strong></p>
-                )}
-              </div>
-            )}
-          </div>
+          <Step3Prescription
+            od={state.od}
+            os={state.os}
+            odAdd={state.odAdd}
+            osAdd={state.osAdd}
+            addLinked={state.addLinked}
+            noRxFallback={state.noRxFallback}
+            isProgressive={isProgressive}
+            effectiveAdd={effectiveAdd}
+            onSetEye={setEye}
+            onSetAdd={setAdd}
+            onToggleAddLinked={() => set("addLinked", !state.addLinked)}
+            onToggleNoRxFallback={() => set("noRxFallback", !state.noRxFallback)}
+          />
 
           {/* STEP 4: Total Price */}
           <div className="p-6 sm:p-8">

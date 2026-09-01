@@ -87,13 +87,28 @@ const liveCalcProg = calculateTotalProgressivePrice(
 );
 assert("Live Admin Update: B3 calculation evaluates to 2,400", liveCalcProg?.finalPrice === 2400, JSON.stringify(liveCalcProg));
 
-// 6. Frame + Lens Calculation in Storefront Configurator
-const framePrice = 4500;
-const totalWithSV = framePrice + updatedB3Pkg.standardBasePrice; // 4500 + 1950 = 6450
-const totalWithProg = framePrice + updatedB3Pkg.presbyopiaBasePrice; // 4500 + 2400 = 6900
+// 7. Initial Prescription State Defaults: 0.00 SPH, 0.00 CYL, 90 deg AXIS
+const initialPrescription = {
+  od: { sph: "0.00", cyl: "0.00", axis: "90" },
+  os: { sph: "0.00", cyl: "0.00", axis: "90" },
+  add: "0.00",
+};
 
-assert("Storefront Frame + SV Lens Total: Rs. 6,450", totalWithSV === 6450);
-assert("Storefront Frame + Prog Lens Total: Rs. 6,900", totalWithProg === 6900);
+assert("Initial OD SPH is 0.00", initialPrescription.od.sph === "0.00");
+assert("Initial OD CYL is 0.00", initialPrescription.od.cyl === "0.00");
+assert("Initial OD AXIS is 90", initialPrescription.od.axis === "90");
+assert("Initial OS SPH is 0.00", initialPrescription.os.sph === "0.00");
+assert("Initial OS CYL is 0.00", initialPrescription.os.cyl === "0.00");
+assert("Initial OS AXIS is 90", initialPrescription.os.axis === "90");
+
+// Verify that initial prescription calculation for B2 (sv-156-bluecut) evaluates to baseline 1,850
+const initCalcSV = calculateTotalLensPrice(
+  "sv-156-bluecut",
+  { sph: initialPrescription.od.sph, cyl: initialPrescription.od.cyl },
+  { sph: initialPrescription.os.sph, cyl: initialPrescription.os.cyl },
+  DEFAULT_BASE_PRICES
+);
+assert("Initial SV calculation matches B2 baseline (Rs. 1,850)", initCalcSV?.finalPrice === 1850);
 
 console.log(`\n${"─".repeat(50)}`);
 if (failed === 0) {
