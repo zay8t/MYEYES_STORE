@@ -15,6 +15,7 @@ import {
   Calculator,
   Eye,
   CreditCard,
+  TicketPercent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
   { name: "Base Price Matrix ($B)", label: "Base Price Matrix ($B)", href: "/admin/base-prices", icon: Calculator },
   { name: "Presbyopia (+40) Pricing", label: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
+  { name: "Discounts & Offers", label: "Discounts & Offers", href: "/admin/discounts", icon: TicketPercent },
 ];
 
 export default function AdminSidebarNav() {

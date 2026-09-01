@@ -369,3 +369,40 @@ model BasePriceSetting {
   value     Float
   updatedAt DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discount Engine — Promo Code & Announcement Banner
+// ─────────────────────────────────────────────────────────────────────────────
+
+model DiscountCode {
+  id    String @id @default(uuid())
+  code  String @unique // normalized UPPERCASE
+
+  title  String // e.g. "Holiday Sale"
+  type   String // "percentage" | "fixed_cart"
+  amount Float  // 20 for 20% or 500 for Rs. 500
+
+  minCartTotal     Float @default(0)    // minimum cart subtotal
+  maxDiscountLimit Float?               // PKR ceiling for percentage discounts
+
+  usageLimitTotal Int? // null = unlimited
+  timesUsed       Int  @default(0)
+
+  startsAt DateTime
+  endsAt   DateTime?
+
+  isActive Boolean @default(true)
+
+  // Announcement Banner Controls
+  showAnnouncementBanner Boolean @default(false)
+  bannerText             String  @default("")
+  bannerTheme            String  @default("dark") // "dark" | "amber" | "emerald" | "crimson"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@map("discount_codes")
+}
+

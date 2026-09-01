@@ -1,25 +1,71 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { X, Plus, Minus, Trash2, ShoppingBag, Eye, ArrowRight } from "lucide-react";
+import {
+  X,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBag,
+  Eye,
+  ArrowRight,
+  Tag,
+  Check,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/utils";
+import type { ValidateCouponResponse } from "@/types/discounts";
 
 export default function CartDrawer() {
   const router = useRouter();
-  const { items, isOpen, closeCart, updateQuantity, removeItem, subtotalPrice } =
-    useCartStore();
+  const { items, isOpen, closeCart, updateQuantity, removeItem, subtotalPrice } = useCartStore();
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [couponState, setCouponState] = useState<ValidateCouponResponse | null>(null);
+  const [isCouponLoading, setIsCouponLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const subtotal = subtotalPrice();
+  const discountAmount = couponState?.valid ? (couponState.discountAmount ?? 0) : 0;
   const shipping = subtotal > 0 ? 250 : 0;
-  const grandTotal = subtotal + shipping;
+  const grandTotal = Math.max(0, subtotal - discountAmount + shipping);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
     closeCart();
     router.push("/checkout");
+  };
+
+  const handleApplyCoupon = useCallback(async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+
+    setIsCouponLoading(true);
+    setCouponState(null);
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, cartSubtotal: subtotal }),
+      });
+      const data: ValidateCouponResponse = await res.json();
+      setCouponState(data);
+    } catch {
+      setCouponState({ valid: false, message: "Failed to validate code. Please try again." });
+    } finally {
+      setIsCouponLoading(false);
+    }
+  }, [couponInput, subtotal]);
+
+  const handleRemoveCoupon = () => {
+    setCouponState(null);
+    setCouponInput("");
   };
 
   return (
@@ -60,7 +106,7 @@ export default function CartDrawer() {
             <div className="text-center py-16 space-y-3">
               <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto stroke-[1.25]" />
               <p className="text-sm font-bold text-slate-800">Your bag is empty</p>
-              <p className="text-xs text-slate-400">Explore our optical & sun collection to select frames.</p>
+              <p className="text-xs text-slate-400">Explore our optical &amp; sun collection to select frames.</p>
             </div>
           ) : (
             items.map((item) => (
@@ -151,13 +197,78 @@ export default function CartDrawer() {
         {/* Footer Calculation & Checkout */}
         {items.length > 0 && (
           <div className="p-6 border-t border-slate-100 bg-white space-y-3 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
+
+            {/* ── Coupon Input ─────────────────────────────────────────────── */}
+            {couponState?.valid ? (
+              /* Applied coupon pill */
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <div>
+                    <p className="text-xs font-bold text-emerald-800">{couponState.discountCode?.code}</p>
+                    <p className="text-[10px] text-emerald-600">{couponState.message}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveCoupon}
+                  className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer p-1"
+                  aria-label="Remove coupon"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              /* Coupon input row */
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      id="cart-coupon-input"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        if (couponState) setCouponState(null);
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                      placeholder="Promo code"
+                      className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-slate-50/60"
+                    />
+                  </div>
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={!couponInput.trim() || isCouponLoading}
+                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isCouponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
+                  </button>
+                </div>
+
+                {/* Error message */}
+                {couponState && !couponState.valid && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-red-600 font-semibold">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    {couponState.message}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Price Breakdown ───────────────────────────────────────────── */}
             <div className="space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="font-semibold text-slate-900">{formatPrice(subtotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-600">
+                  <span>Discount ({couponState?.discountCode?.code})</span>
+                  <span className="font-semibold">−{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
-                <span>Optical Fitting & Inspection</span>
+                <span>Optical Fitting &amp; Inspection</span>
                 <span className="font-semibold text-emerald-600">Free</span>
               </div>
               <div className="flex justify-between">

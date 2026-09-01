@@ -19,6 +19,7 @@ import {
   Tag,
   Eye,
   CreditCard,
+  TicketPercent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { name: "Partial Leads", label: "Partial Leads", href: "/admin/leads", icon: ClipboardList },
   { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
   { name: "Presbyopia (+40) Pricing", label: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
+  { name: "Discounts & Offers", label: "Discounts & Offers", href: "/admin/discounts", icon: TicketPercent },
 ];
 
 export default function AdminMobileNav() {
