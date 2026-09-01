@@ -48,7 +48,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="bg-white text-slate-900 pb-8">
+    <div className="bg-white text-slate-900">
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
