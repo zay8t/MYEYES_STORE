@@ -2,16 +2,33 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Sparkles, ArrowRight, ShieldCheck, Check, Lightbulb, Zap } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Check,
+  Lightbulb,
+  Zap,
+  Layers,
+  Eye,
+  BookOpen,
+} from "lucide-react";
 import {
   LENS_PACKAGES,
   LensPackageDefinition,
-  calculateLensThickness,
   DEFAULT_BASE_PRICES,
   BasePriceConfig,
 } from "@/lib/prescription-pricing";
+import {
+  runLensSimulator,
+  INDEX_REGISTRY,
+  type SingleVisionThickness,
+  type ProgressiveZoneThickness,
+} from "@/lib/optical/lensThicknessSimulator";
 import { calculateTotalLensPrice, calculateTotalProgressivePrice } from "@/lib/pricingEngine";
 import { formatPrice } from "@/lib/utils";
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface LensThicknessSimulatorProps {
   odSph?: number | string;
@@ -26,15 +43,146 @@ export interface LensThicknessSimulatorProps {
   isModal?: boolean;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function parseDiopter(val: number | string | undefined): number {
   return typeof val === "number" ? val : parseFloat(String(val || 0)) || 0;
 }
 
-function formatDiopter(val: number | string | undefined): string {
-  const num = parseDiopter(val);
-  if (num === 0) return "+0.00";
-  return num > 0 ? `+${num.toFixed(2)}` : num.toFixed(2);
+function formatDiopter(val: number): string {
+  if (val === 0) return "+0.00";
+  return val > 0 ? `+${val.toFixed(2)}` : val.toFixed(2);
 }
+
+// Clamp SVG visual height to a sensible band
+function toVisualH(mm: number, scale = 4.5): number {
+  return Math.min(38, Math.max(5, mm * scale));
+}
+
+// ─── SVG Components ───────────────────────────────────────────────────────────
+
+interface LensSVGProps {
+  center: number;
+  edge: number;
+  isProgressive: boolean;
+  /** For progressive: reading center thickness */
+  readingCenter?: number;
+  indexStr: string;
+  packageId: string;
+}
+
+function LensCrossSectionSVG({ center, edge, isProgressive, readingCenter, indexStr, packageId }: LensSVGProps) {
+  const gradId = `grad-${packageId.replace(/[^a-z0-9]/gi, "")}`;
+  const progGradId = `prog-${packageId.replace(/[^a-z0-9]/gi, "")}`;
+
+  const visualEdgeH = toVisualH(edge);
+  const visualCenterH = toVisualH(center);
+
+  const topY = 50 - visualCenterH / 2;
+  const bottomY = 50 + visualCenterH / 2;
+  const leftTopY = 50 - visualEdgeH / 2;
+  const leftBottomY = 50 + visualEdgeH / 2;
+  const rightTopY = 50 - visualEdgeH / 2;
+  const rightBottomY = 50 + visualEdgeH / 2;
+
+  // Progressive second zone (reading segment — slightly thicker center line if plus)
+  const readH = isProgressive && readingCenter ? toVisualH(readingCenter) : 0;
+  const readTopY = 50 - readH / 2;
+  const readBottomY = 50 + readH / 2;
+
+  return (
+    <svg
+      viewBox="0 0 180 100"
+      className="w-full h-full"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label={`Lens cross-section for index ${indexStr}`}
+    >
+      <defs>
+        {/* Main lens fill gradient */}
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.10" />
+          <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.07" />
+          <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.14" />
+        </linearGradient>
+
+        {/* Progressive reading zone overlay gradient */}
+        {isProgressive && (
+          <linearGradient id={progGradId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.00" />
+            <stop offset="55%" stopColor="#a78bfa" stopOpacity="0.13" />
+            <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.22" />
+          </linearGradient>
+        )}
+      </defs>
+
+      {/* ── Main Lens Body ────────────────────────────────────────────── */}
+      <path
+        d={`M 20 ${leftTopY} Q 90 ${topY} 160 ${rightTopY} L 160 ${rightBottomY} Q 90 ${bottomY} 20 ${leftBottomY} Z`}
+        fill={`url(#${gradId})`}
+        stroke="#ff7a00"
+        strokeWidth="2.5"
+      />
+
+      {/* ── Progressive Reading Zone Overlay ─────────────────────────── */}
+      {isProgressive && readingCenter && readH > 0 && (
+        <>
+          {/* Reading zone mask — covers the lower 45% of the lens */}
+          <clipPath id={`clip-lower-${gradId}`}>
+            <rect x="20" y="55" width="140" height="45" />
+          </clipPath>
+          <path
+            d={`M 20 ${leftTopY} Q 90 ${topY} 160 ${rightTopY} L 160 ${rightBottomY} Q 90 ${bottomY} 20 ${leftBottomY} Z`}
+            fill={`url(#${progGradId})`}
+            clipPath={`url(#clip-lower-${gradId})`}
+          />
+          {/* Reading zone demarcation curve */}
+          <path
+            d={`M 25 57 Q 90 52 155 57`}
+            stroke="#a78bfa"
+            strokeWidth="1"
+            strokeDasharray="3 2"
+            opacity="0.7"
+          />
+
+          {/* Reading zone label */}
+          <text x="90" y="70" textAnchor="middle" fontSize="5" fill="#7c3aed" fontFamily="monospace" opacity="0.85">
+            Near Zone
+          </text>
+          <text x="90" y="40" textAnchor="middle" fontSize="5" fill="#ff7a00" fontFamily="monospace" opacity="0.85">
+            Distance Zone
+          </text>
+
+          {/* Reading center caliper */}
+          <line x1="97" y1={readTopY} x2="97" y2={readBottomY} stroke="#a78bfa" strokeWidth="1.5" />
+          <line x1="94" y1={readTopY} x2="100" y2={readTopY} stroke="#a78bfa" strokeWidth="1" />
+          <line x1="94" y1={readBottomY} x2="100" y2={readBottomY} stroke="#a78bfa" strokeWidth="1" />
+        </>
+      )}
+
+      {/* ── Optical Axis Dashed Guide ─────────────────────────────────── */}
+      <line
+        x1="90" y1="10"
+        x2="90" y2="90"
+        stroke="#cbd5e1"
+        strokeWidth="1"
+        strokeDasharray="3 3"
+      />
+
+      {/* ── Edge Caliper (left) ───────────────────────────────────────── */}
+      <line x1="15" y1={leftTopY} x2="15" y2={leftBottomY} stroke="#ff7a00" strokeWidth="1.5" />
+      <line x1="12" y1={leftTopY} x2="18" y2={leftTopY} stroke="#ff7a00" strokeWidth="1" />
+      <line x1="12" y1={leftBottomY} x2="18" y2={leftBottomY} stroke="#ff7a00" strokeWidth="1" />
+
+      {/* ── Center Caliper (right of axis) ────────────────────────────── */}
+      <line x1="95" y1={topY} x2="95" y2={bottomY} stroke="#38bdf8" strokeWidth="1.5" />
+      <line x1="92" y1={topY} x2="98" y2={topY} stroke="#38bdf8" strokeWidth="1" />
+      <line x1="92" y1={bottomY} x2="98" y2={bottomY} stroke="#38bdf8" strokeWidth="1" />
+    </svg>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function LensThicknessSimulator({
   odSph = "-2.00",
@@ -54,52 +202,90 @@ export default function LensThicknessSimulator({
     async function loadPrices() {
       try {
         const res = await fetch("/api/base-prices", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          setBasePrices(data);
-        }
-      } catch (error) {
-        console.error("Failed to load base prices in simulator:", error);
-      }
+        if (res.ok) setBasePrices(await res.json());
+      } catch { /* silent */ }
     }
     loadPrices();
   }, []);
 
+  // ── Parsed values ──────────────────────────────────────────────────────────
   const parsedOdSph = parseDiopter(odSph);
   const parsedOsSph = parseDiopter(osSph);
   const parsedOdCyl = parseDiopter(odCyl);
   const parsedOsCyl = parseDiopter(osCyl);
+  const parsedAdd   = parseDiopter(add);
+  const isProgressive = visionType === "progressive";
 
-  // Active Package Lookup
-  const activePackage = useMemo(() => {
-    return (
-      LENS_PACKAGES.find((p) => p.id === selectedPackageId) ||
-      LENS_PACKAGES[1]
-    );
-  }, [selectedPackageId]);
-
-  // Optical physics calculations
+  // Dominant eye
   const maxAbsSph = Math.max(Math.abs(parsedOdSph), Math.abs(parsedOsSph));
   const dominantSph = Math.abs(parsedOdSph) >= Math.abs(parsedOsSph) ? parsedOdSph : parsedOsSph;
-  const signedEffectiveDiopter = dominantSph <= 0 ? -maxAbsSph : maxAbsSph;
 
-  const { center, edge } = useMemo(() => {
-    return calculateLensThickness(signedEffectiveDiopter, activePackage.indexNumber);
-  }, [signedEffectiveDiopter, activePackage.indexNumber]);
+  // ── Active Package ─────────────────────────────────────────────────────────
+  const activePackage = useMemo(
+    () => LENS_PACKAGES.find((p) => p.id === selectedPackageId) ?? LENS_PACKAGES[1],
+    [selectedPackageId]
+  );
 
-  // Benchmark against 1.67 Aspheric
-  const specs167 = useMemo(() => {
-    return calculateLensThickness(signedEffectiveDiopter, 1.67);
-  }, [signedEffectiveDiopter]);
+  // ── Index Profile from Registry ────────────────────────────────────────────
+  const indexProfile = useMemo(
+    () => INDEX_REGISTRY[activePackage.baseKey] ?? INDEX_REGISTRY["B2"],
+    [activePackage.baseKey]
+  );
 
-  // Live pair pricing calculation
+  // ── Physics Simulation ─────────────────────────────────────────────────────
+  const simResult = useMemo(() => runLensSimulator({
+    odSph: parsedOdSph,
+    osSph: parsedOsSph,
+    odCyl: parsedOdCyl,
+    osCyl: parsedOsCyl,
+    add: parsedAdd,
+    visionType,
+    tier: activePackage.baseKey,
+  }), [parsedOdSph, parsedOsSph, parsedOdCyl, parsedOsCyl, parsedAdd, visionType, activePackage.baseKey]);
+
+  // ── Benchmark vs 1.67 in single-vision mode ───────────────────────────────
+  const bench167 = useMemo(() => runLensSimulator({
+    odSph: parsedOdSph,
+    osSph: parsedOsSph,
+    odCyl: parsedOdCyl,
+    osCyl: parsedOsCyl,
+    add: parsedAdd,
+    visionType,
+    tier: "B5",
+  }), [parsedOdSph, parsedOsSph, parsedOdCyl, parsedOsCyl, parsedAdd, visionType]);
+
+  // ── Derived display values ─────────────────────────────────────────────────
+  const { centerMm, edgeMm, readingCenterMm } = useMemo(() => {
+    if (simResult.mode === "progressive") {
+      const r = simResult as ProgressiveZoneThickness;
+      return {
+        centerMm: r.distanceCenter,
+        edgeMm: r.distanceEdge,
+        readingCenterMm: r.readingCenter,
+      };
+    }
+    const r = simResult as SingleVisionThickness;
+    return { centerMm: r.center, edgeMm: r.edge, readingCenterMm: undefined };
+  }, [simResult]);
+
+  const bench167Edge = bench167.mode === "single_vision"
+    ? (bench167 as SingleVisionThickness).edge
+    : (bench167 as ProgressiveZoneThickness).distanceEdge;
+
+  // Progressive derived values
+  const readingPower = isProgressive ? parsedAdd + dominantSph : null;
+  const fMax = simResult.mode === "progressive"
+    ? (simResult as ProgressiveZoneThickness).fMax
+    : null;
+
+  // ── Live Price ─────────────────────────────────────────────────────────────
   const calculatedPrice = useMemo(() => {
-    if (visionType === "progressive") {
+    if (isProgressive) {
       const res = calculateTotalProgressivePrice(
         activePackage.id,
         { sph: parsedOdSph, cyl: parsedOdCyl },
         { sph: parsedOsSph, cyl: parsedOsCyl },
-        add,
+        parsedAdd,
         basePrices
       );
       if (res) return res.finalPrice;
@@ -111,29 +297,19 @@ export default function LensThicknessSimulator({
       basePrices
     );
     return res ? res.finalPrice : basePrices[activePackage.baseKey];
-  }, [activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, add, visionType, basePrices]);
+  }, [activePackage, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, isProgressive, basePrices]);
 
-  // High-diopter condition: |SPH| >= 4.00 D
+  // ── Recommendation flags ───────────────────────────────────────────────────
   const isHighDiopter = maxAbsSph >= 4.00;
   const is156Index = activePackage.index === "1.56";
+  const ultraThinPkg = LENS_PACKAGES.find((p) => p.id === "sv-167-shmc");
 
-  // SVG Parametric Curve Heights
-  const visualEdgeH = Math.min(38, Math.max(6, edge * 4.5));
-  const visualCenterH = Math.min(38, Math.max(6, center * 4.5));
-
-  const topY = 50 - visualCenterH / 2;
-  const bottomY = 50 + visualCenterH / 2;
-  const leftTopY = 50 - visualEdgeH / 2;
-  const leftBottomY = 50 + visualEdgeH / 2;
-  const rightTopY = 50 - visualEdgeH / 2;
-  const rightBottomY = 50 + visualEdgeH / 2;
-
-  const ultraThinPackage = LENS_PACKAGES.find((p) => p.id === "sv-167-shmc");
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={`w-full bg-white ${isModal ? "py-2" : "pt-8 pb-4"} ${className}`}>
       <div className="space-y-6">
-        {/* Header & Live RX Callout */}
+
+        {/* ── Page Header ─────────────────────────────────────────────────── */}
         {!isModal && (
           <div className="space-y-1">
             <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-1.5 block">
@@ -143,51 +319,113 @@ export default function LensThicknessSimulator({
               Estimated Lens Thickness
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 font-normal">
-              A preview of how thin your lenses will look in your frame.
+              A real optical cross-section preview modeled to your prescription and lens tier.
             </p>
           </div>
         )}
 
-        {/* Dynamic Prescription Indicator Pill */}
+        {/* ── Live Prescription Indicator Row ────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#ff7a00]" />
-            <span className="font-semibold text-slate-700">
-              Your Numbers:
-            </span>
+            <Eye className="w-3.5 h-3.5 text-[#ff7a00]" />
+            <span className="font-semibold text-slate-700">Your Numbers:</span>
+
+            {/* OD */}
             <span className="font-mono font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-              Right: {formatDiopter(parsedOdSph)} {parsedOdCyl !== 0 ? `| Cyl: ${formatDiopter(parsedOdCyl)}` : ""}
+              OD: {formatDiopter(parsedOdSph)}
+              {parsedOdCyl !== 0 ? ` | Cyl ${formatDiopter(parsedOdCyl)}` : ""}
             </span>
+
+            {/* OS */}
             <span className="font-mono font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-              Left: {formatDiopter(parsedOsSph)} {parsedOsCyl !== 0 ? `| Cyl: ${formatDiopter(parsedOsCyl)}` : ""}
+              OS: {formatDiopter(parsedOsSph)}
+              {parsedOsCyl !== 0 ? ` | Cyl ${formatDiopter(parsedOsCyl)}` : ""}
             </span>
+
+            {/* ADD pill — only for progressive */}
+            {isProgressive && parsedAdd !== 0 && (
+              <span className="font-mono font-bold text-violet-800 bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200 shadow-2xs">
+                ADD: +{parsedAdd.toFixed(2)}
+              </span>
+            )}
+
+            {/* Effective Reading Power */}
+            {isProgressive && readingPower !== null && (
+              <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                Near: {formatDiopter(readingPower)} D
+              </span>
+            )}
           </div>
+
           <span className="text-[11px] font-medium text-slate-500">
-            Strength: <strong className="text-[#ff7a00] font-bold font-mono">{formatDiopter(dominantSph)} D</strong>
+            {isProgressive ? "Progressive" : "Single Vision"}{" "}
+            ·{" "}
+            <strong className="text-[#ff7a00] font-bold font-mono">
+              {formatDiopter(dominantSph)} D
+            </strong>
           </span>
         </div>
 
-        {/* SINGLE FOCUSED LENS PREVIEW CARD */}
+        {/* ── Main Card ──────────────────────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* LEFT: Lens Details & Specs (7 cols) */}
+
+            {/* LEFT: Lens Details & Specs */}
             <div className="lg:col-span-7 space-y-5">
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
+                {/* Index + Material badge */}
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-mono font-bold text-[#ff7a00] uppercase tracking-wider bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200/70">
-                    Index {activePackage.index} · {activePackage.badge}
+                    Index {activePackage.index} · {indexProfile.material}
                   </span>
                   <span className="text-xs font-medium text-slate-400">
                     {activePackage.idealRange}
                   </span>
+                  {isProgressive && (
+                    <span className="text-[10px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      <Layers className="w-3 h-3" />
+                      Progressive Multi-Zone
+                    </span>
+                  )}
                 </div>
-                <h4 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+
+                <h4 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">
                   {activePackage.name}
                 </h4>
                 <p className="text-sm text-slate-600 leading-relaxed font-normal">
                   {activePackage.description}
                 </p>
               </div>
+
+              {/* ── Progressive Zone Breakdown ─────────────────────── */}
+              {isProgressive && simResult.mode === "progressive" && (
+                <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-3 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-violet-700 flex items-center gap-1.5">
+                    <BookOpen className="w-3 h-3" />
+                    Progressive Zone Physics
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-[11px]">
+                    <div className="bg-white rounded-lg border border-violet-100 p-2 text-center">
+                      <div className="font-bold text-violet-700 font-mono">
+                        {formatDiopter((simResult as ProgressiveZoneThickness).fMax)} D
+                      </div>
+                      <div className="text-slate-500 text-[9px] mt-0.5">Peak Power (Fmax)</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-violet-100 p-2 text-center">
+                      <div className="font-bold text-emerald-700 font-mono">
+                        {formatDiopter((simResult as ProgressiveZoneThickness).readingPower)} D
+                      </div>
+                      <div className="text-slate-500 text-[9px] mt-0.5">Reading Power</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-violet-100 p-2 text-center">
+                      <div className="font-bold text-slate-700 font-mono">
+                        {(simResult as ProgressiveZoneThickness).readingCenter} mm
+                      </div>
+                      <div className="text-slate-500 text-[9px] mt-0.5">Near Zone CT</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Optical Badges */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
@@ -205,7 +443,7 @@ export default function LensThicknessSimulator({
                 </span>
               </div>
 
-              {/* Live Calculated Price Display */}
+              {/* Live Price */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-slate-400 block font-bold uppercase tracking-wider">
@@ -221,83 +459,59 @@ export default function LensThicknessSimulator({
               </div>
             </div>
 
-            {/* RIGHT: Dynamic Parametric SVG Cross-Section (5 cols) */}
+            {/* RIGHT: Parametric SVG Cross-Section */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center">
               <div className="relative w-full aspect-[16/10] bg-slate-50/80 border border-slate-200/80 rounded-2xl flex items-center justify-center p-4 overflow-hidden shadow-2xs">
-                <svg
-                  viewBox="0 0 180 100"
-                  className="w-full h-full"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient
-                      id={`grad-focus-${activePackage.id}`}
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.12" />
-                      <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.08" />
-                      <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.16" />
-                    </linearGradient>
-                  </defs>
+                <LensCrossSectionSVG
+                  center={centerMm}
+                  edge={edgeMm}
+                  isProgressive={isProgressive}
+                  readingCenter={readingCenterMm}
+                  indexStr={activePackage.index}
+                  packageId={activePackage.id}
+                />
 
-                  {/* Lens Cross-section Profile */}
-                  <path
-                    d={`M 20 ${leftTopY} Q 90 ${topY} 160 ${rightTopY} L 160 ${rightBottomY} Q 90 ${bottomY} 20 ${leftBottomY} Z`}
-                    fill={`url(#grad-focus-${activePackage.id})`}
-                    stroke="#ff7a00"
-                    strokeWidth="2.5"
-                  />
-
-                  {/* Optical Axis Guide */}
-                  <line
-                    x1="90"
-                    y1="10"
-                    x2="90"
-                    y2="90"
-                    stroke="#cbd5e1"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-
-                  {/* Caliper Markers */}
-                  <line x1="15" y1={leftTopY} x2="15" y2={leftBottomY} stroke="#ff7a00" strokeWidth="1.5" />
-                  <line x1="12" y1={leftTopY} x2="18" y2={leftTopY} stroke="#ff7a00" strokeWidth="1" />
-                  <line x1="12" y1={leftBottomY} x2="18" y2={leftBottomY} stroke="#ff7a00" strokeWidth="1" />
-                  <line x1="95" y1={topY} x2="95" y2={bottomY} stroke="#38bdf8" strokeWidth="1.5" />
-                </svg>
-
-                {/* Absolute Measurement Callouts */}
+                {/* Measurement Callouts */}
                 <div className="absolute top-3 right-3 text-xs font-mono font-bold text-slate-800 bg-white/95 px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
-                  Edge: ~{edge} mm
+                  Edge: ~{edgeMm} mm
                 </div>
                 <div className="absolute bottom-3 left-3 text-xs font-mono font-medium text-slate-600 bg-white/95 px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
-                  Center: ~{center} mm
+                  Center: ~{centerMm} mm
+                </div>
+                {isProgressive && readingCenterMm !== undefined && (
+                  <div className="absolute bottom-3 right-3 text-[10px] font-mono font-bold text-violet-700 bg-violet-50/95 px-2 py-1 rounded-lg border border-violet-200 shadow-xs">
+                    Near CT: ~{readingCenterMm} mm
+                  </div>
+                )}
+
+                {/* Index badge overlay */}
+                <div className="absolute top-3 left-3 text-[9px] font-mono font-bold text-slate-500 bg-white/80 px-2 py-0.5 rounded border border-slate-200">
+                  n = {activePackage.index}
                 </div>
               </div>
-              <span className="text-[11px] text-slate-400 mt-2 font-medium">
-                Physical cross-section modeled for index {activePackage.index}
+              <span className="text-[11px] text-slate-400 mt-2 font-medium text-center">
+                {isProgressive
+                  ? `Progressive cross-section · Index ${activePackage.index} · ${indexProfile.material}`
+                  : `Physical cross-section modeled for index ${activePackage.index}`}
               </span>
             </div>
           </div>
 
-          {/* High-Diopter Smart Recommendation Banner */}
-          {isHighDiopter && is156Index && ultraThinPackage && (
+          {/* ── High-Diopter Recommendation ──────────────────────────────── */}
+          {isHighDiopter && is156Index && ultraThinPkg && (
             <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-amber-900">
               <div className="flex items-start gap-2.5">
                 <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <p className="leading-relaxed font-medium">
-                  <strong>💡 Tip for Strong Numbers ({formatDiopter(dominantSph)} D):</strong> Switching to{" "}
-                  <strong>{ultraThinPackage.name}</strong> will make your lenses up to 35% slimmer and lighter (edge ~{specs167.edge} mm).
+                  <strong>💡 Tip for Strong Numbers ({formatDiopter(dominantSph)} D):</strong>{" "}
+                  Switching to <strong>{ultraThinPkg.name}</strong> will make your lenses up to 35%
+                  slimmer and lighter (edge ~{bench167Edge} mm).
                 </p>
               </div>
               {onSelectPackage && (
                 <button
                   type="button"
-                  onClick={() => onSelectPackage(ultraThinPackage)}
+                  onClick={() => onSelectPackage(ultraThinPkg)}
                   className="shrink-0 px-4 py-2 rounded-xl bg-[#ff7a00] hover:bg-[#e56e00] text-white font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                 >
                   <span>Switch to Extra Thin</span>
@@ -311,17 +525,18 @@ export default function LensThicknessSimulator({
             <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5 text-xs text-emerald-900 font-medium">
               <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                <strong>✨ Optimal Choice:</strong> You have selected our Extra Thin lenses, giving you the thinnest and lightest look for your numbers.
+                <strong>✨ Optimal Choice:</strong> You have selected our Extra Thin lenses (n=1.67), giving you the thinnest and lightest look for your numbers.
               </span>
             </div>
           )}
         </div>
 
-        {/* Lab Guarantee */}
+        {/* ── Lab Guarantee ──────────────────────────────────────────────────── */}
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-3 text-xs text-slate-600">
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="leading-relaxed">
             Every lens is carefully cut and fitted in our lab to match your frame perfectly.
+            Progressive lenses are manufactured with free-form digital surfacing.
           </p>
         </div>
       </div>

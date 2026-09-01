@@ -9,6 +9,22 @@ import {
   TotalPricingResult,
 } from "./pricingEngine";
 
+// Re-export the upgraded optical physics engine
+export {
+  calculateLensThickness,
+  runLensSimulator,
+  INDEX_REGISTRY,
+  calcSingleVisionThickness,
+  calcProgressiveThickness,
+} from "./optical/lensThicknessSimulator";
+export type {
+  LensIndexProfile,
+  SingleVisionThickness,
+  ProgressiveZoneThickness,
+  LensThicknessResult,
+  SimulatorInput,
+} from "./optical/lensThicknessSimulator";
+
 export interface LensPackageDefinition {
   id: string;
   name: string;
@@ -103,31 +119,8 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
   },
 ];
 
-/**
- * Pure non-recursive mathematical sagitta calculation:
- * s = (r^2 * |D|) / (2000 * (index - 1))
- */
-export function calculateLensThickness(
-  sph: number,
-  index: number
-): { center: number; edge: number } {
-  const absSph = Math.abs(sph);
-  const radius = 26; // standard lens blank half-diameter (52mm eye size)
-  const deltaN = Math.max(0.3, index - 1);
-  const sag = (radius * radius * absSph) / (2000 * deltaN);
 
-  if (sph <= 0) {
-    // Myopia (Concave): fixed center, edge grows
-    const center = 1.5;
-    const edge = Number((center + sag).toFixed(1));
-    return { center, edge };
-  } else {
-    // Hyperopia (Convex): fixed edge, center grows
-    const edge = 1.2;
-    const center = Number((edge + sag).toFixed(1));
-    return { center, edge };
-  }
-}
+
 
 /**
  * Evaluates exact lens pair price from central pricing engine for given package and prescription.
