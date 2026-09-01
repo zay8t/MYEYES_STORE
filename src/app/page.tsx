@@ -52,9 +52,9 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  HERO SECTION                                                */}
       {/* ============================================================ */}
-      <section className="relative pt-8 sm:pt-12 pb-8 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 bg-white">
-        <div className="max-w-5xl mx-auto text-center space-y-4">
-          <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
+      <section className="relative pt-6 sm:pt-10 pb-2 sm:pb-3 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 bg-white">
+        <div className="max-w-5xl mx-auto text-center space-y-3">
+          <div className="mb-2 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#ff7a00] animate-pulse" />
             Pakistan&apos;s #1 Online Eyewear Store
           </div>
@@ -76,7 +76,7 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
       {/* ============================================================ */}
-      <section className="w-full bg-white py-8 sm:py-12 my-2">
+      <section className="w-full bg-white pt-2 sm:pt-4 pb-4 sm:pb-6">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div className="max-w-xl space-y-4 text-left">
             {/* 1. Category Pill Badge */}
@@ -99,36 +99,36 @@ export default function HomePage() {
               {/* Button 1: Start with a quiz */}
               <Link
                 href="/quiz"
-                className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 shrink-0 text-white" />
                 <span className="truncate">Take 1-Min Quiz</span>
               </Link>
 
               {/* Button 2: Shop eyeglasses */}
               <Link
                 href="/eyeglasses"
-                className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-[#0F172A] text-white hover:bg-[#1E293B] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#F0F4F8] text-[#0B132B] shadow-sm hover:bg-[#E2E8F0] border border-slate-200/60 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap"
               >
-                <Glasses className="w-3.5 h-3.5 shrink-0" />
+                <Glasses className="w-3.5 h-3.5 shrink-0 text-[#0B132B]" />
                 <span className="truncate">Shop Eyeglasses</span>
               </Link>
 
               {/* Button 3: Shop sunglasses */}
               <Link
                 href="/sunglasses"
-                className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sun className="w-3.5 h-3.5 shrink-0" />
+                <Sun className="w-3.5 h-3.5 shrink-0 text-white" />
                 <span className="truncate">Shop Sunglasses</span>
               </Link>
 
               {/* Button 4: Lens Pricing */}
               <Link
                 href="/lens-pricing"
-                className="h-[42px] w-full sm:w-auto px-4 rounded-full bg-white text-slate-900 border-2 border-slate-800 hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-100 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Calculator className="w-3.5 h-3.5 shrink-0" />
+                <Calculator className="w-3.5 h-3.5 shrink-0 text-[#0B132B]" />
                 <span className="truncate">See Lens Prices</span>
               </Link>
             </div>
