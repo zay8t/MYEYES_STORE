@@ -44,31 +44,59 @@ export default function Frame3DCanvasWrapper() {
   const [showBadge, setShowBadge] = useState(true);
 
   // ─── DOM overlay drag-to-rotate (mobile only) ───────────────────────────
-  const dragStartX   = useRef<number | null>(null);
   const isDragging   = useRef(false);
   const autoRotating = useRef(true); // disable idle spin once user interacts
 
+  // EMA velocity tracker refs (no allocations per frame)
+  const lastX        = useRef<number>(0);
+  const lastTime     = useRef<number>(0);
+  const velocity     = useRef<number>(0); // EMA-filtered angular velocity (rad/ms)
+
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    dragStartX.current = e.clientX;
     isDragging.current = true;
-    // Capture pointer so we get moves even if finger drifts off element
+    lastX.current      = e.clientX;
+    lastTime.current   = performance.now();
+    velocity.current   = 0; // reset EMA on each new touch
+    // Capture pointer so moves arrive even when finger drifts off element
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
   }, []);
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current || dragStartX.current === null) return;
-    const deltaX = e.clientX - dragStartX.current;
-    targetRotationY.current += deltaX * 0.008;
-    dragStartX.current = e.clientX;
+    if (!isDragging.current) return;
 
-    // Dismiss badge and stop auto-spin on first horizontal drag
+    const now = performance.now();
+    const dt  = Math.max(now - lastTime.current, 1); // guard against dt=0
+    const dx  = e.clientX - lastX.current;
+
+    // Instantaneous angular velocity (rad/ms), scaled for the sensitivity factor
+    const instantaneousVelocity = (dx / dt) * 0.02;
+
+    // EMA filter: 60% old weight, 40% new sample → smooth, noise-resistant velocity
+    velocity.current = velocity.current * 0.6 + instantaneousVelocity * 0.4;
+
+    // 0.015 rad/px → immediate 1:1 finger tracking
+    targetRotationY.current += dx * 0.015;
+
+    lastX.current    = e.clientX;
+    lastTime.current = now;
+
+    // Dismiss badge and stop idle auto-spin on first horizontal drag
     if (showBadge) setShowBadge(false);
     autoRotating.current = false;
   }, [showBadge]);
 
   const onPointerUp = useCallback(() => {
+    if (!isDragging.current) return;
     isDragging.current = false;
-    dragStartX.current = null;
+
+    // Inject release impulse for coasting momentum
+    const rawImpulse = velocity.current * 18.0;
+
+    // Clamp to ±1.5π to prevent chaotic multi-revolution runaway
+    const clampedImpulse = Math.min(Math.max(rawImpulse, -Math.PI * 1.5), Math.PI * 1.5);
+    targetRotationY.current += clampedImpulse;
+
+    velocity.current = 0;
   }, []);
 
   // ─── Swatch options ──────────────────────────────────────────────────────

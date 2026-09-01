@@ -310,7 +310,7 @@ function EyewearStudioModel({
       groupRef.current.rotation.y = THREE.MathUtils.damp(
         groupRef.current.rotation.y,
         targetRotationY.current,
-        6,
+        3.8,
         delta
       );
     }
