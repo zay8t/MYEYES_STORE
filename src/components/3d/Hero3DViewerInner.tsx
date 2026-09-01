@@ -120,42 +120,92 @@ function RoundFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMateria
   );
 }
 
+// ─── Procedural Teardrop Aviator Geometry Helpers ──────────────────────────
+
+function createTeardropLensShape(isLeft: boolean) {
+  const shape = new THREE.Shape();
+  const s = isLeft ? 1 : -1;
+
+  // Start at top-inner near bridge
+  shape.moveTo(0.52 * s, 0.45);
+  // Wide curved upper brow
+  shape.bezierCurveTo(0.15 * s, 0.48, -0.55 * s, 0.43, -0.76 * s, 0.32);
+  // Outer drooping teardrop slope
+  shape.bezierCurveTo(-0.95 * s, 0.18, -0.92 * s, -0.28, -0.68 * s, -0.68);
+  // Bottom teardrop sag apex
+  shape.bezierCurveTo(-0.48 * s, -0.92, -0.05 * s, -0.95, 0.20 * s, -0.80);
+  // Inner nose contour rising up
+  shape.bezierCurveTo(0.52 * s, -0.62, 0.64 * s, -0.15, 0.58 * s, 0.18);
+  shape.bezierCurveTo(0.56 * s, 0.34, 0.54 * s, 0.41, 0.52 * s, 0.45);
+
+  return shape;
+}
+
+const leftAviatorShape = createTeardropLensShape(true);
+const rightAviatorShape = createTeardropLensShape(false);
+
+const createTeardropRimGeometry = (shape: THREE.Shape) => {
+  const pts2d = shape.getPoints(54);
+  const pts3d = pts2d.map((p) => new THREE.Vector3(p.x, p.y, 0));
+  const curve = new THREE.CatmullRomCurve3(pts3d, true);
+  return new THREE.TubeGeometry(curve, 64, 0.022, 12, true);
+};
+
+const createTeardropLensGeometry = (shape: THREE.Shape) => {
+  return new THREE.ExtrudeGeometry(shape, {
+    depth: 0.022,
+    bevelEnabled: true,
+    bevelThickness: 0.006,
+    bevelSize: 0.006,
+    bevelSegments: 2,
+  });
+};
+
+const leftAviatorRimGeo = createTeardropRimGeometry(leftAviatorShape);
+const rightAviatorRimGeo = createTeardropRimGeometry(rightAviatorShape);
+const leftAviatorLensGeo = createTeardropLensGeometry(leftAviatorShape);
+const rightAviatorLensGeo = createTeardropLensGeometry(rightAviatorShape);
+
 // ─── 2. Titanium Aviator ─────────────────────────────────────────────────────
 
 function AviatorFrame({ frameMat, lensMat }: { frameMat: THREE.MeshStandardMaterial; lensMat: THREE.MeshPhysicalMaterial }) {
   return (
     <group>
-      <mesh position={[0, 0.42, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.03, 0.03, 1.2, 16]} />
+      {/* Elevated Slim Titanium Top Brow Bar */}
+      <mesh position={[0, 0.43, 0.01]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.02, 0.02, 1.45, 16]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      <mesh position={[0, 0.12, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.035, 0.035, 0.5, 16]} />
+
+      {/* Arched Lower Nose Bridge */}
+      <mesh position={[0, 0.14, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.26, 0.022, 12, 24, Math.PI]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      <group position={[-1.2, -0.08, 0]} scale={[1.0, 1.15, 1.0]}>
-        <mesh>
-          <torusGeometry args={[0.85, 0.045, 24, 64]} />
+
+      {/* Left Teardrop Aviator Rim & Refractive Lens */}
+      <group position={[-1.02, -0.04, 0]}>
+        <mesh geometry={leftAviatorRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.83, 0.83, 0.03, 32]} />
+        <mesh geometry={leftAviatorLensGeo} position={[0, 0, -0.011]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
-      <group position={[1.2, -0.08, 0]} scale={[1.0, 1.15, 1.0]}>
-        <mesh>
-          <torusGeometry args={[0.85, 0.045, 24, 64]} />
+
+      {/* Right Teardrop Aviator Rim & Refractive Lens */}
+      <group position={[1.02, -0.04, 0]}>
+        <mesh geometry={rightAviatorRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.83, 0.83, 0.03, 32]} />
+        <mesh geometry={rightAviatorLensGeo} position={[0, 0, -0.011]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
+
       <NosePads frameMat={frameMat} />
-      <TempleArm position={[-2.1, 0.1, -0.05]} rotation={[0, -0.12, 0]} frameMat={frameMat} />
-      <TempleArm position={[2.1, 0.1, -0.05]} rotation={[0, 0.12, 0]} frameMat={frameMat} />
+      <TempleArm position={[-1.94, 0.28, -0.05]} rotation={[0, -0.12, 0]} frameMat={frameMat} />
+      <TempleArm position={[1.94, 0.28, -0.05]} rotation={[0, 0.12, 0]} frameMat={frameMat} />
     </group>
   );
 }
