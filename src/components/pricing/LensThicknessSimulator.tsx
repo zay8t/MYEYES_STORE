@@ -129,13 +129,13 @@ export default function LensThicknessSimulator({
         {!isModal && (
           <div className="space-y-1">
             <span className="text-xs font-semibold tracking-widest uppercase text-[#ff7a00] mb-1.5 block">
-              PHYSICAL LENS THICKNESS PREVIEW
+              LENS PROFILE &amp; THICKNESS
             </span>
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Your Selected Lens Profile &amp; Thickness
+              Estimated Lens Thickness
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 font-normal">
-              Dynamically rendered cross-section and thickness metrics for your active prescription and chosen package.
+              A preview of how thin your lenses will look in your frame.
             </p>
           </div>
         )}
@@ -145,17 +145,17 @@ export default function LensThicknessSimulator({
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#ff7a00]" />
             <span className="font-semibold text-slate-700">
-              Active Parameters:
+              Your Numbers:
             </span>
             <span className="font-mono font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-              OD: {formatDiopter(parsedOdSph)} SPH {parsedOdCyl !== 0 ? `| ${formatDiopter(parsedOdCyl)} CYL` : ""}
+              Right: {formatDiopter(parsedOdSph)} {parsedOdCyl !== 0 ? `| Cyl: ${formatDiopter(parsedOdCyl)}` : ""}
             </span>
             <span className="font-mono font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-              OS: {formatDiopter(parsedOsSph)} SPH {parsedOsCyl !== 0 ? `| ${formatDiopter(parsedOsCyl)} CYL` : ""}
+              Left: {formatDiopter(parsedOsSph)} {parsedOsCyl !== 0 ? `| Cyl: ${formatDiopter(parsedOsCyl)}` : ""}
             </span>
           </div>
           <span className="text-[11px] font-medium text-slate-500">
-            Preview Power: <strong className="text-[#ff7a00] font-bold font-mono">{formatDiopter(dominantSph)} D</strong>
+            Strength: <strong className="text-[#ff7a00] font-bold font-mono">{formatDiopter(dominantSph)} D</strong>
           </span>
         </div>
 
@@ -282,8 +282,8 @@ export default function LensThicknessSimulator({
               <div className="flex items-start gap-2.5">
                 <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <p className="leading-relaxed font-medium">
-                  <strong>💡 Pro Tip for High Prescription ({formatDiopter(dominantSph)} D):</strong> Switching to{" "}
-                  <strong>{ultraThinPackage.name} (1.67 Index)</strong> will reduce your lens edge thickness from ~{edge} mm down to ~{specs167.edge} mm (up to 35% slimmer and lighter).
+                  <strong>💡 Tip for Strong Numbers ({formatDiopter(dominantSph)} D):</strong> Switching to{" "}
+                  <strong>{ultraThinPackage.name}</strong> will make your lenses up to 35% slimmer and lighter (edge ~{specs167.edge} mm).
                 </p>
               </div>
               {onSelectPackage && (
@@ -292,7 +292,7 @@ export default function LensThicknessSimulator({
                   onClick={() => onSelectPackage(ultraThinPackage)}
                   className="shrink-0 px-4 py-2 rounded-xl bg-[#ff7a00] hover:bg-[#e56e00] text-white font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                 >
-                  <span>Switch to 1.67 Ultra-Thin</span>
+                  <span>Switch to Extra Thin</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -303,17 +303,17 @@ export default function LensThicknessSimulator({
             <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5 text-xs text-emerald-900 font-medium">
               <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                <strong>✨ Optimal High-Index Choice:</strong> You have selected our 1.67 Ultra-Thin Aspheric design, ensuring the thinnest and lightest profile for your {formatDiopter(dominantSph)} D prescription.
+                <strong>✨ Optimal Choice:</strong> You have selected our Extra Thin lenses, giving you the thinnest and lightest look for your numbers.
               </span>
             </div>
           )}
         </div>
 
-        {/* Optical Studio Laboratory Guarantee */}
+        {/* Lab Guarantee */}
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-3 text-xs text-slate-600">
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="leading-relaxed">
-            All lenses are custom-beveled using computer-controlled CNC edging machines to match your selected frame geometry with sub-millimeter precision.
+            Every lens is carefully cut and fitted in our lab to match your frame perfectly.
           </p>
         </div>
       </div>

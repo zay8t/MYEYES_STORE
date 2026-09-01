@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -229,103 +229,120 @@ export default function LensPricingPage() {
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-neutral-200/60 pb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold uppercase tracking-widest text-amber-700">
             <Tag className="w-3.5 h-3.5 text-amber-600" />
-            MY EYES Precision Lens Pricing Wizard
+            Simple Lens Pricing
           </div>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-neutral-900">
-            Prescription Lens Pricing
+            Calculate Your Lens Price
           </h1>
           <p className="text-sm text-neutral-500 leading-relaxed max-w-2xl mx-auto font-normal">
-            Transparent, dynamic pricing from MY EYES Precision Labs. Enter your prescription and get an exact price — what you see here is exactly what you pay at checkout.
+            Find out the exact price for your lenses in a few simple steps. No hidden charges.
           </p>
           {isProgressive && (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-semibold shadow-xs">
               <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
-              <span>Presbyopia Progressive Calculator Active</span>
+              <span>All-in-One (Near &amp; Far) Mode Active</span>
             </div>
           )}
         </div>
 
         {/* Step Navigator */}
         <div className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto pb-1">
-          <StepBadge step={1} label="Vision Intent" />
+          <StepBadge step={1} label="1. Glasses Type" />
           <ChevronRight className="w-4 h-4 text-neutral-300 flex-shrink-0" />
-          <StepBadge step={2} label="Lens Tier" />
+          <StepBadge step={2} label="2. Lens Choice" />
           <ChevronRight className="w-4 h-4 text-neutral-300 flex-shrink-0" />
-          <StepBadge step={3} label={isProgressive ? "Rx & ADD Power" : "Rx Powers"} />
+          <StepBadge step={3} label="3. Eye Numbers" />
           <ChevronRight className="w-4 h-4 text-neutral-300 flex-shrink-0" />
-          <StepBadge step={4} label="Live Pricing" />
+          <StepBadge step={4} label="4. Total Price" />
         </div>
 
         {/* Main Card */}
         <div className="bg-white border border-neutral-200/80 rounded-3xl shadow-sm overflow-hidden">
 
-          {/* STEP 1: Vision Intent */}
+          {/* STEP 1: Glasses Type */}
           <div className="p-6 sm:p-8 border-b border-neutral-100">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
-                <Eye className="w-4 h-4 text-amber-600" />
+                <Eye className="w-4.5 h-4.5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">Step 1 — Vision Type &amp; Patient Profile</h2>
-                <p className="text-xs text-neutral-500 font-normal mt-0.5">Select your vision correction intent. This controls which packages and ADD fields appear.</p>
+                <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">Step 1 — What will you use these glasses for?</h2>
+                <p className="text-xs text-neutral-500 font-normal mt-0.5">Choose the option that fits your daily needs.</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button type="button" onClick={() => set("visionType", "single_vision")}
-                className={cn("relative text-left p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer",
+              {/* Everyday Glasses */}
+              <button
+                type="button"
+                onClick={() => set("visionType", "single_vision")}
+                className={cn(
+                  "relative text-left p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer",
                   !isProgressive ? "border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/15" : "border-neutral-200 bg-white hover:border-neutral-300"
-                )}>
+                )}
+              >
                 {!isProgressive && <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center"><Check className="w-3 h-3 text-slate-950" /></span>}
-                <div className="text-sm font-extrabold text-neutral-900 mb-1.5">Standard Single Vision</div>
-                <p className="text-xs text-neutral-500 font-normal leading-relaxed">For myopia, hyperopia, or astigmatism. Single correction power across the entire lens. No ADD power required.</p>
-                <span className="inline-block mt-3 text-[10px] font-bold uppercase tracking-wider text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-lg">Distance or Reading</span>
+                <div className="text-sm font-extrabold text-neutral-900 mb-1.5">Everyday Glasses</div>
+                <p className="text-xs text-neutral-500 font-normal leading-relaxed">For distance, reading, or screen use. One single power throughout the lens.</p>
+                <span className="inline-block mt-3 text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-lg">One Focus</span>
               </button>
 
-              <button type="button" onClick={() => set("visionType", "progressive")}
-                className={cn("relative text-left p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer",
+              {/* All-in-One Glasses */}
+              <button
+                type="button"
+                onClick={() => set("visionType", "progressive")}
+                className={cn(
+                  "relative text-left p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer",
                   isProgressive ? "border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/15" : "border-neutral-200 bg-white hover:border-neutral-300"
-                )}>
+                )}
+              >
                 {isProgressive && <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center"><Check className="w-3 h-3 text-slate-950" /></span>}
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-sm font-extrabold text-neutral-900">Progressive (Presbyopia)</span>
-                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">+40</span>
+                  <span className="text-sm font-extrabold text-neutral-900">All-in-One Glasses (Near &amp; Far)</span>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">Age 40+</span>
                 </div>
-                <p className="text-xs text-neutral-500 font-normal leading-relaxed">No-line multifocal. Requires a near Addition (ADD) power. Typically prescribed for presbyopia age 40+.</p>
-                <span className="inline-block mt-3 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200/60">Distance + Intermediate + Near</span>
+                <p className="text-xs text-neutral-500 font-normal leading-relaxed">See clearly far away and read up close without changing your glasses. Ideal for age 40+.</p>
+                <span className="inline-block mt-3 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200/60">Far + Screen + Reading</span>
               </button>
             </div>
 
+            {/* Age field */}
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-2">Patient Age <span className="text-neutral-400 font-normal">(optional)</span></label>
-                <input type="number" min="1" max="120" value={state.age} onChange={(e) => set("age", e.target.value)} placeholder="e.g. 42"
-                  className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold transition-all outline-none" />
+                <label className="block text-xs font-semibold text-neutral-700 mb-2">Your Age <span className="text-neutral-400 font-normal">(optional)</span></label>
+                <input
+                  type="number" min="1" max="120"
+                  value={state.age}
+                  onChange={(e) => set("age", e.target.value)}
+                  placeholder="e.g. 42"
+                  className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold transition-all outline-none"
+                />
               </div>
               {showAgeAdvisory && (
                 <div className="flex items-start gap-2.5 p-4 rounded-xl bg-amber-50 border border-amber-200/70 text-xs text-amber-900 self-end">
                   <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="leading-relaxed font-medium"><strong>Age {parsedAge}:</strong> Most patients 40+ benefit from Progressive lenses for presbyopia. Consider selecting Progressive above.</p>
+                  <p className="leading-relaxed font-medium"><strong>Age {parsedAge}:</strong> Most people around 40+ find all-in-one lenses most comfortable for reading and distance.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* STEP 2: Lens Package */}
+          {/* STEP 2: Choose Your Lens */}
           <div className="p-6 sm:p-8 border-b border-neutral-100 bg-neutral-50/30">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
-                <BookOpen className="w-4 h-4 text-amber-600" />
+                <BookOpen className="w-4.5 h-4.5 text-amber-600" />
               </div>
               <div>
                 <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">
-                  Step 2 — {isProgressive ? "Progressive Lens Package" : "Lens Package"}
+                  Step 2 — Choose Your Lens
                 </h2>
                 <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                  {isProgressive ? "4 progressive packages (Ultra-Thin 1.67 excluded — no progressive support)." : "5 standard single-vision lens packages."}
+                  Select the features you want for your lenses.
                 </p>
               </div>
             </div>
+
             <div className={cn("grid gap-3", isProgressive ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
               {activeLenses.slice(0, isProgressive ? 4 : 3).map((lens) => (
                 <LensCard key={lens.id} lens={lens} selected={state.selectedLensId === lens.id} basePrices={basePrices} onClick={() => set("selectedLensId", lens.id)} />
@@ -340,19 +357,19 @@ export default function LensPricingPage() {
             )}
           </div>
 
-          {/* STEP 3: Rx + Conditional ADD */}
+          {/* STEP 3: Eye Numbers + Conditional ADD */}
           <div className="p-6 sm:p-8 border-b border-neutral-100">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
-                  <Calculator className="w-4 h-4 text-amber-600" />
+                  <Calculator className="w-4.5 h-4.5 text-amber-600" />
                 </div>
                 <div>
                   <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">
-                    Step 3 — {isProgressive ? "Refractive Powers & ADD (Progressive)" : "Enter Eye Prescription (OD & OS)"}
+                    Step 3 — Enter Your Eye Numbers
                   </h2>
                   <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                    SPH, CYL, and AXIS for each eye.{isProgressive ? " ADD power required for progressive calculation." : ""}
+                    Copy the numbers from your prescription slip.{isProgressive ? " Reading number (ADD) required for all-in-one lenses." : ""}
                   </p>
                 </div>
               </div>
@@ -361,22 +378,22 @@ export default function LensPricingPage() {
                   state.noRxFallback ? "bg-amber-500/10 border-amber-500/40 text-amber-700" : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-neutral-300"
                 )}>
                 <BookOpen className="w-3.5 h-3.5" />
-                {state.noRxFallback ? "Using Estimated Defaults" : "Don't have Rx handy?"}
+                {state.noRxFallback ? "Using Estimated Numbers" : "Don't have your slip?"}
               </button>
             </div>
 
             {state.noRxFallback && (
               <div className="mb-5 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs text-amber-900 flex items-start gap-2 font-medium">
                 <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Estimated defaults active:</strong>{" "}
-                  {isProgressive ? "Plano (0.00 SPH / 0.00 CYL) with standard entry ADD +1.50 D. Actual price may vary." : "Plano (0.00 SPH / 0.00 CYL) — base tier rate only. Enter actual Rx for exact price."}
+                <span><strong>Using estimated numbers:</strong>{" "}
+                  {isProgressive ? "Standard baseline applied with entry reading addition (+1.50). Your final price may adjust when you enter your slip." : "Standard baseline applied (zero power). Enter your actual slip numbers for your exact price."}
                 </span>
               </div>
             )}
 
             {isProgressive && (
               <div className="mb-5 p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs text-amber-900 font-medium">
-                <strong>Pupillary Distance (PD):</strong> For custom progressive lenses, our optical team will contact you on WhatsApp after order placement to confirm your PD measurement.
+                <strong>Pupillary Distance (PD):</strong> For all-in-one lenses, our team will message you on WhatsApp after your order to help measure your eye distance easily.
               </div>
             )}
 
@@ -384,25 +401,25 @@ export default function LensPricingPage() {
               <div className={cn("p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4", state.noRxFallback && "opacity-50")}>
                 <div className="flex items-center gap-2 border-b border-neutral-200/60 pb-3">
                   <Eye className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Right Eye (OD)</span>
+                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Right Eye</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <PrescriptionInputGroup label="Sphere (SPH)" value={state.od.sph} onChange={(v) => setEye("od", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
+                  <PrescriptionInputGroup label="Number / Power (SPH)" value={state.od.sph} onChange={(v) => setEye("od", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
                   <PrescriptionInputGroup label="Cylinder (CYL)" value={state.od.cyl} onChange={(v) => setEye("od", "cyl", v)} options={CYL_ALL} disabled={state.noRxFallback} />
                 </div>
-                <PrescriptionInputGroup label="Axis" value={state.od.axis} onChange={(v) => setEye("od", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
+                <PrescriptionInputGroup label="Angle (AXIS)" value={state.od.axis} onChange={(v) => setEye("od", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
               </div>
 
               <div className={cn("p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/30 space-y-4", state.noRxFallback && "opacity-50")}>
                 <div className="flex items-center gap-2 border-b border-neutral-200/60 pb-3">
                   <Eye className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Left Eye (OS)</span>
+                  <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Left Eye</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <PrescriptionInputGroup label="Sphere (SPH)" value={state.os.sph} onChange={(v) => setEye("os", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
+                  <PrescriptionInputGroup label="Number / Power (SPH)" value={state.os.sph} onChange={(v) => setEye("os", "sph", v)} options={SPH_ALL} disabled={state.noRxFallback} />
                   <PrescriptionInputGroup label="Cylinder (CYL)" value={state.os.cyl} onChange={(v) => setEye("os", "cyl", v)} options={CYL_ALL} disabled={state.noRxFallback} />
                 </div>
-                <PrescriptionInputGroup label="Axis" value={state.os.axis} onChange={(v) => setEye("os", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
+                <PrescriptionInputGroup label="Angle (AXIS)" value={state.os.axis} onChange={(v) => setEye("os", "axis", v)} options={AXIS_OPTIONS} isAxis disabled={state.noRxFallback} />
               </div>
             </div>
 
@@ -412,54 +429,54 @@ export default function LensPricingPage() {
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Near Addition (ADD Power) — Progressive Only</span>
+                    <span className="text-xs font-extrabold text-neutral-900 uppercase tracking-wider">Reading Number (ADD) — All-in-One Only</span>
                   </div>
                   <button type="button" onClick={() => set("addLinked", !state.addLinked)}
                     className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer",
                       state.addLinked ? "bg-emerald-50 border-emerald-300/70 text-emerald-700" : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300"
                     )}>
-                    {state.addLinked ? <><Link2 className="w-3.5 h-3.5" /> OD = OS (Linked)</> : <><Unlink className="w-3.5 h-3.5" /> Decoupled</>}
+                    {state.addLinked ? <><Link2 className="w-3.5 h-3.5" /> Both Eyes Same</> : <><Unlink className="w-3.5 h-3.5" /> Set Separately</>}
                   </button>
                 </div>
                 <p className="text-[11px] text-amber-800/70 font-normal leading-relaxed">
-                  Reading ADD power (+0.75 D to +3.50 D in +0.25 D steps). Bilateral ADD is typically equal for both eyes. Toggle <strong>Decoupled</strong> to set OD and OS ADD independently.
+                  Reading addition (+0.75 to +3.50). Usually the same for both eyes. Toggle <strong>Set Separately</strong> to adjust each eye independently if needed.
                 </p>
                 <div className={cn("grid gap-4", state.addLinked ? "grid-cols-1 max-w-xs" : "grid-cols-1 sm:grid-cols-2")}>
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">
-                      {state.addLinked ? "ADD Power (Both Eyes)" : "OD — ADD Power"}
+                      {state.addLinked ? "Reading Number (ADD)" : "Right Eye — Reading Number"}
                     </label>
                     <select value={state.noRxFallback ? "+1.50" : state.odAdd} onChange={(e) => setAdd("od", e.target.value)} disabled={state.noRxFallback}
                       className={cn("w-full bg-white border border-amber-300/60 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold font-mono transition-all outline-none", state.noRxFallback && "opacity-50")}>
-                      {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o} D</option>)}
+                      {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                   {!state.addLinked && (
                     <div className="space-y-2">
-                      <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">OS — ADD Power</label>
+                      <label className="block text-xs font-semibold text-neutral-700 tracking-wide uppercase">Left Eye — Reading Number</label>
                       <select value={state.noRxFallback ? "+1.50" : state.osAdd} onChange={(e) => setAdd("os", e.target.value)} disabled={state.noRxFallback}
                         className={cn("w-full bg-white border border-amber-300/60 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-neutral-900 text-sm font-bold font-mono transition-all outline-none", state.noRxFallback && "opacity-50")}>
-                        {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o} D</option>)}
+                        {ADD_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
                   )}
                 </div>
                 {!state.addLinked && (
-                  <p className="text-[10px] text-amber-700 font-medium">Average ADD for pricing: <strong>+{effectiveAdd.toFixed(2)} D</strong></p>
+                  <p className="text-[10px] text-amber-700 font-medium">Average reading addition: <strong>+{effectiveAdd.toFixed(2)}</strong></p>
                 )}
               </div>
             )}
           </div>
 
-          {/* STEP 4: Live Result */}
+          {/* STEP 4: Total Price */}
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <ShieldCheck className="w-4.5 h-4.5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">Step 4 — Live Pricing Result</h2>
-                <p className="text-xs text-neutral-500 font-normal mt-0.5">Computed in real-time by our canonical optical pricing matrix engine. Zero hardcoded overrides.</p>
+                <h2 className="text-base font-extrabold text-neutral-900 tracking-tight">Step 4 — Your Final Lens Price</h2>
+                <p className="text-xs text-neutral-500 font-normal mt-0.5">Here is the exact cost for your pair of lenses.</p>
               </div>
             </div>
 
@@ -468,10 +485,10 @@ export default function LensPricingPage() {
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-bold text-red-900">
-                    {isProgressive ? "Prescription outside progressive matrix — Contact Support" : "Prescription outside standard matrix — Contact Support"}
+                    Special numbers needed — Contact Support
                   </h4>
                   <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                    The entered values fall outside our automated pricing range. Please contact MY EYES support for a custom laboratory quote.
+                    The numbers entered require custom laboratory crafting. Please message our team for quick help.
                   </p>
                 </div>
               </div>
@@ -479,11 +496,11 @@ export default function LensPricingPage() {
               <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-2xl border border-amber-200/60 p-6 sm:p-8 space-y-5">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-                    {isProgressive ? "Progressive Lens Pair Estimate" : "Single Vision Lens Pair Estimate"}
+                    Estimated Lens Price
                   </span>
                   <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    {isProgressive ? "Progressive Matrix Verified" : "Single Vision Matrix Verified"}
+                    Price Guaranteed
                   </div>
                 </div>
 
@@ -493,28 +510,28 @@ export default function LensPricingPage() {
                       <span className="font-semibold text-neutral-700">{selectedPkg.name}</span>
                       <span className="text-xs text-neutral-400 ml-2 font-medium">({selectedPkg.coating})</span>
                     </div>
-                    <span className="font-mono text-xs text-neutral-500 font-bold">
-                      Base {result.basePriceKey} @ Rs.&nbsp;{result.basePriceValue.toLocaleString()}
+                    <span className="text-xs text-neutral-500 font-bold bg-neutral-100 px-2 py-0.5 rounded-md">
+                      Pair of Lenses
                     </span>
                   </div>
 
                   {isProgressive ? (
                     <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed">
                       <div>
-                        <span className="font-semibold text-neutral-700">Progressive Corridor Tier</span>
+                        <span className="font-semibold text-neutral-700">All-in-One Reading Zone</span>
                         <span className="text-xs text-amber-700 ml-2 font-bold bg-amber-50 px-1.5 py-0.5 rounded">
-                          ADD +{effectiveAdd.toFixed(2)} D
+                          Reading +{effectiveAdd.toFixed(2)}
                         </span>
                       </div>
-                      <span className="font-mono text-xs text-neutral-500 font-bold">
-                        &times;{result.multiplier.toFixed(2)} multiplier
+                      <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+                        Far + Near Included
                       </span>
                     </div>
                   ) : (
                     <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed">
-                      <span className="font-semibold text-neutral-700">Standard Distance / Reading Lens</span>
+                      <span className="font-semibold text-neutral-700">Standard Single Vision</span>
                       <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
-                        No ADD Surcharge
+                        No Extra Fees
                       </span>
                     </div>
                   )}
@@ -522,29 +539,29 @@ export default function LensPricingPage() {
                   {result.isAsymmetricRx && (
                     <>
                       <div className="flex justify-between items-center py-1.5 text-xs">
-                        <span className="font-medium text-neutral-600">Right Lens (OD) — asymmetric pair split</span>
+                        <span className="font-medium text-neutral-600">Right Lens — customized power</span>
                         <span className="font-mono font-bold text-neutral-800">{formatPrice(result.rightEyeLensPrice ?? 0)}</span>
                       </div>
                       <div className="flex justify-between items-center py-1.5 text-xs border-b border-neutral-100 border-dashed">
-                        <span className="font-medium text-neutral-600">Left Lens (OS) — asymmetric pair split</span>
+                        <span className="font-medium text-neutral-600">Left Lens — customized power</span>
                         <span className="font-mono font-bold text-neutral-800">{formatPrice(result.leftEyeLensPrice ?? 0)}</span>
                       </div>
                     </>
                   )}
                   {!result.isAsymmetricRx && (
-                    <p className="text-xs text-neutral-400 font-medium">Both lenses priced identically (symmetric Rx).</p>
+                    <p className="text-xs text-neutral-400 font-medium">Both left and right lenses included</p>
                   )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pt-3 border-t border-neutral-200">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">Pair Total (Lens Only)</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">Total Lens Price</span>
                     <span className="text-4xl font-black text-amber-600 tracking-tight">{formatPrice(result.finalPrice)}</span>
-                    <span className="text-xs text-neutral-400 block mt-1 font-normal">Frame cost is separate. This is lens fabrication only.</span>
+                    <span className="text-xs text-neutral-400 block mt-1 font-normal">Pick a frame next to complete your order.</span>
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200/70 px-3 py-1.5 rounded-xl inline-block">
-                      {isProgressive ? "40% advance required for progressive COD orders" : "25% advance required for COD orders"}
+                      {isProgressive ? "40% advance for Cash on Delivery" : "25% advance for Cash on Delivery"}
                     </div>
                   </div>
                 </div>
@@ -552,13 +569,11 @@ export default function LensPricingPage() {
                 <div className="pt-2">
                   <Link href={ctaHref}
                     className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-[#F59E0B] text-[#0F172A] hover:bg-[#D97706] font-bold shadow-sm transition-all hover:shadow-md hover:scale-[1.01] text-sm">
-                    Apply &amp; Shop Frames
+                    Choose Your Frame
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <p className="text-[10px] text-neutral-400 mt-2 font-normal">
-                    {isProgressive
-                      ? `Carries visionType=progressive&add=${effectiveAdd.toFixed(2)} to catalog`
-                      : "Carries visionType=single_vision to catalog"}
+                    Saves your lens settings for your frame
                   </p>
                 </div>
               </div>
