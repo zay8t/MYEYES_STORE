@@ -23,6 +23,14 @@ export interface ProductInput {
   featured?: boolean;
 }
 
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Non-fatal if invoked outside Next.js request lifecycle
+  }
+}
+
 export async function updateOrderStatusAction(orderId: string, status: OrderStatus) {
   try {
     const updatedOrder = await prisma.order.update({
@@ -30,9 +38,9 @@ export async function updateOrderStatusAction(orderId: string, status: OrderStat
       data: { status },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/orders");
-    revalidatePath("/admin/customers");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/orders");
+    safeRevalidatePath("/admin/customers");
     return { success: true, order: updatedOrder };
   } catch (error) {
     console.error("Error updating order status:", error);
@@ -47,9 +55,9 @@ export async function updatePaymentStatusAction(orderId: string, paymentStatus: 
       data: { paymentStatus: paymentStatus as PaymentStatus },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/orders");
-    revalidatePath("/admin/customers");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/orders");
+    safeRevalidatePath("/admin/customers");
     return { success: true, order: updatedOrder };
   } catch (error) {
     console.error("Error updating payment status:", error);
@@ -179,12 +187,12 @@ export async function updateProductAction(productId: string, input: Partial<Prod
       data: updateData,
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
-    revalidatePath("/admin/inventory");
-    revalidatePath("/");
-    revalidatePath("/eyeglasses");
-    revalidatePath("/sunglasses");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/products");
+    safeRevalidatePath("/admin/inventory");
+    safeRevalidatePath("/");
+    safeRevalidatePath("/eyeglasses");
+    safeRevalidatePath("/sunglasses");
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error updating product:", error);
@@ -244,9 +252,9 @@ export async function verifyPaymentAction(
       console.error("Notification failed (non-fatal):", notifErr);
     }
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/payments");
-    revalidatePath("/admin/orders");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/payments");
+    safeRevalidatePath("/admin/orders");
     return { success: true, order };
   } catch (error) {
     console.error("verifyPaymentAction error:", error);
@@ -302,9 +310,9 @@ export async function rejectPaymentAction(
       console.error("Rejection notification failed (non-fatal):", notifErr);
     }
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/payments");
-    revalidatePath("/admin/orders");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/payments");
+    safeRevalidatePath("/admin/orders");
     return { success: true, order };
   } catch (error) {
     console.error("rejectPaymentAction error:", error);
@@ -340,9 +348,9 @@ export async function flagPaymentAction(
 
     await sendFlaggedAlert(order, notes || "No additional notes.");
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/payments");
-    revalidatePath("/admin/orders");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/payments");
+    safeRevalidatePath("/admin/orders");
     return { success: true, order };
   } catch (error) {
     console.error("flagPaymentAction error:", error);
@@ -361,12 +369,12 @@ export async function deleteProductAction(productId: string) {
       where: { id: productId },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
-    revalidatePath("/admin/inventory");
-    revalidatePath("/");
-    revalidatePath("/eyeglasses");
-    revalidatePath("/sunglasses");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/products");
+    safeRevalidatePath("/admin/inventory");
+    safeRevalidatePath("/");
+    safeRevalidatePath("/eyeglasses");
+    safeRevalidatePath("/sunglasses");
     return { success: true };
   } catch (error) {
     console.error("Error deleting product:", error);

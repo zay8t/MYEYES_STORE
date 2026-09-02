@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, OrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 /**
- * POST /api/orders/[id]/resubmit-proof
- * Allows customer to resubmit valid TID and receipt screenshot after payment rejection.
+ * POST /api/orders/[id]/resubmit-proof (also /payment-proof)
+ * Allows customer to submit or resubmit valid TID, sender name, and receipt screenshot.
+ * Updates order paymentStatus to PENDING_VERIFICATION and commits audit log.
  */
 export async function POST(
   request: NextRequest,
@@ -21,11 +22,17 @@ export async function POST(
     const {
       transactionId,
       paymentReceiptUrl,
+      advanceReceiptUrl,
+      transactionProofUrl,
       paymentSenderName,
+      senderAccountTitle,
       paymentSenderPhone,
     } = body;
 
-    if (!transactionId && !paymentReceiptUrl) {
+    const receiptUrl = advanceReceiptUrl || paymentReceiptUrl || transactionProofUrl || null;
+    const senderTitle = senderAccountTitle || paymentSenderName || null;
+
+    if (!transactionId && !receiptUrl) {
       return NextResponse.json(
         { success: false, error: "Please provide a valid Transaction ID (TID) or receipt screenshot." },
         { status: 400 }
@@ -78,9 +85,9 @@ export async function POST(
         paymentStatus: PaymentStatus.PENDING_VERIFICATION,
         rejectionReason: null,
         transactionId: cleanTid,
-        paymentReceiptUrl: paymentReceiptUrl || existingOrder.paymentReceiptUrl,
-        transactionProofUrl: paymentReceiptUrl || existingOrder.transactionProofUrl,
-        paymentSenderName: paymentSenderName !== undefined ? paymentSenderName : existingOrder.paymentSenderName,
+        paymentReceiptUrl: receiptUrl || existingOrder.paymentReceiptUrl,
+        transactionProofUrl: receiptUrl || existingOrder.transactionProofUrl,
+        paymentSenderName: senderTitle !== null ? senderTitle : existingOrder.paymentSenderName,
         paymentSenderPhone: paymentSenderPhone !== undefined ? paymentSenderPhone : existingOrder.paymentSenderPhone,
         verifiedAt: null,
         verifiedBy: null,
@@ -94,19 +101,20 @@ export async function POST(
         orderId: existingOrder.id,
         action: "SUBMITTED",
         actor: "CUSTOMER",
-        notes: `Customer resubmitted payment verification proof. New TID: ${cleanTid || "None"}. Status reset to PENDING_VERIFICATION.`,
+        notes: `Customer submitted deposit / payment verification proof. TID: ${cleanTid || "None"}. Status: PENDING_VERIFICATION.`,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Payment proof resubmitted successfully. Your payment is under review.",
+      status: "PENDING_VERIFICATION",
+      message: "Payment proof submitted successfully. Your deposit is now in the verification queue.",
       order: updatedOrder,
     });
   } catch (error) {
-    console.error("Resubmit proof error:", error);
+    console.error("Proof submission error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to resubmit payment proof" },
+      { success: false, error: "Failed to submit payment proof" },
       { status: 500 }
     );
   }

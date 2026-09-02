@@ -463,14 +463,32 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     return c;
   }, [orders]);
 
-  // Metrics
+  // Metrics & Calculations
+  const getOrderFinancials = useCallback((order: PaymentOrder) => {
+    const isCod = order.paymentMethod === "COD";
+    const hasPrescription = order.items.some((i) => Boolean(i.prescription));
+    const isAdvanceDeposit = isCod || hasPrescription;
+    const advanceAmount = isAdvanceDeposit ? Math.round(order.totalAmount * 0.25) : order.totalAmount;
+    const doorstepBalance = isAdvanceDeposit ? Math.max(0, order.totalAmount - advanceAmount) : 0;
+
+    return {
+      isCod,
+      isAdvanceDeposit,
+      advanceAmount,
+      doorstepBalance,
+    };
+  }, []);
+
   const metrics = useMemo(() => {
     const pendingOrders = orders.filter(
       (o) =>
         o.paymentStatus === "PENDING_VERIFICATION" ||
         (o.paymentStatus !== "PAID" && o.paymentStatus !== "FAILED")
     );
-    const pendingAmount = pendingOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+    const pendingAmount = pendingOrders.reduce((s, o) => {
+      const fin = getOrderFinancials(o);
+      return s + (fin.advanceAmount || o.totalAmount || 0);
+    }, 0);
     const pendingCount = pendingOrders.length;
 
     const today = new Date().toDateString();
@@ -479,7 +497,10 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       const d = o.verifiedAt ? new Date(o.verifiedAt) : new Date(o.createdAt);
       return d.toDateString() === today;
     });
-    const approvedTodayAmount = approvedTodayOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+    const approvedTodayAmount = approvedTodayOrders.reduce((s, o) => {
+      const fin = getOrderFinancials(o);
+      return s + (fin.advanceAmount || o.totalAmount || 0);
+    }, 0);
     const approvedTodayCount = approvedTodayOrders.length;
 
     const totalReceiptsCount = orders.filter((o) => Boolean(o.paymentReceiptUrl || o.transactionId)).length;
@@ -491,7 +512,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       approvedTodayCount,
       totalReceiptsCount,
     };
-  }, [orders]);
+  }, [orders, getOrderFinancials]);
 
   const updateOrderInState = useCallback((orderId: string, patch: Partial<PaymentOrder>) => {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...patch } : o)));
@@ -843,64 +864,83 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   </div>
 
                   {/* Card Body */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">
-                        {order.customerName}
-                      </p>
-                      {order.customerPhone && (
-                        <p className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                          {order.customerPhone}
-                        </p>
-                      )}
-                      <p className="text-xs font-extrabold text-slate-900 mt-1">
-                        {formatPKR(order.totalAmount)}
-                      </p>
+                  {(() => {
+                    const fin = getOrderFinancials(order);
+                    return (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {order.customerName}
+                          </p>
+                          {order.customerPhone && (
+                            <p className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 mt-0.5">
+                              <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                              {order.customerPhone}
+                            </p>
+                          )}
 
-                      {order.transactionId && (
-                        <div className="flex items-center gap-1 mt-1.5">
-                          <span className="text-[10px] font-mono text-slate-700 bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded max-w-[170px] truncate">
-                            TID: {order.transactionId}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleCopyTid(order.transactionId!, e)}
-                            className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
-                            title="Copy TID"
+                          {fin.isAdvanceDeposit ? (
+                            <div className="mt-1 space-y-0.5">
+                              <p className="text-xs font-extrabold text-amber-700">
+                                Deposit: {formatPKR(fin.advanceAmount)}
+                                <span className="text-[10px] font-normal text-slate-500 ml-1">(25% Advance)</span>
+                              </p>
+                              <p className="text-[10px] font-medium text-slate-500">
+                                Doorstep Balance: {formatPKR(fin.doorstepBalance)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-xs font-extrabold text-slate-900 mt-1">
+                              {formatPKR(order.totalAmount)}
+                              <span className="text-[10px] font-normal text-slate-500 ml-1">(Full Payment)</span>
+                            </p>
+                          )}
+
+                          {order.transactionId && (
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded max-w-[170px] truncate">
+                                TID: {order.transactionId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyTid(order.transactionId!, e)}
+                                className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
+                                title="Copy TID"
+                              >
+                                {copiedTid === order.transactionId ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Inline Receipt Thumbnail (if present) */}
+                        {order.paymentReceiptUrl && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected(order);
+                              setFullscreenReceipt(order.paymentReceiptUrl || null);
+                            }}
+                            className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 hover:opacity-90 transition-opacity cursor-pointer relative group/thumb"
+                            title="Click to view full receipt"
                           >
-                            {copiedTid === order.transactionId ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Inline Receipt Thumbnail (if present) */}
-                    {order.paymentReceiptUrl && (
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelected(order);
-                          setFullscreenReceipt(order.paymentReceiptUrl || null);
-                        }}
-                        className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 hover:opacity-90 transition-opacity cursor-pointer relative group/thumb"
-                        title="Click to view full receipt"
-                      >
-                        <img
-                          src={order.paymentReceiptUrl}
-                          alt="Receipt preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
-                          <ZoomIn className="w-4 h-4 text-white" />
-                        </div>
+                            <img
+                              src={order.paymentReceiptUrl}
+                              alt="Receipt preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                              <ZoomIn className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
 
                   {/* Mobile Quick Action Buttons (Stacked on mobile screen card) */}
                   <div className="flex sm:hidden items-center gap-2 pt-1 border-t border-slate-100">
@@ -1007,59 +1047,86 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                   {/* Order + Customer Info */}
                   <div className="space-y-3">
                     {/* Customer Details */}
-                    <div className="rounded-xl border border-slate-200 p-4 space-y-2.5 bg-slate-50/50">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer & Proof Details</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="font-bold">{selected.customerName}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-500 min-w-0">
-                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate">{selected.customerEmail}</span>
-                        </div>
-                        {selected.customerPhone && (
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{selected.customerPhone}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-slate-900 font-extrabold">
-                          <Banknote className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{formatPKR(selected.totalAmount)}</span>
-                        </div>
-                        {selected.transactionId && (
-                          <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
-                            <div className="flex items-center gap-2 text-slate-700 min-w-0">
-                              <Hash className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="font-mono font-bold text-xs truncate">{selected.transactionId}</span>
+                    {(() => {
+                      const fin = getOrderFinancials(selected);
+                      return (
+                        <div className="rounded-xl border border-slate-200 p-4 space-y-2.5 bg-slate-50/50">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer &amp; Proof Details</p>
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center gap-2 text-slate-700">
+                              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="font-bold">{selected.customerName}</span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyTid(selected.transactionId!)}
-                              className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
-                              title="Copy Transaction ID"
-                            >
-                              {copiedTid === selected.transactionId ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <div className="flex items-center gap-2 text-slate-500 min-w-0">
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{selected.customerEmail}</span>
+                            </div>
+                            {selected.customerPhone && (
+                              <div className="flex items-center gap-2 text-slate-500">
+                                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>{selected.customerPhone}</span>
+                              </div>
+                            )}
+
+                            {/* Financial Breakdown */}
+                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1 mt-1">
+                              <div className="flex items-center justify-between text-slate-600">
+                                <span>Total Order Value:</span>
+                                <span className="font-bold text-slate-900">{formatPKR(selected.totalAmount)}</span>
+                              </div>
+                              {fin.isAdvanceDeposit ? (
+                                <>
+                                  <div className="flex items-center justify-between text-amber-800 font-bold">
+                                    <span>25% Advance Deposit:</span>
+                                    <span>{formatPKR(fin.advanceAmount)}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-slate-500 text-[11px] pt-0.5 border-t border-slate-100">
+                                    <span>Doorstep Balance (COD):</span>
+                                    <span className="font-medium text-slate-700">{formatPKR(fin.doorstepBalance)}</span>
+                                  </div>
+                                </>
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <div className="flex items-center justify-between text-emerald-700 font-bold">
+                                  <span>Full Payment Due:</span>
+                                  <span>{formatPKR(selected.totalAmount)}</span>
+                                </div>
                               )}
-                            </button>
+                            </div>
+
+                            {selected.transactionId && (
+                              <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+                                <div className="flex items-center gap-2 text-slate-700 min-w-0">
+                                  <Hash className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="font-mono font-bold text-xs truncate">{selected.transactionId}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyTid(selected.transactionId!)}
+                                  className="p-1 text-slate-400 hover:text-slate-900 rounded transition-colors cursor-pointer shrink-0"
+                                  title="Copy Transaction ID"
+                                >
+                                  {copiedTid === selected.transactionId ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                            {selected.paymentSenderName && (
+                              <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
+                                <strong>Sender Title:</strong> {selected.paymentSenderName}
+                              </div>
+                            )}
+                            {selected.paymentSenderPhone && (
+                              <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
+                                <strong>Sender Mobile:</strong> {selected.paymentSenderPhone}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {selected.paymentSenderName && (
-                          <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
-                            <strong>Sender Title:</strong> {selected.paymentSenderName}
-                          </div>
-                        )}
-                        {selected.paymentSenderPhone && (
-                          <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
-                            <strong>Sender Mobile:</strong> {selected.paymentSenderPhone}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Items */}
                     <div className="rounded-xl border border-slate-200 p-4 max-h-36 overflow-y-auto">

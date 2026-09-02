@@ -32,22 +32,23 @@ export async function GET(request: NextRequest) {
     const orderNumber = searchParams.get("orderNumber")?.trim();
     const search = searchParams.get("search")?.trim();
 
-    // Base condition: Strictly online prepaid methods ONLY, never COD
+    // Base condition: Query orders needing verification or with proofs or prepaid methods
     const whereClause: Record<string, unknown> = {
-      paymentMethod: {
-        in: PREPAID_METHODS,
-        not: PaymentMethod.COD,
-      },
+      OR: [
+        { paymentMethod: { in: PREPAID_METHODS } },
+        { paymentStatus: { in: [PaymentStatus.PENDING_VERIFICATION, PaymentStatus.PAID, PaymentStatus.FAILED] } },
+        { paymentReceiptUrl: { not: null } },
+        { transactionProofUrl: { not: null } },
+        { transactionId: { not: null } },
+      ],
     };
 
     // Specific Payment Method filter if provided and not ALL
     if (paymentMethodParam && paymentMethodParam !== "ALL") {
       const upperMethod = paymentMethodParam.toUpperCase() as PaymentMethod;
-      if (PREPAID_METHODS.includes(upperMethod)) {
+      if (Object.values(PaymentMethod).includes(upperMethod)) {
         whereClause.paymentMethod = upperMethod;
-      } else if (upperMethod === PaymentMethod.COD) {
-        // If COD is requested in this endpoint, return empty list because COD is excluded from verification
-        return NextResponse.json({ success: true, count: 0, orders: [] });
+        delete whereClause.OR;
       }
     }
 
@@ -76,9 +77,6 @@ export async function GET(request: NextRequest) {
     if (search) {
       whereClause.AND = [
         {
-          paymentMethod: { in: PREPAID_METHODS, not: PaymentMethod.COD },
-        },
-        {
           OR: [
             { orderNumber: { contains: search, mode: "insensitive" } },
             { transactionId: { contains: search, mode: "insensitive" } },
@@ -90,7 +88,6 @@ export async function GET(request: NextRequest) {
           ],
         },
       ];
-      delete whereClause.paymentMethod;
     }
 
     const orders = await prisma.order.findMany({
