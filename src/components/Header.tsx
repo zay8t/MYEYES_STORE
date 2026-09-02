@@ -301,15 +301,20 @@ export default function Header() {
             ) : (
               /* Authenticated State: User Pill & Dropdown Menu */
               <div className="flex items-center">
-                {/* Mobile View: User Initials Avatar triggers Mobile Account Drawer */}
+                {/* Mobile View: User Avatar triggers Mobile Account Drawer */}
                 <button
                   id="header-mobile-user-avatar-btn"
                   type="button"
                   onClick={openAccountDrawer}
-                  className="sm:hidden w-8 h-8 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[11px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0"
+                  className="sm:hidden w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[11px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0 border border-amber-200/50"
                   aria-label="Open Account Menu"
                 >
-                  {initials || <User className="w-4 h-4" />}
+                  {user.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    initials || <User className="w-4 h-4" />
+                  )}
                 </button>
 
                 {/* Desktop View: Authenticated User Pill Menu */}
@@ -321,8 +326,13 @@ export default function Header() {
                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
                     aria-label="User Account Menu"
                   >
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
-                      {initials || <User className="w-3 h-3" />}
+                    <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
+                      {user.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        initials || <User className="w-3 h-3" />
+                      )}
                     </div>
                     <span className="text-xs font-bold text-slate-800 max-w-[100px] truncate">{firstName}</span>
                     <ChevronDown
@@ -334,15 +344,25 @@ export default function Header() {
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="absolute top-full right-0 mt-2 w-64 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                       <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
-                        <div className="px-1 py-0.5">
-                          <p className="text-sm font-bold text-slate-900 leading-tight">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-slate-500 truncate mt-0.5">
-                            {user.email}
-                          </p>
+                        <div className="flex items-center gap-2.5 px-1 py-1">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-xs font-extrabold shrink-0">
+                            {user.avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                              initials || <User className="w-4 h-4" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-slate-900 leading-tight truncate">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
 
                         <div className="border-t border-slate-100 my-1.5" />

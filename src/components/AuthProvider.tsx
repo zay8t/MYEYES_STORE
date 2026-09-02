@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAuthenticated = Boolean(user?.id && user?.phone);
+  const isAuthenticated = Boolean(user?.id);
 
   const fetchUser = useCallback(async () => {
     try {

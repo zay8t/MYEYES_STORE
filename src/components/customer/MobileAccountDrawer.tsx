@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/components/AuthProvider";
 import { useAccountDrawerStore } from "@/store/useAccountDrawerStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export default function MobileAccountDrawer() {
   const router = useRouter();
@@ -115,8 +116,13 @@ export default function MobileAccountDrawer() {
                 <>
                   {/* Customer Profile Card */}
                   <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-orange-50/40 border border-slate-200/80 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-lg font-black flex items-center justify-center shadow-md shrink-0">
-                      {initials || <User className="w-6 h-6" />}
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-lg font-black flex items-center justify-center shadow-md shrink-0 border border-amber-200/60">
+                      {user.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        initials || <User className="w-6 h-6" />
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -340,19 +346,31 @@ export default function MobileAccountDrawer() {
 
                   {/* Action Buttons */}
                   <div className="space-y-2.5 pt-2">
+                    <GoogleSignInButton
+                      callbackUrl="/"
+                      text="Continue with Google"
+                    />
+
+                    <div className="relative my-2 text-center text-[11px] text-slate-400">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-200"></div>
+                      </div>
+                      <span className="relative bg-white px-2 text-slate-400">or use email</span>
+                    </div>
+
                     <Link
                       href="/login"
                       onClick={closeAccountDrawer}
-                      className="w-full py-3.5 rounded-2xl bg-[#ff7a00] hover:bg-[#ea6c00] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+                      className="w-full py-3 rounded-2xl bg-[#ff7a00] hover:bg-[#ea6c00] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                     >
                       <LogIn className="w-4 h-4" />
-                      <span>Sign In to Account</span>
+                      <span>Sign In with Email</span>
                     </Link>
 
                     <Link
                       href="/signup"
                       onClick={closeAccountDrawer}
-                      className="w-full py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                      className="w-full py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                     >
                       <UserPlus className="w-4 h-4 text-slate-600" />
                       <span>Create New Account</span>

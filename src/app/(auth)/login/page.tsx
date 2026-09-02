@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Loader2, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -133,6 +134,21 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+
+        {/* Google OAuth One-Click Sign In */}
+        <div className="space-y-4 mb-4">
+          <GoogleSignInButton
+            callbackUrl={searchParams.get("redirect") || "/"}
+            text="Continue with Google"
+          />
+
+          <div className="relative my-4 text-center text-xs text-slate-400">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <span className="relative bg-white px-3 text-slate-400">or continue with email</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Identifier */}

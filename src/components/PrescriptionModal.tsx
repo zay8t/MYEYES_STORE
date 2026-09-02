@@ -25,6 +25,7 @@ import {
 } from "@/lib/ocrScanner";
 import { useAuth } from "@/components/AuthProvider";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export interface PrescriptionDetails {
   lensUsage: string;
@@ -237,13 +238,11 @@ export default function PrescriptionModal({
   // Auth context — used for pre-fill and auto-skip
   const { user: authUser, refetch: refetchAuth } = useAuth();
 
-  // Strict sessionUser resolution: prioritize currentUser prop if valid ID & phone, else authUser if valid ID & phone
-  const sessionUser = (currentUser?.id && currentUser?.phone)
-    ? currentUser
-    : (authUser?.id && authUser?.phone ? authUser : null);
+  // SessionUser resolution: prioritize currentUser prop, else authUser
+  const sessionUser = currentUser?.id ? currentUser : authUser?.id ? authUser : null;
 
   // Authenticated session detection strictly relies on immutable unique identifiers
-  const isAuthenticated = Boolean(sessionUser?.id && sessionUser?.phone);
+  const isAuthenticated = Boolean(sessionUser?.id);
 
   // Step Sequence: 1 = Your Info, 2 = Choose Lenses, 3 = Prescription & Review
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -1015,6 +1014,18 @@ export default function PrescriptionModal({
               ) : (
                 /* RETURNING CUSTOMER SIGN-IN */
                 <div className="space-y-3.5">
+                  <GoogleSignInButton
+                    callbackUrl={typeof window !== "undefined" ? window.location.pathname + window.location.search : "/"}
+                    text="Continue with Google"
+                  />
+
+                  <div className="relative my-3 text-center text-xs text-slate-400">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200"></div>
+                    </div>
+                    <span className="relative bg-white px-3 text-slate-400">or use credentials</span>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">WhatsApp Number</label>
                     <div className="flex items-center rounded-2xl border border-slate-200 focus-within:border-[#ff7a00] focus-within:ring-4 focus-within:ring-[#ff7a00]/10 overflow-hidden transition-all duration-150 min-h-[48px]">
