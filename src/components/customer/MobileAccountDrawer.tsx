@@ -19,6 +19,7 @@ import {
   Glasses,
   LogIn,
   UserPlus,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useAccountDrawerStore } from "@/store/useAccountDrawerStore";
@@ -162,7 +163,7 @@ export default function MobileAccountDrawer() {
                     </button>
 
                     <Link
-                      href="/order-confirmation"
+                      href="/orders"
                       onClick={closeAccountDrawer}
                       className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-start hover:border-[#ff7a00] transition-colors cursor-pointer text-left group"
                     >
@@ -180,6 +181,20 @@ export default function MobileAccountDrawer() {
 
                   {/* Navigation List */}
                   <div className="space-y-1.5 border-t border-slate-100 pt-4">
+                    <Link
+                      href="/orders"
+                      onClick={closeAccountDrawer}
+                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Package className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-bold text-slate-800">
+                          My Orders &amp; Invoices
+                        </span>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+
                     <button
                       onClick={handleOpenWishlist}
                       className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group cursor-pointer"
@@ -222,6 +237,40 @@ export default function MobileAccountDrawer() {
                       </div>
                       <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
                     </Link>
+
+                    {/* Mobile Share Store Trigger */}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        closeAccountDrawer();
+                        const url = typeof window !== "undefined" ? window.location.origin : "https://myeyes.pk";
+                        if (typeof navigator !== "undefined" && navigator.share) {
+                          try {
+                            await navigator.share({
+                              title: "MY EYES Optical Studio",
+                              text: "Lab-precision prescription glasses and frames delivered across Pakistan.",
+                              url,
+                            });
+                            return;
+                          } catch { /* fallback */ }
+                        }
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          alert("Store link copied to clipboard!");
+                        } catch {
+                          prompt("Copy store link:", url);
+                        }
+                      }}
+                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Share2 className="w-4 h-4 text-slate-600" />
+                        <span className="text-xs font-bold text-slate-800">
+                          Share Store
+                        </span>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </button>
 
                     {isAdmin && (
                       <Link

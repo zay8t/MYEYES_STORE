@@ -14,6 +14,7 @@ import {
   Shield,
   ChevronDown,
   X,
+  Share2,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -23,7 +24,6 @@ import WishlistDrawer from "@/components/WishlistDrawer";
 import MobileAccountDrawer from "@/components/customer/MobileAccountDrawer";
 import { NavigationSidebar } from "@/components/NavigationSidebar";
 import { cn } from "@/lib/utils";
-import ShareAppButton from "@/components/ShareAppButton";
 import { useAuth } from "@/components/AuthProvider";
 import PDMeasurementModal from "@/components/PDTool/PDMeasurementModal";
 
@@ -42,6 +42,32 @@ export default function Header() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [guestWishlistCount, setGuestWishlistCount] = useState(0);
   const [pdModalOpen, setPdModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://myeyes.pk";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "MY EYES Optical Studio",
+          text: "Discover luxury frames & lab-precision prescription eyewear.",
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        /* fallback to clipboard copy */
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setToastMessage("Store link copied to clipboard!");
+      setTimeout(() => setToastMessage(""), 3000);
+    } catch {
+      setToastMessage("Link: " + shareUrl);
+      setTimeout(() => setToastMessage(""), 3000);
+    }
+  };
 
   const totalItems = useCartStore((s) => s.totalItems);
   const openCart = useCartStore((s) => s.openCart);
@@ -243,43 +269,37 @@ export default function Header() {
               )}
             </button>
 
-            {/* Share App Button — Desktop Extra */}
-            <div className="hidden lg:flex items-center">
-              <ShareAppButton variant="icon" />
-            </div>
-
-            {/* 4. User / Account Trigger (Always visible on mobile & desktop) */}
+            {/* 4. User / Account Trigger (Gated on Authentication) */}
             {(!mounted || isLoading) ? (
               <div className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center rounded-xl text-slate-400">
                 <User className="w-5 h-5" />
               </div>
             ) : !user ? (
-              /* Unauthenticated State: Mobile Drawer trigger & Desktop Sign In Link / Drawer */
+              /* Unauthenticated State: Clean Login / Sign Up CTA */
               <div className="flex items-center">
-                {/* Mobile View: User icon button opens Account Drawer (with 1-tap Sign In & Sign Up) */}
-                <button
+                {/* Mobile View: User icon button linking to login */}
+                <Link
+                  href="/login"
                   id="header-mobile-account-btn"
-                  type="button"
-                  onClick={openAccountDrawer}
                   className="sm:hidden min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 cursor-pointer"
                   aria-label="Account Login or Signup"
                 >
                   <User className="w-5 h-5" />
-                </button>
+                </Link>
 
-                {/* Desktop View: Clean Sign In button with User Icon */}
+                {/* Desktop View: Clean Login / Sign Up button */}
                 <Link
                   href="/login"
                   id="header-signin-btn"
-                  className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
-                  aria-label="Sign In to Account"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
+                  aria-label="Sign In or Sign Up"
                 >
-                  <User className="w-4 h-4 text-slate-600" />
-                  <span className="text-xs font-bold text-slate-800">Sign In</span>
+                  <User className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Login / Sign Up</span>
                 </Link>
               </div>
             ) : (
-              /* Authenticated State: Mobile Avatar & Desktop Profile Dropdown */
+              /* Authenticated State: User Pill & Dropdown Menu */
               <div className="flex items-center">
                 {/* Mobile View: User Initials Avatar triggers Mobile Account Drawer */}
                 <button
@@ -292,7 +312,7 @@ export default function Header() {
                   {initials || <User className="w-4 h-4" />}
                 </button>
 
-                {/* Desktop View: Profile Dropdown Menu */}
+                {/* Desktop View: Authenticated User Pill Menu */}
                 <div className="relative hidden sm:block" ref={userDropdownRef}>
                   <button
                     id="header-user-menu"
@@ -335,6 +355,19 @@ export default function Header() {
                           <User className="w-3.5 h-3.5 text-slate-500" />
                           <span>My Orders &amp; Profile</span>
                         </Link>
+
+                        {/* Relocated Share Store Item (Requirement 2) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            handleShare();
+                          }}
+                          className="text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                        >
+                          <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Share Store</span>
+                        </button>
 
                         {isAdmin && (
                           <>
@@ -426,6 +459,14 @@ export default function Header() {
         onClose={() => setPdModalOpen(false)}
         onConfirm={() => setPdModalOpen(false)}
       />
+
+      {/* Share Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-150 flex items-center gap-2">
+          <Share2 className="w-4 h-4 text-amber-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </>
   );
 }
