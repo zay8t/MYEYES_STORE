@@ -128,9 +128,9 @@ function DiscountFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
           {/* Code & Title */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Promo Code *
@@ -160,7 +160,7 @@ function DiscountFormModal({
           </div>
 
           {/* Type & Amount */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Discount Type *
@@ -193,7 +193,7 @@ function DiscountFormModal({
           </div>
 
           {/* Limits */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Min Cart (PKR)
@@ -241,7 +241,7 @@ function DiscountFormModal({
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Valid From *
@@ -309,7 +309,7 @@ function DiscountFormModal({
 
             {form.showProductBadge && (
               <div className="space-y-3 pt-2 border-t border-slate-200/80">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                       Badge Type
@@ -675,139 +675,297 @@ export default function DiscountsClient() {
           <p className="text-xs text-slate-400">Click "New Code" to create your first discount.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {codes.map((dc) => {
-            const expired = isExpired(dc);
-            const scheduled = isScheduled(dc);
-            const statusLabel = !dc.isActive ? "Inactive" : expired ? "Expired" : scheduled ? "Scheduled" : "Active";
-            const statusCls = !dc.isActive
-              ? "bg-slate-100 text-slate-500"
-              : expired
-              ? "bg-rose-50 text-rose-600"
-              : scheduled
-              ? "bg-sky-50 text-sky-600"
-              : "bg-emerald-50 text-emerald-700";
+        <div className="space-y-4">
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200/70 shadow-xs overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="py-3.5 px-4">Code</th>
+                  <th className="py-3.5 px-4">Campaign Title</th>
+                  <th className="py-3.5 px-4">Discount</th>
+                  <th className="py-3.5 px-4">Usage &amp; Dates</th>
+                  <th className="py-3.5 px-4">Badges &amp; Banners</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {codes.map((dc) => {
+                  const expired = isExpired(dc);
+                  const scheduled = isScheduled(dc);
+                  const statusLabel = !dc.isActive ? "Inactive" : expired ? "Expired" : scheduled ? "Scheduled" : "Active";
+                  const statusCls = !dc.isActive
+                    ? "bg-slate-100 text-slate-500"
+                    : expired
+                    ? "bg-rose-50 text-rose-600"
+                    : scheduled
+                    ? "bg-sky-50 text-sky-600"
+                    : "bg-emerald-50 text-emerald-700";
 
-            const badgeText = dc.badgeLabel?.trim()
-              ? dc.badgeLabel.trim()
-              : dc.type === "percentage"
-              ? `${dc.amount}% OFF`
-              : `Rs. ${dc.amount} OFF`;
+                  const badgeText = dc.badgeLabel?.trim()
+                    ? dc.badgeLabel.trim()
+                    : dc.type === "percentage"
+                    ? `${dc.amount}% OFF`
+                    : `Rs. ${dc.amount} OFF`;
 
-            return (
-              <div
-                key={dc.id}
-                className="bg-white rounded-xl border border-slate-200/70 shadow-xs overflow-hidden"
-              >
-                <div className="p-4 flex flex-wrap items-center gap-3">
-                  {/* Code pill */}
-                  <div className="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1.5 rounded-lg font-mono text-sm font-bold cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => handleCopy(dc.code)}>
-                    {copied === dc.code ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3 h-3 opacity-60" />}
-                    {dc.code}
+                  return (
+                    <tr key={dc.id} className="hover:bg-slate-50/60 transition-colors">
+                      {/* Code */}
+                      <td className="py-3.5 px-4">
+                        <button
+                          onClick={() => handleCopy(dc.code)}
+                          className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-colors cursor-pointer"
+                          title={`Copy ${dc.code}`}
+                        >
+                          {copied === dc.code ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 opacity-60" />}
+                          {dc.code}
+                        </button>
+                      </td>
+
+                      {/* Title */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">{dc.title}</div>
+                        {dc.minCartTotal > 0 && (
+                          <div className="text-[11px] text-slate-500">Min spend: {formatPrice(dc.minCartTotal)}</div>
+                        )}
+                      </td>
+
+                      {/* Discount */}
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1 font-semibold text-slate-800 text-xs bg-amber-50 text-amber-900 border border-amber-200/60 px-2 py-0.5 rounded">
+                          {dc.type === "percentage" ? <BadgePercent className="w-3.5 h-3.5 text-amber-600" /> : <Coins className="w-3.5 h-3.5 text-amber-600" />}
+                          {dc.type === "percentage" ? `${dc.amount}% OFF` : `${formatPrice(dc.amount)} OFF`}
+                        </span>
+                        {dc.maxDiscountLimit && dc.type === "percentage" && (
+                          <div className="text-[10px] text-slate-400 mt-0.5">Cap: {formatPrice(dc.maxDiscountLimit)}</div>
+                        )}
+                      </td>
+
+                      {/* Usage & Dates */}
+                      <td className="py-3.5 px-4 text-xs text-slate-600">
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <Users2 className="w-3 h-3 text-slate-400" />
+                          <span>{dc.timesUsed}{dc.usageLimitTotal ? `/${dc.usageLimitTotal}` : ""} uses</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
+                          <Calendar className="w-3 h-3 text-slate-400" />
+                          <span>{formatDate(dc.startsAt)} → {dc.endsAt ? formatDate(dc.endsAt) : "No expiry"}</span>
+                        </div>
+                      </td>
+
+                      {/* Badges & Banners */}
+                      <td className="py-3.5 px-4 space-y-1">
+                        {(dc.showProductBadge ?? true) && dc.isActive && (
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-neutral-900 text-white">
+                            <Tag className="w-2.5 h-2.5" />
+                            {badgeText}
+                          </div>
+                        )}
+                        {dc.showAnnouncementBanner && dc.isActive && (
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700">
+                              <Megaphone className="w-2.5 h-2.5" />
+                              Banner
+                            </span>
+                          </div>
+                        )}
+                        {!((dc.showProductBadge ?? true) && dc.isActive) && !(dc.showAnnouncementBanner && dc.isActive) && (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${statusCls}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleToggleActive(dc)}
+                            title={dc.isActive ? "Deactivate" : "Activate"}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                          >
+                            {dc.isActive
+                              ? <ToggleRight className="w-5 h-5 text-emerald-500" />
+                              : <ToggleLeft className="w-5 h-5 text-slate-300" />
+                            }
+                          </button>
+                          <button
+                            onClick={() => openEdit(dc)}
+                            title="Edit code"
+                            className="p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          {deleteConfirm === dc.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleDelete(dc.id)}
+                                className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-2 py-1 rounded border border-slate-200 text-[10px] font-medium text-slate-500 hover:bg-slate-100 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDeleteConfirm(dc.id)}
+                              title="Delete code"
+                              className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {codes.map((discount) => {
+              const expired = isExpired(discount);
+              const scheduled = isScheduled(discount);
+              const statusLabel = !discount.isActive ? "Inactive" : expired ? "Expired" : scheduled ? "Scheduled" : "Active";
+              const statusCls = !discount.isActive
+                ? "bg-neutral-100 text-neutral-500"
+                : expired
+                ? "bg-rose-100 text-rose-700"
+                : scheduled
+                ? "bg-sky-100 text-sky-700"
+                : "bg-emerald-100 text-emerald-700";
+
+              const badgeText = discount.badgeLabel?.trim()
+                ? discount.badgeLabel.trim()
+                : discount.type === "percentage"
+                ? `${discount.amount}% OFF`
+                : `Rs. ${discount.amount} OFF`;
+
+              return (
+                <div key={discount.id} className="bg-white rounded-xl border border-neutral-200 p-4 flex flex-col gap-3 shadow-sm">
+                  {/* Row 1: Code & Status */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCopy(discount.code)}
+                        className="font-mono font-bold bg-neutral-900 text-white text-xs px-2.5 py-1 rounded flex items-center gap-1.5 cursor-pointer hover:bg-neutral-800 transition-colors"
+                        title={`Copy ${discount.code}`}
+                      >
+                        {copied === discount.code ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 opacity-60" />}
+                        {discount.code}
+                      </button>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${statusCls}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <span className="text-xs font-semibold bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded">
+                      {discount.type === "percentage" ? `${discount.amount}% OFF` : `${formatPrice(discount.amount)} OFF`}
+                    </span>
                   </div>
 
-                  {/* Title & meta */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{dc.title}</p>
-                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        {dc.type === "percentage" ? <BadgePercent className="w-3 h-3" /> : <Coins className="w-3 h-3" />}
-                        {dc.type === "percentage" ? `${dc.amount}% off` : `${formatPrice(dc.amount)} off`}
-                      </span>
-                      {dc.minCartTotal > 0 && (
-                        <span>Min: {formatPrice(dc.minCartTotal)}</span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Users2 className="w-3 h-3" />
-                        {dc.timesUsed}{dc.usageLimitTotal ? `/${dc.usageLimitTotal}` : ""} uses
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(dc.startsAt)} → {dc.endsAt ? formatDate(dc.endsAt) : "No expiry"}
-                      </span>
+                  {/* Row 2: Campaign Title & Dates */}
+                  <div>
+                    <div className="font-semibold text-sm text-neutral-900">{discount.title}</div>
+                    <div className="text-xs text-neutral-500 mt-0.5">
+                      {formatDate(discount.startsAt)} → {discount.endsAt ? formatDate(discount.endsAt) : "No expiry"}
                     </div>
                   </div>
 
-                  {/* Status badge */}
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${statusCls}`}>
-                    {statusLabel}
-                  </span>
+                  {/* Row 3: Usage Stats */}
+                  <div className="text-xs text-neutral-600 flex items-center justify-between border-t border-neutral-100 pt-2">
+                    <span>Usage: {discount.timesUsed}{discount.usageLimitTotal ? `/${discount.usageLimitTotal}` : ""} uses</span>
+                    <div className="flex items-center gap-1.5">
+                      {(discount.showProductBadge ?? true) && discount.isActive && (
+                        <span className="text-[10px] bg-neutral-900 text-white font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                          <Tag className="w-2.5 h-2.5" />
+                          {badgeText}
+                        </span>
+                      )}
+                      {discount.showAnnouncementBanner && (
+                        <span className="text-[10px] bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded">
+                          Banner Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                  {/* Catalog Badge indicator */}
-                  {(dc.showProductBadge ?? true) && dc.isActive && (
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-neutral-900 text-white flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      {badgeText}
-                    </span>
-                  )}
-
-                  {/* Banner indicator */}
-                  {dc.showAnnouncementBanner && dc.isActive && (
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-violet-50 text-violet-600 flex items-center gap-1">
-                      <Megaphone className="w-3 h-3" />
-                      Banner
-                    </span>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                    {/* Toggle active */}
-                    <button
-                      onClick={() => handleToggleActive(dc)}
-                      title={dc.isActive ? "Deactivate" : "Activate"}
-                      className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                    >
-                      {dc.isActive
-                        ? <ToggleRight className="w-5 h-5 text-emerald-500" />
-                        : <ToggleLeft className="w-5 h-5 text-slate-300" />
-                      }
-                    </button>
-
-                    {/* Edit */}
-                    <button
-                      onClick={() => openEdit(dc)}
-                      className="p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-
-                    {/* Delete */}
-                    {deleteConfirm === dc.id ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleDelete(dc.id)}
-                          className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold cursor-pointer"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="px-2.5 py-1 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500 hover:bg-slate-100 cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
+                  {/* Row 4: Action Controls */}
+                  <div className="flex items-center justify-between border-t border-neutral-100 pt-2">
+                    <div className="flex items-center gap-2">
+                      {/* Active Toggle Switch */}
                       <button
-                        onClick={() => setDeleteConfirm(dc.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                        type="button"
+                        onClick={() => handleToggleActive(discount)}
+                        className="cursor-pointer flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-700"
+                        title={discount.isActive ? "Deactivate" : "Activate"}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {discount.isActive
+                          ? <ToggleRight className="w-6 h-6 text-emerald-500" />
+                          : <ToggleLeft className="w-6 h-6 text-slate-300" />
+                        }
+                        <span>{discount.isActive ? "Active" : "Enable"}</span>
                       </button>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => openEdit(discount)}
+                        className="text-neutral-500 hover:text-neutral-900 p-1 cursor-pointer"
+                        title="Edit discount"
+                      >
+                        <Pencil className="w-4 h-4"/>
+                      </button>
+                      {deleteConfirm === discount.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDelete(discount.id)}
+                            className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            className="px-2 py-1 rounded border border-neutral-200 text-[10px] font-medium text-neutral-600 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteConfirm(discount.id)}
+                          className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+                          title="Delete discount"
+                        >
+                          <Trash2 className="w-4 h-4"/>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Banner preview strip */}
-                {dc.showAnnouncementBanner && dc.bannerText && (
-                  <div className={`px-4 py-1.5 text-[10px] font-semibold flex items-center gap-2 ${THEME_CLASSES[dc.bannerTheme]}`}>
-                    <Megaphone className="w-3 h-3 opacity-70 flex-shrink-0" />
-                    <span className="truncate">{dc.bannerText}</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {/* Optional Banner Live Preview */}
+                  {discount.showAnnouncementBanner && discount.bannerText && (
+                    <div className={`text-white text-xs px-3 py-1.5 rounded flex items-center gap-2 truncate mt-1 ${THEME_CLASSES[discount.bannerTheme] || "bg-slate-950"}`}>
+                      <Megaphone className="w-3.5 h-3.5 shrink-0"/>
+                      <span className="truncate">{discount.bannerText}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

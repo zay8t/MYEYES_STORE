@@ -3,6 +3,7 @@
  * Inlined test — no @/ path aliases needed.
  * Run: npx tsx test-lens-simulator.ts
  */
+export {};
 
 // ─── Inline the engine (same logic, no imports) ──────────────────────────────
 

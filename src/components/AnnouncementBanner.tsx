@@ -70,48 +70,48 @@ export default function AnnouncementBanner() {
   return (
     <div
       className={`
-        relative w-full py-2.5 px-4 border-b text-xs font-semibold tracking-wide
-        flex items-center justify-center gap-3 z-50 transition-all duration-300
-        ${THEME_CLASSES[banner.bannerTheme]}
-        ${visible ? "max-h-16 opacity-100" : "max-h-0 opacity-0 overflow-hidden py-0 border-0"}
+        w-full px-3 py-2 border-b text-xs transition-all duration-300 z-50
+        ${THEME_CLASSES[banner.bannerTheme] || "bg-slate-950 text-white"}
+        ${visible ? "max-h-24 opacity-100" : "max-h-0 opacity-0 overflow-hidden py-0 border-0"}
       `}
       role="banner"
       aria-label="Promotional announcement"
     >
-      {/* Icon */}
-      <Megaphone className="w-3.5 h-3.5 flex-shrink-0 opacity-80" />
-
-      {/* Message */}
-      <span className="text-center leading-snug">{banner.bannerText}</span>
-
-      {/* Copy code pill */}
-      <button
-        onClick={handleCopy}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors cursor-pointer border border-white/30 font-bold text-[10px] uppercase tracking-widest flex-shrink-0"
-        aria-label={`Copy code ${banner.code}`}
-        title={`Copy ${banner.code}`}
-      >
-        {copied ? (
-          <>
-            <Check className="w-3 h-3" />
-            Copied!
-          </>
-        ) : (
-          <>
-            <Copy className="w-3 h-3" />
-            {banner.code}
-          </>
-        )}
-      </button>
-
-      {/* Dismiss button */}
-      <button
-        onClick={handleDismiss}
-        className="absolute right-3 p-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"
-        aria-label="Dismiss announcement"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
+      <div className="max-w-7xl mx-auto flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Megaphone className="w-3.5 h-3.5 shrink-0 opacity-90" />
+          <span className="font-medium tracking-wide uppercase truncate text-[11px] sm:text-xs">
+            {banner.bannerText}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-2 py-1 rounded text-[11px] font-semibold tracking-wider transition-colors cursor-pointer border border-white/20"
+            aria-label={`Copy code ${banner.code}`}
+            title={`Copy ${banner.code}`}
+          >
+            {copied ? (
+              <>
+                <Check className="w-3 h-3 text-emerald-400" />
+                <span>COPIED!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3" />
+                <span>{banner.code}</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleDismiss}
+            className="p-1 hover:opacity-75 transition-opacity cursor-pointer"
+            aria-label="Dismiss announcement"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

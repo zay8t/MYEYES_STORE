@@ -80,4 +80,5 @@ export interface ActivePromotion {
   bannerText?: string;
   bannerTheme?: BannerTheme;
   showAnnouncementBanner?: boolean;
+  isActive?: boolean;
 }

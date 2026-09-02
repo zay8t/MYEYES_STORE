@@ -3,6 +3,7 @@
  * Validation of Promotional OFF Badges, Pricing Math, and Admin Sync.
  * Run: npx tsx test-promotional-badges.ts
  */
+export {};
 
 interface ActivePromotion {
   id: string;
