@@ -1,11 +1,14 @@
 /**
  * Exact Optical Prescription Range Constants
- * Defined with 0.25 D step intervals for high-precision optical dispensing.
+ * Defined with 0.25 D step intervals for clinical optical dispensing.
  */
 
-// Sphere (SPH): -0.25 to +16.00 in 0.25 steps including 0.00
+// SPH Range: -16.00 to +16.00 in 0.25 steps
 export const SPH_OPTIONS: string[] = [
-  "-0.25",
+  ...Array.from({ length: 64 }, (_, i) => {
+    const val = -16.0 + i * 0.25;
+    return val.toFixed(2);
+  }),
   "0.00",
   ...Array.from({ length: 64 }, (_, i) => {
     const val = (i + 1) * 0.25;
@@ -13,9 +16,12 @@ export const SPH_OPTIONS: string[] = [
   }),
 ];
 
-// Cylinder (CYL): -0.25 to +4.00 in 0.25 steps including 0.00
+// CYL Range: -4.00 to +4.00 in 0.25 steps
 export const CYL_OPTIONS: string[] = [
-  "-0.25",
+  ...Array.from({ length: 16 }, (_, i) => {
+    const val = -4.0 + i * 0.25;
+    return val.toFixed(2);
+  }),
   "0.00",
   ...Array.from({ length: 16 }, (_, i) => {
     const val = (i + 1) * 0.25;
@@ -23,13 +29,13 @@ export const CYL_OPTIONS: string[] = [
   }),
 ];
 
-// Axis: Integer values from 1 to 180
+// AXIS Range: Integers 1 to 180
 export const AXIS_OPTIONS: string[] = Array.from(
   { length: 180 },
   (_, i) => String(i + 1)
 );
 
-// ADD (Reading Addition): +0.75 to +3.50 in 0.25 steps (Progressive / Multi-Focal)
+// ADD Range: +0.75 to +3.50 in 0.25 steps
 export const ADD_OPTIONS: string[] = Array.from(
   { length: 12 },
   (_, i) => {

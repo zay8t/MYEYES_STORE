@@ -138,13 +138,13 @@ export async function POST(req: NextRequest) {
     const prompt = `You are an expert optical laboratory assistant analyzing an ophthalmologist/optometrist prescription slip.
 Examine the doctor's handwriting or printed prescription carefully:
 1. OD (Right Eye) and OS/O.S. (Left Eye).
-2. SPH (Sphere/Power/Spherical): identify positive (+) or negative (-) signs. Round to the nearest 0.25 step between -0.25 and +16.00 (or "0.00" for Plano/PL/Nil).
-3. CYL (Cylinder/Astigmatism): identify sign. Round to nearest 0.25 step between -0.25 and +4.00 (or "0.00" for Nil/None/Plano).
+2. SPH (Sphere/Power/Spherical): identify positive (+) or negative (-) signs. Round to the nearest 0.25 step between -16.00 and +16.00 (or "0.00" for Plano/PL/Nil).
+3. CYL (Cylinder/Astigmatism): identify sign. Round to nearest 0.25 step between -4.00 and +4.00 (or "0.00" for Nil/None/Plano).
 4. AXIS: Integer between 1 and 180 degrees. If cylinder is 0.00/nil, output "180".
 5. ADD (Addition/Near Vision/Reading): extract reading power (e.g. +1.50, +2.00, +2.50) if indicated for presbyopia/reading/bifocal/progressive. Otherwise null.
 6. PD: Pupillary distance in mm if mentioned (e.g. 62, 64), otherwise null.
 
-Format numbers with explicit signs (+ or -) and 2 decimal places (e.g. "+1.25", "-0.25", "0.00"). Return valid JSON.`;
+Format numbers with explicit signs (+ or -) and 2 decimal places (e.g. "+1.25", "-1.50", "0.00"). Return valid JSON.`;
 
     const result = await model.generateContent([
       prompt,
@@ -162,13 +162,13 @@ Format numbers with explicit signs (+ or -) and 2 decimal places (e.g. "+1.25", 
     // Sanitize and snap to our exact 0.25 step interval arrays
     const sanitizedData = {
       od: {
-        sph: snapToInterval(rawData.od?.sph, -0.25, 16.0, "0.00"),
-        cyl: snapToInterval(rawData.od?.cyl, -0.25, 4.0, "0.00"),
+        sph: snapToInterval(rawData.od?.sph, -16.0, 16.0, "0.00"),
+        cyl: snapToInterval(rawData.od?.cyl, -4.0, 4.0, "0.00"),
         axis: snapAxis(rawData.od?.axis),
       },
       os: {
-        sph: snapToInterval(rawData.os?.sph, -0.25, 16.0, "0.00"),
-        cyl: snapToInterval(rawData.os?.cyl, -0.25, 4.0, "0.00"),
+        sph: snapToInterval(rawData.os?.sph, -16.0, 16.0, "0.00"),
+        cyl: snapToInterval(rawData.os?.cyl, -4.0, 4.0, "0.00"),
         axis: snapAxis(rawData.os?.axis),
       },
       add: snapAdd(rawData.add),

@@ -23,6 +23,7 @@ import {
   ChevronRight,
   AlertCircle,
   FileCheck2,
+  ChevronDown,
 } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
@@ -37,6 +38,7 @@ import {
   DEFAULT_AXIS,
   DEFAULT_ADD,
 } from '@/lib/constants/prescription';
+import PrescriptionPickerSheet from './PrescriptionPickerSheet';
 
 export {
   SPH_OPTIONS,
@@ -83,6 +85,15 @@ export interface CustomerProfile {
 type VisionType = 'standard' | 'progressive';
 type PrescriptionTab = 'upload' | 'manual';
 
+interface ActivePickerState {
+  field: 'odSph' | 'odCyl' | 'odAxis' | 'osSph' | 'osCyl' | 'osAxis' | 'add';
+  title: string;
+  subtitle?: string;
+  options: string[];
+  value: string;
+  unit?: string;
+}
+
 // ─── Step Progress Indicator ─────────────────────────────────────────────────
 
 const STEPS = [
@@ -95,40 +106,49 @@ const STEPS = [
 function StepBar({ current }: { current: number }) {
   return (
     <div className="flex items-center gap-1.5 px-1">
-      {STEPS.map((s, i) => (
-        <React.Fragment key={s.num}>
-          <div className="flex items-center gap-1.5">
-            <div
-              className={cn(
-                'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200',
-                current === s.num
-                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-200'
-                  : current > s.num
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-neutral-100 text-neutral-400'
-              )}
-            >
-              {current > s.num ? <Check className="w-3.5 h-3.5" /> : s.num}
+      {STEPS.map((s, i) => {
+        const isCurrent = current === s.num;
+        const isCompleted = current > s.num;
+
+        return (
+          <React.Fragment key={s.num}>
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200',
+                  isCurrent
+                    ? 'bg-amber-500 text-white ring-4 ring-amber-500/20 shadow-sm'
+                    : isCompleted
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-100 text-slate-400'
+                )}
+              >
+                {isCompleted ? <Check className="w-4 h-4 stroke-[2.5]" /> : s.num}
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-bold transition-colors hidden sm:block',
+                  isCurrent
+                    ? 'text-slate-900'
+                    : isCompleted
+                    ? 'text-emerald-700'
+                    : 'text-slate-400'
+                )}
+              >
+                {s.label}
+              </span>
             </div>
-            <span
-              className={cn(
-                'text-[11px] font-semibold transition-colors hidden sm:block',
-                current === s.num ? 'text-slate-900' : current > s.num ? 'text-emerald-600' : 'text-neutral-400'
-              )}
-            >
-              {s.label}
-            </span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div
-              className={cn(
-                'flex-1 h-px transition-colors',
-                current > s.num ? 'bg-emerald-400' : 'bg-neutral-200'
-              )}
-            />
-          )}
-        </React.Fragment>
-      ))}
+            {i < STEPS.length - 1 && (
+              <div
+                className={cn(
+                  'flex-1 h-0.5 transition-colors mx-1',
+                  isCompleted ? 'bg-emerald-400' : 'bg-slate-200'
+                )}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
@@ -187,7 +207,10 @@ export function LensConfiguratorModal({
     message?: string;
   }>({ type: 'idle' });
 
-  // Manual Rx fields bound to exact 0.25 D optical ranges
+  // Custom Bottom-Sheet Picker State (Eliminating native OS selects)
+  const [activePicker, setActivePicker] = useState<ActivePickerState | null>(null);
+
+  // Manual Rx fields bound to exact clinical ranges
   const [odSph, setOdSph] = useState(DEFAULT_SPH);
   const [odCyl, setOdCyl] = useState(DEFAULT_CYL);
   const [odAxis, setOdAxis] = useState(DEFAULT_AXIS);
@@ -218,6 +241,7 @@ export function LensConfiguratorModal({
       setRxFileUrl(null);
       setIsScanning(false);
       setScanStatus({ type: 'idle' });
+      setActivePicker(null);
       setOdSph(DEFAULT_SPH);
       setOdCyl(DEFAULT_CYL);
       setOdAxis(DEFAULT_AXIS);
@@ -385,6 +409,39 @@ export function LensConfiguratorModal({
     if (file) handleFileSelect(file);
   }, [handleFileSelect]);
 
+  // ─── Bottom-Sheet Picker Value Handler ──────────────────────────────────
+
+  const handlePickerChange = (val: string) => {
+    if (!activePicker) return;
+    const { field } = activePicker;
+
+    switch (field) {
+      case 'odSph':
+        setOdSph(val);
+        break;
+      case 'odCyl':
+        setOdCyl(val);
+        if (val === '0.00') setOdAxis(DEFAULT_AXIS);
+        break;
+      case 'odAxis':
+        setOdAxis(val);
+        break;
+      case 'osSph':
+        setOsSph(val);
+        break;
+      case 'osCyl':
+        setOsCyl(val);
+        if (val === '0.00') setOsAxis(DEFAULT_AXIS);
+        break;
+      case 'osAxis':
+        setOsAxis(val);
+        break;
+      case 'add':
+        setAddPower(val);
+        break;
+    }
+  };
+
   // ─── Checkout handoff ────────────────────────────────────────────────────
 
   const handleCheckout = async () => {
@@ -456,27 +513,27 @@ export function LensConfiguratorModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm"
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Shell */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-[28px] sm:rounded-3xl shadow-2xl border border-neutral-100 flex flex-col z-10 max-h-[92dvh] sm:max-h-[90vh] overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-10 max-h-[92dvh] sm:max-h-[90vh] overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-neutral-100 shrink-0 bg-white">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 shrink-0 bg-white">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
               <Glasses className="w-5 h-5 text-amber-600" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-black text-amber-600 shrink-0">MY EYES</span>
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                  Pakistan&apos;s First Prescription Eyewear
+                <span className="text-sm font-black tracking-tight text-amber-600 shrink-0">MY EYES</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                  Prescription Eyewear
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-500 font-medium truncate mt-0.5">
+              <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
                 {frame.name} — <span className="font-bold text-slate-900">Rs. {frame.price.toLocaleString()}</span>
               </p>
             </div>
@@ -484,7 +541,7 @@ export function LensConfiguratorModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 -mr-1 rounded-xl text-neutral-400 hover:text-slate-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
+            className="p-2 -mr-1 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
             aria-label="Close configurator"
           >
             <X className="w-5 h-5" />
@@ -492,27 +549,27 @@ export function LensConfiguratorModal({
         </div>
 
         {/* ── Step Progress ── */}
-        <div className="px-5 sm:px-6 pt-3.5 pb-1 shrink-0 bg-white border-b border-neutral-50">
+        <div className="px-5 sm:px-6 py-3 shrink-0 bg-slate-50/50 border-b border-slate-100">
           <StepBar current={step} />
         </div>
 
         {/* ── Scrollable Body ── */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6 py-5 space-y-5 pb-safe">
 
           {/* ═══════════════════════════════════════════════
-              STEP 1 — CONTACT INFORMATION
+              STEP 1 — CUSTOMER CONTACT INFORMATION
           ═══════════════════════════════════════════════ */}
           {step === 1 && (
-            <div className="space-y-5">
+            <div className="space-y-5 animate-in fade-in duration-150">
               {/* Micro-badge */}
-              <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-amber-50 border border-amber-200/60">
-                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/70">
+                <Sparkles className="w-5 h-5 text-amber-600 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-amber-900 leading-tight">
+                  <p className="text-xs font-bold text-amber-950 leading-tight">
                     Pakistan&apos;s First Prescription Based Eyewear Store
                   </p>
-                  <p className="text-[11px] text-amber-700 mt-0.5 leading-snug">
-                    Enter your details so we can prepare your prescription lenses.
+                  <p className="text-[11px] text-amber-800 mt-0.5 leading-snug">
+                    Enter your contact details so our lab can craft your personalized lenses.
                   </p>
                 </div>
               </div>
@@ -524,14 +581,14 @@ export function LensConfiguratorModal({
                     Full Name <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Ahmed Khan"
-                      className="w-full pl-10 pr-4 py-3.5 min-h-[48px] rounded-2xl border border-neutral-200 text-sm text-slate-900 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all"
+                      className="w-full pl-11 pr-4 py-3.5 min-h-[50px] rounded-xl border border-slate-200 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -541,9 +598,9 @@ export function LensConfiguratorModal({
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     WhatsApp / Mobile Number <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center rounded-2xl border border-neutral-200 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 overflow-hidden transition-all min-h-[48px]">
-                    <span className="px-3.5 py-3.5 bg-neutral-50 border-r border-neutral-200 text-xs text-slate-600 font-bold flex items-center gap-1 shrink-0">
-                      <Phone className="w-3.5 h-3.5 text-neutral-400" />
+                  <div className="flex items-center rounded-xl border border-slate-200 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 overflow-hidden transition-all min-h-[50px]">
+                    <span className="px-4 py-3.5 bg-slate-50 border-r border-slate-200 text-xs text-slate-700 font-bold flex items-center gap-1.5 shrink-0">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
                       +92
                     </span>
                     <input
@@ -552,13 +609,13 @@ export function LensConfiguratorModal({
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
                       placeholder="3xx-xxxxxxx"
-                      className="flex-1 px-3.5 py-3 text-sm text-slate-900 focus:outline-none bg-white"
+                      className="flex-1 px-4 py-3.5 text-base text-slate-900 focus:outline-none bg-white"
                     />
                   </div>
                 </div>
 
                 {step1Error && (
-                  <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                  <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-2.5">
                     {step1Error}
                   </p>
                 )}
@@ -566,7 +623,7 @@ export function LensConfiguratorModal({
                 <button
                   type="submit"
                   disabled={isSavingLead}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-60"
+                  className="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-semibold py-4 rounded-xl shadow-md shadow-amber-500/15 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSavingLead ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>
@@ -582,10 +639,10 @@ export function LensConfiguratorModal({
               STEP 2 — VISION TYPE
           ═══════════════════════════════════════════════ */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-4 animate-in fade-in duration-150">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Choose Vision Type</h3>
-                <p className="text-xs text-neutral-500 mt-1">Select how you&apos;d like your lenses to work.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Select how you&apos;d like your lenses to function.</p>
               </div>
 
               {/* Standard Vision Card */}
@@ -593,32 +650,32 @@ export function LensConfiguratorModal({
                 type="button"
                 onClick={() => setVisionType('standard')}
                 className={cn(
-                  'w-full text-left p-5 rounded-2xl border-2 transition-all duration-150 cursor-pointer group',
+                  'w-full text-left p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                   visionType === 'standard'
-                    ? 'border-amber-500 bg-amber-50/60 shadow-sm'
-                    : 'border-neutral-200 bg-white hover:border-amber-300 hover:bg-amber-50/20'
+                    ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
+                    : 'border-slate-200 hover:border-amber-400'
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3.5 flex-1 min-w-0">
                     <div className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
-                      visionType === 'standard' ? 'bg-amber-500 text-white' : 'bg-neutral-100 text-neutral-500 group-hover:bg-amber-100 group-hover:text-amber-600'
+                      'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                      visionType === 'standard' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-amber-100 group-hover:text-amber-600'
                     )}>
                       <Eye className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">Standard Vision</p>
-                      <p className="text-xs text-neutral-500 mt-0.5 leading-snug">
-                        For driving, walking, daily wear, or reading. Single focal power.
+                      <p className="text-base font-bold text-slate-900">Standard Vision</p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">
+                        For driving, distance vision, screen use, or single reading power.
                       </p>
                     </div>
                   </div>
                   <div className={cn(
                     'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all',
-                    visionType === 'standard' ? 'border-amber-500 bg-amber-500' : 'border-neutral-300'
+                    visionType === 'standard' ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
                   )}>
-                    {visionType === 'standard' && <Check className="w-3 h-3 text-white" />}
+                    {visionType === 'standard' && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                   </div>
                 </div>
               </button>
@@ -628,47 +685,47 @@ export function LensConfiguratorModal({
                 type="button"
                 onClick={() => setVisionType('progressive')}
                 className={cn(
-                  'w-full text-left p-5 rounded-2xl border-2 transition-all duration-150 cursor-pointer group',
+                  'w-full text-left p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                   visionType === 'progressive'
-                    ? 'border-amber-500 bg-amber-50/60 shadow-sm'
-                    : 'border-neutral-200 bg-white hover:border-amber-300 hover:bg-amber-50/20'
+                    ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
+                    : 'border-slate-200 hover:border-amber-400'
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3.5 flex-1 min-w-0">
                     <div className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
-                      visionType === 'progressive' ? 'bg-amber-500 text-white' : 'bg-neutral-100 text-neutral-500 group-hover:bg-amber-100 group-hover:text-amber-600'
+                      'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                      visionType === 'progressive' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-amber-100 group-hover:text-amber-600'
                     )}>
                       <Zap className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-bold text-slate-900">Progressive</p>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wide">
+                        <p className="text-base font-bold text-slate-900">Progressive</p>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wide">
                           Near &amp; Far
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-500 mt-0.5 leading-snug">
-                        Near &amp; far view without switching glasses. Seamless multi-focal.
+                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">
+                        Smooth transition between reading, intermediate &amp; distance without changing frames.
                       </p>
                     </div>
                   </div>
                   <div className={cn(
                     'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all',
-                    visionType === 'progressive' ? 'border-amber-500 bg-amber-500' : 'border-neutral-300'
+                    visionType === 'progressive' ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
                   )}>
-                    {visionType === 'progressive' && <Check className="w-3 h-3 text-white" />}
+                    {visionType === 'progressive' && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                   </div>
                 </div>
               </button>
 
-              {/* Nav */}
+              {/* Navigation Actions */}
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-neutral-200 text-xs font-semibold text-slate-600 hover:bg-neutral-50 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back
@@ -676,7 +733,7 @@ export function LensConfiguratorModal({
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
                 >
                   <span>Choose Lenses</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -689,21 +746,21 @@ export function LensConfiguratorModal({
               STEP 3 — LENS PACKAGES
           ═══════════════════════════════════════════════ */}
           {step === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-150">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Lens Package</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">
-                    Showing {isProgressive ? 'progressive' : 'standard'} prices.
+                  <h3 className="text-base font-bold text-slate-900">Select Lens Package</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Showing {isProgressive ? 'progressive' : 'standard'} options.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold">
+                <span className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">
                   {isProgressive ? 'Progressive / Multi-Focal' : 'Single Vision'}
                 </span>
               </div>
 
               {isPricingLoading ? (
-                <div className="flex items-center justify-center py-12 gap-2 text-neutral-400">
+                <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span className="text-xs font-semibold">Loading live prices...</span>
                 </div>
@@ -720,10 +777,10 @@ export function LensConfiguratorModal({
                         type="button"
                         onClick={() => setSelectedLensId(pkg.id)}
                         className={cn(
-                          'w-full text-left p-4 rounded-2xl border-2 transition-all duration-150 cursor-pointer group',
+                          'w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                           isSelected
-                            ? 'border-amber-500 bg-amber-50/50 shadow-sm'
-                            : 'border-neutral-200 bg-white hover:border-amber-300'
+                            ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
+                            : 'border-slate-200 hover:border-amber-400'
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -731,22 +788,22 @@ export function LensConfiguratorModal({
                             {/* Tier code + name */}
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className={cn(
-                                'text-[10px] font-black px-2 py-0.5 rounded-full transition-colors',
-                                isSelected ? 'bg-amber-500 text-white' : 'bg-neutral-100 text-neutral-600 group-hover:bg-amber-100 group-hover:text-amber-700'
+                                'text-[11px] font-black px-2.5 py-0.5 rounded-full transition-colors',
+                                isSelected ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-800'
                               )}>
                                 {pkg.code}
                               </span>
-                              <span className="text-xs font-bold text-slate-900 leading-tight">
+                              <span className="text-base font-bold text-slate-900 leading-tight">
                                 {pkg.name}
                               </span>
                             </div>
 
                             {/* Feature bullets */}
                             {features.length > 0 && (
-                              <ul className="mt-2 space-y-0.5">
+                              <ul className="mt-2.5 space-y-1">
                                 {features.map((f) => (
-                                  <li key={f} className="flex items-start gap-1.5 text-[11px] text-neutral-600">
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                  <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                                     <span>{f}</span>
                                   </li>
                                 ))}
@@ -758,11 +815,11 @@ export function LensConfiguratorModal({
                           <div className="flex flex-col items-end gap-2 shrink-0">
                             <div className={cn(
                               'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                              isSelected ? 'border-amber-500 bg-amber-500' : 'border-neutral-300'
+                              isSelected ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
                             )}>
-                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                             </div>
-                            <span className="text-sm font-black text-amber-600 whitespace-nowrap">
+                            <span className="text-lg sm:text-xl font-bold text-amber-600 whitespace-nowrap">
                               Rs. {price.toLocaleString()}
                             </span>
                           </div>
@@ -773,12 +830,12 @@ export function LensConfiguratorModal({
                 </div>
               )}
 
-              {/* Nav */}
+              {/* Navigation Actions */}
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-neutral-200 text-xs font-semibold text-slate-600 hover:bg-neutral-50 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back
@@ -787,7 +844,7 @@ export function LensConfiguratorModal({
                   type="button"
                   onClick={() => { if (selectedLensId) setStep(4); }}
                   disabled={!selectedLensId}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
                 >
                   <span>Add Prescription</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -797,25 +854,25 @@ export function LensConfiguratorModal({
           )}
 
           {/* ═══════════════════════════════════════════════
-              STEP 4 — PRESCRIPTION + AI SCANNER + CHECKOUT
+              STEP 4 — PRESCRIPTION + CUSTOM AMBER PICKER
           ═══════════════════════════════════════════════ */}
           {step === 4 && (
-            <div className="space-y-5">
+            <div className="space-y-5 animate-in fade-in duration-150">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Prescription Details</h3>
-                <p className="text-xs text-neutral-500 mt-1">Upload doctor slip for instant AI extraction or enter values manually.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Upload doctor slip for instant AI extraction or enter values.</p>
               </div>
 
               {/* Tab Switch */}
-              <div className="flex items-center p-1 bg-neutral-100 rounded-xl">
+              <div className="flex items-center p-1 bg-slate-100 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setPrescriptionTab('upload')}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                     prescriptionTab === 'upload'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-neutral-500 hover:text-slate-700'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
@@ -827,8 +884,8 @@ export function LensConfiguratorModal({
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                     prescriptionTab === 'manual'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-neutral-500 hover:text-slate-700'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -840,8 +897,8 @@ export function LensConfiguratorModal({
               {prescriptionTab === 'upload' && (
                 <div className="space-y-4">
                   {uploadedPreviewUrl ? (
-                    <div className="relative rounded-2xl border-2 border-amber-300 bg-amber-50/40 overflow-hidden">
-                      <div className="relative w-full aspect-video bg-neutral-100">
+                    <div className="relative rounded-2xl border border-amber-300 bg-amber-50/30 overflow-hidden">
+                      <div className="relative w-full aspect-video bg-slate-50">
                         <Image
                           src={uploadedPreviewUrl}
                           alt="Prescription slip preview"
@@ -851,11 +908,11 @@ export function LensConfiguratorModal({
                         {/* Scanning Overlay */}
                         {isScanning && (
                           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 p-4 animate-in fade-in">
-                            <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
-                              <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
+                            <div className="w-11 h-11 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center">
+                              <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
                             </div>
                             <p className="text-xs font-bold text-amber-300">Reading prescription details with AI...</p>
-                            <p className="text-[11px] text-neutral-300 text-center">Gemini 1.5 Flash is extracting SPH, CYL, AXIS &amp; ADD</p>
+                            <p className="text-[11px] text-slate-300 text-center">Gemini 1.5 Flash is extracting SPH, CYL, AXIS &amp; ADD</p>
                           </div>
                         )}
                       </div>
@@ -863,7 +920,7 @@ export function LensConfiguratorModal({
                       <div className="flex items-center justify-between px-4 py-2.5 border-t border-amber-200/60 bg-white">
                         <div className="flex items-center gap-2 min-w-0">
                           <FileCheck2 className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span className="text-[11px] font-semibold text-slate-800 truncate max-w-[200px]">
+                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">
                             {uploadedFile?.name}
                           </span>
                         </div>
@@ -904,23 +961,18 @@ export function LensConfiguratorModal({
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
                       className={cn(
-                        'border-2 border-dashed rounded-2xl p-7 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all',
-                        isDragging
-                          ? 'border-amber-500 bg-amber-50'
-                          : 'border-neutral-200 hover:border-amber-400 hover:bg-amber-50/30'
+                        'border-2 border-dashed border-amber-300 bg-amber-50/20 hover:bg-amber-50/40 p-6 rounded-2xl text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3',
+                        isDragging && 'border-amber-500 bg-amber-50/60'
                       )}
                     >
-                      <div className={cn(
-                        'w-12 h-12 rounded-2xl flex items-center justify-center transition-colors',
-                        isDragging ? 'bg-amber-100' : 'bg-neutral-100'
-                      )}>
-                        <Upload className={cn('w-6 h-6', isDragging ? 'text-amber-600' : 'text-neutral-400')} />
+                      <div className="w-12 h-12 rounded-2xl bg-amber-100/80 flex items-center justify-center text-amber-700">
+                        <Upload className="w-6 h-6" />
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-bold text-slate-900">Drop doctor&apos;s slip or tap to browse</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">AI will auto-fill your numbers instantly</p>
+                        <p className="text-xs text-slate-500 mt-0.5">AI will auto-fill your numbers instantly</p>
                       </div>
-                      <span className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors">
+                      <span className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-xs">
                         Upload Slip (AI Scan)
                       </span>
                     </div>
@@ -940,100 +992,206 @@ export function LensConfiguratorModal({
                 </div>
               )}
 
-              {/* ── Extracted / Manual Dropdowns Verification Section ── */}
+              {/* ── Compact 3-Column Touch Tile Grid (OD / OS / ADD) ── */}
               <div className="space-y-4 pt-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                     {prescriptionTab === 'upload' ? 'Verify Prescription Numbers' : 'Prescription Values'}
                   </span>
                   {isProgressive && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                      Progressive Mode
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                      Progressive Active
                     </span>
                   )}
                 </div>
 
-                {(['OD (Right Eye)', 'OS (Left Eye)'] as const).map((label, eyeIndex) => {
-                  const isRight = eyeIndex === 0;
-                  const sph = isRight ? odSph : osSph;
-                  const cyl = isRight ? odCyl : osCyl;
-                  const axis = isRight ? odAxis : osAxis;
-                  const setSph = isRight ? setOdSph : setOsSph;
-                  const setCyl = isRight ? setOdCyl : setOsCyl;
-                  const setAxis = isRight ? setOdAxis : setOsAxis;
-
-                  return (
-                    <div key={label} className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
-                      <p className="text-xs font-bold text-slate-900">{label}</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {/* SPH */}
-                        <div>
-                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">SPH</label>
-                          <select
-                            value={sph}
-                            onChange={(e) => setSph(e.target.value)}
-                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
-                          >
-                            {SPH_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                          </select>
-                        </div>
-                        {/* CYL */}
-                        <div>
-                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">CYL</label>
-                          <select
-                            value={cyl}
-                            onChange={(e) => {
-                              setCyl(e.target.value);
-                              if (e.target.value === '0.00') setAxis(DEFAULT_AXIS);
-                            }}
-                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
-                          >
-                            {CYL_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                          </select>
-                        </div>
-                        {/* AXIS */}
-                        <div>
-                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">AXIS</label>
-                          <select
-                            value={axis}
-                            onChange={(e) => setAxis(e.target.value)}
-                            disabled={cyl === '0.00'}
-                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer disabled:opacity-40"
-                          >
-                            {AXIS_OPTIONS.map((v) => <option key={v} value={v}>{v}°</option>)}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* ADD field for progressive */}
-                {isProgressive && (
-                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2 animate-in fade-in">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-amber-900">ADD Power (Reading Addition)</p>
-                      <span className="text-[10px] text-amber-700 font-semibold">Near &amp; Far Lenses</span>
-                    </div>
-                    <select
-                      value={addPower}
-                      onChange={(e) => setAddPower(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
+                {/* Right Eye (OD) */}
+                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">OD (Right Eye)</p>
+                    <span className="text-[10px] text-slate-400 font-medium">Touch tile to select</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {/* SPH Tile */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'odSph',
+                          title: 'Right Eye (OD) — Sphere (SPH)',
+                          subtitle: 'Select optical sphere power (-16.00 to +16.00)',
+                          options: SPH_OPTIONS,
+                          value: odSph,
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
                     >
-                      {ADD_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                    </select>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SPH</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{odSph}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+
+                    {/* CYL Tile */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'odCyl',
+                          title: 'Right Eye (OD) — Cylinder (CYL)',
+                          subtitle: 'Select astigmatism cylinder (-4.00 to +4.00)',
+                          options: CYL_OPTIONS,
+                          value: odCyl,
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CYL</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{odCyl}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+
+                    {/* AXIS Tile */}
+                    <button
+                      type="button"
+                      disabled={odCyl === '0.00'}
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'odAxis',
+                          title: 'Right Eye (OD) — Axis',
+                          subtitle: 'Select cylinder axis angle (1° to 180°)',
+                          options: AXIS_OPTIONS,
+                          value: odAxis,
+                          unit: '°',
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AXIS</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">
+                          {odCyl === '0.00' ? '—' : `${odAxis}°`}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Left Eye (OS) */}
+                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">OS (Left Eye)</p>
+                    <span className="text-[10px] text-slate-400 font-medium">Touch tile to select</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {/* SPH Tile */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'osSph',
+                          title: 'Left Eye (OS) — Sphere (SPH)',
+                          subtitle: 'Select optical sphere power (-16.00 to +16.00)',
+                          options: SPH_OPTIONS,
+                          value: osSph,
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SPH</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{osSph}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+
+                    {/* CYL Tile */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'osCyl',
+                          title: 'Left Eye (OS) — Cylinder (CYL)',
+                          subtitle: 'Select astigmatism cylinder (-4.00 to +4.00)',
+                          options: CYL_OPTIONS,
+                          value: osCyl,
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CYL</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{osCyl}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+
+                    {/* AXIS Tile */}
+                    <button
+                      type="button"
+                      disabled={osCyl === '0.00'}
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'osAxis',
+                          title: 'Left Eye (OS) — Axis',
+                          subtitle: 'Select cylinder axis angle (1° to 180°)',
+                          options: AXIS_OPTIONS,
+                          value: osAxis,
+                          unit: '°',
+                        })
+                      }
+                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AXIS</span>
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">
+                          {osCyl === '0.00' ? '—' : `${osAxis}°`}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progressive ADD Power Tile */}
+                {isProgressive && (
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-amber-950">ADD Power (Reading Addition)</p>
+                      <span className="text-[10px] text-amber-800 font-semibold">Near &amp; Far</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivePicker({
+                          field: 'add',
+                          title: 'Reading Addition (ADD Power)',
+                          subtitle: 'Select near vision magnification (+0.75 to +3.50)',
+                          options: ADD_OPTIONS,
+                          value: addPower,
+                        })
+                      }
+                      className="bg-white border border-amber-300 hover:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3.5 flex items-center justify-between cursor-pointer w-full text-left transition-all shadow-2xs"
+                    >
+                      <span className="text-sm font-mono font-bold text-slate-900">{addPower}</span>
+                      <ChevronDown className="w-4 h-4 text-amber-700" />
+                    </button>
                   </div>
                 )}
               </div>
 
-              {/* ── Live Summary Bar (Warm Amber Theme) ── */}
-              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-slate-800 space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800">Order Summary</p>
+              {/* ── Live Summary Card (Soft Warm Amber Theme) ── */}
+              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-xs text-slate-800 space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">Order Summary</p>
 
                 {/* Frame thumbnail + name */}
                 <div className="flex items-center gap-3">
                   {frame.imageUrl && (
-                    <div className="w-12 h-10 rounded-lg bg-white border border-amber-200/80 overflow-hidden shrink-0 relative">
+                    <div className="w-12 h-10 rounded-lg bg-white border border-amber-200/80 overflow-hidden shrink-0 relative shadow-2xs">
                       <Image
                         src={frame.imageUrl}
                         alt={frame.name}
@@ -1051,7 +1209,7 @@ export function LensConfiguratorModal({
                 <div className="border-t border-amber-200/60 pt-2.5 space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-600 font-medium">Lens Tier</span>
-                    <span className="font-bold text-amber-700 text-right max-w-[200px] truncate">
+                    <span className="font-bold text-amber-800 text-right max-w-[200px] truncate">
                       {selectedPackage?.code} — {selectedPackage?.name}
                     </span>
                   </div>
@@ -1070,12 +1228,12 @@ export function LensConfiguratorModal({
                 </div>
               </div>
 
-              {/* Nav */}
+              {/* Navigation Actions */}
               <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-neutral-200 text-xs font-semibold text-slate-600 hover:bg-neutral-50 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back
@@ -1084,7 +1242,7 @@ export function LensConfiguratorModal({
                   type="button"
                   onClick={handleCheckout}
                   disabled={isCheckingOut || isScanning}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-colors cursor-pointer active:scale-[0.99] disabled:opacity-60"
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md shadow-amber-500/15 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
                 >
                   {isCheckingOut ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span>Processing...</span></>
@@ -1097,6 +1255,20 @@ export function LensConfiguratorModal({
           )}
         </div>
       </div>
+
+      {/* ── Custom Bottom-Sheet Picker Modal ── */}
+      {activePicker && (
+        <PrescriptionPickerSheet
+          isOpen={!!activePicker}
+          onClose={() => setActivePicker(null)}
+          title={activePicker.title}
+          subtitle={activePicker.subtitle}
+          options={activePicker.options}
+          value={activePicker.value}
+          unit={activePicker.unit}
+          onChange={handlePickerChange}
+        />
+      )}
     </div>
   );
 }
