@@ -453,65 +453,105 @@ export function LensConfiguratorModal({
     if (isCheckingOut) return;
     setIsCheckingOut(true);
 
-    // Ensure slip is uploaded if file is chosen
-    if (uploadedFile && !rxFileUrl) {
-      await uploadStorageFile(uploadedFile);
+    try {
+      // Ensure slip is uploaded if file is chosen
+      let finalRxUrl = rxFileUrl;
+      if (uploadedFile && !finalRxUrl) {
+        try {
+          const formData = new FormData();
+          formData.append('file', uploadedFile);
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          if (res.ok) {
+            const data = await res.json();
+            finalRxUrl = data.url || data.fileUrl || null;
+            if (finalRxUrl) setRxFileUrl(finalRxUrl);
+          }
+        } catch (uploadErr) {
+          console.warn('Slip upload issue during checkout:', uploadErr);
+        }
+      }
+
+      const lensLabel = `${selectedPackage?.name || 'Custom Lens'} (${isProgressive ? 'Progressive' : 'Standard'})`;
+
+      const parseVal = (v: string) => {
+        const num = parseFloat(v);
+        return isNaN(num) ? 0 : num;
+      };
+      const parseCyl = (v: string) => {
+        const num = parseFloat(v);
+        return isNaN(num) || num === 0 ? null : num;
+      };
+
+      const prescriptionDetails = {
+        odSph: parseVal(odSph),
+        odCyl: parseCyl(odCyl),
+        odAxis: parseCyl(odCyl) === null ? null : parseInt(odAxis, 10),
+        osSph: parseVal(osSph),
+        osCyl: parseCyl(osCyl),
+        osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
+        add: isProgressive ? parseVal(addPower) : null,
+        lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
+        rxFileUrl: typeof finalRxUrl === 'string' ? finalRxUrl : undefined,
+      };
+
+      const cartPayload = {
+        productId: String(frame.id),
+        name: `${frame.name} + ${lensLabel}`,
+        price: Number(totalPrice),
+        image: frame.imageUrl || '/placeholder-frame.png',
+        color: frame.color || undefined,
+        prescription: {
+          ...prescriptionDetails,
+          lensMaterial: String(selectedPackage?.name || ''),
+          lensBasePriceKey: String(pricingResult?.basePriceKey || selectedPackage?.code || ''),
+          lensBasePriceValue: Number(pricingResult?.basePriceValue || lensPrice),
+          lensMultiplier: Number(pricingResult?.multiplier || 1),
+          lensFinalPrice: Number(lensPrice),
+          framePrice: Number(frame.price),
+          isAsymmetricRx: Boolean(pricingResult?.isAsymmetricRx),
+          rightEyeLensPrice: pricingResult?.rightEyeLensPrice ? Number(pricingResult.rightEyeLensPrice) : undefined,
+          leftEyeLensPrice: pricingResult?.leftEyeLensPrice ? Number(pricingResult.leftEyeLensPrice) : undefined,
+          rightMultiplier: pricingResult?.rightMultiplier ? Number(pricingResult.rightMultiplier) : undefined,
+          leftMultiplier: pricingResult?.leftMultiplier ? Number(pricingResult.leftMultiplier) : undefined,
+        },
+      };
+
+      addItem(cartPayload);
+
+      if (onAddToCart) {
+        try {
+          onAddToCart({
+            frame: { id: frame.id, name: frame.name, price: frame.price, imageUrl: frame.imageUrl, color: frame.color },
+            visionType,
+            selectedLensId,
+            lensPrice: Number(lensPrice),
+            totalPrice: Number(totalPrice),
+            prescriptionDetails,
+            contact: { fullName: fullName.trim(), whatsapp: whatsapp.trim() },
+          });
+        } catch (cbErr) {
+          console.warn('onAddToCart callback error:', cbErr);
+        }
+      }
+
+      onClose();
+
+      try {
+        router.push('/checkout');
+      } catch (navErr) {
+        console.warn('Router push failed, falling back to window.location:', navErr);
+        window.location.href = '/checkout';
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setIsCheckingOut(false);
+      try {
+        onClose();
+        router.push('/checkout');
+      } catch {
+        window.location.href = '/checkout';
+      }
     }
-
-    const lensLabel = `${selectedPackage?.name || 'Custom Lens'} (${isProgressive ? 'Progressive' : 'Standard'})`;
-
-    const parseVal = (v: string) => parseFloat(v) || 0;
-    const parseCyl = (v: string) => {
-      const num = parseFloat(v);
-      return isNaN(num) || num === 0 ? null : num;
-    };
-
-    const prescriptionDetails = {
-      odSph: parseVal(odSph),
-      odCyl: parseCyl(odCyl),
-      odAxis: parseCyl(odCyl) === null ? null : parseInt(odAxis, 10),
-      osSph: parseVal(osSph),
-      osCyl: parseCyl(osCyl),
-      osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
-      add: isProgressive ? parseFloat(addPower) : null,
-      lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
-      rxFileUrl: rxFileUrl || undefined,
-    };
-
-    const cartPayload = {
-      productId: frame.id,
-      name: `${frame.name} + ${lensLabel}`,
-      price: totalPrice,
-      image: frame.imageUrl || '/placeholder-frame.png',
-      color: frame.color,
-      prescription: {
-        ...prescriptionDetails,
-        lensMaterial: selectedPackage?.name || '',
-        lensBasePriceKey: pricingResult?.basePriceKey || selectedPackage?.code || '',
-        lensBasePriceValue: pricingResult?.basePriceValue || lensPrice,
-        lensMultiplier: pricingResult?.multiplier || 1,
-        lensFinalPrice: lensPrice,
-        framePrice: frame.price,
-      },
-    };
-
-    addItem(cartPayload);
-
-    if (onAddToCart) {
-      onAddToCart({
-        frame,
-        visionType,
-        selectedLensId,
-        lensPrice,
-        totalPrice,
-        pricingResult,
-        prescriptionDetails,
-        contact: { fullName: fullName.trim(), whatsapp },
-      });
-    }
-
-    onClose();
-    router.push('/checkout');
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────

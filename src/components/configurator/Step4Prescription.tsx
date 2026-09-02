@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   ChevronRight,
   ArrowLeft,
+  ArrowRight,
   RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -177,7 +178,7 @@ export function Step4Prescription({
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-150">
+    <div className="space-y-6 animate-in fade-in duration-150">
       {/* Header */}
       <div>
         <h3 className="text-base font-bold text-slate-900">Prescription Details</h3>
@@ -622,92 +623,171 @@ export function Step4Prescription({
         )}
       </div>
 
-      {/* ── Live Summary Card with Canonical Pricing Breakdown ── */}
-      <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-xs text-slate-800 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">
-            Order Summary
-          </p>
-          {pricingResult && pricingResult.multiplier > 1 && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
-              Rx Tier ({pricingResult.multiplier}x)
-            </span>
-          )}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          EXACT "STEP 4 — YOUR FINAL LENS PRICE" CARD (MATCHING LENS PRICING PAGE)
+      ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="bg-gradient-to-br from-amber-50/50 via-white to-amber-50/30 rounded-2xl border border-amber-200/80 p-5 sm:p-6 space-y-4 shadow-sm text-neutral-900">
+        
+        {/* Card Header */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/30 shrink-0">
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-950">
+                Step 4 — Your Final Lens Price
+              </h4>
+              <p className="text-[11px] text-neutral-500 font-normal">
+                Exact cost for your frame + lenses based on optical lab rates.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Price Guaranteed
+          </div>
         </div>
 
-        {/* Frame thumbnail + name */}
-        <div className="flex items-center gap-3">
-          {frame.imageUrl && (
-            <div className="w-12 h-10 rounded-lg bg-white border border-amber-200/80 overflow-hidden shrink-0 relative shadow-2xs">
-              <Image
-                src={frame.imageUrl}
-                alt={frame.name}
-                fill
-                className="object-contain p-1"
-              />
+        {/* Itemized Breakdown */}
+        <div className="space-y-2.5 text-sm pt-1">
+          {/* Frame Item Row */}
+          <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {frame.imageUrl && (
+                <div className="w-9 h-7 rounded-md bg-white border border-neutral-200 overflow-hidden shrink-0 relative">
+                  <Image src={frame.imageUrl} alt={frame.name} fill className="object-contain p-0.5" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <span className="font-semibold text-neutral-800 text-xs sm:text-sm truncate block">
+                  {frame.name}
+                </span>
+                <span className="text-[11px] text-neutral-400 font-medium">Selected Frame</span>
+              </div>
+            </div>
+            <span className="font-mono font-bold text-neutral-800 text-xs sm:text-sm whitespace-nowrap">
+              Rs. {frame.price.toLocaleString()}/-
+            </span>
+          </div>
+
+          {/* Lens Package Row */}
+          <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed">
+            <div className="min-w-0">
+              <span className="font-semibold text-neutral-800 text-xs sm:text-sm block truncate">
+                {selectedPackage?.cleanName || selectedPackage?.name}
+              </span>
+              <span className="text-[11px] text-neutral-400 font-medium">
+                ({selectedPackage?.coating || selectedPackage?.badge})
+              </span>
+            </div>
+            <span className="text-xs text-neutral-500 font-bold bg-neutral-100 px-2 py-0.5 rounded-md shrink-0">
+              Pair of Lenses
+            </span>
+          </div>
+
+          {/* Vision Mode Line */}
+          {isProgressive ? (
+            <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed flex-wrap gap-1">
+              <div>
+                <span className="font-semibold text-neutral-800 text-xs sm:text-sm">
+                  PROGRESSIVE (TWO IN 1 NEAR AND FAR)
+                </span>
+                <span className="text-[11px] text-amber-700 ml-2 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/50">
+                  Reading {addPower}
+                </span>
+              </div>
+              <span className="text-[11px] text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 shrink-0">
+                Far + Near Included (Base Rs. {selectedPackage?.presbyopiaBasePrice?.toLocaleString()})
+              </span>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center py-2 border-b border-neutral-100 border-dashed">
+              <span className="font-semibold text-neutral-800 text-xs sm:text-sm">
+                STANDARD VISION LENS (EVERYDAY SINGLE WEAR)
+              </span>
+              <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60 shrink-0">
+                Base Rs. {selectedPackage?.standardBasePrice?.toLocaleString()}
+              </span>
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-900 truncate">{frame.name}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-              Rs. {frame.price.toLocaleString()}
-            </p>
-          </div>
+
+          {/* Asymmetrical Customized Power Lines */}
+          {pricingResult?.isAsymmetricRx && (
+            <>
+              <div className="flex justify-between items-center py-1 text-xs">
+                <span className="font-medium text-neutral-600">Right Lens — customized power</span>
+                <span className="font-mono font-bold text-neutral-800">
+                  Rs. {Math.round(pricingResult.rightEyeLensPrice ?? 0).toLocaleString()}/-
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 text-xs border-b border-neutral-100 border-dashed">
+                <span className="font-medium text-neutral-600">Left Lens — customized power</span>
+                <span className="font-mono font-bold text-neutral-800">
+                  Rs. {Math.round(pricingResult.leftEyeLensPrice ?? 0).toLocaleString()}/-
+                </span>
+              </div>
+            </>
+          )}
+          {pricingResult && !pricingResult.isAsymmetricRx && (
+            <p className="text-[11px] text-neutral-400 font-medium">Both left and right lenses included</p>
+          )}
         </div>
 
-        <div className="border-t border-amber-200/60 pt-2.5 space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-600 font-medium">Lens Tier</span>
-            <span className="font-bold text-amber-800 text-right max-w-[200px] truncate">
-              {selectedPackage?.code} — {selectedPackage?.name}
+        {/* Grand Total & Advance Notice */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pt-3 border-t border-neutral-200">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">
+              Total Order Price (Frame + Lenses)
+            </span>
+            <span className="text-3xl sm:text-4xl font-black text-amber-600 tracking-tight">
+              Rs. {Math.round(totalPrice).toLocaleString()}/-
+            </span>
+            <span className="text-[11px] text-neutral-400 block mt-1 font-normal">
+              Lens: Rs. {Math.round(lensPrice).toLocaleString()} + Frame: Rs. {frame.price.toLocaleString()}
             </span>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-600 font-medium">Vision Mode</span>
-            <span className="font-bold text-slate-900 capitalize">{visionType}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-600 font-medium">Lens Price (Pair)</span>
-            <span className="font-bold text-slate-900">Rs. {lensPrice.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-baseline pt-2 border-t border-amber-200/80">
-            <span className="text-sm font-bold text-slate-900">Total Price</span>
-            <span className="text-amber-600 font-bold text-xl">
-              Rs. {totalPrice.toLocaleString()}
-            </span>
+          <div className="text-left sm:text-right">
+            <div className="text-[10px] font-bold text-amber-900 bg-amber-100/90 border border-amber-200 px-3 py-1.5 rounded-xl inline-block">
+              {isProgressive ? '40% advance for Cash on Delivery' : '25% advance for Cash on Delivery'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Actions */}
-      <div className="flex items-center justify-between pt-1">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={onCheckout}
-          disabled={isCheckingOut || isScanning}
-          className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md shadow-amber-500/15 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-        >
-          {isCheckingOut ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Processing...</span>
-            </>
-          ) : (
-            <>
-              <ShieldCheck className="w-4 h-4" />
-              <span>Proceed to Checkout</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </>
-          )}
-        </button>
+      {/* ── Navigation & Checkout Actions ── */}
+      <div className="space-y-2 pt-1">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onCheckout}
+            disabled={isCheckingOut || isScanning}
+            className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-md shadow-amber-500/15 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60 text-sm"
+          >
+            {isCheckingOut ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Processing Checkout...</span>
+              </>
+            ) : (
+              <>
+                <span>Proceed to Checkout</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-[11px] text-center text-neutral-400 font-normal">
+          Saves your lens settings for your frame
+        </p>
       </div>
     </div>
   );
