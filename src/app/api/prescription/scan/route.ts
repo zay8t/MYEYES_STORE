@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -60,13 +60,12 @@ function extractJsonObject(text: string): any {
   }
 }
 
-const PRIMARY_MODEL = "gemini-1.5-flash";
+const PRIMARY_MODEL = "gemini-3-flash-preview";
 const FALLBACK_MODELS = [
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-pro",
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-pro-vision",
+  "gemini-1.5-flash",
 ];
 
 export async function POST(req: NextRequest) {
@@ -95,77 +94,73 @@ export async function POST(req: NextRequest) {
     const base64Data = buffer.toString("base64");
     const mimeType = file.type || "image/jpeg";
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `You are an expert optical laboratory assistant analyzing an ophthalmologist/optometrist prescription slip.
+    const prompt = `You are an expert optical laboratory optician analyzing an ophthalmologist/optometrist prescription slip.
 Examine the doctor's handwriting or printed prescription carefully:
 1. OD (Right Eye) and OS/O.S. (Left Eye).
-2. SPH (Sphere/Power/Spherical): identify positive (+) or negative (-) signs. Round to the nearest 0.25 step between -16.00 and +16.00 (or "0.00" for Plano/PL/Nil).
-3. CYL (Cylinder/Astigmatism): identify sign. Round to nearest 0.25 step between -4.00 and +4.00 (or "0.00" for Nil/None/Plano).
+2. SPH (Sphere/Power/Spherical): identify positive (+) or negative (-) signs. Preserve +/- signs with 2 decimal places (-16.00 to +16.00, or "0.00" for Plano/PL/Nil).
+3. CYL (Cylinder/Astigmatism): identify sign. Preserve +/- signs with 2 decimal places (-4.00 to +4.00, or "0.00" for Nil/None/Plano).
 4. AXIS: Integer between 1 and 180 degrees. If cylinder is 0.00/nil, output "180".
 5. ADD (Addition/Near Vision/Reading): extract reading power (e.g. +1.50, +2.00, +2.50) if indicated for presbyopia/reading/bifocal/progressive. Otherwise null.
 6. PD: Pupillary distance in mm if mentioned (e.g. 62, 64), otherwise null.
 
-Return ONLY a JSON object with this exact structure:
-{
-  "od": { "sph": "-1.25", "cyl": "-0.75", "axis": "170" },
-  "os": { "sph": "-2.25", "cyl": "-1.00", "axis": "10" },
-  "add": null,
-  "pd": "64"
-}`;
+Return valid structured JSON matching the schema.`;
+
+    const responseSchema = {
+      type: Type.OBJECT,
+      properties: {
+        od: {
+          type: Type.OBJECT,
+          description: "Right Eye (OD) optical prescription values",
+          properties: {
+            sph: { type: Type.STRING },
+            cyl: { type: Type.STRING },
+            axis: { type: Type.STRING },
+          },
+          required: ["sph", "cyl", "axis"],
+        },
+        os: {
+          type: Type.OBJECT,
+          description: "Left Eye (OS/O.S.) optical prescription values",
+          properties: {
+            sph: { type: Type.STRING },
+            cyl: { type: Type.STRING },
+            axis: { type: Type.STRING },
+          },
+          required: ["sph", "cyl", "axis"],
+        },
+        add: { type: Type.STRING, nullable: true },
+        pd: { type: Type.STRING, nullable: true },
+      },
+      required: ["od", "os"],
+    };
 
     let rawData: any = null;
     let lastError: any = null;
 
-    // Attempt 1: Primary structured output with gemini-1.5-flash
+    // Attempt 1: Primary structured output with gemini-3-flash-preview
     try {
-      const model = genAI.getGenerativeModel({
+      const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: SchemaType.OBJECT,
-            properties: {
-              od: {
-                type: SchemaType.OBJECT,
-                description: "Right Eye (OD) optical prescription values",
-                properties: {
-                  sph: { type: SchemaType.STRING },
-                  cyl: { type: SchemaType.STRING },
-                  axis: { type: SchemaType.STRING },
-                },
-                required: ["sph", "cyl", "axis"],
-              },
-              os: {
-                type: SchemaType.OBJECT,
-                description: "Left Eye (OS/O.S.) optical prescription values",
-                properties: {
-                  sph: { type: SchemaType.STRING },
-                  cyl: { type: SchemaType.STRING },
-                  axis: { type: SchemaType.STRING },
-                },
-                required: ["sph", "cyl", "axis"],
-              },
-              add: { type: SchemaType.STRING, nullable: true },
-              pd: { type: SchemaType.STRING, nullable: true },
+        contents: [
+          {
+            inlineData: {
+              mimeType,
+              data: base64Data,
             },
-            required: ["od", "os"],
           },
+          prompt,
+        ],
+        config: {
+          temperature: 0.2,
+          responseMimeType: "application/json",
+          responseSchema,
         },
       });
 
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType,
-          },
-        },
-      ]);
-
-      const text = result.response.text();
-      rawData = extractJsonObject(text);
+      const responseText = response.text || "";
+      rawData = extractJsonObject(responseText);
     } catch (err: any) {
       console.warn(`Primary structured model (${PRIMARY_MODEL}) failed:`, err?.message);
       lastError = err;
@@ -175,25 +170,25 @@ Return ONLY a JSON object with this exact structure:
     if (!rawData) {
       for (const candidate of FALLBACK_MODELS) {
         try {
-          const fallbackModel = genAI.getGenerativeModel({
+          const response = await ai.models.generateContent({
             model: candidate,
-            generationConfig: {
+            contents: [
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64Data,
+                },
+              },
+              prompt,
+            ],
+            config: {
+              temperature: 0.2,
               responseMimeType: "application/json",
             },
           });
 
-          const result = await fallbackModel.generateContent([
-            prompt,
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: mimeType,
-              },
-            },
-          ]);
-
-          const text = result.response.text();
-          rawData = extractJsonObject(text);
+          const responseText = response.text || "";
+          rawData = extractJsonObject(responseText);
           if (rawData) break;
         } catch (fbErr: any) {
           console.warn(`Fallback model (${candidate}) failed:`, fbErr?.message);
