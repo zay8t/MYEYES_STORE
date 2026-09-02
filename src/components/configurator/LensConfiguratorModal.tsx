@@ -30,7 +30,12 @@ import {
   DEFAULT_ADD,
 } from '@/lib/constants/prescription';
 import PrescriptionPickerSheet from './PrescriptionPickerSheet';
-import PrescriptionStep, { Step4Prescription } from './PrescriptionStep';
+import Step4Prescription from './Step4Prescription';
+import {
+  calculateTotalLensPrice,
+  calculateTotalProgressivePrice,
+  TotalPricingResult,
+} from '@/lib/pricingEngine';
 
 export {
   SPH_OPTIONS,
@@ -335,26 +340,56 @@ export function LensConfiguratorModal({
     }
   }, [visionType, selectedLensId]);
 
-  // ─── Single Source of Truth for Lens Price ───────────────────────────────
+  function parsePowerNum(v: string | number | null | undefined): number {
+    const n = parseFloat(String(v || 0));
+    return isNaN(n) ? 0 : n;
+  }
+
+  // ─── Single Source of Truth for Lens Price via Pricing Engine ─────────────
   const isProgressive = visionType === 'progressive';
   const selectedPackage = packages.find((p) => p.id === selectedLensId);
 
+  const parsedOdSph = parsePowerNum(odSph);
+  const parsedOdCyl = parsePowerNum(odCyl);
+  const parsedOsSph = parsePowerNum(osSph);
+  const parsedOsCyl = parsePowerNum(osCyl);
+  const parsedAdd = parsePowerNum(addPower);
+
+  const pricingResult: TotalPricingResult | null = useMemo(() => {
+    if (!selectedLensId) return null;
+    if (isProgressive) {
+      return calculateTotalProgressivePrice(
+        selectedLensId,
+        { sph: parsedOdSph, cyl: parsedOdCyl },
+        { sph: parsedOsSph, cyl: parsedOsCyl },
+        parsedAdd,
+        basePrices
+      );
+    }
+    return calculateTotalLensPrice(
+      selectedLensId,
+      { sph: parsedOdSph, cyl: parsedOdCyl },
+      { sph: parsedOsSph, cyl: parsedOsCyl },
+      basePrices
+    );
+  }, [isProgressive, selectedLensId, parsedOdSph, parsedOdCyl, parsedOsSph, parsedOsCyl, parsedAdd, basePrices]);
+
+  const fallbackBasePrice = isProgressive
+    ? (selectedPackage?.presbyopiaBasePrice ?? 0)
+    : (selectedPackage?.standardBasePrice ?? 0);
+
+  const activeLensPrice = pricingResult?.finalPrice ?? fallbackBasePrice;
+  const framePrice = frame?.price ?? 0;
+  const totalPrice = (framePrice || 0) + (activeLensPrice || 0);
+
   const selectedLens = useMemo(() => {
     if (!selectedPackage) return null;
-    const price = isProgressive
-      ? selectedPackage.presbyopiaBasePrice
-      : selectedPackage.standardBasePrice;
     return {
       ...selectedPackage,
-      price,
+      price: activeLensPrice,
       isProgressive,
     };
-  }, [selectedPackage, isProgressive]);
-
-  const activeLensPrice = selectedLens?.price ?? 0;
-  const framePrice = frame?.price ?? 0;
-  const prescriptionExtra = 0;
-  const totalPrice = framePrice + activeLensPrice + prescriptionExtra;
+  }, [selectedPackage, activeLensPrice, isProgressive]);
 
   if (!isOpen) return null;
 
@@ -596,11 +631,16 @@ export function LensConfiguratorModal({
         prescription: {
           ...prescriptionDetails,
           lensMaterial: String(selectedPackage?.name || ''),
-          lensBasePriceKey: String(selectedPackage?.code || ''),
-          lensBasePriceValue: Number(activeLensPrice),
-          lensMultiplier: 1,
+          lensBasePriceKey: String(pricingResult?.basePriceKey || selectedPackage?.code || ''),
+          lensBasePriceValue: Number(pricingResult?.basePriceValue || activeLensPrice),
+          lensMultiplier: Number(pricingResult?.multiplier || 1),
           lensFinalPrice: Number(activeLensPrice),
           framePrice: Number(frame.price),
+          isAsymmetricRx: pricingResult?.isAsymmetricRx,
+          rightEyeLensPrice: pricingResult?.rightEyeLensPrice,
+          leftEyeLensPrice: pricingResult?.leftEyeLensPrice,
+          rightMultiplier: pricingResult?.rightMultiplier,
+          leftMultiplier: pricingResult?.leftMultiplier,
         },
       };
 
@@ -993,7 +1033,7 @@ export function LensConfiguratorModal({
               STEP 4 — PRESCRIPTION + DUAL MOBILE CAPTURE
           ═══════════════════════════════════════════════ */}
           {step === 4 && (
-            <PrescriptionStep
+            <Step4Prescription
               frame={frame}
               visionType={visionType}
               setVisionType={setVisionType}
@@ -1001,6 +1041,8 @@ export function LensConfiguratorModal({
               selectedPackage={selectedPackage}
               lensPrice={activeLensPrice}
               totalPrice={totalPrice}
+              pricingResult={pricingResult}
+              basePrices={basePrices}
               prescriptionTab={prescriptionTab}
               setPrescriptionTab={setPrescriptionTab}
               uploadedFile={uploadedFile}
