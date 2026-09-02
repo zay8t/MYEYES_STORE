@@ -1,80 +1,14 @@
-import React from "react";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import CustomersCRMClient, { CustomerData } from "@/components/admin/CustomersCRMClient";
-import { OrderReceiptData } from "@/components/A4ReceiptModal";
+import type { Metadata } from "next";
+import AdminUsersClient from "@/components/admin/AdminUsersClient";
 
-export const revalidate = 0; // Fresh data per request
+export const metadata: Metadata = {
+  title: "Customer Directory | MY EYES Admin",
+  description: "Unified customer account directory, contact details, order history, and role management.",
+};
 
-type CustomerOrder = Prisma.OrderGetPayload<{
-  include: {
-    items: {
-      include: {
-        product: true;
-        prescription: true;
-      };
-    };
-  };
-}>;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default async function AdminCustomersPage() {
-  let orders: CustomerOrder[] = [];
-  try {
-    orders = await prisma.order.findMany({
-      include: {
-        items: {
-          include: {
-            product: true,
-            prescription: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("Admin customers page database error:", error);
-  }
-
-  // Group orders by customer email to compile customer CRM profiles
-  const customerMap: Record<string, CustomerData> = {};
-
-  orders.forEach((ord) => {
-    const email = ord.customerEmail.toLowerCase().trim();
-    if (!customerMap[email]) {
-      customerMap[email] = {
-        email,
-        name: ord.customerName,
-        phone: ord.customerPhone || "",
-        address: [ord.shippingAddress, ord.shippingCity].filter(Boolean).join(", "),
-        totalSpent: 0,
-        ordersCount: 0,
-        lastOrderDate: ord.createdAt.toISOString(),
-        orders: [],
-      };
-    }
-
-    const serializedOrder: OrderReceiptData = {
-      ...ord,
-      shippingFee: ord.shippingFee ?? undefined,
-      status: ord.status as OrderReceiptData["status"],
-      createdAt: ord.createdAt.toISOString(),
-      items: ord.items.map((item) => ({
-        ...item,
-        prescription: item.prescription
-          ? {
-              ...item.prescription,
-              createdAt: item.prescription.createdAt.toISOString(),
-            }
-          : null,
-      })),
-    };
-
-    customerMap[email].totalSpent += ord.totalAmount;
-    customerMap[email].ordersCount += 1;
-    customerMap[email].orders.push(serializedOrder);
-  });
-
-  const customersList = Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent);
-
-  return <CustomersCRMClient initialCustomers={customersList} />;
+export default function AdminCustomersPage() {
+  return <AdminUsersClient />;
 }

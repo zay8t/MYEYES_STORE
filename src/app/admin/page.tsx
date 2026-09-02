@@ -136,9 +136,9 @@ export default async function AdminDashboardPage() {
       {/* Dashboard Top Hero Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200/80">
         <div>
-          <span className="badge">PRESCRIPTION OPTICAL MANAGEMENT</span>
-          <h1 className="text-2xl font-bold text-slate-900 mt-1">Optical Retail Performance & Analytics</h1>
-          <p className="text-sm text-slate-500">Real-time metrics, prescription order pipeline, and frame inventory stats</p>
+          <span className="badge">DASHBOARD</span>
+          <h1 className="text-2xl font-bold text-slate-900 mt-1">Store Overview</h1>
+          <p className="text-sm text-slate-500">Real-time sales metrics, customer orders, and frame inventory overview</p>
         </div>
         <div className="flex items-center gap-2.5 flex-shrink-0">
           <Link
@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
             href="/admin/orders"
             className="bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border border-slate-200/45 flex items-center justify-center gap-2"
           >
-            <span>Lab Orders</span>
+            <span>Orders</span>
             <span className="bg-slate-200 text-slate-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">
               {metrics.pendingLabCount}
             </span>
@@ -193,7 +193,7 @@ export default async function AdminDashboardPage() {
         <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-              Prescription Ratio
+              Prescription Share
             </span>
             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/30">
               <Glasses className="w-5 h-5" />
@@ -204,7 +204,7 @@ export default async function AdminDashboardPage() {
               {metrics.rxRatio}% <span className="text-xs font-normal text-slate-400">Rx Orders</span>
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">
-              Custom optical fitting sales
+              Custom lab orders
             </p>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default async function AdminDashboardPage() {
         <div className="bg-white border border-slate-200/70 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-200 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-              Pending Lab Queue
+              Pending Lab Fitting
             </span>
             <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/30">
               <Clock className="w-5 h-5" />
@@ -224,7 +224,7 @@ export default async function AdminDashboardPage() {
               {metrics.pendingLabCount} <span className="text-xs font-normal text-slate-400">Orders</span>
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">
-              Avg turnaround: ~24 hours
+              Waiting for workshop
             </p>
           </div>
         </div>

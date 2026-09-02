@@ -1,14 +1,14 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import PaymentVerificationClient, { PaymentOrder } from "@/components/admin/PaymentVerificationClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Payment Verification | My Eyes Admin",
-  description: "Prepaid online payment verification & settlement system for My Eyes Eyewear.",
+  title: "Approve Advance Deposits | My Eyes Admin",
+  description: "Verify customer bank transfer, EasyPaisa, and JazzCash receipts for My Eyes Eyewear.",
 };
 
 export default async function AdminPaymentsPage() {

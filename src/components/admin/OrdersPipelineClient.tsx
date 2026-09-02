@@ -143,13 +143,13 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60 inline-block mb-1">
-            OPTICAL ORDER FULFILLMENT
+            CUSTOMER ORDERS
           </span>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Prescription Pipeline Suite
+            Customer Orders
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Manage custom lens grinding, optical verification, and customer delivery receipts
+            Track and manage customer prescription orders.
           </p>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
         <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-1">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-            Pipeline Revenue
+            Total Revenue
           </span>
           <p className="text-2xl font-black text-slate-900 font-mono">{formatPrice(totalRevenue)}</p>
         </div>
@@ -228,7 +228,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Debounced search by Order #, Customer Name, Email, or Phone..."
+            placeholder="Search by Order #, Name, or Phone..."
             className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:border-slate-900"
           />
         </div>
@@ -245,7 +245,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                 <th className="px-6 py-4">Optical Specs</th>
                 <th className="px-6 py-4">Total Amount</th>
                 <th className="px-6 py-4">Payment Status</th>
-                <th className="px-6 py-4">Pipeline Status</th>
+                <th className="px-6 py-4">Order Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>

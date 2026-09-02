@@ -102,13 +102,13 @@ export default function InventoryControlClient({ initialProducts }: InventoryCon
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/60 inline-block mb-1">
-            REAL-TIME INVENTORY CONTROL
+            STOCK LEVELS
           </span>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Frame Stock & Inventory Suite
+            Stock Levels
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Quick +/- stock adjustments with instant store-wide revalidation
+            Update available frame quantities in real time.
           </p>
         </div>
       </div>

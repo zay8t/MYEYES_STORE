@@ -295,13 +295,13 @@ export default function AdminUsersClient() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span>User Management</span>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-50 text-[#ff7a00] border border-orange-200">
-              Admin Portal
+            <span>Customer Directory</span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+              Accounts &amp; Orders
             </span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Create, inspect, update roles, reset passwords, and manage customer & staff accounts.
+            Manage customer accounts, contact details, order history, role assignments, and authentication.
           </p>
         </div>
 

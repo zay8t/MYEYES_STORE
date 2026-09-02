@@ -232,14 +232,25 @@ export default function ProductDetailPage({
 
             {/* Stock Availability */}
             <div className="flex items-center gap-2 text-xs">
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span className="font-semibold text-slate-800">
-                In Stock ({product.stock} units ready for optical fitting)
-              </span>
+              {product.stock > 0 ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold text-slate-800">
+                    In Stock ({product.stock} units ready for optical fitting)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                  <span className="font-bold text-rose-600">
+                    Out of Stock (0 units available)
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Sunglasses Lens Selection Options */}
-            {product.category === "SUNGLASSES" && (
+            {product.category === "SUNGLASSES" && product.stock > 0 && (
               <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-900 block">
                   Select Sun Lens Option
@@ -300,7 +311,14 @@ export default function ProductDetailPage({
 
             {/* Action Buttons */}
             <div className="space-y-3 pt-2">
-              {product.category === "SUNGLASSES" ? (
+              {product.stock <= 0 ? (
+                <button
+                  disabled
+                  className="w-full py-4 px-6 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-wider border border-slate-200 cursor-not-allowed"
+                >
+                  Out of Stock
+                </button>
+              ) : product.category === "SUNGLASSES" ? (
                 <button
                   onClick={handleSunglassesAdd}
                   className="w-full py-4 px-6 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"

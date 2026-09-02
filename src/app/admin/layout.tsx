@@ -52,9 +52,8 @@ export default function AdminLayout({
               <div className="px-3 py-2 rounded-xl bg-amber-50/50 border border-amber-200/60 text-[10px] text-slate-600 flex items-center justify-between font-semibold">
                 <span className="flex items-center gap-1.5 font-bold text-slate-800">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Lab Engine Active
+                  Store Online • v2.5
                 </span>
-                <span className="font-mono text-amber-700">v2.5</span>
               </div>
             </div>
           </aside>

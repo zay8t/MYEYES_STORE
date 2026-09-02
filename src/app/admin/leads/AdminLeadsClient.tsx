@@ -75,9 +75,9 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
             <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center">
               <ClipboardList className="w-4.5 h-4.5 text-amber-600" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900">MY EYES Lead Management CRM</h1>
+            <h1 className="text-xl font-bold text-slate-900">Incomplete Leads</h1>
           </div>
-          <p className="text-sm text-slate-500">Automated lead tracking & deduplication engine. Matching phone numbers are auto-deleted when orders are completed.</p>
+          <p className="text-sm text-slate-500">Follow up with shoppers who entered contact details in Step 1 but did not complete checkout.</p>
         </div>
       </div>
 

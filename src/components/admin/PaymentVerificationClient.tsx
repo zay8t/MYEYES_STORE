@@ -710,18 +710,13 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight">
-            Payment Verification & Settlement
+            Approve Advance Deposits
           </h1>
           <p className="text-xs text-slate-500 max-w-sm sm:max-w-none mt-0.5">
-            Verify customer bank transfer, EasyPaisa, and JazzCash proofs and approve orders.
+            Verify customer bank transfer, EasyPaisa, and JazzCash receipts.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600">
-            <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-emerald-700 font-mono">A</kbd> Approve ·
-            <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-red-700 font-mono">R</kbd> Reject ·
-            <kbd className="bg-white border border-slate-200 rounded px-1 py-0.5 text-orange-700 font-mono">F</kbd> Flag
-          </div>
           <button
             onClick={handleRefresh}
             className="h-9 w-9 p-0 flex items-center justify-center shrink-0 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 cursor-pointer transition-colors"
@@ -1163,8 +1158,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                       className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      <span>Approve Payment</span>
-                      <kbd className="hidden sm:inline bg-emerald-500 px-1.5 py-0.5 rounded text-[10px] font-mono">A</kbd>
+                      <span>Approve Deposit</span>
                     </button>
 
                     <button
@@ -1173,8 +1167,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                       className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       <XCircle className="w-4 h-4" />
-                      <span>Reject Payment</span>
-                      <kbd className="hidden sm:inline bg-rose-500 px-1.5 py-0.5 rounded text-[10px] font-mono">R</kbd>
+                      <span>Reject</span>
                     </button>
 
                     <button
@@ -1184,7 +1177,6 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                     >
                       <AlertTriangle className="w-4 h-4" />
                       <span>Flag</span>
-                      <kbd className="hidden sm:inline bg-orange-400 px-1.5 py-0.5 rounded text-[10px] font-mono">F</kbd>
                     </button>
                   </div>
 

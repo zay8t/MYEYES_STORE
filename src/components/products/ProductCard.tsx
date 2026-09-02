@@ -141,9 +141,15 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
 
         {/* Category Pill Badge & Promotional OFF Badge pinned inside top left */}
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 pointer-events-none flex-wrap max-w-[75%]">
-          <span className="bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
-            {product.category || "Eyeglasses"}
-          </span>
+          {product.stock <= 0 ? (
+            <span className="bg-rose-600/95 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+              Out of Stock
+            </span>
+          ) : (
+            <span className="bg-[#0F172A]/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+              {product.category || "Eyeglasses"}
+            </span>
+          )}
           {pricing.hasDiscount && pricing.badgeText && (
             <span className="bg-neutral-900/90 text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded shadow-sm">
               {pricing.badgeText}
@@ -225,7 +231,14 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
             )}
           </div>
 
-          {product.category === "EYEGLASSES" || !product.category ? (
+          {product.stock <= 0 ? (
+            <button
+              disabled
+              className="h-[36px] px-4 rounded-full bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed border border-slate-200"
+            >
+              Out of Stock
+            </button>
+          ) : product.category === "EYEGLASSES" || !product.category ? (
             <button
               onClick={() => onAddLenses && onAddLenses(product)}
               className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"

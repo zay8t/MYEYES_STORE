@@ -72,12 +72,17 @@ export async function updateProductStockAction(productId: string, newStock: numb
       data: { stock: Math.max(0, newStock) },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
-    revalidatePath("/admin/inventory");
-    revalidatePath("/");
-    revalidatePath("/eyeglasses");
-    revalidatePath("/sunglasses");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/products");
+    safeRevalidatePath("/admin/inventory");
+    safeRevalidatePath("/");
+    safeRevalidatePath("/eyeglasses");
+    safeRevalidatePath("/sunglasses");
+    safeRevalidatePath("/men");
+    safeRevalidatePath("/women");
+    safeRevalidatePath("/kids");
+    safeRevalidatePath("/collections");
+    safeRevalidatePath("/products");
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error updating product stock:", error);
@@ -96,12 +101,17 @@ export async function adjustStockDeltaAction(productId: string, delta: number) {
       data: { stock: newStock },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
-    revalidatePath("/admin/inventory");
-    revalidatePath("/");
-    revalidatePath("/eyeglasses");
-    revalidatePath("/sunglasses");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/products");
+    safeRevalidatePath("/admin/inventory");
+    safeRevalidatePath("/");
+    safeRevalidatePath("/eyeglasses");
+    safeRevalidatePath("/sunglasses");
+    safeRevalidatePath("/men");
+    safeRevalidatePath("/women");
+    safeRevalidatePath("/kids");
+    safeRevalidatePath("/collections");
+    safeRevalidatePath("/products");
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error adjusting stock delta:", error);
@@ -147,12 +157,17 @@ export async function createProductAction(input: ProductInput) {
       },
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
-    revalidatePath("/admin/inventory");
-    revalidatePath("/");
-    revalidatePath("/eyeglasses");
-    revalidatePath("/sunglasses");
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/products");
+    safeRevalidatePath("/admin/inventory");
+    safeRevalidatePath("/");
+    safeRevalidatePath("/eyeglasses");
+    safeRevalidatePath("/sunglasses");
+    safeRevalidatePath("/men");
+    safeRevalidatePath("/women");
+    safeRevalidatePath("/kids");
+    safeRevalidatePath("/collections");
+    safeRevalidatePath("/products");
     return { success: true, product };
   } catch (error) {
     console.error("Error creating product:", error);
