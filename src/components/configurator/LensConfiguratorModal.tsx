@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import {
   X,
   User,
@@ -15,15 +14,7 @@ import {
   Eye,
   Zap,
   Sparkles,
-  ShieldCheck,
-  Upload,
-  Camera,
-  Trash2,
   Loader2,
-  ChevronRight,
-  AlertCircle,
-  FileCheck2,
-  ChevronDown,
 } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
@@ -39,6 +30,7 @@ import {
   DEFAULT_ADD,
 } from '@/lib/constants/prescription';
 import PrescriptionPickerSheet from './PrescriptionPickerSheet';
+import Step4Prescription from './Step4Prescription';
 
 export {
   SPH_OPTIONS,
@@ -85,7 +77,7 @@ export interface CustomerProfile {
 type VisionType = 'standard' | 'progressive';
 type PrescriptionTab = 'upload' | 'manual';
 
-interface ActivePickerState {
+export interface ActivePickerState {
   field: 'odSph' | 'odCyl' | 'odAxis' | 'osSph' | 'osCyl' | 'osAxis' | 'add';
   title: string;
   subtitle?: string;
@@ -197,8 +189,6 @@ export function LensConfiguratorModal({
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [rxFileUrl, setRxFileUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // AI Scanner state
   const [isScanning, setIsScanning] = useState(false);
@@ -207,7 +197,7 @@ export function LensConfiguratorModal({
     message?: string;
   }>({ type: 'idle' });
 
-  // Custom Bottom-Sheet Picker State (Eliminating native OS selects)
+  // Custom Bottom-Sheet Picker State
   const [activePicker, setActivePicker] = useState<ActivePickerState | null>(null);
 
   // Manual Rx fields bound to exact clinical ranges
@@ -389,25 +379,6 @@ export function LensConfiguratorModal({
     } catch { /* ignore storage upload error */ }
     setIsUploading(false);
   };
-
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    setUploadedFile(file);
-    const url = URL.createObjectURL(file);
-    setUploadedPreviewUrl(url);
-    setRxFileUrl(null);
-
-    // Trigger AI Scanner & storage upload
-    scanPrescriptionSlip(file);
-    uploadStorageFile(file);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
-  }, [handleFileSelect]);
 
   // ─── Bottom-Sheet Picker Value Handler ──────────────────────────────────
 
@@ -854,404 +825,47 @@ export function LensConfiguratorModal({
           )}
 
           {/* ═══════════════════════════════════════════════
-              STEP 4 — PRESCRIPTION + CUSTOM AMBER PICKER
+              STEP 4 — PRESCRIPTION + DUAL MOBILE CAPTURE
           ═══════════════════════════════════════════════ */}
           {step === 4 && (
-            <div className="space-y-5 animate-in fade-in duration-150">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Prescription Details</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Upload doctor slip for instant AI extraction or enter values.</p>
-              </div>
-
-              {/* Tab Switch */}
-              <div className="flex items-center p-1 bg-slate-100 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setPrescriptionTab('upload')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                    prescriptionTab === 'upload'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  )}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  AI Slip Scan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrescriptionTab('manual')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                    prescriptionTab === 'manual'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  )}
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  Manual Entry
-                </button>
-              </div>
-
-              {/* Upload & AI Scanner Section */}
-              {prescriptionTab === 'upload' && (
-                <div className="space-y-4">
-                  {uploadedPreviewUrl ? (
-                    <div className="relative rounded-2xl border border-amber-300 bg-amber-50/30 overflow-hidden">
-                      <div className="relative w-full aspect-video bg-slate-50">
-                        <Image
-                          src={uploadedPreviewUrl}
-                          alt="Prescription slip preview"
-                          fill
-                          className="object-contain p-2"
-                        />
-                        {/* Scanning Overlay */}
-                        {isScanning && (
-                          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 p-4 animate-in fade-in">
-                            <div className="w-11 h-11 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center">
-                              <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
-                            </div>
-                            <p className="text-xs font-bold text-amber-300">Reading prescription details with AI...</p>
-                            <p className="text-[11px] text-slate-300 text-center">Gemini 1.5 Flash is extracting SPH, CYL, AXIS &amp; ADD</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between px-4 py-2.5 border-t border-amber-200/60 bg-white">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileCheck2 className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">
-                            {uploadedFile?.name}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUploadedFile(null);
-                            setUploadedPreviewUrl(null);
-                            setRxFileUrl(null);
-                            setScanStatus({ type: 'idle' });
-                          }}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
-                          aria-label="Remove slip"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Status Callouts */}
-                      {scanStatus.type === 'success' && (
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border-t border-emerald-200 text-emerald-800 text-xs font-semibold">
-                          <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>{scanStatus.message}</span>
-                        </div>
-                      )}
-
-                      {scanStatus.type === 'error' && (
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-100/70 border-t border-amber-300 text-amber-900 text-xs font-semibold">
-                          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                          <span>{scanStatus.message}</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={cn(
-                        'border-2 border-dashed border-amber-300 bg-amber-50/20 hover:bg-amber-50/40 p-6 rounded-2xl text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3',
-                        isDragging && 'border-amber-500 bg-amber-50/60'
-                      )}
-                    >
-                      <div className="w-12 h-12 rounded-2xl bg-amber-100/80 flex items-center justify-center text-amber-700">
-                        <Upload className="w-6 h-6" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-slate-900">Drop doctor&apos;s slip or tap to browse</p>
-                        <p className="text-xs text-slate-500 mt-0.5">AI will auto-fill your numbers instantly</p>
-                      </div>
-                      <span className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-xs">
-                        Upload Slip (AI Scan)
-                      </span>
-                    </div>
-                  )}
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileSelect(file);
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* ── Compact 3-Column Touch Tile Grid (OD / OS / ADD) ── */}
-              <div className="space-y-4 pt-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {prescriptionTab === 'upload' ? 'Verify Prescription Numbers' : 'Prescription Values'}
-                  </span>
-                  {isProgressive && (
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                      Progressive Active
-                    </span>
-                  )}
-                </div>
-
-                {/* Right Eye (OD) */}
-                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">OD (Right Eye)</p>
-                    <span className="text-[10px] text-slate-400 font-medium">Touch tile to select</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {/* SPH Tile */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'odSph',
-                          title: 'Right Eye (OD) — Sphere (SPH)',
-                          subtitle: 'Select optical sphere power (-16.00 to +16.00)',
-                          options: SPH_OPTIONS,
-                          value: odSph,
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SPH</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{odSph}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-
-                    {/* CYL Tile */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'odCyl',
-                          title: 'Right Eye (OD) — Cylinder (CYL)',
-                          subtitle: 'Select astigmatism cylinder (-4.00 to +4.00)',
-                          options: CYL_OPTIONS,
-                          value: odCyl,
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CYL</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{odCyl}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-
-                    {/* AXIS Tile */}
-                    <button
-                      type="button"
-                      disabled={odCyl === '0.00'}
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'odAxis',
-                          title: 'Right Eye (OD) — Axis',
-                          subtitle: 'Select cylinder axis angle (1° to 180°)',
-                          options: AXIS_OPTIONS,
-                          value: odAxis,
-                          unit: '°',
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AXIS</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">
-                          {odCyl === '0.00' ? '—' : `${odAxis}°`}
-                        </span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Left Eye (OS) */}
-                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">OS (Left Eye)</p>
-                    <span className="text-[10px] text-slate-400 font-medium">Touch tile to select</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {/* SPH Tile */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'osSph',
-                          title: 'Left Eye (OS) — Sphere (SPH)',
-                          subtitle: 'Select optical sphere power (-16.00 to +16.00)',
-                          options: SPH_OPTIONS,
-                          value: osSph,
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SPH</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{osSph}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-
-                    {/* CYL Tile */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'osCyl',
-                          title: 'Left Eye (OS) — Cylinder (CYL)',
-                          subtitle: 'Select astigmatism cylinder (-4.00 to +4.00)',
-                          options: CYL_OPTIONS,
-                          value: osCyl,
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CYL</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">{osCyl}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-
-                    {/* AXIS Tile */}
-                    <button
-                      type="button"
-                      disabled={osCyl === '0.00'}
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'osAxis',
-                          title: 'Left Eye (OS) — Axis',
-                          subtitle: 'Select cylinder axis angle (1° to 180°)',
-                          options: AXIS_OPTIONS,
-                          value: osAxis,
-                          unit: '°',
-                        })
-                      }
-                      className="bg-white border border-slate-200 hover:border-amber-400 active:border-amber-500 active:ring-2 active:ring-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl p-3 flex flex-col items-start cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AXIS</span>
-                      <div className="flex items-center justify-between w-full mt-1">
-                        <span className="text-sm sm:text-base font-mono font-bold text-slate-900">
-                          {osCyl === '0.00' ? '—' : `${osAxis}°`}
-                        </span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Progressive ADD Power Tile */}
-                {isProgressive && (
-                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-2 animate-in fade-in">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-amber-950">ADD Power (Reading Addition)</p>
-                      <span className="text-[10px] text-amber-800 font-semibold">Near &amp; Far</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActivePicker({
-                          field: 'add',
-                          title: 'Reading Addition (ADD Power)',
-                          subtitle: 'Select near vision magnification (+0.75 to +3.50)',
-                          options: ADD_OPTIONS,
-                          value: addPower,
-                        })
-                      }
-                      className="bg-white border border-amber-300 hover:border-amber-500 active:ring-2 active:ring-amber-500/20 rounded-xl p-3.5 flex items-center justify-between cursor-pointer w-full text-left transition-all shadow-2xs"
-                    >
-                      <span className="text-sm font-mono font-bold text-slate-900">{addPower}</span>
-                      <ChevronDown className="w-4 h-4 text-amber-700" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Live Summary Card (Soft Warm Amber Theme) ── */}
-              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-xs text-slate-800 space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">Order Summary</p>
-
-                {/* Frame thumbnail + name */}
-                <div className="flex items-center gap-3">
-                  {frame.imageUrl && (
-                    <div className="w-12 h-10 rounded-lg bg-white border border-amber-200/80 overflow-hidden shrink-0 relative shadow-2xs">
-                      <Image
-                        src={frame.imageUrl}
-                        alt={frame.name}
-                        fill
-                        className="object-contain p-1"
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{frame.name}</p>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Rs. {frame.price.toLocaleString()}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-amber-200/60 pt-2.5 space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Lens Tier</span>
-                    <span className="font-bold text-amber-800 text-right max-w-[200px] truncate">
-                      {selectedPackage?.code} — {selectedPackage?.name}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Vision Mode</span>
-                    <span className="font-bold text-slate-900 capitalize">{visionType}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Lens Price</span>
-                    <span className="font-bold text-slate-900">Rs. {lensPrice.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-baseline pt-2 border-t border-amber-200/80">
-                    <span className="text-sm font-bold text-slate-900">Total Price</span>
-                    <span className="text-amber-600 font-bold text-xl">Rs. {totalPrice.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation Actions */}
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCheckout}
-                  disabled={isCheckingOut || isScanning}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md shadow-amber-500/15 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-                >
-                  {isCheckingOut ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /><span>Processing...</span></>
-                  ) : (
-                    <><ShieldCheck className="w-4 h-4" /><span>Proceed to Checkout</span><ChevronRight className="w-3.5 h-3.5" /></>
-                  )}
-                </button>
-              </div>
-            </div>
+            <Step4Prescription
+              frame={frame}
+              visionType={visionType}
+              setVisionType={setVisionType}
+              selectedPackage={selectedPackage}
+              lensPrice={lensPrice}
+              totalPrice={totalPrice}
+              prescriptionTab={prescriptionTab}
+              setPrescriptionTab={setPrescriptionTab}
+              uploadedFile={uploadedFile}
+              setUploadedFile={setUploadedFile}
+              uploadedPreviewUrl={uploadedPreviewUrl}
+              setUploadedPreviewUrl={setUploadedPreviewUrl}
+              rxFileUrl={rxFileUrl}
+              setRxFileUrl={setRxFileUrl}
+              isScanning={isScanning}
+              scanStatus={scanStatus}
+              scanPrescriptionSlip={scanPrescriptionSlip}
+              uploadStorageFile={uploadStorageFile}
+              odSph={odSph}
+              setOdSph={setOdSph}
+              odCyl={odCyl}
+              setOdCyl={setOdCyl}
+              odAxis={odAxis}
+              setOdAxis={setOdAxis}
+              osSph={osSph}
+              setOsSph={setOsSph}
+              osCyl={osCyl}
+              setOsCyl={setOsCyl}
+              osAxis={osAxis}
+              setOsAxis={setOsAxis}
+              addPower={addPower}
+              setAddPower={setAddPower}
+              openPicker={setActivePicker}
+              onBack={() => setStep(3)}
+              onCheckout={handleCheckout}
+              isCheckingOut={isCheckingOut}
+            />
           )}
         </div>
       </div>
