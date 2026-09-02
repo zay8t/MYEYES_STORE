@@ -6,7 +6,6 @@ import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles
 import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
-import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
@@ -38,7 +37,6 @@ export default function ProductDetailPage({
   const [loading, setLoading] = useState(true);
 
   // Modal state
-  const [rxModalOpen, setRxModalOpen] = useState(false);
   const [configuratorOpen, setConfiguratorOpen] = useState(false);
   const [thicknessModalOpen, setThicknessModalOpen] = useState(false);
   const [lensOption, setLensOption] = useState<"standard" | "polarized">("standard");
@@ -101,17 +99,6 @@ export default function ProductDetailPage({
 
   const imagesList = parseImages(product.images);
   const currentImage = imagesList[0] || "";
-
-  const handleRxSubmit = (details: PrescriptionDetails, totalPrice: number) => {
-    addItem({
-      productId: product.id,
-      name: `${product.name} (${details.lensUsage})`,
-      price: totalPrice,
-      image: currentImage,
-      prescription: details,
-    });
-    setRxModalOpen(false);
-  };
 
   const handleFrameOnlyAdd = () => {
     addItem({
@@ -374,17 +361,6 @@ export default function ProductDetailPage({
         />
       )}
 
-      {/* Legacy PrescriptionModal kept for quiz/catalog flows */}
-      {product.category !== "SUNGLASSES" && rxModalOpen && (
-        <PrescriptionModal
-          isOpen={rxModalOpen}
-          onClose={() => setRxModalOpen(false)}
-          productName={product.name}
-          productPrice={product.price}
-          onSubmit={handleRxSubmit}
-        />
-      )}
-
       {/* Lens Thickness & Refractive Index Slide-Over / Modal */}
       {thicknessModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto">
@@ -414,7 +390,7 @@ export default function ProductDetailPage({
                 isModal={true}
                 onSelectPackage={() => {
                   setThicknessModalOpen(false);
-                  setRxModalOpen(true);
+                  setConfiguratorOpen(true);
                 }}
               />
             </div>

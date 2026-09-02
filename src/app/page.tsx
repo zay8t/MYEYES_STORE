@@ -8,7 +8,7 @@ import { Glasses, Sun, Sparkles, Truck, ShieldCheck, CreditCard, Box, Calculator
 import ProductCard from "@/components/products/ProductCard";
 
 import dynamic from "next/dynamic";
-import PrescriptionModal from "@/components/PrescriptionModal";
+import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
 import FaceShapeMatcher from "@/components/home/FaceShapeMatcher";
 import OrderingJourney from "@/components/home/OrderingJourney";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
@@ -256,26 +256,21 @@ export default function HomePage() {
       {/* ============================================================ */}
       <CategorySpotlight />
 
-      {/* Prescription Modal for Eyeglasses */}
+      {/* Lens Configurator Modal for Eyeglasses */}
       {rxModalOpen && selectedProduct && (
-        <PrescriptionModal
+        <LensConfiguratorModal
           isOpen={rxModalOpen}
           onClose={() => {
             setRxModalOpen(false);
             setSelectedProduct(null);
           }}
-          productName={selectedProduct.name}
-          productPrice={selectedProduct.price}
-          onSubmit={(details, totalPrice) => {
-            addItem({
-              productId: selectedProduct.id,
-              name: `${selectedProduct.name} (${details.lensUsage})`,
-              price: totalPrice,
-              image: selectedProduct.images[0] || "",
-              prescription: details,
-            });
-            setRxModalOpen(false);
-            setSelectedProduct(null);
+          frame={{
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            imageUrl: (Array.isArray(selectedProduct.images)
+              ? selectedProduct.images[0]
+              : selectedProduct.images) || '/placeholder-frame.png',
           }}
         />
       )}

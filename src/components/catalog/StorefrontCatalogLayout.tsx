@@ -9,7 +9,7 @@ import FilterSidebar from "@/components/catalog/FilterSidebar";
 import MobileFilterDrawer from "@/components/catalog/MobileFilterDrawer";
 import ActiveFilterRibbon from "@/components/catalog/ActiveFilterRibbon";
 import ProductCard, { Product } from "@/components/products/ProductCard";
-import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
+import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
 import { useCartStore } from "@/lib/cart-store";
 import { Sparkles, RotateCcw, EyeOff } from "lucide-react";
 
@@ -61,17 +61,6 @@ export default function StorefrontCatalogLayout({
     });
   };
 
-  const handleRxSubmit = (details: PrescriptionDetails, totalPrice: number) => {
-    if (!selectedProduct) return;
-    addItem({
-      productId: selectedProduct.id,
-      name: `${selectedProduct.name} (${details.lensUsage})`,
-      price: totalPrice,
-      image: selectedProduct.images[0] || "",
-      prescription: details,
-    });
-    setRxModalOpen(false);
-  };
 
   return (
     <div className="min-h-screen bg-white py-8 sm:py-12">
@@ -176,15 +165,22 @@ export default function StorefrontCatalogLayout({
         </div>
       </div>
 
-      {/* Prescription Customization Modal */}
+      {/* 4-Step Lens Configurator */}
       {selectedProduct && (
-        <PrescriptionModal
+        <LensConfiguratorModal
           isOpen={rxModalOpen}
-          onClose={() => setRxModalOpen(false)}
-          productName={selectedProduct.name}
-          productPrice={selectedProduct.price}
-          productId={selectedProduct.id}
-          onSubmit={handleRxSubmit}
+          onClose={() => {
+            setRxModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          frame={{
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            imageUrl: (Array.isArray(selectedProduct.images)
+              ? selectedProduct.images[0]
+              : selectedProduct.images) || '/placeholder-frame.png',
+          }}
         />
       )}
     </div>

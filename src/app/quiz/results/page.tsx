@@ -16,7 +16,7 @@ import LogoLoader from "@/components/ui/LogoLoader";
 import { QuizAnswers, QUIZ_STEPS } from "@/lib/quizData";
 import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice } from "@/lib/utils";
-import PrescriptionModal from "@/components/PrescriptionModal";
+import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
 import { useCartStore } from "@/store/useCartStore";
 import { useDiscount } from "@/hooks/useDiscount";
 
@@ -524,27 +524,20 @@ function ResultsInner() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/*  PRESCRIPTION MODAL                                                */}
+      {/*  LENS CONFIGURATOR MODAL                                           */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {rxModalOpen && selectedProduct && (
-        <PrescriptionModal
+        <LensConfiguratorModal
           isOpen={rxModalOpen}
           onClose={() => {
             setRxModalOpen(false);
             setSelectedProduct(null);
           }}
-          productName={selectedProduct.name}
-          productPrice={selectedProduct.price}
-          onSubmit={(details, totalPrice) => {
-            addItem({
-              productId: selectedProduct.id,
-              name: `${selectedProduct.name} (${details.lensUsage})`,
-              price: totalPrice,
-              image: selectedProduct.firstImage || "",
-              prescription: details,
-            });
-            setRxModalOpen(false);
-            setSelectedProduct(null);
+          frame={{
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            imageUrl: selectedProduct.firstImage || (Array.isArray(selectedProduct.images) ? selectedProduct.images[0] : selectedProduct.images) || '/placeholder-frame.png',
           }}
         />
       )}

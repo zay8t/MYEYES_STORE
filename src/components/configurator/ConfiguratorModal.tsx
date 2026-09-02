@@ -1,8 +1,8 @@
 "use client";
 
 import LensConfiguratorModal from "./LensConfiguratorModal";
-import PrescriptionModal from "../PrescriptionModal";
 
-export { LensConfiguratorModal, PrescriptionModal };
-export { PrescriptionModal as ConfiguratorModal };
-export default PrescriptionModal;
+export { LensConfiguratorModal };
+export { LensConfiguratorModal as ConfiguratorModal };
+export { LensConfiguratorModal as PrescriptionModal };
+export default LensConfiguratorModal;

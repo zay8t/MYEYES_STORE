@@ -2,11 +2,11 @@
 
 import React from "react";
 import ProductConfigurator, { ProductConfiguratorProps } from "./ProductConfigurator";
-import PrescriptionModal from "@/components/PrescriptionModal";
+import LensConfiguratorModal from "./LensConfiguratorModal";
 
 export function LensSelectionModal(props: ProductConfiguratorProps) {
   return <ProductConfigurator {...props} />;
 }
 
-export { PrescriptionModal, ProductConfigurator };
+export { LensConfiguratorModal, ProductConfigurator };
 export default LensSelectionModal;
