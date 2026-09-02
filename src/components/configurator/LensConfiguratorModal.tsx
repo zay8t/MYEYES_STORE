@@ -18,10 +18,6 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
-import {
-  calculateTotalLensPrice,
-  calculateTotalProgressivePrice,
-} from '@/lib/pricingEngine';
 import { cn } from '@/lib/utils';
 import {
   SPH_OPTIONS,
@@ -34,7 +30,7 @@ import {
   DEFAULT_ADD,
 } from '@/lib/constants/prescription';
 import PrescriptionPickerSheet from './PrescriptionPickerSheet';
-import Step4Prescription from './Step4Prescription';
+import PrescriptionStep, { Step4Prescription } from './PrescriptionStep';
 
 export {
   SPH_OPTIONS,
@@ -339,37 +335,26 @@ export function LensConfiguratorModal({
     }
   }, [visionType, selectedLensId]);
 
-  // ─── Canonical Lens Pricing Engine Integration ───────────────────────────
-
+  // ─── Single Source of Truth for Lens Price ───────────────────────────────
   const isProgressive = visionType === 'progressive';
   const selectedPackage = packages.find((p) => p.id === selectedLensId);
 
-  const pricingResult = useMemo(() => {
-    if (!selectedLensId) return null;
-    if (isProgressive) {
-      return calculateTotalProgressivePrice(
-        selectedLensId,
-        { sph: odSph, cyl: odCyl },
-        { sph: osSph, cyl: osCyl },
-        addPower,
-        basePrices
-      );
-    }
-    return calculateTotalLensPrice(
-      selectedLensId,
-      { sph: odSph, cyl: odCyl },
-      { sph: osSph, cyl: osCyl },
-      basePrices
-    );
-  }, [selectedLensId, isProgressive, odSph, odCyl, osSph, osCyl, addPower, basePrices]);
+  const selectedLens = useMemo(() => {
+    if (!selectedPackage) return null;
+    const price = isProgressive
+      ? selectedPackage.presbyopiaBasePrice
+      : selectedPackage.standardBasePrice;
+    return {
+      ...selectedPackage,
+      price,
+      isProgressive,
+    };
+  }, [selectedPackage, isProgressive]);
 
-  const lensPrice = pricingResult
-    ? pricingResult.finalPrice
-    : (selectedPackage
-        ? (isProgressive ? selectedPackage.presbyopiaBasePrice : selectedPackage.standardBasePrice)
-        : 0);
-
-  const totalPrice = frame.price + lensPrice;
+  const activeLensPrice = selectedLens?.price ?? 0;
+  const framePrice = frame?.price ?? 0;
+  const prescriptionExtra = 0;
+  const totalPrice = framePrice + activeLensPrice + prescriptionExtra;
 
   if (!isOpen) return null;
 
@@ -611,16 +596,11 @@ export function LensConfiguratorModal({
         prescription: {
           ...prescriptionDetails,
           lensMaterial: String(selectedPackage?.name || ''),
-          lensBasePriceKey: String(pricingResult?.basePriceKey || selectedPackage?.code || ''),
-          lensBasePriceValue: Number(pricingResult?.basePriceValue || lensPrice),
-          lensMultiplier: Number(pricingResult?.multiplier || 1),
-          lensFinalPrice: Number(lensPrice),
+          lensBasePriceKey: String(selectedPackage?.code || ''),
+          lensBasePriceValue: Number(activeLensPrice),
+          lensMultiplier: 1,
+          lensFinalPrice: Number(activeLensPrice),
           framePrice: Number(frame.price),
-          isAsymmetricRx: Boolean(pricingResult?.isAsymmetricRx),
-          rightEyeLensPrice: pricingResult?.rightEyeLensPrice ? Number(pricingResult.rightEyeLensPrice) : undefined,
-          leftEyeLensPrice: pricingResult?.leftEyeLensPrice ? Number(pricingResult.leftEyeLensPrice) : undefined,
-          rightMultiplier: pricingResult?.rightMultiplier ? Number(pricingResult.rightMultiplier) : undefined,
-          leftMultiplier: pricingResult?.leftMultiplier ? Number(pricingResult.leftMultiplier) : undefined,
         },
       };
 
@@ -632,7 +612,8 @@ export function LensConfiguratorModal({
             frame: { id: frame.id, name: frame.name, price: frame.price, imageUrl: frame.imageUrl, color: frame.color },
             visionType,
             selectedLensId,
-            lensPrice: Number(lensPrice),
+            selectedLens,
+            lensPrice: Number(activeLensPrice),
             totalPrice: Number(totalPrice),
             prescriptionDetails,
             contact: { fullName: fullName.trim(), whatsapp: whatsapp.trim() },
@@ -690,6 +671,9 @@ export function LensConfiguratorModal({
               </div>
               <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
                 {frame.name} — <span className="font-bold text-slate-900">Rs. {frame.price.toLocaleString()}</span>
+                {step > 2 && selectedLens && (
+                  <> + <span className="font-bold text-amber-600">Rs. {activeLensPrice.toLocaleString()}</span> = <span className="font-extrabold text-slate-900">Rs. {totalPrice.toLocaleString()}</span></>
+                )}
               </p>
             </div>
           </div>
@@ -1009,14 +993,14 @@ export function LensConfiguratorModal({
               STEP 4 — PRESCRIPTION + DUAL MOBILE CAPTURE
           ═══════════════════════════════════════════════ */}
           {step === 4 && (
-            <Step4Prescription
+            <PrescriptionStep
               frame={frame}
               visionType={visionType}
               setVisionType={setVisionType}
+              selectedLens={selectedLens}
               selectedPackage={selectedPackage}
-              lensPrice={lensPrice}
+              lensPrice={activeLensPrice}
               totalPrice={totalPrice}
-              pricingResult={pricingResult}
               prescriptionTab={prescriptionTab}
               setPrescriptionTab={setPrescriptionTab}
               uploadedFile={uploadedFile}
