@@ -2,9 +2,10 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles, X, Camera, TicketPercent } from "lucide-react";
+import { Glasses, Sun, ArrowLeft, Check, ShieldCheck, Truck, RotateCcw, Sparkles, X, TicketPercent } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
+import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
 import PrescriptionModal, { PrescriptionDetails } from "@/components/PrescriptionModal";
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
@@ -36,8 +37,9 @@ export default function ProductDetailPage({
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Prescription modal state
+  // Modal state
   const [rxModalOpen, setRxModalOpen] = useState(false);
+  const [configuratorOpen, setConfiguratorOpen] = useState(false);
   const [thicknessModalOpen, setThicknessModalOpen] = useState(false);
   const [lensOption, setLensOption] = useState<"standard" | "polarized">("standard");
 
@@ -322,11 +324,11 @@ export default function ProductDetailPage({
               ) : (
                 <>
                   <button
-                    onClick={() => setRxModalOpen(true)}
-                    className="w-full py-4 px-6 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={() => setConfiguratorOpen(true)}
+                    className="w-full py-4 px-6 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Glasses className="w-4 h-4" />
-                    Configure Lenses &amp; Add to Cart
+                    Configure Lenses &amp; Checkout
                   </button>
 
                   <button
@@ -358,8 +360,22 @@ export default function ProductDetailPage({
         </div>
       </div>
 
-      {/* Prescription Modal */}
+      {/* 4-Step Lens Configurator (Eyeglasses only — direct checkout handoff) */}
       {product.category !== "SUNGLASSES" && (
+        <LensConfiguratorModal
+          isOpen={configuratorOpen}
+          onClose={() => setConfiguratorOpen(false)}
+          frame={{
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            imageUrl: imagesList[0] || '/placeholder-frame.png',
+          }}
+        />
+      )}
+
+      {/* Legacy PrescriptionModal kept for quiz/catalog flows */}
+      {product.category !== "SUNGLASSES" && rxModalOpen && (
         <PrescriptionModal
           isOpen={rxModalOpen}
           onClose={() => setRxModalOpen(false)}
