@@ -357,11 +357,13 @@ model LensPrice {
 model Lead {
   id        String   @id @default(uuid())
   name      String
-  age       Int
+  age       Int      @default(0)
   whatsapp  String
   frameId   String?
-  status    String   @default("abandoned")
+  frameName String?
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model BasePriceSetting {

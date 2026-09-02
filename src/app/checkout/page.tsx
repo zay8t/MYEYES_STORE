@@ -112,6 +112,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Pre-populate customer name & phone if captured during configurator Step 1
+    try {
+      const storedName = localStorage.getItem("myeyes_lead_name");
+      const storedPhone = localStorage.getItem("myeyes_lead_phone");
+      if (storedName) setName((prev) => prev || storedName);
+      if (storedPhone) setPhone((prev) => prev || storedPhone);
+    } catch { /* storage fallback */ }
+
     // Initialize persistent tentative Order Number for transfer remarks & cloudinary tagging
     const storedOrd = sessionStorage.getItem("myeyes_checkout_ord");
     if (storedOrd) {

@@ -3,14 +3,16 @@
 import React, { useState } from "react";
 import { ClipboardList, MessageCircle, User, Calendar, Phone, CheckCircle2, AlertCircle, Trash2, Loader2 } from "lucide-react";
 
-interface LeadItem {
+export interface LeadItem {
   id: string;
   name: string;
-  age: number;
+  age?: number;
   whatsapp: string;
-  frameId: string | null;
+  frameId?: string | null;
+  frameName?: string | null;
   status: string;
   createdAt: Date | string;
+  updatedAt?: Date | string;
 }
 
 function formatDate(d: Date | string) {
@@ -142,18 +144,18 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100">
-                  <th className="px-5 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Age</th>
-                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">WhatsApp</th>
+                  <th className="px-5 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Customer Name</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Mobile Number</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Frame Name</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Captured Date & Time</th>
                   <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">CRM Status</th>
-                  <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Captured Date</th>
                   <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredLeads.map(lead => {
                   const waNumber = lead.whatsapp.replace(/\D/g, "");
-                  const waHref = `https://wa.me/92${waNumber.startsWith("92") ? waNumber.slice(2) : waNumber}`;
+                  const waHref = `https://wa.me/92${waNumber.startsWith("92") ? waNumber.slice(2) : (waNumber.startsWith("0") ? waNumber.slice(1) : waNumber)}`;
                   const isDeleting = deletingId === lead.id;
 
                   return (
@@ -166,21 +168,25 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
                           <span className="font-semibold text-slate-900">{lead.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-slate-700 font-medium">{lead.age} yrs</td>
                       <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-1.5 text-slate-700">
+                        <div className="flex items-center gap-1.5 text-slate-700 font-mono">
                           <Phone className="w-3 h-3 text-slate-400" />
                           {lead.whatsapp}
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <StatusBadge status={lead.status} />
+                        <span className="inline-flex items-center font-semibold text-slate-900 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-md border border-amber-200">
+                          {lead.frameName || "Selected Frame"}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5 text-slate-500">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {formatDate(lead.createdAt)}
+                          {formatDate(lead.updatedAt || lead.createdAt)}
                         </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={lead.status} />
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">

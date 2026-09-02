@@ -151,6 +151,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url, orderId: order.id, orderNumber: order.orderNumber });
     }
 
+    // CRM Lead Deduplication & Conversion Algorithm
+    if (customerName || customerEmail) {
+      try {
+        const activeLeads = await prisma.lead.findMany({
+          where: { status: { notIn: ["CONVERTED", "converted"] } },
+        });
+
+        const matchingLeadIds = activeLeads
+          .filter((l) => {
+            const isNameMatch = customerName && l.name &&
+              l.name.trim().toLowerCase() === customerName.trim().toLowerCase();
+            return isNameMatch;
+          })
+          .map((l) => l.id);
+
+        if (matchingLeadIds.length > 0) {
+          await prisma.lead.updateMany({
+            where: { id: { in: matchingLeadIds } },
+            data: { status: "CONVERTED", updatedAt: new Date() },
+          });
+        }
+      } catch (leadErr) {
+        console.error("Checkout lead conversion failed:", leadErr);
+      }
+    }
+
     // Direct return for instant order completion in demo/local mode
     return NextResponse.json({
       success: true,

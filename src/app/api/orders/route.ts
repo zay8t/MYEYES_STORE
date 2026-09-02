@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // CRM Lead Deduplication Algorithm
+    // CRM Lead Deduplication & Conversion Algorithm
     const normalizedPhone = normalizePhoneNumber(customerPhone);
     if (normalizedPhone || customerName) {
       try {
@@ -277,13 +277,14 @@ export async function POST(request: NextRequest) {
           .map((l) => l.id);
 
         if (matchingLeadIds.length > 0) {
-          await prisma.lead.deleteMany({
+          await prisma.lead.updateMany({
             where: { id: { in: matchingLeadIds } },
+            data: { status: "CONVERTED", updatedAt: new Date() },
           });
-          console.log(`[Lead Deduplication] Automatically deleted ${matchingLeadIds.length} matching lead(s) for Order #${order.orderNumber}`);
+          console.log(`[Lead Conversion] Successfully converted ${matchingLeadIds.length} lead(s) for Order #${order.orderNumber}`);
         }
       } catch (leadErr) {
-        console.error("Lead deduplication auto-delete failed:", leadErr);
+        console.error("Lead conversion update failed:", leadErr);
       }
     }
 

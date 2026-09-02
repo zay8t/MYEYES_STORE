@@ -7,22 +7,61 @@ export const revalidate = 0;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, age, whatsapp, frameId } = body;
+    const name = String(body.name || "").trim();
+    const phone = String(body.phone || body.whatsapp || "").trim();
+    const age = body.age ? parseInt(String(body.age), 10) : 0;
+    const frameId = body.frameId ? String(body.frameId) : null;
+    const frameName = body.frameName ? String(body.frameName).trim() : null;
+    const status = body.status ? String(body.status).toUpperCase() : "ACTIVE";
 
-    if (!name || !age || !whatsapp) {
+    if (!name || !phone) {
       return NextResponse.json(
-        { error: "name, age, and whatsapp are required" },
+        { error: "name and mobile number (phone/whatsapp) are required" },
         { status: 400 }
       );
     }
 
+    const cleanDigits = phone.replace(/\D/g, "");
+    const coreDigits = cleanDigits.startsWith("92") && cleanDigits.length >= 12
+      ? cleanDigits.slice(2)
+      : (cleanDigits.startsWith("0") && cleanDigits.length >= 11 ? cleanDigits.slice(1) : cleanDigits);
+    const standardPhone = cleanDigits.startsWith("0") ? cleanDigits : `0${coreDigits}`;
+
+    // Deduplication check
+    const existing = await prisma.lead.findFirst({
+      where: {
+        status: { in: ["ACTIVE", "active", "abandoned"] },
+        OR: [
+          { whatsapp: standardPhone },
+          { whatsapp: { contains: coreDigits } },
+        ],
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (existing) {
+      const updated = await prisma.lead.update({
+        where: { id: existing.id },
+        data: {
+          name,
+          whatsapp: standardPhone,
+          frameId: frameId || existing.frameId,
+          frameName: frameName || existing.frameName,
+          status: "ACTIVE",
+          updatedAt: new Date(),
+        },
+      });
+      return NextResponse.json(updated, { status: 200 });
+    }
+
     const lead = await prisma.lead.create({
       data: {
-        name: String(name).trim(),
-        age: parseInt(String(age), 10),
-        whatsapp: String(whatsapp).trim(),
-        frameId: frameId ? String(frameId) : null,
-        status: "abandoned",
+        name,
+        age,
+        whatsapp: standardPhone,
+        frameId,
+        frameName,
+        status,
       },
     });
 

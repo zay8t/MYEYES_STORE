@@ -311,35 +311,49 @@ export function LensConfiguratorModal({
     e.preventDefault();
     setStep1Error('');
 
-    const name = fullName.trim();
-    const phone = whatsapp.replace(/\D/g, '');
+    const customerName = fullName.trim();
+    const rawDigits = whatsapp.replace(/\D/g, '');
 
-    if (!name || name.length < 2) {
+    if (!customerName || customerName.length < 2) {
       setStep1Error('Please enter your full name.');
       return;
     }
-    if (phone.length < 10) {
+    if (rawDigits.length < 10) {
       setStep1Error('Please enter a valid WhatsApp/mobile number.');
       return;
     }
 
-    // Fire-and-forget lead capture
-    setIsSavingLead(true);
-    try {
-      await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          whatsapp: phone.startsWith('92') ? phone : `92${phone.startsWith('0') ? phone.slice(1) : phone}`,
-          frameId: frame.id,
-          frameName: frame.name,
-          source: 'configurator',
-        }),
-      });
-    } catch { /* fire-and-forget */ }
-    setIsSavingLead(false);
+    const customerPhone = rawDigits.startsWith('0')
+      ? rawDigits
+      : (rawDigits.startsWith('92') ? `0${rawDigits.slice(2)}` : `0${rawDigits}`);
+    const activeFrameId = frame?.id ? String(frame.id) : undefined;
+    const activeFrameName = frame?.name || 'Selected Frame';
 
+    // Store in localStorage for checkout pre-population
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('myeyes_lead_name', customerName);
+        localStorage.setItem('myeyes_lead_phone', customerPhone);
+        localStorage.setItem('myeyes_lead_frame', activeFrameName);
+      }
+    } catch { /* storage fallback */ }
+
+    // Dispatch non-blocking lead capture
+    setIsSavingLead(true);
+    fetch('/api/leads/partial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: customerName,
+        phone: customerPhone,
+        frameId: activeFrameId,
+        frameName: activeFrameName,
+      }),
+    }).catch(err => {
+      console.warn('Lead capture notice:', err);
+    });
+
+    setIsSavingLead(false);
     setStep(2);
   };
 
