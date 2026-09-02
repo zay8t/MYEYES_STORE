@@ -11,7 +11,7 @@ function snapToInterval(
   max: number,
   defaultVal: string = "0.00"
 ): string {
-  if (raw === null || raw === undefined || raw === "" || raw === "None" || raw === "PL") {
+  if (raw === null || raw === undefined || raw === "" || raw === "None" || raw === "PL" || raw === "Plano") {
     return defaultVal;
   }
 
@@ -38,7 +38,7 @@ function snapAxis(raw: string | number | null | undefined): string {
 }
 
 function snapAdd(raw: string | number | null | undefined): string | null {
-  if (!raw || raw === "null" || raw === "none") return null;
+  if (!raw || raw === "null" || raw === "none" || raw === "0" || raw === "0.00") return null;
   const str = String(raw).trim().replace(/^[+]/, "");
   const num = parseFloat(str);
   if (isNaN(num) || num <= 0) return null;
@@ -46,6 +46,28 @@ function snapAdd(raw: string | number | null | undefined): string | null {
   const clamped = Math.max(0.75, Math.min(3.50, rounded));
   return `+${clamped.toFixed(2)}`;
 }
+
+// Extract JSON object safely from LLM output
+function extractJsonObject(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error("No valid JSON found in model output.");
+  }
+}
+
+const PRIMARY_MODEL = "gemini-1.5-flash";
+const FALLBACK_MODELS = [
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-pro",
+  "gemini-2.0-flash",
+  "gemini-pro-vision",
+];
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,66 +96,6 @@ export async function POST(req: NextRequest) {
     const mimeType = file.type || "image/jpeg";
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            od: {
-              type: SchemaType.OBJECT,
-              description: "Right Eye (OD) optical prescription values",
-              properties: {
-                sph: {
-                  type: SchemaType.STRING,
-                  description: "Sphere (SPH/SPHERICAL/PWR) power (e.g. +1.50, -0.25, 0.00, Plano/PL)",
-                },
-                cyl: {
-                  type: SchemaType.STRING,
-                  description: "Cylinder (CYL/CYLINDRICAL) power (e.g. -0.50, +1.00, 0.00, Nil/None)",
-                },
-                axis: {
-                  type: SchemaType.STRING,
-                  description: "Axis in degrees between 1 and 180 (e.g. 90, 180, 45)",
-                },
-              },
-              required: ["sph", "cyl", "axis"],
-            },
-            os: {
-              type: SchemaType.OBJECT,
-              description: "Left Eye (OS/O.S.) optical prescription values",
-              properties: {
-                sph: {
-                  type: SchemaType.STRING,
-                  description: "Sphere (SPH/SPHERICAL/PWR) power (e.g. +1.50, -0.25, 0.00, Plano/PL)",
-                },
-                cyl: {
-                  type: SchemaType.STRING,
-                  description: "Cylinder (CYL/CYLINDRICAL) power (e.g. -0.50, +1.00, 0.00, Nil/None)",
-                },
-                axis: {
-                  type: SchemaType.STRING,
-                  description: "Axis in degrees between 1 and 180 (e.g. 90, 180, 45)",
-                },
-              },
-              required: ["sph", "cyl", "axis"],
-            },
-            add: {
-              type: SchemaType.STRING,
-              nullable: true,
-              description: "Reading Addition (ADD / NV / Near Vision / Bifocal Addition) e.g. +1.50, +2.00, or null if distance only",
-            },
-            pd: {
-              type: SchemaType.STRING,
-              nullable: true,
-              description: "Pupillary distance (PD / IPD) in mm if listed, or null",
-            },
-          },
-          required: ["od", "os"],
-        },
-      },
-    });
 
     const prompt = `You are an expert optical laboratory assistant analyzing an ophthalmologist/optometrist prescription slip.
 Examine the doctor's handwriting or printed prescription carefully:
@@ -144,20 +106,105 @@ Examine the doctor's handwriting or printed prescription carefully:
 5. ADD (Addition/Near Vision/Reading): extract reading power (e.g. +1.50, +2.00, +2.50) if indicated for presbyopia/reading/bifocal/progressive. Otherwise null.
 6. PD: Pupillary distance in mm if mentioned (e.g. 62, 64), otherwise null.
 
-Format numbers with explicit signs (+ or -) and 2 decimal places (e.g. "+1.25", "-1.50", "0.00"). Return valid JSON.`;
+Return ONLY a JSON object with this exact structure:
+{
+  "od": { "sph": "-1.25", "cyl": "-0.75", "axis": "170" },
+  "os": { "sph": "-2.25", "cyl": "-1.00", "axis": "10" },
+  "add": null,
+  "pd": "64"
+}`;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeType,
+    let rawData: any = null;
+    let lastError: any = null;
+
+    // Attempt 1: Primary structured output with gemini-1.5-flash
+    try {
+      const model = genAI.getGenerativeModel({
+        model: PRIMARY_MODEL,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: SchemaType.OBJECT,
+            properties: {
+              od: {
+                type: SchemaType.OBJECT,
+                description: "Right Eye (OD) optical prescription values",
+                properties: {
+                  sph: { type: SchemaType.STRING },
+                  cyl: { type: SchemaType.STRING },
+                  axis: { type: SchemaType.STRING },
+                },
+                required: ["sph", "cyl", "axis"],
+              },
+              os: {
+                type: SchemaType.OBJECT,
+                description: "Left Eye (OS/O.S.) optical prescription values",
+                properties: {
+                  sph: { type: SchemaType.STRING },
+                  cyl: { type: SchemaType.STRING },
+                  axis: { type: SchemaType.STRING },
+                },
+                required: ["sph", "cyl", "axis"],
+              },
+              add: { type: SchemaType.STRING, nullable: true },
+              pd: { type: SchemaType.STRING, nullable: true },
+            },
+            required: ["od", "os"],
+          },
         },
-      },
-    ]);
+      });
 
-    const responseText = result.response.text();
-    const rawData = JSON.parse(responseText);
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType,
+          },
+        },
+      ]);
+
+      const text = result.response.text();
+      rawData = extractJsonObject(text);
+    } catch (err: any) {
+      console.warn(`Primary structured model (${PRIMARY_MODEL}) failed:`, err?.message);
+      lastError = err;
+    }
+
+    // Attempt 2: Fallback across candidate models with relaxed JSON parsing
+    if (!rawData) {
+      for (const candidate of FALLBACK_MODELS) {
+        try {
+          const fallbackModel = genAI.getGenerativeModel({
+            model: candidate,
+            generationConfig: {
+              responseMimeType: "application/json",
+            },
+          });
+
+          const result = await fallbackModel.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: mimeType,
+              },
+            },
+          ]);
+
+          const text = result.response.text();
+          rawData = extractJsonObject(text);
+          if (rawData) break;
+        } catch (fbErr: any) {
+          console.warn(`Fallback model (${candidate}) failed:`, fbErr?.message);
+          lastError = fbErr;
+        }
+      }
+    }
+
+    if (!rawData) {
+      throw lastError || new Error("Unable to parse prescription with available AI models.");
+    }
 
     // Sanitize and snap to our exact 0.25 step interval arrays
     const sanitizedData = {
@@ -184,7 +231,7 @@ Format numbers with explicit signs (+ or -) and 2 decimal places (e.g. "+1.25", 
     return NextResponse.json(
       {
         success: false,
-        error: error?.message || "Failed to scan prescription slip with AI.",
+        error: "Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.",
       },
       { status: 500 }
     );

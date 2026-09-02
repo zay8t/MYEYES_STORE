@@ -352,14 +352,14 @@ export function LensConfiguratorModal({
       } else {
         setScanStatus({
           type: 'error',
-          message: json?.error || 'Could not auto-read all numbers. Please confirm your values below.',
+          message: 'Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.',
         });
       }
     } catch (err) {
       console.warn('AI Scan network issue:', err);
       setScanStatus({
         type: 'error',
-        message: 'Could not auto-read all numbers. Please confirm your values below.',
+        message: 'Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.',
       });
     } finally {
       setIsScanning(false);
