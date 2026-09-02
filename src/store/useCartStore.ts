@@ -1,17 +1,28 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+
+export interface EyePrescriptionValues {
+  sph?: string | number;
+  cyl?: string | number | null;
+  axis?: string | number | null;
+}
 
 export interface OpticalPrescription {
   lensUsage?: string;
   lensMaterial?: string;
-  odSph?: number;
-  odCyl?: number | null;
-  odAxis?: number | null;
-  osSph?: number;
-  osCyl?: number | null;
-  osAxis?: number | null;
-  pd?: number;
-  rxFileUrl?: string;
+  odSph?: number | string;
+  odCyl?: number | string | null;
+  odAxis?: number | string | null;
+  osSph?: number | string;
+  osCyl?: number | string | null;
+  osAxis?: number | string | null;
+  od?: EyePrescriptionValues;
+  os?: EyePrescriptionValues;
+  add?: number | string | null;
+  pd?: number | string | null;
+  rxFileUrl?: string | null;
+  slipUrl?: string | null;
+  slipName?: string | null;
   notes?: string;
   // Pricing breakdown
   lensBasePriceKey?: string;
@@ -51,6 +62,43 @@ interface CartStore {
   subtotalPrice: () => number;
 }
 
+// Self-healing resilient localStorage wrapper
+const safeStorage = {
+  getItem: (name: string): string | null => {
+    try {
+      if (typeof window === "undefined") return null;
+      const raw = localStorage.getItem(name);
+      if (!raw || raw.includes("[object Object]") || raw.includes("[object File]") || raw.includes("[object Blob]")) {
+        if (raw) localStorage.removeItem(name);
+        return null;
+      }
+      JSON.parse(raw);
+      return raw;
+    } catch {
+      try {
+        localStorage.removeItem(name);
+      } catch {}
+      return null;
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(name, value);
+      }
+    } catch (e) {
+      console.warn("Failed to persist cart to localStorage:", e);
+    }
+  },
+  removeItem: (name: string): void => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(name);
+      }
+    } catch {}
+  },
+};
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -67,6 +115,7 @@ export const useCartStore = create<CartStore>()(
           const newItem: CartItem = {
             ...item,
             id: newItemId,
+            price: Number(item.price || 0),
             quantity: item.quantity || 1,
           };
           return {
@@ -96,13 +145,14 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => set({ items: [] }),
 
-      totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
+      totalItems: () => get().items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0),
 
       subtotalPrice: () =>
-        get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+        get().items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0),
     }),
     {
       name: "my-eyes-cart-storage",
+      storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ items: state.items }),
     }
   )

@@ -176,16 +176,31 @@ export default function CartDrawer() {
                       <span>{item.prescription.lensMaterial || "1.56 Index"}</span>
                     </div>
 
-                    {item.prescription.odSph !== undefined && (
-                      <div className="grid grid-cols-2 text-slate-600 font-mono text-[9.5px] pt-0.5">
-                        <div>OD: SPH {item.prescription.odSph} | CYL {item.prescription.odCyl || "0.00"} | AXIS {item.prescription.odAxis || "-"}</div>
-                        <div>OS: SPH {item.prescription.osSph} | CYL {item.prescription.osCyl || "0.00"} | AXIS {item.prescription.osAxis || "-"}</div>
+                    <div className="grid grid-cols-2 text-slate-600 font-mono text-[9.5px] pt-0.5">
+                      <div>
+                        OD: SPH {String(item.prescription.odSph ?? item.prescription.od?.sph ?? "0.00")} | CYL {String(item.prescription.odCyl ?? item.prescription.od?.cyl ?? "0.00")} | AXIS {String(item.prescription.odAxis ?? item.prescription.od?.axis ?? "180")}°
+                      </div>
+                      <div>
+                        OS: SPH {String(item.prescription.osSph ?? item.prescription.os?.sph ?? "0.00")} | CYL {String(item.prescription.osCyl ?? item.prescription.os?.cyl ?? "0.00")} | AXIS {String(item.prescription.osAxis ?? item.prescription.os?.axis ?? "180")}°
+                      </div>
+                    </div>
+
+                    {item.prescription.add && (
+                      <div className="text-[9.5px] text-amber-800 font-medium pt-0.5">
+                        Reading ADD: {String(item.prescription.add)}
                       </div>
                     )}
+
                     {item.prescription.pd && (
                       <span className="block text-[9.5px] text-slate-400">
-                        PD: {item.prescription.pd} mm
+                        PD: {String(item.prescription.pd)} mm
                       </span>
+                    )}
+
+                    {(item.prescription.slipUrl || item.prescription.rxFileUrl) && (
+                      <div className="text-[9.5px] text-emerald-700 font-semibold pt-0.5 flex items-center gap-1">
+                        ✓ Slip attached
+                      </div>
                     )}
                   </div>
                 )}

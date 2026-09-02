@@ -151,13 +151,12 @@ export function Step4Prescription({
       setUploadedFile(processedFile);
       const url = URL.createObjectURL(processedFile);
       setUploadedPreviewUrl(url);
-      setRxFileUrl(null);
 
-      // Trigger AI Scanner & storage upload
+      // Trigger automatic scan & storage upload
       scanPrescriptionSlip(processedFile);
       uploadStorageFile(processedFile);
     },
-    [setUploadedFile, setUploadedPreviewUrl, setRxFileUrl, scanPrescriptionSlip, uploadStorageFile]
+    [setUploadedFile, setUploadedPreviewUrl, scanPrescriptionSlip, uploadStorageFile]
   );
 
   const handleDrop = useCallback(
@@ -183,7 +182,7 @@ export function Step4Prescription({
       <div>
         <h3 className="text-base font-bold text-slate-900">Prescription Details</h3>
         <p className="text-xs text-slate-500 mt-0.5">
-          Snap a photo of your doctor slip for instant AI reading or enter numbers manually.
+          Snap a photo of your doctor slip for instant detection or enter numbers manually.
         </p>
       </div>
 
@@ -200,7 +199,7 @@ export function Step4Prescription({
           )}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-          AI Slip Scan
+          Scan Prescription Slip
         </button>
         <button
           type="button"
@@ -218,12 +217,12 @@ export function Step4Prescription({
       </div>
 
       {/* ═══════════════════════════════════════════════
-          AI SLIP SCAN TAB (Dual Mobile Capture)
+          PRESCRIPTION SLIP SCAN TAB (Dual Mobile Capture)
       ═══════════════════════════════════════════════ */}
       {prescriptionTab === 'upload' && (
         <div className="space-y-4">
           {uploadedPreviewUrl ? (
-            /* Uploaded Preview + AI Scanning State */
+            /* Uploaded Preview + Reading State */
             <div className="relative rounded-2xl border border-amber-300 bg-amber-50/30 overflow-hidden shadow-xs">
               {/* Media Preview Viewport */}
               <div className="relative w-full min-h-[180px] sm:min-h-[220px] bg-slate-50 flex items-center justify-center">
@@ -250,15 +249,15 @@ export function Step4Prescription({
                   </div>
                 )}
 
-                {/* AI Scanning Overlay */}
+                {/* Reading Slip Overlay */}
                 {isScanning && (
                   <div className="absolute inset-0 bg-slate-900/65 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2.5 p-4 animate-in fade-in">
                     <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center shadow-lg shadow-amber-500/20">
                       <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
                     </div>
-                    <p className="text-sm font-bold text-amber-300">Analyzing slip with AI...</p>
+                    <p className="text-sm font-bold text-amber-300">Reading your prescription slip...</p>
                     <p className="text-xs text-slate-300 text-center max-w-[260px]">
-                      Extracting SPH, CYL, AXIS &amp; ADD
+                      Detecting SPH, CYL, AXIS &amp; ADD
                     </p>
                   </div>
                 )}
@@ -277,7 +276,7 @@ export function Step4Prescription({
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
                     className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 transition cursor-pointer flex items-center gap-1 text-[11px] font-bold"
-                    title="Re-snap photo"
+                    title="Change photo"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Change</span>
@@ -667,7 +666,7 @@ export function Step4Prescription({
               </div>
             </div>
             <span className="font-mono font-bold text-neutral-800 text-xs sm:text-sm whitespace-nowrap">
-              Rs. {frame.price.toLocaleString()}/-
+              Rs. {Number(frame.price || 0).toLocaleString()}/-
             </span>
           </div>
 
@@ -698,7 +697,7 @@ export function Step4Prescription({
                 </span>
               </div>
               <span className="text-[11px] text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 shrink-0">
-                Far + Near Included (Base Rs. {selectedPackage?.presbyopiaBasePrice?.toLocaleString()})
+                Far + Near Included (Base Rs. {Number(selectedPackage?.presbyopiaBasePrice || 0).toLocaleString()})
               </span>
             </div>
           ) : (
@@ -707,7 +706,7 @@ export function Step4Prescription({
                 STANDARD VISION LENS (EVERYDAY SINGLE WEAR)
               </span>
               <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60 shrink-0">
-                Base Rs. {selectedPackage?.standardBasePrice?.toLocaleString()}
+                Base Rs. {Number(selectedPackage?.standardBasePrice || 0).toLocaleString()}
               </span>
             </div>
           )}
@@ -744,7 +743,7 @@ export function Step4Prescription({
               Rs. {Math.round(totalPrice).toLocaleString()}/-
             </span>
             <span className="text-[11px] text-neutral-400 block mt-1 font-normal">
-              Lens: Rs. {Math.round(lensPrice).toLocaleString()} + Frame: Rs. {frame.price.toLocaleString()}
+              Lens: Rs. {Math.round(lensPrice).toLocaleString()} + Frame: Rs. {Number(frame.price || 0).toLocaleString()}
             </span>
           </div>
           <div className="text-left sm:text-right">

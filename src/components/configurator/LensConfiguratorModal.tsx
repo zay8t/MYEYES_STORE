@@ -343,7 +343,7 @@ export function LensConfiguratorModal({
     setStep(2);
   };
 
-  // ─── AI Prescription Scanner & Upload ────────────────────────────────────
+  // ─── Prescription Scanner & Upload ───────────────────────────────────────
 
   const scanPrescriptionSlip = async (file: File) => {
     setIsScanning(true);
@@ -360,40 +360,51 @@ export function LensConfiguratorModal({
 
       const json = await res.json();
 
-      if (res.ok && json.success && json.data) {
-        const { od, os, add } = json.data;
-
-        // Auto-fill right eye
-        if (od?.sph && SPH_OPTIONS.includes(od.sph)) setOdSph(od.sph);
-        if (od?.cyl && CYL_OPTIONS.includes(od.cyl)) setOdCyl(od.cyl);
-        if (od?.axis && AXIS_OPTIONS.includes(od.axis)) setOdAxis(od.axis);
-
-        // Auto-fill left eye
-        if (os?.sph && SPH_OPTIONS.includes(os.sph)) setOsSph(os.sph);
-        if (os?.cyl && CYL_OPTIONS.includes(os.cyl)) setOsCyl(os.cyl);
-        if (os?.axis && AXIS_OPTIONS.includes(os.axis)) setOsAxis(os.axis);
-
-        // Auto-detect ADD power and switch to progressive mode
-        if (add && ADD_OPTIONS.includes(add)) {
-          setAddPower(add);
-          setVisionType('progressive');
+      if (res.ok && json.success) {
+        if (json.slipUrl && typeof json.slipUrl === 'string') {
+          setRxFileUrl(json.slipUrl);
         }
 
-        setScanStatus({
-          type: 'success',
-          message: 'Numbers auto-detected from your slip with AI. Please verify below.',
-        });
+        if (json.data) {
+          const { od, os, add } = json.data;
+
+          // Auto-fill right eye
+          if (od?.sph && SPH_OPTIONS.includes(od.sph)) setOdSph(od.sph);
+          if (od?.cyl && CYL_OPTIONS.includes(od.cyl)) setOdCyl(od.cyl);
+          if (od?.axis && AXIS_OPTIONS.includes(od.axis)) setOdAxis(od.axis);
+
+          // Auto-fill left eye
+          if (os?.sph && SPH_OPTIONS.includes(os.sph)) setOsSph(os.sph);
+          if (os?.cyl && CYL_OPTIONS.includes(os.cyl)) setOsCyl(os.cyl);
+          if (os?.axis && AXIS_OPTIONS.includes(os.axis)) setOsAxis(os.axis);
+
+          // Auto-detect ADD power and switch to progressive mode
+          if (add && ADD_OPTIONS.includes(add)) {
+            setAddPower(add);
+            setVisionType('progressive');
+          }
+
+          setScanStatus({
+            type: 'success',
+            message: 'Numbers detected from your slip. Please verify below.',
+          });
+        } else {
+          setScanStatus({
+            type: 'success',
+            message: 'Prescription slip attached. Please select your power numbers below.',
+          });
+        }
       } else {
         setScanStatus({
           type: 'error',
-          message: 'Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.',
+          message: 'We could not clearly detect all numbers. Please confirm or adjust them manually below.',
         });
       }
     } catch (err) {
-      console.warn('AI Scan network issue:', err);
+      console.warn('Prescription scan network issue:', err);
       setScanStatus({
         type: 'error',
-        message: 'Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.',
+        message: 'We could not clearly detect all numbers. Please confirm or adjust them manually below.',
       });
     } finally {
       setIsScanning(false);
@@ -401,6 +412,8 @@ export function LensConfiguratorModal({
   };
 
   const uploadStorageFile = async (file: File) => {
+    // If we already received Cloudinary slipUrl from scan, skip secondary upload
+    if (rxFileUrl && rxFileUrl.includes('cloudinary.com')) return;
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -408,7 +421,8 @@ export function LensConfiguratorModal({
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       if (res.ok) {
         const data = await res.json();
-        setRxFileUrl(data.url || data.fileUrl || null);
+        const url = data.url || data.fileUrl || data.secure_url || null;
+        if (url) setRxFileUrl(url);
       }
     } catch { /* ignore storage upload error */ }
     setIsUploading(false);
@@ -489,9 +503,21 @@ export function LensConfiguratorModal({
         osSph: parseVal(osSph),
         osCyl: parseCyl(osCyl),
         osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
+        od: {
+          sph: String(odSph || "0.00"),
+          cyl: String(odCyl || "0.00"),
+          axis: String(odAxis || "180"),
+        },
+        os: {
+          sph: String(osSph || "0.00"),
+          cyl: String(osCyl || "0.00"),
+          axis: String(osAxis || "180"),
+        },
         add: isProgressive ? parseVal(addPower) : null,
         lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
         rxFileUrl: typeof finalRxUrl === 'string' ? finalRxUrl : undefined,
+        slipUrl: typeof finalRxUrl === 'string' ? finalRxUrl : null,
+        slipName: uploadedFile?.name || null,
       };
 
       const cartPayload = {

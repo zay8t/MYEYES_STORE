@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -80,19 +81,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: "Gemini API key is not configured on server." },
-        { status: 500 }
-      );
-    }
-
     // Convert file arrayBuffer to base64
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64Data = buffer.toString("base64");
     const mimeType = file.type || "image/jpeg";
+    const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+    // Upload prescription slip to permanent Cloudinary storage
+    let slipUrl: string | null = null;
+    try {
+      const uploadRes = await uploadToCloudinary(dataUri, "myeyes/prescriptions", ["prescription-slip"]);
+      if (uploadRes?.secure_url && !uploadRes.secure_url.startsWith("data:")) {
+        slipUrl = uploadRes.secure_url;
+      }
+    } catch (uploadErr) {
+      console.warn("Cloudinary upload issue:", uploadErr);
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      // If API key is missing, return success with slipUrl so customer isn't blocked
+      return NextResponse.json({
+        success: true,
+        slipUrl,
+        data: null,
+      });
+    }
 
     const ai = new GoogleGenAI({ apiKey });
 
@@ -198,7 +213,7 @@ Return valid structured JSON matching the schema.`;
     }
 
     if (!rawData) {
-      throw lastError || new Error("Unable to parse prescription with available AI models.");
+      throw lastError || new Error("Unable to parse prescription numbers.");
     }
 
     // Sanitize and snap to our exact 0.25 step interval arrays
@@ -220,13 +235,14 @@ Return valid structured JSON matching the schema.`;
     return NextResponse.json({
       success: true,
       data: sanitizedData,
+      slipUrl,
     });
   } catch (error: any) {
-    console.error("Prescription AI Scan Error:", error);
+    console.error("Prescription Scan Error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Could not auto-read prescription numbers clearly. Please tap the fields below to enter them manually.",
+        error: "We could not clearly detect all numbers. Please confirm or adjust them manually below.",
       },
       { status: 500 }
     );

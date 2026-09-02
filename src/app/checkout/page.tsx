@@ -1116,20 +1116,35 @@ export default function CheckoutPage() {
                     {item.prescription && (
                       <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/60 text-[9px] space-y-1">
                         <div className="flex items-center justify-between font-bold text-slate-800 border-b border-slate-200/40 pb-1">
-                          <span>Lens: {item.prescription.lensUsage || "Prescription"}</span>
+                          <span>Lens: {item.prescription.lensUsage || "Prescription Lenses"}</span>
                           <span>{item.prescription.lensMaterial || "1.56 Index"}</span>
                         </div>
 
-                        {item.prescription.odSph !== undefined && item.prescription.osSph !== undefined && (
-                          <div className="grid grid-cols-2 text-slate-500 font-mono text-[8.5px] pt-0.5 leading-relaxed">
-                            <div>OD: SPH {item.prescription.odSph.toFixed(2)} | CYL {item.prescription.odCyl || "0.00"} | AXIS {item.prescription.odAxis || "-"}</div>
-                            <div>OS: SPH {item.prescription.osSph.toFixed(2)} | CYL {item.prescription.osCyl || "0.00"} | AXIS {item.prescription.osAxis || "-"}</div>
+                        <div className="grid grid-cols-2 text-slate-600 font-mono text-[8.5px] pt-0.5 leading-relaxed">
+                          <div>
+                            OD: SPH {String(item.prescription.odSph ?? item.prescription.od?.sph ?? "0.00")} | CYL {String(item.prescription.odCyl ?? item.prescription.od?.cyl ?? "0.00")} | AXIS {String(item.prescription.odAxis ?? item.prescription.od?.axis ?? "180")}°
+                          </div>
+                          <div>
+                            OS: SPH {String(item.prescription.osSph ?? item.prescription.os?.sph ?? "0.00")} | CYL {String(item.prescription.osCyl ?? item.prescription.os?.cyl ?? "0.00")} | AXIS {String(item.prescription.osAxis ?? item.prescription.os?.axis ?? "180")}°
+                          </div>
+                        </div>
+
+                        {item.prescription.add && (
+                          <div className="text-[8.5px] text-amber-800 font-medium pt-0.5">
+                            Reading ADD: {String(item.prescription.add)}
                           </div>
                         )}
+
                         {item.prescription.pd && (
                           <span className="block text-[8.5px] text-slate-400">
-                            Pupillary Distance (PD): {item.prescription.pd} mm
+                            Pupillary Distance (PD): {String(item.prescription.pd)} mm
                           </span>
+                        )}
+
+                        {(item.prescription.slipUrl || item.prescription.rxFileUrl) && (
+                          <div className="text-[8.5px] text-emerald-700 font-semibold pt-0.5 flex items-center gap-1">
+                            ✓ Prescription Slip Attached
+                          </div>
                         )}
                       </div>
                     )}
