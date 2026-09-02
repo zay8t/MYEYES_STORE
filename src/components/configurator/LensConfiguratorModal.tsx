@@ -21,6 +21,8 @@ import {
   Trash2,
   Loader2,
   ChevronRight,
+  AlertCircle,
+  FileCheck2,
 } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
@@ -178,6 +180,13 @@ export function LensConfiguratorModal({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // AI Scanner state
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState<{
+    type: 'success' | 'error' | 'idle';
+    message?: string;
+  }>({ type: 'idle' });
+
   // Manual Rx fields bound to exact 0.25 D optical ranges
   const [odSph, setOdSph] = useState(DEFAULT_SPH);
   const [odCyl, setOdCyl] = useState(DEFAULT_CYL);
@@ -207,6 +216,8 @@ export function LensConfiguratorModal({
       setUploadedFile(null);
       setUploadedPreviewUrl(null);
       setRxFileUrl(null);
+      setIsScanning(false);
+      setScanStatus({ type: 'idle' });
       setOdSph(DEFAULT_SPH);
       setOdCyl(DEFAULT_CYL);
       setOdAxis(DEFAULT_AXIS);
@@ -284,7 +295,76 @@ export function LensConfiguratorModal({
     setStep(2);
   };
 
-  // ─── File upload helpers ─────────────────────────────────────────────────
+  // ─── AI Prescription Scanner & Upload ────────────────────────────────────
+
+  const scanPrescriptionSlip = async (file: File) => {
+    setIsScanning(true);
+    setScanStatus({ type: 'idle' });
+
+    try {
+      const formData = new FormData();
+      formData.append('slip', file);
+
+      const res = await fetch('/api/prescription/scan', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (res.ok && json.success && json.data) {
+        const { od, os, add } = json.data;
+
+        // Auto-fill right eye
+        if (od?.sph && SPH_OPTIONS.includes(od.sph)) setOdSph(od.sph);
+        if (od?.cyl && CYL_OPTIONS.includes(od.cyl)) setOdCyl(od.cyl);
+        if (od?.axis && AXIS_OPTIONS.includes(od.axis)) setOdAxis(od.axis);
+
+        // Auto-fill left eye
+        if (os?.sph && SPH_OPTIONS.includes(os.sph)) setOsSph(os.sph);
+        if (os?.cyl && CYL_OPTIONS.includes(os.cyl)) setOsCyl(os.cyl);
+        if (os?.axis && AXIS_OPTIONS.includes(os.axis)) setOsAxis(os.axis);
+
+        // Auto-detect ADD power and switch to progressive mode
+        if (add && ADD_OPTIONS.includes(add)) {
+          setAddPower(add);
+          setVisionType('progressive');
+        }
+
+        setScanStatus({
+          type: 'success',
+          message: 'Numbers auto-detected from your slip with AI. Please verify below.',
+        });
+      } else {
+        setScanStatus({
+          type: 'error',
+          message: json?.error || 'Could not auto-read all numbers. Please confirm your values below.',
+        });
+      }
+    } catch (err) {
+      console.warn('AI Scan network issue:', err);
+      setScanStatus({
+        type: 'error',
+        message: 'Could not auto-read all numbers. Please confirm your values below.',
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const uploadStorageFile = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setRxFileUrl(data.url || data.fileUrl || null);
+      }
+    } catch { /* ignore storage upload error */ }
+    setIsUploading(false);
+  };
 
   const handleFileSelect = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -292,6 +372,10 @@ export function LensConfiguratorModal({
     const url = URL.createObjectURL(file);
     setUploadedPreviewUrl(url);
     setRxFileUrl(null);
+
+    // Trigger AI Scanner & storage upload
+    scanPrescriptionSlip(file);
+    uploadStorageFile(file);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -301,30 +385,15 @@ export function LensConfiguratorModal({
     if (file) handleFileSelect(file);
   }, [handleFileSelect]);
 
-  const handleUploadFile = async () => {
-    if (!uploadedFile) return;
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setRxFileUrl(data.url || data.fileUrl || null);
-      }
-    } catch { /* ignore upload error */ }
-    setIsUploading(false);
-  };
-
   // ─── Checkout handoff ────────────────────────────────────────────────────
 
   const handleCheckout = async () => {
     if (isCheckingOut) return;
     setIsCheckingOut(true);
 
-    // Ensure slip is uploaded if that tab is active and file is chosen
-    if (prescriptionTab === 'upload' && uploadedFile && !rxFileUrl) {
-      await handleUploadFile();
+    // Ensure slip is uploaded if file is chosen
+    if (uploadedFile && !rxFileUrl) {
+      await uploadStorageFile(uploadedFile);
     }
 
     const lensLabel = `${selectedPackage?.name || 'Custom Lens'} (${isProgressive ? 'Progressive' : 'Standard'})`;
@@ -335,21 +404,17 @@ export function LensConfiguratorModal({
       return isNaN(num) || num === 0 ? null : num;
     };
 
-    const prescriptionDetails = prescriptionTab === 'manual'
-      ? {
-          odSph: parseVal(odSph),
-          odCyl: parseCyl(odCyl),
-          odAxis: parseCyl(odCyl) === null ? null : parseInt(odAxis, 10),
-          osSph: parseVal(osSph),
-          osCyl: parseCyl(osCyl),
-          osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
-          add: isProgressive ? parseFloat(addPower) : null,
-          lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
-        }
-      : {
-          rxFileUrl: rxFileUrl || undefined,
-          lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
-        };
+    const prescriptionDetails = {
+      odSph: parseVal(odSph),
+      odCyl: parseCyl(odCyl),
+      odAxis: parseCyl(odCyl) === null ? null : parseInt(odAxis, 10),
+      osSph: parseVal(osSph),
+      osCyl: parseCyl(osCyl),
+      osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
+      add: isProgressive ? parseFloat(addPower) : null,
+      lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
+      rxFileUrl: rxFileUrl || undefined,
+    };
 
     const cartPayload = {
       productId: frame.id,
@@ -732,13 +797,13 @@ export function LensConfiguratorModal({
           )}
 
           {/* ═══════════════════════════════════════════════
-              STEP 4 — PRESCRIPTION + CHECKOUT
+              STEP 4 — PRESCRIPTION + AI SCANNER + CHECKOUT
           ═══════════════════════════════════════════════ */}
           {step === 4 && (
             <div className="space-y-5">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Prescription Details</h3>
-                <p className="text-xs text-neutral-500 mt-1">Upload your doctor&apos;s slip or enter numbers manually.</p>
+                <p className="text-xs text-neutral-500 mt-1">Upload doctor slip for instant AI extraction or enter values manually.</p>
               </div>
 
               {/* Tab Switch */}
@@ -753,8 +818,8 @@ export function LensConfiguratorModal({
                       : 'text-neutral-500 hover:text-slate-700'
                   )}
                 >
-                  <Camera className="w-3.5 h-3.5" />
-                  Upload Slip
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  AI Slip Scan
                 </button>
                 <button
                   type="button"
@@ -767,43 +832,68 @@ export function LensConfiguratorModal({
                   )}
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  Enter Numbers
+                  Manual Entry
                 </button>
               </div>
 
-              {/* Upload Tab */}
+              {/* Upload & AI Scanner Section */}
               {prescriptionTab === 'upload' && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {uploadedPreviewUrl ? (
-                    <div className="relative rounded-2xl border-2 border-amber-300 bg-amber-50/30 overflow-hidden">
-                      <div className="relative w-full aspect-video">
+                    <div className="relative rounded-2xl border-2 border-amber-300 bg-amber-50/40 overflow-hidden">
+                      <div className="relative w-full aspect-video bg-neutral-100">
                         <Image
                           src={uploadedPreviewUrl}
                           alt="Prescription slip preview"
                           fill
                           className="object-contain p-2"
                         />
+                        {/* Scanning Overlay */}
+                        {isScanning && (
+                          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 p-4 animate-in fade-in">
+                            <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
+                              <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
+                            </div>
+                            <p className="text-xs font-bold text-amber-300">Reading prescription details with AI...</p>
+                            <p className="text-[11px] text-neutral-300 text-center">Gemini 1.5 Flash is extracting SPH, CYL, AXIS &amp; ADD</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center justify-between px-4 py-2.5 border-t border-amber-200/50">
-                        <span className="text-[11px] font-semibold text-amber-800 truncate max-w-[200px]">
-                          {uploadedFile?.name}
-                        </span>
+
+                      <div className="flex items-center justify-between px-4 py-2.5 border-t border-amber-200/60 bg-white">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileCheck2 className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span className="text-[11px] font-semibold text-slate-800 truncate max-w-[200px]">
+                            {uploadedFile?.name}
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
                             setUploadedFile(null);
                             setUploadedPreviewUrl(null);
                             setRxFileUrl(null);
+                            setScanStatus({ type: 'idle' });
                           }}
                           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                          aria-label="Remove slip"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      {rxFileUrl && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border-t border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-[11px] font-semibold text-emerald-700">Slip uploaded successfully</span>
+
+                      {/* Status Callouts */}
+                      {scanStatus.type === 'success' && (
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border-t border-emerald-200 text-emerald-800 text-xs font-semibold">
+                          <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{scanStatus.message}</span>
+                        </div>
+                      )}
+
+                      {scanStatus.type === 'error' && (
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-100/70 border-t border-amber-300 text-amber-900 text-xs font-semibold">
+                          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span>{scanStatus.message}</span>
                         </div>
                       )}
                     </div>
@@ -814,7 +904,7 @@ export function LensConfiguratorModal({
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
                       className={cn(
-                        'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all',
+                        'border-2 border-dashed rounded-2xl p-7 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all',
                         isDragging
                           ? 'border-amber-500 bg-amber-50'
                           : 'border-neutral-200 hover:border-amber-400 hover:bg-amber-50/30'
@@ -827,11 +917,11 @@ export function LensConfiguratorModal({
                         <Upload className={cn('w-6 h-6', isDragging ? 'text-amber-600' : 'text-neutral-400')} />
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-bold text-slate-900">Drop slip here or tap to browse</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Take a photo or upload JPG/PNG</p>
+                        <p className="text-sm font-bold text-slate-900">Drop doctor&apos;s slip or tap to browse</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">AI will auto-fill your numbers instantly</p>
                       </div>
-                      <span className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold">
-                        Choose File
+                      <span className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors">
+                        Upload Slip (AI Scan)
                       </span>
                     </div>
                   )}
@@ -850,79 +940,91 @@ export function LensConfiguratorModal({
                 </div>
               )}
 
-              {/* Manual Entry Tab */}
-              {prescriptionTab === 'manual' && (
-                <div className="space-y-4">
-                  {(['OD (Right Eye)', 'OS (Left Eye)'] as const).map((label, eyeIndex) => {
-                    const isRight = eyeIndex === 0;
-                    const sph = isRight ? odSph : osSph;
-                    const cyl = isRight ? odCyl : osCyl;
-                    const axis = isRight ? odAxis : osAxis;
-                    const setSph = isRight ? setOdSph : setOsSph;
-                    const setCyl = isRight ? setOdCyl : setOsCyl;
-                    const setAxis = isRight ? setOdAxis : setOsAxis;
-
-                    return (
-                      <div key={label} className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
-                        <p className="text-xs font-bold text-slate-900">{label}</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {/* SPH */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">SPH</label>
-                            <select
-                              value={sph}
-                              onChange={(e) => setSph(e.target.value)}
-                              className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
-                            >
-                              {SPH_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                            </select>
-                          </div>
-                          {/* CYL */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">CYL</label>
-                            <select
-                              value={cyl}
-                              onChange={(e) => {
-                                setCyl(e.target.value);
-                                if (e.target.value === '0.00') setAxis(DEFAULT_AXIS);
-                              }}
-                              className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
-                            >
-                              {CYL_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                            </select>
-                          </div>
-                          {/* AXIS */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">AXIS</label>
-                            <select
-                              value={axis}
-                              onChange={(e) => setAxis(e.target.value)}
-                              disabled={cyl === '0.00'}
-                              className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer disabled:opacity-40"
-                            >
-                              {AXIS_OPTIONS.map((v) => <option key={v} value={v}>{v}°</option>)}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* ADD field for progressive */}
+              {/* ── Extracted / Manual Dropdowns Verification Section ── */}
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {prescriptionTab === 'upload' ? 'Verify Prescription Numbers' : 'Prescription Values'}
+                  </span>
                   {isProgressive && (
-                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-                      <p className="text-xs font-bold text-amber-900">ADD Power (Reading Addition)</p>
-                      <select
-                        value={addPower}
-                        onChange={(e) => setAddPower(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
-                      >
-                        {ADD_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
-                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                      Progressive Mode
+                    </span>
                   )}
                 </div>
-              )}
+
+                {(['OD (Right Eye)', 'OS (Left Eye)'] as const).map((label, eyeIndex) => {
+                  const isRight = eyeIndex === 0;
+                  const sph = isRight ? odSph : osSph;
+                  const cyl = isRight ? odCyl : osCyl;
+                  const axis = isRight ? odAxis : osAxis;
+                  const setSph = isRight ? setOdSph : setOsSph;
+                  const setCyl = isRight ? setOdCyl : setOsCyl;
+                  const setAxis = isRight ? setOdAxis : setOsAxis;
+
+                  return (
+                    <div key={label} className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
+                      <p className="text-xs font-bold text-slate-900">{label}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* SPH */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">SPH</label>
+                          <select
+                            value={sph}
+                            onChange={(e) => setSph(e.target.value)}
+                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
+                          >
+                            {SPH_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        {/* CYL */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">CYL</label>
+                          <select
+                            value={cyl}
+                            onChange={(e) => {
+                              setCyl(e.target.value);
+                              if (e.target.value === '0.00') setAxis(DEFAULT_AXIS);
+                            }}
+                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
+                          >
+                            {CYL_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        {/* AXIS */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">AXIS</label>
+                          <select
+                            value={axis}
+                            onChange={(e) => setAxis(e.target.value)}
+                            disabled={cyl === '0.00'}
+                            className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer disabled:opacity-40"
+                          >
+                            {AXIS_OPTIONS.map((v) => <option key={v} value={v}>{v}°</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* ADD field for progressive */}
+                {isProgressive && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-amber-900">ADD Power (Reading Addition)</p>
+                      <span className="text-[10px] text-amber-700 font-semibold">Near &amp; Far Lenses</span>
+                    </div>
+                    <select
+                      value={addPower}
+                      onChange={(e) => setAddPower(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
+                    >
+                      {ADD_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
 
               {/* ── Live Summary Bar (Warm Amber Theme) ── */}
               <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-slate-800 space-y-3">
@@ -981,7 +1083,7 @@ export function LensConfiguratorModal({
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  disabled={isCheckingOut}
+                  disabled={isCheckingOut || isScanning}
                   className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-colors cursor-pointer active:scale-[0.99] disabled:opacity-60"
                 >
                   {isCheckingOut ? (
