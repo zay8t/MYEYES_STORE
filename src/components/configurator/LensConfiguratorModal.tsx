@@ -15,7 +15,6 @@ import {
   Eye,
   Zap,
   Sparkles,
-  Sun,
   ShieldCheck,
   Upload,
   Camera,
@@ -26,6 +25,23 @@ import {
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
 import { cn } from '@/lib/utils';
+import {
+  SPH_OPTIONS,
+  CYL_OPTIONS,
+  AXIS_OPTIONS,
+  ADD_OPTIONS,
+  DEFAULT_SPH,
+  DEFAULT_CYL,
+  DEFAULT_AXIS,
+  DEFAULT_ADD,
+} from '@/lib/constants/prescription';
+
+export {
+  SPH_OPTIONS,
+  CYL_OPTIONS,
+  AXIS_OPTIONS,
+  ADD_OPTIONS,
+};
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -64,27 +80,6 @@ export interface CustomerProfile {
 
 type VisionType = 'standard' | 'progressive';
 type PrescriptionTab = 'upload' | 'manual';
-
-// ─── Refractive index data ───────────────────────────────────────────────────
-
-const SPHERE_OPTIONS = [
-  'PL', '+0.25', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75',
-  '+2.00', '+2.25', '+2.50', '+2.75', '+3.00', '+3.25', '+3.50',
-  '+3.75', '+4.00', '+4.50', '+5.00', '+5.50', '+6.00',
-  '-0.25', '-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75',
-  '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50',
-  '-3.75', '-4.00', '-4.50', '-5.00', '-5.50', '-6.00', '-7.00', '-8.00',
-];
-
-const CYL_OPTIONS = [
-  'None', '-0.25', '-0.50', '-0.75', '-1.00', '-1.25', '-1.50',
-  '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50',
-  '-3.75', '-4.00',
-];
-
-const AXIS_OPTIONS = Array.from({ length: 181 }, (_, i) => String(i));
-
-const ADD_OPTIONS = ['+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00'];
 
 // ─── Step Progress Indicator ─────────────────────────────────────────────────
 
@@ -183,14 +178,14 @@ export function LensConfiguratorModal({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Manual Rx fields
-  const [odSph, setOdSph] = useState('PL');
-  const [odCyl, setOdCyl] = useState('None');
-  const [odAxis, setOdAxis] = useState('0');
-  const [osSph, setOsSph] = useState('PL');
-  const [osCyl, setOsCyl] = useState('None');
-  const [osAxis, setOsAxis] = useState('0');
-  const [addPower, setAddPower] = useState('+1.50');
+  // Manual Rx fields bound to exact 0.25 D optical ranges
+  const [odSph, setOdSph] = useState(DEFAULT_SPH);
+  const [odCyl, setOdCyl] = useState(DEFAULT_CYL);
+  const [odAxis, setOdAxis] = useState(DEFAULT_AXIS);
+  const [osSph, setOsSph] = useState(DEFAULT_SPH);
+  const [osCyl, setOsCyl] = useState(DEFAULT_CYL);
+  const [osAxis, setOsAxis] = useState(DEFAULT_AXIS);
+  const [addPower, setAddPower] = useState(DEFAULT_ADD);
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -212,6 +207,13 @@ export function LensConfiguratorModal({
       setUploadedFile(null);
       setUploadedPreviewUrl(null);
       setRxFileUrl(null);
+      setOdSph(DEFAULT_SPH);
+      setOdCyl(DEFAULT_CYL);
+      setOdAxis(DEFAULT_AXIS);
+      setOsSph(DEFAULT_SPH);
+      setOsCyl(DEFAULT_CYL);
+      setOsAxis(DEFAULT_AXIS);
+      setAddPower(DEFAULT_ADD);
       setIsCheckingOut(false);
     }
   }, [isOpen, currentUser, refresh]);
@@ -327,14 +329,20 @@ export function LensConfiguratorModal({
 
     const lensLabel = `${selectedPackage?.name || 'Custom Lens'} (${isProgressive ? 'Progressive' : 'Standard'})`;
 
+    const parseVal = (v: string) => parseFloat(v) || 0;
+    const parseCyl = (v: string) => {
+      const num = parseFloat(v);
+      return isNaN(num) || num === 0 ? null : num;
+    };
+
     const prescriptionDetails = prescriptionTab === 'manual'
       ? {
-          odSph: odSph === 'PL' ? 0 : parseFloat(odSph),
-          odCyl: odCyl === 'None' ? null : parseFloat(odCyl),
-          odAxis: odCyl === 'None' ? null : parseInt(odAxis, 10),
-          osSph: osSph === 'PL' ? 0 : parseFloat(osSph),
-          osCyl: osCyl === 'None' ? null : parseFloat(osCyl),
-          osAxis: osCyl === 'None' ? null : parseInt(osAxis, 10),
+          odSph: parseVal(odSph),
+          odCyl: parseCyl(odCyl),
+          odAxis: parseCyl(odCyl) === null ? null : parseInt(odAxis, 10),
+          osSph: parseVal(osSph),
+          osCyl: parseCyl(osCyl),
+          osAxis: parseCyl(osCyl) === null ? null : parseInt(osAxis, 10),
           add: isProgressive ? parseFloat(addPower) : null,
           lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
         }
@@ -493,7 +501,7 @@ export function LensConfiguratorModal({
                 <button
                   type="submit"
                   disabled={isSavingLead}
-                  className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer disabled:opacity-60"
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-60"
                 >
                   {isSavingLead ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>
@@ -866,7 +874,7 @@ export function LensConfiguratorModal({
                               onChange={(e) => setSph(e.target.value)}
                               className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
                             >
-                              {SPHERE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                              {SPH_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                             </select>
                           </div>
                           {/* CYL */}
@@ -874,7 +882,10 @@ export function LensConfiguratorModal({
                             <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">CYL</label>
                             <select
                               value={cyl}
-                              onChange={(e) => { setCyl(e.target.value); if (e.target.value === 'None') setAxis('0'); }}
+                              onChange={(e) => {
+                                setCyl(e.target.value);
+                                if (e.target.value === '0.00') setAxis(DEFAULT_AXIS);
+                              }}
                               className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer"
                             >
                               {CYL_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
@@ -886,7 +897,7 @@ export function LensConfiguratorModal({
                             <select
                               value={axis}
                               onChange={(e) => setAxis(e.target.value)}
-                              disabled={cyl === 'None'}
+                              disabled={cyl === '0.00'}
                               className="w-full px-2.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none cursor-pointer disabled:opacity-40"
                             >
                               {AXIS_OPTIONS.map((v) => <option key={v} value={v}>{v}°</option>)}
@@ -913,14 +924,14 @@ export function LensConfiguratorModal({
                 </div>
               )}
 
-              {/* ── Live Summary Bar ── */}
-              <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Order Summary</p>
+              {/* ── Live Summary Bar (Warm Amber Theme) ── */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-slate-800 space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800">Order Summary</p>
 
                 {/* Frame thumbnail + name */}
                 <div className="flex items-center gap-3">
                   {frame.imageUrl && (
-                    <div className="w-12 h-10 rounded-lg bg-white/10 overflow-hidden shrink-0 relative">
+                    <div className="w-12 h-10 rounded-lg bg-white border border-amber-200/80 overflow-hidden shrink-0 relative">
                       <Image
                         src={frame.imageUrl}
                         alt={frame.name}
@@ -930,29 +941,29 @@ export function LensConfiguratorModal({
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{frame.name}</p>
-                    <p className="text-[10px] text-neutral-400 mt-0.5">Rs. {frame.price.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{frame.name}</p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Rs. {frame.price.toLocaleString()}</p>
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-2.5 space-y-1.5">
+                <div className="border-t border-amber-200/60 pt-2.5 space-y-1.5">
                   <div className="flex justify-between text-xs">
-                    <span className="text-neutral-400">Lens Tier</span>
-                    <span className="font-bold text-amber-400 text-right max-w-[180px] truncate">
+                    <span className="text-slate-600 font-medium">Lens Tier</span>
+                    <span className="font-bold text-amber-700 text-right max-w-[200px] truncate">
                       {selectedPackage?.code} — {selectedPackage?.name}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-neutral-400">Vision Mode</span>
-                    <span className="font-bold text-white capitalize">{visionType}</span>
+                    <span className="text-slate-600 font-medium">Vision Mode</span>
+                    <span className="font-bold text-slate-900 capitalize">{visionType}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-neutral-400">Lens Price</span>
-                    <span className="font-bold text-white">Rs. {lensPrice.toLocaleString()}</span>
+                    <span className="text-slate-600 font-medium">Lens Price</span>
+                    <span className="font-bold text-slate-900">Rs. {lensPrice.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-sm font-black pt-1 border-t border-white/10">
-                    <span className="text-white">Total</span>
-                    <span className="text-amber-400">Rs. {totalPrice.toLocaleString()}</span>
+                  <div className="flex justify-between items-baseline pt-2 border-t border-amber-200/80">
+                    <span className="text-sm font-bold text-slate-900">Total Price</span>
+                    <span className="text-amber-600 font-bold text-xl">Rs. {totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -971,7 +982,7 @@ export function LensConfiguratorModal({
                   type="button"
                   onClick={handleCheckout}
                   disabled={isCheckingOut}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-xs font-black tracking-wide transition shadow-sm cursor-pointer active:scale-[0.99]"
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-colors cursor-pointer active:scale-[0.99] disabled:opacity-60"
                 >
                   {isCheckingOut ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span>Processing...</span></>
@@ -988,6 +999,6 @@ export function LensConfiguratorModal({
   );
 }
 
-export const READING_ADD_DIOPTERS = ['+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00'];
+export const READING_ADD_DIOPTERS = ADD_OPTIONS;
 
 export default LensConfiguratorModal;
