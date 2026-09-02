@@ -7,30 +7,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   User,
-  Heart,
   Package,
-  Sparkles,
   LogOut,
   ShieldCheck,
   ArrowRight,
-  HelpCircle,
   Mail,
-  Phone,
-  Glasses,
   LogIn,
   UserPlus,
   Share2,
+  Heart,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useAccountDrawerStore } from "@/store/useAccountDrawerStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export default function MobileAccountDrawer() {
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const { isOpen, closeAccountDrawer } = useAccountDrawerStore();
-  const { openWishlist } = useWishlistStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Lock body scroll when drawer is open
@@ -53,11 +48,6 @@ export default function MobileAccountDrawer() {
     } catch {
       setIsLoggingOut(false);
     }
-  };
-
-  const handleOpenWishlist = () => {
-    closeAccountDrawer();
-    openWishlist();
   };
 
   const initials = user?.name
@@ -114,24 +104,24 @@ export default function MobileAccountDrawer() {
               {/* Authenticated Customer View */}
               {user ? (
                 <>
-                  {/* Customer Profile Card */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-orange-50/40 border border-slate-200/80 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-lg font-black flex items-center justify-center shadow-md shrink-0 border border-amber-200/60">
+                  {/* Customer Profile Header */}
+                  <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-base font-black flex items-center justify-center shadow-xs shrink-0">
                       {user.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                       ) : (
-                        initials || <User className="w-6 h-6" />
+                        initials || <User className="w-5 h-5" />
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-base font-extrabold text-slate-900 truncate">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">
                           {user.name}
                         </h4>
                         {isAdmin && (
-                          <span className="text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
                             Admin
                           </span>
                         )}
@@ -141,110 +131,27 @@ export default function MobileAccountDrawer() {
                         <Mail className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                         <span className="truncate">{user.email}</span>
                       </div>
-
-                      {user.phone && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                          <Phone className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span>{user.phone}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  {/* Quick Stat Cards */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={handleOpenWishlist}
-                      className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-start hover:border-[#ff7a00] transition-colors cursor-pointer text-left group"
-                    >
-                      <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/60 flex items-center justify-center text-rose-600 mb-2 group-hover:scale-110 transition-transform">
-                        <Heart className="w-4 h-4" />
-                      </div>
-                      <span className="text-xl font-extrabold text-slate-900">
-                        {user.wishlistCount ?? 0}
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-500">
-                        Saved Frames
-                      </span>
-                    </button>
-
+                  {/* Menu Items */}
+                  <div className="space-y-2 pt-2">
+                    {/* 1. My Orders */}
                     <Link
                       href="/orders"
                       onClick={closeAccountDrawer}
-                      className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-start hover:border-[#ff7a00] transition-colors cursor-pointer text-left group"
-                    >
-                      <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 mb-2 group-hover:scale-110 transition-transform">
-                        <Package className="w-4 h-4" />
-                      </div>
-                      <span className="text-xl font-extrabold text-slate-900">
-                        {user.orderCount ?? 0}
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-500">
-                        Total Orders
-                      </span>
-                    </Link>
-                  </div>
-
-                  {/* Navigation List */}
-                  <div className="space-y-1.5 border-t border-slate-100 pt-4">
-                    <Link
-                      href="/orders"
-                      onClick={closeAccountDrawer}
-                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group"
+                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <Package className="w-4 h-4 text-amber-600" />
-                        <span className="text-xs font-bold text-slate-800">
-                          My Orders &amp; Invoices
+                        <Package className="w-4 h-4 text-slate-500" />
+                        <span className="text-xs font-medium text-slate-700">
+                          My Orders
                         </span>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                     </Link>
 
-                    <button
-                      onClick={handleOpenWishlist}
-                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Heart className="w-4 h-4 text-rose-500" />
-                        <span className="text-xs font-bold text-slate-800">
-                          Saved Wishlist Frames
-                        </span>
-                      </div>
-                      <span className="text-xs font-extrabold text-[#ff7a00] bg-orange-50 px-2 py-0.5 rounded-full">
-                        {user.wishlistCount ?? 0}
-                      </span>
-                    </button>
-
-                    <Link
-                      href="/quiz"
-                      onClick={closeAccountDrawer}
-                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span className="text-xs font-bold text-slate-800">
-                          Facial Silhouette & Style Quiz
-                        </span>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-
-                    <Link
-                      href="/lens-pricing"
-                      onClick={closeAccountDrawer}
-                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Glasses className="w-4 h-4 text-indigo-500" />
-                        <span className="text-xs font-bold text-slate-800">
-                          Lens Pricing & Coatings Guide
-                        </span>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-
-                    {/* Mobile Share Store Trigger */}
+                    {/* 2. Share */}
                     <button
                       type="button"
                       onClick={async () => {
@@ -254,7 +161,7 @@ export default function MobileAccountDrawer() {
                           try {
                             await navigator.share({
                               title: "MY EYES Optical Studio",
-                              text: "Lab-precision prescription glasses and frames delivered across Pakistan.",
+                              text: "Discover luxury frames & lab-precision prescription eyewear.",
                               url,
                             });
                             return;
@@ -262,49 +169,49 @@ export default function MobileAccountDrawer() {
                         }
                         try {
                           await navigator.clipboard.writeText(url);
-                          alert("Store link copied to clipboard!");
+                          alert("Link copied");
                         } catch {
                           prompt("Copy store link:", url);
                         }
                       }}
-                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors group cursor-pointer"
+                      className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <Share2 className="w-4 h-4 text-slate-600" />
-                        <span className="text-xs font-bold text-slate-800">
-                          Share Store
+                        <Share2 className="w-4 h-4 text-slate-500" />
+                        <span className="text-xs font-medium text-slate-700">
+                          Share
                         </span>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                     </button>
 
                     {isAdmin && (
                       <Link
                         href="/admin"
                         onClick={closeAccountDrawer}
-                        className="w-full p-3.5 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 flex items-center justify-between text-left transition-colors group"
+                        className="w-full p-3.5 rounded-2xl bg-orange-50/70 hover:bg-orange-100/70 flex items-center justify-between text-left transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <ShieldCheck className="w-4 h-4 text-purple-600" />
-                          <span className="text-xs font-extrabold text-purple-900">
-                            Admin Control Center
+                          <ShieldCheck className="w-4 h-4 text-[#ff7a00]" />
+                          <span className="text-xs font-medium text-[#ff7a00]">
+                            Admin Portal
                           </span>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-purple-600 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-3.5 h-3.5 text-[#ff7a00]" />
                       </Link>
                     )}
-                  </div>
 
-                  {/* Sign Out Button */}
-                  <div className="pt-2">
-                    <button
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
-                    </button>
+                    {/* 3. Sign Out */}
+                    <div className="pt-2">
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="w-full p-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100/80 text-rose-600 font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500" />
+                        <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (

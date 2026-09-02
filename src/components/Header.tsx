@@ -15,6 +15,7 @@ import {
   ChevronDown,
   X,
   Share2,
+  Package,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -61,7 +62,7 @@ export default function Header() {
 
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setToastMessage("Store link copied to clipboard!");
+      setToastMessage("Link copied");
       setTimeout(() => setToastMessage(""), 3000);
     } catch {
       setToastMessage("Link: " + shareUrl);
@@ -344,9 +345,10 @@ export default function Header() {
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-64 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
-                        <div className="flex items-center gap-2.5 px-1 py-1">
+                    <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                      <div className="p-2.5 rounded-2xl bg-white border border-slate-100 shadow-xl space-y-1">
+                        {/* Minimal User Identifier */}
+                        <div className="flex items-center gap-2.5 px-2 py-1.5">
                           <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-xs font-extrabold shrink-0">
                             {user.avatarUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -356,55 +358,54 @@ export default function Header() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-900 leading-tight truncate">
+                            <p className="text-xs font-bold text-slate-900 leading-tight truncate">
                               {user.name}
                             </p>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                            <p className="text-[11px] text-slate-500 truncate mt-0.5">
                               {user.email}
                             </p>
                           </div>
                         </div>
 
-                        <div className="border-t border-slate-100 my-1.5" />
+                        <div className="border-t border-slate-100 my-1" />
 
+                        {/* 1. My Orders */}
                         <Link
                           href="/orders"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
+                          className="text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl px-3 py-2 w-full flex items-center gap-2.5 transition-colors"
                         >
-                          <User className="w-3.5 h-3.5 text-slate-500" />
-                          <span>My Orders &amp; Profile</span>
+                          <Package className="w-4 h-4 text-slate-500 shrink-0" />
+                          <span>My Orders</span>
                         </Link>
 
-                        {/* Relocated Share Store Item (Requirement 2) */}
+                        {/* 2. Share */}
                         <button
                           type="button"
                           onClick={() => {
                             setUserDropdownOpen(false);
                             handleShare();
                           }}
-                          className="text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                          className="text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl px-3 py-2 w-full flex items-center gap-2.5 transition-colors cursor-pointer text-left"
                         >
-                          <Share2 className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Share Store</span>
+                          <Share2 className="w-4 h-4 text-slate-500 shrink-0" />
+                          <span>Share</span>
                         </button>
 
                         {isAdmin && (
-                          <>
-                            <div className="border-t border-slate-100 my-1.5" />
-                            <Link
-                              href="/admin"
-                              onClick={() => setUserDropdownOpen(false)}
-                              className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
-                            >
-                              <Shield className="w-3.5 h-3.5" />
-                              <span>Admin Dashboard</span>
-                            </Link>
-                          </>
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="text-xs font-medium text-[#ff7a00] hover:bg-orange-50/70 rounded-xl px-3 py-2 w-full flex items-center gap-2.5 transition-colors"
+                          >
+                            <Shield className="w-4 h-4 text-[#ff7a00] shrink-0" />
+                            <span>Admin Portal</span>
+                          </Link>
                         )}
 
-                        <div className="border-t border-slate-100 my-2" />
+                        <div className="border-t border-slate-100 my-1" />
 
+                        {/* 3. Sign Out */}
                         <button
                           id="header-signout-btn"
                           type="button"
@@ -412,9 +413,9 @@ export default function Header() {
                             setUserDropdownOpen(false);
                             logout();
                           }}
-                          className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                          className="text-xs font-medium text-rose-600 hover:bg-rose-50/80 rounded-xl px-3 py-2 w-full flex items-center gap-2.5 transition-colors cursor-pointer text-left"
                         >
-                          <LogOut className="w-3.5 h-3.5 shrink-0" />
+                          <LogOut className="w-4 h-4 shrink-0 text-rose-500" />
                           <span>Sign Out</span>
                         </button>
                       </div>
