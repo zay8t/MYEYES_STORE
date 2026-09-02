@@ -144,12 +144,12 @@ export async function GET(
     y += 90;
     doc
       .rect(40, y, 515, 20)
-      .fill("#0f172a");
+      .fillAndStroke("#f8fafc", "#e2e8f0");
 
     doc
       .fontSize(8)
       .font("Helvetica-Bold")
-      .fillColor("#ffffff")
+      .fillColor("#475569")
       .text("PRODUCT", 50, y + 6)
       .text("SPECS / LENS", 220, y + 6)
       .text("QTY", 380, y + 6, { width: 30, align: "center" })
