@@ -24,8 +24,9 @@ import {
   CYL_OPTIONS,
   AXIS_OPTIONS,
   ADD_OPTIONS,
-  DEFAULT_AXIS,
 } from '@/lib/constants/prescription';
+import { compressPrescriptionImage } from '@/lib/image-compression';
+import type { TotalPricingResult } from '@/lib/pricingEngine';
 import type { FrameDetails } from './LensConfiguratorModal';
 
 export interface Step4PrescriptionProps {
@@ -35,6 +36,7 @@ export interface Step4PrescriptionProps {
   selectedPackage: any;
   lensPrice: number;
   totalPrice: number;
+  pricingResult?: TotalPricingResult | null;
   prescriptionTab: 'upload' | 'manual';
   setPrescriptionTab: (t: 'upload' | 'manual') => void;
   uploadedFile: File | null;
@@ -81,6 +83,7 @@ export function Step4Prescription({
   selectedPackage,
   lensPrice,
   totalPrice,
+  pricingResult,
   prescriptionTab,
   setPrescriptionTab,
   uploadedFile,
@@ -120,35 +123,38 @@ export function Step4Prescription({
   const isProgressive = visionType === 'progressive';
   const isPdf = uploadedFile?.type === 'application/pdf';
 
-  // ─── File Pre-check & Handler ───────────────────────────────────────────
+  // ─── File Pre-check & Handler with Client-Side Canvas Compression ───────
 
   const handleFile = useCallback(
-    (file: File) => {
+    async (rawFile: File) => {
       setFileError(null);
 
       // Pre-check size (10MB limit)
       const MAX_SIZE = 10 * 1024 * 1024;
-      if (file.size > MAX_SIZE) {
+      if (rawFile.size > MAX_SIZE) {
         setFileError('File size exceeds 10MB limit. Please choose a smaller file.');
         return;
       }
 
       // Pre-check type
-      const isImg = file.type.startsWith('image/');
-      const isDoc = file.type === 'application/pdf';
+      const isImg = rawFile.type.startsWith('image/');
+      const isDoc = rawFile.type === 'application/pdf';
       if (!isImg && !isDoc) {
         setFileError('Please upload an image (JPG, PNG, WEBP) or a PDF document.');
         return;
       }
 
-      setUploadedFile(file);
-      const url = URL.createObjectURL(file);
+      // Client-side canvas compression for images (clamps max dim to 1600px, 0.82 JPEG quality)
+      const processedFile = isImg ? await compressPrescriptionImage(rawFile) : rawFile;
+
+      setUploadedFile(processedFile);
+      const url = URL.createObjectURL(processedFile);
       setUploadedPreviewUrl(url);
       setRxFileUrl(null);
 
       // Trigger AI Scanner & storage upload
-      scanPrescriptionSlip(file);
-      uploadStorageFile(file);
+      scanPrescriptionSlip(processedFile);
+      uploadStorageFile(processedFile);
     },
     [setUploadedFile, setUploadedPreviewUrl, setRxFileUrl, scanPrescriptionSlip, uploadStorageFile]
   );
@@ -251,7 +257,7 @@ export function Step4Prescription({
                     </div>
                     <p className="text-sm font-bold text-amber-300">Analyzing slip with AI...</p>
                     <p className="text-xs text-slate-300 text-center max-w-[260px]">
-                      Gemini 1.5 Flash is extracting SPH, CYL, AXIS &amp; ADD
+                      Extracting SPH, CYL, AXIS &amp; ADD
                     </p>
                   </div>
                 )}
@@ -361,7 +367,7 @@ export function Step4Prescription({
                 </button>
               </div>
 
-              {/* Hidden Inputs */}
+              {/* Hidden Inputs with Value Reset */}
               <input
                 ref={cameraInputRef}
                 id="camera-input"
@@ -369,8 +375,9 @@ export function Step4Prescription({
                 accept="image/*"
                 capture="environment"
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
+                  e.target.value = '';
                   if (file) handleFile(file);
                 }}
               />
@@ -380,8 +387,9 @@ export function Step4Prescription({
                 type="file"
                 accept="image/*,application/pdf"
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
+                  e.target.value = '';
                   if (file) handleFile(file);
                 }}
               />
@@ -614,11 +622,18 @@ export function Step4Prescription({
         )}
       </div>
 
-      {/* ── Live Summary Card (Soft Warm Amber Theme) ── */}
+      {/* ── Live Summary Card with Canonical Pricing Breakdown ── */}
       <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-xs text-slate-800 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">
-          Order Summary
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">
+            Order Summary
+          </p>
+          {pricingResult && pricingResult.multiplier > 1 && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
+              Rx Tier ({pricingResult.multiplier}x)
+            </span>
+          )}
+        </div>
 
         {/* Frame thumbnail + name */}
         <div className="flex items-center gap-3">
@@ -652,7 +667,7 @@ export function Step4Prescription({
             <span className="font-bold text-slate-900 capitalize">{visionType}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-slate-600 font-medium">Lens Price</span>
+            <span className="text-slate-600 font-medium">Lens Price (Pair)</span>
             <span className="font-bold text-slate-900">Rs. {lensPrice.toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-baseline pt-2 border-t border-amber-200/80">

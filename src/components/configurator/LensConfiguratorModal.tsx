@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   X,
@@ -18,6 +18,10 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
+import {
+  calculateTotalLensPrice,
+  calculateTotalProgressivePrice,
+} from '@/lib/pricingEngine';
 import { cn } from '@/lib/utils';
 import {
   SPH_OPTIONS,
@@ -166,7 +170,7 @@ export function LensConfiguratorModal({
 }: LensConfiguratorModalProps) {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
-  const { packages, isLoading: isPricingLoading, refresh } = useLensPricing();
+  const { packages, basePrices, isLoading: isPricingLoading, refresh } = useLensPricing();
 
   // ─── Step state ─────────────────────────────────────────────────────────
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -260,16 +264,46 @@ export function LensConfiguratorModal({
     }
   }, [packages, selectedLensId]);
 
-  if (!isOpen) return null;
+  // If switching to progressive, ensure 1.67 is mapped to valid progressive tier
+  useEffect(() => {
+    if (visionType === 'progressive' && selectedLensId === 'sv-167-shmc') {
+      setSelectedLensId('progressive-freeform');
+    }
+  }, [visionType, selectedLensId]);
 
-  // ─── Derived data ────────────────────────────────────────────────────────
+  // ─── Canonical Lens Pricing Engine Integration ───────────────────────────
 
   const isProgressive = visionType === 'progressive';
   const selectedPackage = packages.find((p) => p.id === selectedLensId);
-  const lensPrice = selectedPackage
-    ? (isProgressive ? selectedPackage.presbyopiaBasePrice : selectedPackage.standardBasePrice)
-    : 0;
+
+  const pricingResult = useMemo(() => {
+    if (!selectedLensId) return null;
+    if (isProgressive) {
+      return calculateTotalProgressivePrice(
+        selectedLensId,
+        { sph: odSph, cyl: odCyl },
+        { sph: osSph, cyl: osCyl },
+        addPower,
+        basePrices
+      );
+    }
+    return calculateTotalLensPrice(
+      selectedLensId,
+      { sph: odSph, cyl: odCyl },
+      { sph: osSph, cyl: osCyl },
+      basePrices
+    );
+  }, [selectedLensId, isProgressive, odSph, odCyl, osSph, osCyl, addPower, basePrices]);
+
+  const lensPrice = pricingResult
+    ? pricingResult.finalPrice
+    : (selectedPackage
+        ? (isProgressive ? selectedPackage.presbyopiaBasePrice : selectedPackage.standardBasePrice)
+        : 0);
+
   const totalPrice = frame.price + lensPrice;
+
+  if (!isOpen) return null;
 
   // ─── Step 1 Submit ───────────────────────────────────────────────────────
 
@@ -453,8 +487,9 @@ export function LensConfiguratorModal({
       prescription: {
         ...prescriptionDetails,
         lensMaterial: selectedPackage?.name || '',
-        lensBasePriceKey: selectedPackage?.code || '',
-        lensBasePriceValue: lensPrice,
+        lensBasePriceKey: pricingResult?.basePriceKey || selectedPackage?.code || '',
+        lensBasePriceValue: pricingResult?.basePriceValue || lensPrice,
+        lensMultiplier: pricingResult?.multiplier || 1,
         lensFinalPrice: lensPrice,
         framePrice: frame.price,
       },
@@ -469,6 +504,7 @@ export function LensConfiguratorModal({
         selectedLensId,
         lensPrice,
         totalPrice,
+        pricingResult,
         prescriptionDetails,
         contact: { fullName: fullName.trim(), whatsapp },
       });
@@ -737,67 +773,69 @@ export function LensConfiguratorModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {packages.map((pkg) => {
-                    const price = isProgressive ? pkg.presbyopiaBasePrice : pkg.standardBasePrice;
-                    const isSelected = selectedLensId === pkg.id;
-                    const features = TIER_FEATURES[pkg.code] || [];
+                  {packages
+                    .filter((pkg) => !(isProgressive && pkg.id === 'sv-167-shmc'))
+                    .map((pkg) => {
+                      const price = isProgressive ? pkg.presbyopiaBasePrice : pkg.standardBasePrice;
+                      const isSelected = selectedLensId === pkg.id;
+                      const features = TIER_FEATURES[pkg.code] || [];
 
-                    return (
-                      <button
-                        key={pkg.id}
-                        type="button"
-                        onClick={() => setSelectedLensId(pkg.id)}
-                        className={cn(
-                          'w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
-                          isSelected
-                            ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
-                            : 'border-slate-200 hover:border-amber-400'
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            {/* Tier code + name */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={cn(
-                                'text-[11px] font-black px-2.5 py-0.5 rounded-full transition-colors',
-                                isSelected ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-800'
+                      return (
+                        <button
+                          key={pkg.id}
+                          type="button"
+                          onClick={() => setSelectedLensId(pkg.id)}
+                          className={cn(
+                            'w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
+                            isSelected
+                              ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
+                              : 'border-slate-200 hover:border-amber-400'
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              {/* Tier code + name */}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={cn(
+                                  'text-[11px] font-black px-2.5 py-0.5 rounded-full transition-colors',
+                                  isSelected ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-800'
+                                )}>
+                                  {pkg.code}
+                                </span>
+                                <span className="text-base font-bold text-slate-900 leading-tight">
+                                  {pkg.name}
+                                </span>
+                              </div>
+
+                              {/* Feature bullets */}
+                              {features.length > 0 && (
+                                <ul className="mt-2.5 space-y-1">
+                                  {features.map((f) => (
+                                    <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                      <span>{f}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+
+                            {/* Price + selection indicator */}
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <div className={cn(
+                                'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                                isSelected ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
                               )}>
-                                {pkg.code}
-                              </span>
-                              <span className="text-base font-bold text-slate-900 leading-tight">
-                                {pkg.name}
+                                {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                              </div>
+                              <span className="text-lg sm:text-xl font-bold text-amber-600 whitespace-nowrap">
+                                Rs. {price.toLocaleString()}
                               </span>
                             </div>
-
-                            {/* Feature bullets */}
-                            {features.length > 0 && (
-                              <ul className="mt-2.5 space-y-1">
-                                {features.map((f) => (
-                                  <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                    <span>{f}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
                           </div>
-
-                          {/* Price + selection indicator */}
-                          <div className="flex flex-col items-end gap-2 shrink-0">
-                            <div className={cn(
-                              'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                              isSelected ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
-                            )}>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                            </div>
-                            <span className="text-lg sm:text-xl font-bold text-amber-600 whitespace-nowrap">
-                              Rs. {price.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
                 </div>
               )}
 
@@ -835,6 +873,7 @@ export function LensConfiguratorModal({
               selectedPackage={selectedPackage}
               lensPrice={lensPrice}
               totalPrice={totalPrice}
+              pricingResult={pricingResult}
               prescriptionTab={prescriptionTab}
               setPrescriptionTab={setPrescriptionTab}
               uploadedFile={uploadedFile}
