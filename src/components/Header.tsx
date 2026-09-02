@@ -49,7 +49,7 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Secret triple-tap admin access
+  // Secret triple-tap admin access on logo
   const lastTapRef = useRef<number>(0);
   const tapCountRef = useRef<number>(0);
 
@@ -150,23 +150,26 @@ export default function Header() {
         className={cn(
           "sticky top-0 left-0 right-0 z-40 w-full transition-all duration-200",
           scrolled
-            ? "bg-white/95 backdrop-blur-md border-b border-slate-100/90 shadow-2xs"
-            : "bg-white/95 backdrop-blur-md border-b border-slate-100/80"
+            ? "bg-white border-b border-neutral-200 shadow-sm"
+            : "bg-white border-b border-neutral-100"
         )}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2">
-          {/* Left Cluster: 3-Bar Menu + Brand Logo */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between gap-2">
+
+          {/* Left: Hamburger (desktop/sm+ only) + Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0 min-w-0">
+            {/* Hamburger — hidden on mobile, visible sm+ */}
             <button
               type="button"
               id="header-hamburger-menu-btn"
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition cursor-pointer shrink-0 flex items-center justify-center"
+              className="hidden sm:flex p-2 -ml-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition cursor-pointer items-center justify-center"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
+            {/* Brand Logo */}
             <Link
               href="/"
               onClick={handleLogoClick}
@@ -194,30 +197,31 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Right Cluster: Action Icons */}
+          {/* Right: Core action icons — Search, Wishlist, Bag (always visible) + desktop-only extras */}
           <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
-            {/* Search Trigger */}
+
+            {/* Search */}
             <button
               id="header-search-btn"
               type="button"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
               aria-label="Search"
             >
-              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Search className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
             </button>
 
-            {/* Saved Items / Wishlist */}
+            {/* Wishlist */}
             <button
               id="header-wishlist-btn"
               type="button"
               onClick={openWishlist}
-              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
               aria-label="Saved Items"
             >
-              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Heart className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
               {mounted && wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-2xs">
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm pointer-events-none">
                   {wishlistCount}
                 </span>
               )}
@@ -228,125 +232,102 @@ export default function Header() {
               id="cart-button"
               type="button"
               onClick={openCart}
-              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer flex items-center justify-center"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
               aria-label="Shopping Bag"
             >
-              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ShoppingBag className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
               {mounted && totalItems() > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-2xs">
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm pointer-events-none">
                   {totalItems()}
                 </span>
               )}
             </button>
 
-            {/* Share App Button */}
-            <div className="hidden xs:flex items-center">
+            {/* Share App Button — desktop only */}
+            <div className="hidden sm:flex items-center">
               <ShareAppButton variant="icon" />
             </div>
 
-            {/* Auth State */}
+            {/* Auth — desktop only (mobile uses bottom nav & account drawer) */}
             {mounted && !isLoading && (
               <>
-                {/* Guest → Sign In */}
+                {/* Guest → Sign In (desktop only) */}
                 {!user && (
-                  <>
-                    <Link
-                      href="/login"
-                      id="header-signin-btn"
-                      className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
-                    >
-                      <User className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Sign In</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={openAccountDrawer}
-                      className="sm:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition cursor-pointer flex items-center justify-center"
-                      aria-label="Account"
-                    >
-                      <User className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  </>
+                  <Link
+                    href="/login"
+                    id="header-signin-btn"
+                    className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-sm"
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Sign In</span>
+                  </Link>
                 )}
 
-                {/* Authenticated → Profile Dropdown (Desktop) & Avatar (Mobile) */}
+                {/* Authenticated → Profile Dropdown (desktop only) */}
                 {user && (
-                  <>
-                    {/* Mobile Touch Avatar */}
+                  <div className="relative hidden sm:block" ref={userDropdownRef}>
                     <button
+                      id="header-user-menu"
                       type="button"
-                      onClick={openAccountDrawer}
-                      className="sm:hidden w-7 h-7 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0 ml-1"
-                      aria-label="Open Mobile Account Menu"
+                      onClick={() => setUserDropdownOpen((v) => !v)}
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-sm cursor-pointer select-none"
                     >
-                      {initials || <User className="w-3.5 h-3.5" />}
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
+                        {initials}
+                      </div>
+                      <span className="text-xs font-bold text-slate-800">{firstName}</span>
+                      <ChevronDown
+                        className={cn(
+                          "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
+                          userDropdownOpen && "rotate-180"
+                        )}
+                      />
                     </button>
 
-                    {/* Desktop Dropdown */}
-                    <div className="relative hidden sm:block" ref={userDropdownRef}>
-                      <button
-                        id="header-user-menu"
-                        type="button"
-                        onClick={() => setUserDropdownOpen((v) => !v)}
-                        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
-                          {initials}
-                        </div>
-                        <span className="text-xs font-bold text-slate-800">{firstName}</span>
-                        <ChevronDown
-                          className={cn(
-                            "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
-                            userDropdownOpen && "rotate-180"
-                          )}
-                        />
-                      </button>
-
-                      {userDropdownOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                          <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
-                            <div className="px-1 py-0.5">
-                              <p className="text-sm font-bold text-slate-900 leading-tight">
-                                {user.name}
-                              </p>
-                              <p className="text-xs text-slate-500 truncate mt-0.5">
-                                {user.email}
-                              </p>
-                            </div>
-
-                            {isAdmin && (
-                              <>
-                                <div className="border-t border-slate-100 my-1.5" />
-                                <Link
-                                  href="/admin"
-                                  onClick={() => setUserDropdownOpen(false)}
-                                  className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
-                                >
-                                  <Shield className="w-3.5 h-3.5" />
-                                  <span>Admin Dashboard</span>
-                                </Link>
-                              </>
-                            )}
-
-                            <div className="border-t border-slate-100 my-2" />
-
-                            <button
-                              id="header-signout-btn"
-                              type="button"
-                              onClick={() => {
-                                setUserDropdownOpen(false);
-                                logout();
-                              }}
-                              className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
-                            >
-                              <LogOut className="w-3.5 h-3.5 shrink-0" />
-                              <span>Sign Out</span>
-                            </button>
+                    {userDropdownOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                        <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
+                          <div className="px-1 py-0.5">
+                            <p className="text-sm font-bold text-slate-900 leading-tight">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                              {user.email}
+                            </p>
                           </div>
+
+                          {isAdmin && (
+                            <>
+                              <div className="border-t border-slate-100 my-1.5" />
+                              <Link
+                                href="/admin"
+                                onClick={() => setUserDropdownOpen(false)}
+                                className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
+                              >
+                                <Shield className="w-3.5 h-3.5" />
+                                <span>Admin Dashboard</span>
+                              </Link>
+                            </>
+                          )}
+
+                          <div className="border-t border-slate-100 my-2" />
+
+                          <button
+                            id="header-signout-btn"
+                            type="button"
+                            onClick={() => {
+                              setUserDropdownOpen(false);
+                              logout();
+                            }}
+                            className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                          >
+                            <LogOut className="w-3.5 h-3.5 shrink-0" />
+                            <span>Sign Out</span>
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  </>
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -364,7 +345,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search frames, shapes, materials, styles..."
-                className="w-full pl-10 pr-20 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/30 focus:border-[#ff7a00] transition-all"
+                className="w-full pl-10 pr-20 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/30 focus:border-[#ff7a00] transition-all"
               />
               <div className="absolute right-1.5 flex items-center gap-1">
                 {searchQuery && (
@@ -378,7 +359,7 @@ export default function Header() {
                 )}
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-black transition-colors cursor-pointer"
                 >
                   Search
                 </button>
@@ -393,7 +374,7 @@ export default function Header() {
       <WishlistDrawer />
       <MobileAccountDrawer />
 
-      {/* Slide-Out Navigation Sidebar */}
+      {/* Slide-Out Navigation Sidebar (desktop) */}
       <NavigationSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
