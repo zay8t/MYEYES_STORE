@@ -143,7 +143,7 @@ export function LensPricingWizard() {
         <div className="text-center space-y-4 max-w-3xl mx-auto border-b border-neutral-200/60 pb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold uppercase tracking-widest text-amber-700">
             <Tag className="w-3.5 h-3.5 text-amber-600" />
-            Simple Lens Pricing
+            Lens Pricing
           </div>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-neutral-900">
             Calculate Your Lens Price
