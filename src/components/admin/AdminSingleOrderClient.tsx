@@ -45,7 +45,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
     setCurrentStatus(newStatus);
     const res = await updateOrderStatusAction(order.id, newStatus);
     if (res.success) {
-      setToast({ message: `Order pipeline status updated to ${newStatus}`, type: "success" });
+      setToast({ message: `Order status updated to ${newStatus}`, type: "success" });
     } else {
       setToast({ message: res.error || "Failed to update status", type: "error" });
     }
@@ -97,7 +97,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
             href="/admin/orders"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider mb-2"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Orders Pipeline
+            <ArrowLeft className="w-4 h-4" /> Back to Orders
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-slate-900 font-mono">
@@ -130,7 +130,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
       {/* Stepper Status Bar */}
       <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
         <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-amber-600" /> Optical Pipeline Stepper
+          <Clock className="w-4 h-4 text-amber-600" /> Optical Order Status Stepper
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {ORDER_STEPS.map((step, idx) => {

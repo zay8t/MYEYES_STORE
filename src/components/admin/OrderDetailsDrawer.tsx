@@ -148,7 +148,7 @@ export default function OrderDetailsDrawer({
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-600" />
-                Optical Pipeline Status Stepper
+                Optical Order Status Stepper
               </h3>
               {isUpdating && (
                 <span className="text-[11px] font-bold text-amber-700 animate-pulse">
