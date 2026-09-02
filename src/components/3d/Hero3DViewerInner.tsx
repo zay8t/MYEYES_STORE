@@ -417,6 +417,16 @@ export default function Hero3DViewerInner({
       shadows
       dpr={[1, 1.5]}
       performance={{ min: 0.5 }}
+      onCreated={({ gl }) => {
+        const handleContextLost = (event: Event) => {
+          event.preventDefault();
+          console.warn('WebGL context lost handled gracefully.');
+        };
+        const domElement = gl.domElement;
+        if (domElement) {
+          domElement.addEventListener('webglcontextlost', handleContextLost, false);
+        }
+      }}
       gl={{
         powerPreference: 'high-performance',
         antialias: true,

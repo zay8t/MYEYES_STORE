@@ -28,18 +28,16 @@ export default function CartDrawer() {
   const [couponState, setCouponState] = useState<ValidateCouponResponse | null>(null);
   const [isCouponLoading, setIsCouponLoading] = useState(false);
 
-  if (!isOpen) return null;
-
   const subtotal = subtotalPrice();
   const discountAmount = couponState?.valid ? (couponState.discountAmount ?? 0) : 0;
   const shipping = subtotal > 0 ? 250 : 0;
   const grandTotal = Math.max(0, subtotal - discountAmount + shipping);
 
-  const handleCheckout = () => {
+  const handleCheckout = useCallback(() => {
     if (items.length === 0) return;
     closeCart();
     router.push("/checkout");
-  };
+  }, [items.length, closeCart, router]);
 
   const handleApplyCoupon = useCallback(async () => {
     const code = couponInput.trim().toUpperCase();
@@ -63,10 +61,12 @@ export default function CartDrawer() {
     }
   }, [couponInput, subtotal]);
 
-  const handleRemoveCoupon = () => {
+  const handleRemoveCoupon = useCallback(() => {
     setCouponState(null);
     setCouponInput("");
-  };
+  }, []);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col justify-end md:flex-row md:justify-end">
