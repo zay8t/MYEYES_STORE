@@ -150,15 +150,15 @@ export default function Header() {
         className={cn(
           "sticky top-0 left-0 right-0 z-40 w-full transition-all duration-200",
           scrolled
-            ? "bg-white border-b border-neutral-200 shadow-sm"
+            ? "bg-white border-b border-neutral-200 shadow-xs"
             : "bg-white border-b border-neutral-100"
         )}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between gap-2">
 
-          {/* Left: Hamburger (desktop/sm+ only) + Brand Logo */}
+          {/* Left Cluster: Hamburger (desktop/sm+ only) + Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0 min-w-0">
-            {/* Hamburger — hidden on mobile, visible sm+ */}
+            {/* Hamburger — hidden on mobile, visible on sm+ */}
             <button
               type="button"
               id="header-hamburger-menu-btn"
@@ -197,139 +197,178 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Right: Core action icons — Search, Wishlist, Bag (always visible) + desktop-only extras */}
-          <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
+          {/* Right Cluster: Standardized [Search] [Wishlist] [Bag] [User/Account] across all screen sizes */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
 
-            {/* Search */}
+            {/* 1. Search */}
             <button
               id="header-search-btn"
               type="button"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
-              aria-label="Search"
+              className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
+              aria-label="Search frames"
             >
-              <Search className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
+              <Search className="w-5 h-5" />
             </button>
 
-            {/* Wishlist */}
+            {/* 2. Wishlist */}
             <button
               id="header-wishlist-btn"
               type="button"
               onClick={openWishlist}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
-              aria-label="Saved Items"
+              className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
+              aria-label="Saved Wishlist Items"
             >
-              <Heart className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
+              <Heart className="w-5 h-5" />
               {mounted && wishlistCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm pointer-events-none">
+                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs pointer-events-none">
                   {wishlistCount}
                 </span>
               )}
             </button>
 
-            {/* Shopping Bag / Cart */}
+            {/* 3. Shopping Bag / Cart */}
             <button
               id="cart-button"
               type="button"
               onClick={openCart}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
+              className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 relative cursor-pointer"
               aria-label="Shopping Bag"
             >
-              <ShoppingBag className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
+              <ShoppingBag className="w-5 h-5" />
               {mounted && totalItems() > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm pointer-events-none">
+                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 bg-[#ff7a00] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs pointer-events-none">
                   {totalItems()}
                 </span>
               )}
             </button>
 
-            {/* Share App Button — desktop only */}
-            <div className="hidden sm:flex items-center">
+            {/* Share App Button — Desktop Extra */}
+            <div className="hidden lg:flex items-center">
               <ShareAppButton variant="icon" />
             </div>
 
-            {/* Auth — desktop only (mobile uses bottom nav & account drawer) */}
-            {mounted && !isLoading && (
-              <>
-                {/* Guest → Sign In (desktop only) */}
-                {!user && (
-                  <Link
-                    href="/login"
-                    id="header-signin-btn"
-                    className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-sm"
+            {/* 4. User / Account Trigger (Always visible on mobile & desktop) */}
+            {(!mounted || isLoading) ? (
+              <div className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center rounded-xl text-slate-400">
+                <User className="w-5 h-5" />
+              </div>
+            ) : !user ? (
+              /* Unauthenticated State: Mobile Drawer trigger & Desktop Sign In Link / Drawer */
+              <div className="flex items-center">
+                {/* Mobile View: User icon button opens Account Drawer (with 1-tap Sign In & Sign Up) */}
+                <button
+                  id="header-mobile-account-btn"
+                  type="button"
+                  onClick={openAccountDrawer}
+                  className="sm:hidden min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition duration-150 cursor-pointer"
+                  aria-label="Account Login or Signup"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+
+                {/* Desktop View: Clean Sign In button with User Icon */}
+                <Link
+                  href="/login"
+                  id="header-signin-btn"
+                  className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-full hover:border-slate-300 transition shadow-2xs"
+                  aria-label="Sign In to Account"
+                >
+                  <User className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-bold text-slate-800">Sign In</span>
+                </Link>
+              </div>
+            ) : (
+              /* Authenticated State: Mobile Avatar & Desktop Profile Dropdown */
+              <div className="flex items-center">
+                {/* Mobile View: User Initials Avatar triggers Mobile Account Drawer */}
+                <button
+                  id="header-mobile-user-avatar-btn"
+                  type="button"
+                  onClick={openAccountDrawer}
+                  className="sm:hidden w-8 h-8 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] text-white text-[11px] font-extrabold flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer shrink-0"
+                  aria-label="Open Account Menu"
+                >
+                  {initials || <User className="w-4 h-4" />}
+                </button>
+
+                {/* Desktop View: Profile Dropdown Menu */}
+                <div className="relative hidden sm:block" ref={userDropdownRef}>
+                  <button
+                    id="header-user-menu"
+                    type="button"
+                    onClick={() => setUserDropdownOpen((v) => !v)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-2xs cursor-pointer select-none"
+                    aria-label="User Account Menu"
                   >
-                    <User className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Sign In</span>
-                  </Link>
-                )}
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
+                      {initials || <User className="w-3 h-3" />}
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 max-w-[100px] truncate">{firstName}</span>
+                    <ChevronDown
+                      className={cn(
+                        "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
+                        userDropdownOpen && "rotate-180"
+                      )}
+                    />
+                  </button>
 
-                {/* Authenticated → Profile Dropdown (desktop only) */}
-                {user && (
-                  <div className="relative hidden sm:block" ref={userDropdownRef}>
-                    <button
-                      id="header-user-menu"
-                      type="button"
-                      onClick={() => setUserDropdownOpen((v) => !v)}
-                      className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full transition shadow-sm cursor-pointer select-none"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ff7a00] to-[#ea6c00] flex items-center justify-center text-white text-[9px] font-extrabold shrink-0">
-                        {initials}
-                      </div>
-                      <span className="text-xs font-bold text-slate-800">{firstName}</span>
-                      <ChevronDown
-                        className={cn(
-                          "w-3.5 h-3.5 text-slate-400 transition-transform duration-200",
-                          userDropdownOpen && "rotate-180"
-                        )}
-                      />
-                    </button>
-
-                    {userDropdownOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                        <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
-                          <div className="px-1 py-0.5">
-                            <p className="text-sm font-bold text-slate-900 leading-tight">
-                              {user.name}
-                            </p>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">
-                              {user.email}
-                            </p>
-                          </div>
-
-                          {isAdmin && (
-                            <>
-                              <div className="border-t border-slate-100 my-1.5" />
-                              <Link
-                                href="/admin"
-                                onClick={() => setUserDropdownOpen(false)}
-                                className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
-                              >
-                                <Shield className="w-3.5 h-3.5" />
-                                <span>Admin Dashboard</span>
-                              </Link>
-                            </>
-                          )}
-
-                          <div className="border-t border-slate-100 my-2" />
-
-                          <button
-                            id="header-signout-btn"
-                            type="button"
-                            onClick={() => {
-                              setUserDropdownOpen(false);
-                              logout();
-                            }}
-                            className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
-                          >
-                            <LogOut className="w-3.5 h-3.5 shrink-0" />
-                            <span>Sign Out</span>
-                          </button>
+                  {userDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-60 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-2">
+                        <div className="px-1 py-0.5">
+                          <p className="text-sm font-bold text-slate-900 leading-tight">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate mt-0.5">
+                            {user.email}
+                          </p>
                         </div>
+
+                        <div className="border-t border-slate-100 my-1.5" />
+
+                        <Link
+                          href="/orders"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-500" />
+                          <span>My Orders &amp; Profile</span>
+                        </Link>
+
+                        {isAdmin && (
+                          <>
+                            <div className="border-t border-slate-100 my-1.5" />
+                            <Link
+                              href="/admin"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="text-xs font-bold text-[#ff7a00] hover:bg-orange-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors"
+                            >
+                              <Shield className="w-3.5 h-3.5" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                          </>
+                        )}
+
+                        <div className="border-t border-slate-100 my-2" />
+
+                        <button
+                          id="header-signout-btn"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            logout();
+                          }}
+                          className="text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl p-2 w-full flex items-center gap-2 transition-colors cursor-pointer text-left"
+                        >
+                          <LogOut className="w-3.5 h-3.5 shrink-0" />
+                          <span>Sign Out</span>
+                        </button>
                       </div>
-                    )}
-                  </div>
-                )}
-              </>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
