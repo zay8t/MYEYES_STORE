@@ -10,11 +10,11 @@ export default function BasePricesClient({ initialPrices }: { initialPrices: Bas
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: "" });
 
   const LENS_MAPPING = {
-    B1: "MY EYES CR Hard Crystal Coat",
-    B2: "MY EYES Blue Light Filter + UV Protection HMC",
-    B3: "MY EYES Sun Adaptive Photochromic HMC",
-    B4: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER",
-    B5: "MY EYES Ultra Thin Index",
+    B1: "Clear Everyday Lenses",
+    B2: "Screen Protection (Blue Light)",
+    B3: "Auto-Darkening (Transitions)",
+    B4: "All-in-One (Screen Guard + Sun)",
+    B5: "Ultra Thin Slim Lenses",
   };
 
   const handleSave = async () => {

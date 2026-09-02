@@ -149,14 +149,82 @@ function StepBar({ current }: { current: number }) {
   );
 }
 
-// ─── Lens tier features map ──────────────────────────────────────────────────
+// ─── Plain English 2-Bullet Lens Benefit Definitions ──────────────────────────
 
-const TIER_FEATURES: Record<string, string[]> = {
-  B1: ['Hard crystal scratch-resistant coating', 'Standard single-vision clarity', 'Ideal for mild prescriptions (0 to ±2.00)', 'Lightest lens option'],
-  B2: ['HEV Blue light filter (screens & devices)', '100% UV400 protection', 'HMC anti-reflective multi-coating', 'Best for heavy screen users'],
-  B3: ['Photochromic sun-adaptive tinting', 'Auto-darkens in sunlight, clears indoors', '100% UV400 protection + HMC coating', '2-in-1 indoor & outdoor lens'],
-  B4: ['Dual blue light + photochromic filter', 'Tints outdoors, shields digitally indoors', 'Super Flat Blue + Photo coating', 'Ultimate hybrid protection'],
-  B5: ['1.67 high-index ultra-thin profile', '~35% thinner than standard lenses', 'Super hydrophobic HMC coating', 'Best for strong prescriptions (±3.50+)'],
+const SINGLE_VISION_TIER_INFO: Record<string, { title: string; bullets: string[] }> = {
+  B1: {
+    title: "Clear Everyday Lenses",
+    bullets: [
+      "Easy on the eyes, clear everyday vision",
+      "Scratch-resistant coating so they last longer",
+    ],
+  },
+  B2: {
+    title: "Screen Protection (Blue Light)",
+    bullets: [
+      "Stops eye strain from phones, laptops, and TVs",
+      "Helps prevent headaches and tired eyes after work",
+    ],
+  },
+  B3: {
+    title: "Auto-Darkening (Transitions)",
+    bullets: [
+      "Clear inside your room, turns into sunglasses in the sun",
+      "Glasses and sunglasses in one single frame",
+    ],
+  },
+  B4: {
+    title: "All-in-One (Screen Guard + Sun)",
+    bullets: [
+      "Blocks harsh screen glare while you work",
+      "Darkens automatically when you step outside",
+    ],
+  },
+  B5: {
+    title: "Ultra Thin Slim Lenses",
+    bullets: [
+      "Extra slim and lightweight lenses for high powers",
+      "Maximum clarity without heavy or thick glass edges",
+    ],
+  },
+};
+
+const PROGRESSIVE_TIER_INFO: Record<string, { title: string; bullets: string[] }> = {
+  B1: {
+    title: "Clear Everyday Progressive",
+    bullets: [
+      "One pair for phone reading, computer, and driving without switching glasses",
+      "Smooth transition from reading to distance with no visible lines",
+    ],
+  },
+  B2: {
+    title: "Screen Protection Progressive",
+    bullets: [
+      "Blocks harsh blue light from laptops and phones while you work",
+      "Clear reading and distance vision with reduced eye strain",
+    ],
+  },
+  B3: {
+    title: "Auto-Darkening Progressive",
+    bullets: [
+      "Darkens into sunglasses outdoors while keeping your reading power clear",
+      "No need to carry separate prescription sunglasses",
+    ],
+  },
+  B4: {
+    title: "All-in-One Ultimate Progressive",
+    bullets: [
+      "Full screen guard indoors and auto sun-darkening tint outdoors",
+      "Perfect all-in-one vision for work, driving, and reading",
+    ],
+  },
+  B5: {
+    title: "Ultra Thin Progressive",
+    bullets: [
+      "Slim high-index progressive profile for higher powers",
+      "Lightweight everyday comfort with seamless multi-focus",
+    ],
+  },
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -858,7 +926,10 @@ export function LensConfiguratorModal({
                     .map((pkg) => {
                       const price = isProgressive ? pkg.presbyopiaBasePrice : pkg.standardBasePrice;
                       const isSelected = selectedLensId === pkg.id;
-                      const features = TIER_FEATURES[pkg.code] || [];
+                      const tierMap = isProgressive ? PROGRESSIVE_TIER_INFO : SINGLE_VISION_TIER_INFO;
+                      const tierInfo = tierMap[pkg.code];
+                      const title = tierInfo?.title || pkg.name;
+                      const bullets = tierInfo?.bullets || [];
 
                       return (
                         <button
@@ -868,47 +939,39 @@ export function LensConfiguratorModal({
                           className={cn(
                             'w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                             isSelected
-                              ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs'
-                              : 'border-slate-200 hover:border-amber-400'
+                              ? 'border-[#ff7a00] bg-orange-50/40 ring-2 ring-[#ff7a00]/20 shadow-xs'
+                              : 'border-slate-200 hover:border-orange-300'
                           )}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              {/* Tier code + name */}
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className={cn(
-                                  'text-[11px] font-black px-2.5 py-0.5 rounded-full transition-colors',
-                                  isSelected ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-800'
-                                )}>
-                                  {pkg.code}
-                                </span>
-                                <span className="text-base font-bold text-slate-900 leading-tight">
-                                  {pkg.name}
-                                </span>
-                              </div>
+                              {/* Simple Lens Title */}
+                              <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                                {title}
+                              </h4>
 
-                              {/* Feature bullets */}
-                              {features.length > 0 && (
-                                <ul className="mt-2.5 space-y-1">
-                                  {features.map((f) => (
-                                    <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
+                              {/* Exactly 2 Clean Benefit Bullets */}
+                              {bullets.length > 0 && (
+                                <ul className="mt-2 space-y-1.5">
+                                  {bullets.map((b) => (
+                                    <li key={b} className="flex items-start gap-1.5 text-xs text-slate-600">
                                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                      <span>{f}</span>
+                                      <span>{b}</span>
                                     </li>
                                   ))}
                                 </ul>
                               )}
                             </div>
 
-                            {/* Price + selection indicator */}
+                            {/* Price + Selection Indicator */}
                             <div className="flex flex-col items-end gap-2 shrink-0">
                               <div className={cn(
                                 'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                                isSelected ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
+                                isSelected ? 'border-[#ff7a00] bg-[#ff7a00]' : 'border-slate-300'
                               )}>
                                 {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                               </div>
-                              <span className="text-lg sm:text-xl font-bold text-amber-600 whitespace-nowrap">
+                              <span className="text-sm sm:text-base font-extrabold text-[#ff7a00] whitespace-nowrap">
                                 Rs. {price.toLocaleString()}
                               </span>
                             </div>

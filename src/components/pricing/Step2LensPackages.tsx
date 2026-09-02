@@ -15,36 +15,27 @@ export interface Step2LensPackagesProps {
   isLoading?: boolean;
 }
 
-// Customer-friendly feature bullets per tier (no raw optical jargon)
+// Customer-friendly 2-bullet feature points per tier
 const TIER_FEATURES: Record<string, string[]> = {
   "progressive-freeform": [
-    "Standard clarity for everyday wear",
-    "Scratch-resistant hard coating",
-    "Best for mild prescriptions (0 to ±2.00)",
+    "Easy on the eyes, clear everyday vision",
+    "Scratch-resistant coating so they last longer",
   ],
   "sv-156-bluecut": [
-    "Blocks harmful digital screen blue light",
-    "100% UV ray protection",
-    "Anti-glare coating included",
-    "Good for screens & daily use (0 to ±3.00)",
+    "Stops eye strain from phones, laptops, and TVs",
+    "Helps prevent headaches and tired eyes after work",
   ],
   "sv-156-photogrey": [
-    "Automatically darkens in sunlight",
-    "Full UV protection outdoors",
-    "Clear again when you go inside",
-    "Great for driving & outdoor use",
+    "Clear inside your room, turns into sunglasses in the sun",
+    "Glasses and sunglasses in one single frame",
   ],
   "sv-156-photogrey-bluecut": [
-    "Blue light filter indoors",
-    "Auto-darkens into sunglasses outdoors",
-    "Maximum protection in one lens",
-    "Perfect for screens & outdoor life",
+    "Blocks harsh screen glare while you work",
+    "Darkens automatically when you step outside",
   ],
   "sv-167-shmc": [
-    "Ultra-thin — up to 35% slimmer profile",
-    "Ideal for strong prescriptions (±3.50 to ±8.00+)",
-    "Anti-reflective super hydrophobic coating",
-    "Looks great in any frame style",
+    "Extra slim and lightweight lenses for high powers",
+    "Maximum clarity without heavy or thick glass edges",
   ],
 };
 

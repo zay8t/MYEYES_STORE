@@ -71,32 +71,55 @@ interface PrescriptionModalProps {
   } | null;
 }
 
-// Consumer-friendly display names & luxury badges for the 5 Core Options
-const CORE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; description: string }> = {
+// Consumer-friendly display names & 2-bullet benefits for Core Single-Vision Options
+const CORE_CONSUMER_LENSES: Record<
+  string,
+  { title: string; subtitle: string; description: string; bullets: string[] }
+> = {
   "progressive-freeform": {
-    title: "MY EYES CR Hard Crystal Coat",
-    subtitle: "Daily Scratch Resistance",
-    description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
+    title: "Clear Everyday Lenses",
+    subtitle: "Anti-Scratch",
+    description: "Easy on the eyes, clear everyday vision with scratch-resistant coating.",
+    bullets: [
+      "Easy on the eyes, clear everyday vision",
+      "Scratch-resistant coating so they last longer",
+    ],
   },
   "sv-156-bluecut": {
-    title: "MY EYES Blue Light Filter + UV Protection HMC",
-    subtitle: "Digital Screen Shield",
-    description: "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.",
+    title: "Screen Protection (Blue Light)",
+    subtitle: "Blue Light Guard",
+    description: "Stops eye strain from phones, laptops, and TVs. Prevents tired eyes.",
+    bullets: [
+      "Stops eye strain from phones, laptops, and TVs",
+      "Helps prevent headaches and tired eyes after work",
+    ],
   },
   "sv-156-photogrey": {
-    title: "MY EYES Sun Adaptive Photochromic HMC",
-    subtitle: "Sun Adaptive",
-    description: "Transitions smoothly to dark grey in sunlight. Complete UV protection.",
+    title: "Auto-Darkening (Transitions)",
+    subtitle: "Sun-Adaptive",
+    description: "Clear inside your room, turns into sunglasses in the sun.",
+    bullets: [
+      "Clear inside your room, turns into sunglasses in the sun",
+      "Glasses and sunglasses in one single frame",
+    ],
   },
   "sv-156-photogrey-bluecut": {
-    title: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER",
-    subtitle: "Hybrid Protection",
-    description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
+    title: "All-in-One (Screen Guard + Sun)",
+    subtitle: "Screen + Sun Hybrid",
+    description: "Blocks harsh screen glare and darkens automatically when you step outside.",
+    bullets: [
+      "Blocks harsh screen glare while you work",
+      "Darkens automatically when you step outside",
+    ],
   },
   "sv-167-shmc": {
-    title: "MY EYES Ultra Thin Index",
-    subtitle: "Ultra Thin Profile",
-    description: "High-index ultra-thin profile for stronger prescriptions. Reduces lens thickness significantly.",
+    title: "Ultra Thin Slim Lenses",
+    subtitle: "Slim Profile",
+    description: "Extra slim and lightweight lenses designed for stronger prescriptions.",
+    bullets: [
+      "Extra slim and lightweight lenses for high powers",
+      "Maximum clarity without heavy or thick glass edges",
+    ],
   },
 };
 
@@ -1145,33 +1168,52 @@ export default function PrescriptionModal({
                 {activeCustomerLenses.map((lens, idx) => {
                   const isSelected = selectedLensId === lens.id;
 
-                  // Progressive mode: override titles to clearly label as progressive lenses
-                  const PROGRESSIVE_CONSUMER_LENSES: Record<string, { title: string; subtitle: string; description: string }> = {
+                  // Progressive mode: plain English titles & 2-bullet benefits
+                  const PROGRESSIVE_CONSUMER_LENSES: Record<
+                    string,
+                    { title: string; subtitle: string; description: string; bullets: string[] }
+                  > = {
                     "progressive-freeform": {
-                      title: "MY EYES CR Hard Crystal Coat (Progressive)",
-                      subtitle: "Progressive",
-                      description: "Single-vision clarity with standard hard crystal coating for daily scratch resistance.",
+                      title: "Clear Everyday Progressive",
+                      subtitle: "Multi-Distance",
+                      description: "One pair for phone reading, computer, and driving without switching glasses.",
+                      bullets: [
+                        "One pair for phone reading, computer, and driving",
+                        "Smooth transition from reading to distance with no visible lines",
+                      ],
                     },
                     "sv-156-bluecut": {
-                      title: "MY EYES Blue Light Filter + UV Protection HMC (Progressive)",
-                      subtitle: "Progressive + Screen Shield",
-                      description: "Blocks harmful digital screen blue light and 100% UV rays with HMC anti-reflective coating.",
+                      title: "Screen Protection Progressive",
+                      subtitle: "Screen Guard",
+                      description: "Blocks harsh blue light from laptops and phones while you work.",
+                      bullets: [
+                        "Blocks harsh blue light from laptops and phones while you work",
+                        "Clear reading and distance vision with reduced eye strain",
+                      ],
                     },
                     "sv-156-photogrey": {
-                      title: "MY EYES Sun Adaptive Photochromic HMC (Progressive)",
-                      subtitle: "Progressive + Sun Adaptive",
-                      description: "Transitions smoothly to dark grey in sunlight. Complete UV protection.",
+                      title: "Auto-Darkening Progressive",
+                      subtitle: "Sun-Adaptive",
+                      description: "Darkens into sunglasses outdoors while keeping your reading power clear.",
+                      bullets: [
+                        "Darkens into sunglasses outdoors while keeping reading power clear",
+                        "No need to carry separate prescription sunglasses",
+                      ],
                     },
                     "sv-156-photogrey-bluecut": {
-                      title: "MY EYES PHOTOCHROMIC + BLUE LIGHT FILTER (Progressive)",
-                      subtitle: "Progressive + Hybrid Protection",
-                      description: "Ultimate hybrid: filters digital blue light indoors and transitions to sunglasses outdoors.",
+                      title: "All-in-One Ultimate Progressive",
+                      subtitle: "Screen + Sun",
+                      description: "Full screen guard indoors and auto sun-darkening tint outdoors.",
+                      bullets: [
+                        "Full screen guard indoors and auto sun-darkening tint outdoors",
+                        "Perfect all-in-one vision for work, driving, and reading",
+                      ],
                     },
                   };
 
                   const consumerLens = flowMode === "FLOW_3"
-                    ? (PROGRESSIVE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "Progressive", description: lens.description })
-                    : (CORE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "", description: lens.description });
+                    ? (PROGRESSIVE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "Progressive", description: lens.description, bullets: [] })
+                    : (CORE_CONSUMER_LENSES[lens.id] || { title: lens.name, subtitle: "", description: lens.description, bullets: [] });
 
                   const dynamicMatch = dynamicPackages.find(p => p.id === lens.id);
                   const activeBaseStartingPrice = flowMode === "FLOW_3"
@@ -1204,49 +1246,59 @@ export default function PrescriptionModal({
                       type="button"
                       onClick={() => setSelectedLensId(lens.id)}
                       className={cn(
-                        "w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer relative overflow-hidden",
+                        "w-full text-left p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden bg-white",
                         isSelected
-                          ? "border-amber-400 bg-amber-50/60 shadow-xs"
-                          : "border-slate-200 bg-white hover:border-slate-300"
+                          ? "border-[#ff7a00] bg-orange-50/40 ring-2 ring-[#ff7a00]/20 shadow-xs"
+                          : "border-slate-200 hover:border-orange-300"
                       )}
                     >
                       <div className="flex items-start gap-3 w-full">
-                        <span className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 mt-0.5",
-                          isSelected ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-500"
-                        )}>
-                          {idx + 1}
-                        </span>
-
-                        <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 w-full">
                             <div className="flex items-center gap-2 flex-wrap min-w-0">
-                              <span className="text-xs sm:text-sm font-extrabold text-slate-900">{consumerLens.title}</span>
+                              <span className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                                {consumerLens.title}
+                              </span>
                               {consumerLens.subtitle && (
                                 <span className={cn(
-                                  "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider whitespace-nowrap",
-                                  flowMode === "FLOW_3"
-                                    ? isSelected ? "bg-amber-200 text-amber-900" : "bg-amber-100 text-amber-700"
-                                    : isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600"
+                                  "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
+                                  isSelected ? "bg-orange-100 text-[#ff7a00]" : "bg-slate-100 text-slate-600"
                                 )}>
                                   {consumerLens.subtitle}
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+                            <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-shrink-0">
                               {isLensOutOfRange ? (
-                                <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block whitespace-nowrap">Out of Range</span>
+                                <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded block whitespace-nowrap">
+                                  Out of Range
+                                </span>
                               ) : (
-                                <span className="text-sm sm:text-base font-bold text-[#0F172A] whitespace-nowrap block">Starting from Rs. {calcPrice.toLocaleString()}/-</span>
+                                <span className="text-sm sm:text-base font-extrabold text-[#ff7a00] whitespace-nowrap block">
+                                  Starting from Rs. {calcPrice.toLocaleString()}/-
+                                </span>
                               )}
-                              {isSelected && <Check className="w-4.5 h-4.5 text-amber-600 flex-shrink-0 ml-auto sm:ml-0" />}
+                              <div className={cn(
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ml-auto sm:ml-0",
+                                isSelected ? "border-[#ff7a00] bg-[#ff7a00]" : "border-slate-300"
+                              )}>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                              </div>
                             </div>
                           </div>
 
-                          <div className="w-full">
-                            <p className="text-sm text-neutral-600 leading-relaxed">{consumerLens.description}</p>
-                          </div>
+                          {/* Exactly 2 Clean Benefit Bullets */}
+                          {consumerLens.bullets && consumerLens.bullets.length > 0 && (
+                            <ul className="space-y-1 pt-1">
+                              {consumerLens.bullets.map((b, bIdx) => (
+                                <li key={bIdx} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5 stroke-[2.5]" />
+                                  <span>{b}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </div>
                     </button>
