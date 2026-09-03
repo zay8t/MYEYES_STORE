@@ -14,9 +14,26 @@ import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import Toast from "./Toast";
 
+function getFirstImage(imgData?: string | null): string {
+  if (!imgData) return "/placeholder-frame.png";
+  if (imgData.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      // Fallback
+    }
+  }
+  if (imgData.includes(",")) {
+    return imgData.split(",")[0].trim();
+  }
+  return imgData;
+}
+
 export interface OrdersPipelineClientProps {
   initialOrders: OrderReceiptData[];
 }
+
 
 const FILTER_STAGES = [
   { id: "ALL", label: "All Orders" },
@@ -240,29 +257,44 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-100/80 text-slate-700 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4">Order # / Date</th>
-                <th className="px-6 py-4">Customer Details</th>
-                <th className="px-6 py-4">Optical Specs</th>
-                <th className="px-6 py-4">Total Amount</th>
-                <th className="px-6 py-4">Payment Status</th>
-                <th className="px-6 py-4">Order Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-5 py-4">Order # / Date</th>
+                <th className="px-5 py-4">Customer</th>
+                <th className="px-5 py-4">Frame &amp; Product</th>
+                <th className="px-5 py-4 min-w-[240px]">Optical Specs</th>
+                <th className="px-5 py-4 min-w-[140px]">Total &amp; Breakdown</th>
+                <th className="px-5 py-4">Payment</th>
+                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-slate-400 font-medium">
+                  <td colSpan={8} className="p-12 text-center text-slate-400 font-medium">
                     No prescription orders found matching criteria.
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order) => {
-                  const hasRx = order.items.some((i) => i.prescription);
+                  const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
+
+                  const totalFrameCost = order.items.reduce((sum, item) => {
+                    const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                      ? Number(item.framePrice)
+                      : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : Number(item.price));
+                    return sum + (frameCost * item.quantity);
+                  }, 0);
+
+                  const totalLensCost = order.items.reduce((sum, item) => {
+                    const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                      ? Number(item.lensPrice)
+                      : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+                    return sum + (lensCost * item.quantity);
+                  }, 0);
 
                   return (
-                    <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-6 py-4 font-mono">
+                    <tr key={order.id} className="hover:bg-slate-50/60 transition-colors align-top">
+                      <td className="px-5 py-4 font-mono">
                         <span className="px-2.5 py-1 rounded bg-slate-100 border border-slate-200/80 text-slate-900 font-mono font-extrabold text-xs block w-max">
                           {order.orderNumber || "ORDER-000"}
                         </span>
@@ -271,28 +303,119 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                         </span>
                       </td>
 
-                      <td className="px-6 py-4">
-                        <p className="font-extrabold text-slate-900">{order.customerName}</p>
-                        <p className="text-slate-500 text-[11px]">{order.customerEmail}</p>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {hasRx ? (
-                          <span className="px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[10px] uppercase inline-flex items-center gap-1">
-                            <Glasses className="w-3 h-3 text-amber-600" /> Custom Rx
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-600 font-semibold text-[10px]">
-                            Frame Only
-                          </span>
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-900 leading-tight">{order.customerName}</p>
+                        <p className="text-slate-500 text-[11px] truncate max-w-[130px]">{order.customerEmail}</p>
+                        {(order.customerPhone || order.phone) && (
+                          <p className="text-slate-400 text-[10px] font-mono">{order.customerPhone || order.phone}</p>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 font-mono font-extrabold text-slate-900">
-                        {formatPrice(order.totalAmount)}
+                      <td className="px-5 py-4">
+                        <div className="space-y-2">
+                          {order.items.map((item) => {
+                            const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
+                            const frameName = item.frameName || item.product?.name || "Eyewear Frame";
+                            const frameId = item.frameId || item.productId?.slice(0, 8);
+
+                            return (
+                              <div key={item.id} className="flex items-center gap-2.5">
+                                <div className="w-12 h-12 rounded-xl border border-slate-200 bg-slate-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                  {itemFrameImg ? (
+                                    <img
+                                      src={itemFrameImg}
+                                      alt={frameName}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                                      }}
+                                    />
+                                  ) : (
+                                    <Glasses className="w-5 h-5 text-slate-400" />
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-900 block leading-tight text-xs">
+                                    {frameName}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono block">
+                                    ID: {frameId}
+                                  </span>
+                                  {item.quantity > 1 && (
+                                    <span className="text-[10px] font-extrabold text-amber-700 block">
+                                      Qty: {item.quantity}x
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4">
+                        <div className="space-y-2">
+                          {order.items.map((item) => {
+                            const rx = item.prescription;
+                            const lensName = item.lensPackageName || item.selectedLensName || rx?.lensType || (rx ? "Prescription Lenses" : "Frame Only");
+                            const visionType = item.visionType || (rx?.lensType?.toLowerCase().includes("progressive") || lensName.toLowerCase().includes("progressive") ? "Progressive" : (rx ? "Single Vision" : "Frame Only"));
+
+                            if (!rx) {
+                              return (
+                                <span key={item.id} className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[10px] inline-block">
+                                  Standard Frame Only
+                                </span>
+                              );
+                            }
+
+                            const odSph = rx.odSph != null ? (rx.odSph > 0 ? `+${rx.odSph.toFixed(2)}` : rx.odSph.toFixed(2)) : "0.00";
+                            const odCyl = rx.odCyl != null ? (rx.odCyl > 0 ? `+${rx.odCyl.toFixed(2)}` : rx.odCyl.toFixed(2)) : "0.00";
+                            const odAxis = rx.odAxis ? `${rx.odAxis}°` : "-";
+                            const osSph = rx.osSph != null ? (rx.osSph > 0 ? `+${rx.osSph.toFixed(2)}` : rx.osSph.toFixed(2)) : "0.00";
+                            const osCyl = rx.osCyl != null ? (rx.osCyl > 0 ? `+${rx.osCyl.toFixed(2)}` : rx.osCyl.toFixed(2)) : "0.00";
+                            const osAxis = rx.osAxis ? `${rx.osAxis}°` : "-";
+                            const pd = rx.pd ? `${rx.pd} mm` : "63 mm";
+
+                            return (
+                              <div key={item.id} className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                    {visionType}
+                                  </span>
+                                  <span className="font-bold text-slate-900 text-xs">
+                                    {lensName}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-700 font-mono leading-relaxed bg-white/70 px-1.5 py-1 rounded border border-amber-100">
+                                  <span className="font-bold">OD:</span> SPH {odSph} CYL {odCyl} Axis {odAxis} <br />
+                                  <span className="font-bold">OS:</span> SPH {osSph} CYL {osCyl} Axis {osAxis} | <span className="font-bold">PD:</span> {pd}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <div className="space-y-0.5 font-mono">
+                          <span className="font-extrabold text-slate-900 text-sm block">
+                            {formatPrice(order.totalAmount)}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">
+                            Frame: {formatPrice(totalFrameCost)}
+                          </span>
+                          {totalLensCost > 0 && (
+                            <span className="text-[10px] text-slate-500 block">
+                              Lens: {formatPrice(totalLensCost)}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400 block">
+                            Shipping: {formatPrice(shippingFee)}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4">
                         <div className="space-y-1">
                           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
                             {order.paymentMethod || "COD"}
@@ -301,7 +424,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                             value={order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")}
                             onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
                             className={cn(
-                              "px-2.5 py-1 rounded-xl text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors",
+                              "px-2 py-1 rounded-xl text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors max-w-[140px]",
                               getPaymentStatusBadgeClass(order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED"))
                             )}
                           >
@@ -314,12 +437,12 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4">
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
                           className={cn(
-                            "px-3 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none",
+                            "px-2.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none",
                             getStatusBadgeClass(order.status)
                           )}
                         >
@@ -330,7 +453,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                         </select>
                       </td>
 
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedDrawerOrder(order)}
@@ -373,29 +496,78 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
           </div>
         ) : (
           filteredOrders.map((order) => {
-            const hasRx = order.items.some((i) => i.prescription);
+            const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
+
+            const totalFrameCost = order.items.reduce((sum, item) => {
+              const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                ? Number(item.framePrice)
+                : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : Number(item.price));
+              return sum + (frameCost * item.quantity);
+            }, 0);
+
+            const totalLensCost = order.items.reduce((sum, item) => {
+              const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                ? Number(item.lensPrice)
+                : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+              return sum + (lensCost * item.quantity);
+            }, 0);
 
             return (
               <div key={order.id} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded bg-slate-900 text-white font-mono font-extrabold text-xs">
-                      {order.orderNumber || "ORDER-000"}
-                    </span>
-                    {hasRx && (
-                      <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[10px] uppercase">
-                        Rx Included
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-mono font-black text-slate-900 text-sm">
-                    {formatPrice(order.totalAmount)}
+                  <span className="px-2.5 py-1 rounded bg-slate-900 text-white font-mono font-extrabold text-xs">
+                    {order.orderNumber || "ORDER-000"}
                   </span>
+                  <div className="text-right">
+                    <span className="font-mono font-black text-slate-900 text-base block">
+                      {formatPrice(order.totalAmount)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono block">
+                      Frame: {formatPrice(totalFrameCost)} | Lens: {formatPrice(totalLensCost)}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
                   <p className="font-extrabold text-slate-900 text-sm">{order.customerName}</p>
                   <p className="text-xs text-slate-500">{order.customerEmail}</p>
+                </div>
+
+                {/* Items preview in mobile */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  {order.items.map((item) => {
+                    const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
+                    const rx = item.prescription;
+                    const lensName = item.lensPackageName || item.selectedLensName || rx?.lensType || "Prescription Lenses";
+
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          {itemFrameImg ? (
+                            <img
+                              src={itemFrameImg}
+                              alt={item.frameName || item.product?.name || "Frame"}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                              }}
+                            />
+                          ) : (
+                            <Glasses className="w-5 h-5 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="space-y-0.5 text-xs">
+                          <p className="font-bold text-slate-900">{item.frameName || item.product?.name || "Frame"}</p>
+                          <p className="text-[11px] text-amber-900 font-semibold">{lensName}</p>
+                          {rx && (
+                            <p className="text-[10px] text-slate-500 font-mono">
+                              OD: {rx.odSph} | OS: {rx.osSph} | PD: {rx.pd}mm
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
@@ -460,6 +632,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
           })
         )}
       </div>
+
 
       {/* Slide-Over Prescription Drawer */}
       {selectedDrawerOrder && (

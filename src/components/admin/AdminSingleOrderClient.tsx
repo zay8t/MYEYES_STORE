@@ -23,7 +23,24 @@ import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/action
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 import Toast from "./Toast";
 
+function getFirstImage(imgData?: string | null): string {
+  if (!imgData) return "/placeholder-frame.png";
+  if (imgData.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      // Fallback
+    }
+  }
+  if (imgData.includes(",")) {
+    return imgData.split(",")[0].trim();
+  }
+  return imgData;
+}
+
 const ORDER_STEPS = [
+
   { status: "PENDING" as OrderStatus, label: "Pending Prescription" },
   { status: "PROCESSING" as OrderStatus, label: "Lab Cutting" },
   { status: "SHIPPED" as OrderStatus, label: "Dispatched" },
@@ -298,65 +315,158 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
       </div>
 
       {/* Itemized Order Breakdown */}
-      <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-2xs">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
-          <span>Items Purchased ({order.items.length})</span>
-          <span className="font-mono text-slate-900 font-extrabold">Total: {formatPrice(order.totalAmount)}</span>
-        </h3>
+      {(() => {
+        const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
 
-        <div className="divide-y divide-slate-100">
-          {order.items.map((item) => {
-            const frameCost = item.framePrice !== null && item.framePrice !== undefined
-              ? Number(item.framePrice)
-              : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+        const totalFrameCost = order.items.reduce((sum, item) => {
+          const frameCost = item.framePrice !== null && item.framePrice !== undefined
+            ? Number(item.framePrice)
+            : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : Number(item.price));
+          return sum + (frameCost * item.quantity);
+        }, 0);
 
-            const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
-              ? Number(item.lensPrice)
-              : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+        const totalLensCost = order.items.reduce((sum, item) => {
+          const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+            ? Number(item.lensPrice)
+            : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+          return sum + (lensCost * item.quantity);
+        }, 0);
 
-            const humanLensName = item.lensPackageName ||
-              item.selectedLensName ||
-              item.prescription?.lensType ||
-              (item.prescription ? "Standard Prescription Lenses" : null);
+        const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+          ? (totalFrameCost + totalLensCost)
+          : order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-            const unitPrice = (frameCost !== null && lensCost !== null)
-              ? (frameCost + lensCost)
-              : item.price;
+        const grandTotal = itemsSubtotal + shippingFee;
 
-            return (
-              <div key={item.id} className="py-3 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-900">{item.product?.name || "Eyewear Frame"}</p>
-                  {frameCost !== null && (
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      Frame: {formatPrice(frameCost)}
-                    </p>
-                  )}
-                  {humanLensName && (
-                    <div className="pt-0.5">
-                      <span className="text-[11px] font-semibold text-slate-800 block">
-                        Lens: {humanLensName}
-                      </span>
-                      {lensCost !== null && (
-                        <span className="text-[10px] text-slate-500 block">
-                          Lens Cost: {formatPrice(lensCost)}
-                        </span>
-                      )}
+        return (
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-2xs">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
+              <span>Items Purchased ({order.items.length})</span>
+              <span className="font-mono text-slate-900 font-extrabold">Total: {formatPrice(order.totalAmount)}</span>
+            </h3>
+
+            <div className="divide-y divide-slate-100">
+              {order.items.map((item) => {
+                const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                  ? Number(item.framePrice)
+                  : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+
+                const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                  ? Number(item.lensPrice)
+                  : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+                const humanLensName = item.lensPackageName ||
+                  item.selectedLensName ||
+                  item.prescription?.lensType ||
+                  (item.prescription ? "Standard Prescription Lenses" : null);
+
+                const visionType = item.visionType ||
+                  (item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
+                    ? "Progressive"
+                    : (item.prescription ? "Single Vision" : null));
+
+                const unitPrice = (frameCost !== null && lensCost !== null)
+                  ? (frameCost + lensCost)
+                  : item.price;
+
+                const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
+                const frameName = item.frameName || item.product?.name || "Eyewear Frame";
+                const frameId = item.frameId || item.productId?.slice(0, 8);
+
+                return (
+                  <div key={item.id} className="py-4 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-20 h-20 rounded-xl border border-slate-200 bg-slate-50 p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        {itemFrameImg ? (
+                          <img
+                            src={itemFrameImg}
+                            alt={frameName}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                            }}
+                          />
+                        ) : (
+                          <Glasses className="w-8 h-8 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 leading-snug">{frameName}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">ID: {frameId}</p>
+                        </div>
+
+                        {frameCost !== null && (
+                          <p className="text-xs font-semibold text-slate-700">
+                            Frame: {formatPrice(frameCost)}
+                          </p>
+                        )}
+
+                        {humanLensName && (
+                          <div className="pt-0.5">
+                            <div className="flex items-center gap-1.5">
+                              {visionType && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                  {visionType}
+                                </span>
+                              )}
+                              <span className="text-xs font-bold text-slate-900">
+                                {humanLensName}
+                              </span>
+                            </div>
+                            {lensCost !== null && (
+                              <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                                Lens: {formatPrice(lensCost)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <p className="text-[11px] text-slate-500 font-mono pt-1">
+                          Qty: {item.quantity} × {formatPrice(unitPrice)}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  <p className="text-[10px] text-slate-400 font-mono">
-                    Qty: {item.quantity} × {formatPrice(unitPrice)}
-                  </p>
-                </div>
-                <span className="text-xs font-extrabold text-slate-900 font-mono">
-                  {formatPrice(unitPrice * item.quantity)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
 
-      </div>
+                    <div className="text-right font-mono">
+                      <span className="text-sm font-black text-slate-900 block">
+                        {formatPrice(unitPrice * item.quantity)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Subtotal Breakdown Section */}
+            <div className="pt-4 border-t border-slate-200 space-y-2 bg-slate-50/80 p-4 rounded-xl">
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>Frame Subtotal:</span>
+                <span className="font-mono font-semibold text-slate-800">{formatPrice(totalFrameCost)}</span>
+              </div>
+              {totalLensCost > 0 && (
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Lens Subtotal:</span>
+                  <span className="font-mono font-semibold text-slate-800">{formatPrice(totalLensCost)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>Total Subtotal:</span>
+                <span className="font-mono font-semibold text-slate-800">{formatPrice(itemsSubtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>Shipping:</span>
+                <span className="font-mono font-semibold text-slate-800">{formatPrice(shippingFee)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                <span>Grand Total:</span>
+                <span className="font-mono text-base text-amber-900">{formatPrice(order.totalAmount || grandTotal)}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
 
       {/* High Resolution Image Modal */}
       {zoomImage && (

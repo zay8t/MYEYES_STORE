@@ -25,7 +25,24 @@ import {
 import { formatPrice, cn } from "@/lib/utils";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 
+function getFirstImage(imgData?: string | null): string {
+  if (!imgData) return "/placeholder-frame.png";
+  if (imgData.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      // Fallback
+    }
+  }
+  if (imgData.includes(",")) {
+    return imgData.split(",")[0].trim();
+  }
+  return imgData;
+}
+
 export interface CustomerOrderData {
+
   id: string;
   orderNumber?: string | null;
   customerName: string;
@@ -822,43 +839,104 @@ export default function CustomerOrderTrackingView({
               </h2>
 
               <div className="divide-y divide-slate-100">
-                {order.items.map((item) => (
-                  <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center">
-                      <Glasses className="w-7 h-7 text-slate-400" />
-                    </div>
+                {order.items.map((item) => {
+                  const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                    ? Number(item.framePrice)
+                    : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-sm font-extrabold text-slate-900 truncate">
-                          {item.product?.name || "Eyewear Frame"}
-                        </h3>
-                        <span className="text-sm font-mono font-bold text-slate-900 shrink-0">
-                          {formatPrice(item.price * item.quantity)}
-                        </span>
+                  const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                    ? Number(item.lensPrice)
+                    : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+                  const humanLensName = item.lensPackageName ||
+                    item.selectedLensName ||
+                    item.lensName ||
+                    item.prescription?.lensType ||
+                    (item.prescription ? "Standard Prescription Lenses" : null);
+
+                  const visionType = (item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive"))
+                    ? "Progressive"
+                    : (item.prescription ? "Single Vision" : null);
+
+                  const itemFrameImg = getFirstImage(item.product?.images);
+
+                  return (
+                    <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center p-1">
+                        {itemFrameImg ? (
+                          <img
+                            src={itemFrameImg}
+                            alt={item.product?.name || "Frame"}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                            }}
+                          />
+                        ) : (
+                          <Glasses className="w-7 h-7 text-slate-400" />
+                        )}
                       </div>
 
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Qty: {item.quantity} · Unit Price: {formatPrice(item.price)}
-                      </p>
-
-                      {item.prescription && (
-                        <div className="mt-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1">
-                          <p className="font-bold text-slate-900">
-                            Lens: {item.prescription.lensType} (PD: {item.prescription.pd} mm)
-                          </p>
-                          <p className="font-mono text-[11px] text-slate-600">
-                            OD: SPH {item.prescription.odSph.toFixed(2)} | CYL {item.prescription.odCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}
-                          </p>
-                          <p className="font-mono text-[11px] text-slate-600">
-                            OS: SPH {item.prescription.osSph.toFixed(2)} | CYL {item.prescription.osCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}
-                          </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-sm font-extrabold text-slate-900 truncate">
+                              {item.product?.name || "Eyewear Frame"}
+                            </h3>
+                            {frameCost !== null && (
+                              <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                                Frame Price: {formatPrice(frameCost)}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-sm font-mono font-bold text-slate-900 shrink-0">
+                            {formatPrice(item.price * item.quantity)}
+                          </span>
                         </div>
-                      )}
+
+                        {humanLensName && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {visionType && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                  {visionType}
+                                </span>
+                              )}
+                              <span className="font-bold text-slate-900">
+                                {humanLensName}
+                              </span>
+                              {lensCost !== null && (
+                                <span className="text-slate-600 font-medium ml-auto">
+                                  Lens Price: {formatPrice(lensCost)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-slate-400 mt-1 font-mono">
+                          Qty: {item.quantity} · Unit Total: {formatPrice(item.price)}
+                        </p>
+
+                        {item.prescription && (
+                          <div className="mt-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1">
+                            <p className="font-bold text-slate-900">
+                              Prescription Specifications (PD: {item.prescription.pd} mm)
+                            </p>
+                            <p className="font-mono text-[11px] text-slate-600">
+                              OD: SPH {item.prescription.odSph.toFixed(2)} | CYL {item.prescription.odCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}
+                            </p>
+                            <p className="font-mono text-[11px] text-slate-600">
+                              OS: SPH {item.prescription.osSph.toFixed(2)} | CYL {item.prescription.osCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
             </div>
 
             {/* Live Progress Timeline */}

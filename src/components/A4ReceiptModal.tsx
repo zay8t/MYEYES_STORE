@@ -34,9 +34,14 @@ interface OrderItem {
   quantity: number;
   product: Product;
   prescription: Prescription | null;
+  frameId?: string | null;
+  frameName?: string | null;
+  frameImage?: string | null;
   framePrice?: number | null;
+  visionType?: string | null;
   lensPackageName?: string | null;
   lensPrice?: number | null;
+  subtotal?: number | null;
   selectedLensName?: string | null;
   lensBasePriceKey?: string | null;
   lensBasePriceValue?: number | null;
@@ -48,6 +53,23 @@ interface OrderItem {
   rightMultiplier?: number | null;
   leftMultiplier?: number | null;
 }
+
+function getFirstImage(imgData?: string | null): string {
+  if (!imgData) return "/placeholder-frame.png";
+  if (imgData.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      // Fallback
+    }
+  }
+  if (imgData.includes(",")) {
+    return imgData.split(",")[0].trim();
+  }
+  return imgData;
+}
+
 
 
 export interface OrderReceiptData {
@@ -101,12 +123,29 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
   };
 
   const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
-  const itemsSubtotal = order.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+
+  const totalFrameCost = order.items.reduce((sum, item) => {
+    const frameCost = item.framePrice !== null && item.framePrice !== undefined
+      ? Number(item.framePrice)
+      : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : Number(item.price));
+    return sum + (frameCost * item.quantity);
+  }, 0);
+
+  const totalLensCost = order.items.reduce((sum, item) => {
+    const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+      ? Number(item.lensPrice)
+      : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+    return sum + (lensCost * item.quantity);
+  }, 0);
+
+  const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+    ? (totalFrameCost + totalLensCost)
+    : order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const grandTotal = itemsSubtotal + shippingFee;
 
   const getFriendlyPaymentMethod = (method?: string | null) => {
+
     switch (method) {
       case "COD":
         return "Cash on Delivery (COD)";
@@ -357,26 +396,50 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                           item.prescription?.lensType ||
                           (item.prescription ? "Standard Prescription Lenses" : null);
 
-                        const visionType = item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
-                          ? "Progressive"
-                          : (item.prescription ? "Single Vision" : null);
+                        const visionType = item.visionType ||
+                          (item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
+                            ? "Progressive"
+                            : (item.prescription ? "Single Vision" : null));
 
                         const unitPrice = (frameCost !== null && lensCost !== null)
                           ? (frameCost + lensCost)
                           : item.price;
 
                         const totalPrice = unitPrice * item.quantity;
+                        const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
 
                         return (
                           <tr key={item.id} className="border-b border-slate-100 align-top">
                             <td className="py-4 px-3">
-                              <span className="font-semibold text-slate-900 block">{item.product?.name || "Eyewear Frame"}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">ID: {item.productId?.slice(0, 8)}</span>
-                              {frameCost !== null && (
-                                <span className="text-xs font-medium text-slate-600 block mt-1">
-                                  Frame: {formatPrice(frameCost)}
-                                </span>
-                              )}
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 rounded-lg border border-slate-200 bg-slate-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                  {itemFrameImg ? (
+                                    <img
+                                      src={itemFrameImg}
+                                      alt={item.frameName || item.product?.name || "Eyewear Frame"}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                                      }}
+                                    />
+                                  ) : (
+                                    <Glasses className="w-6 h-6 text-slate-400" />
+                                  )}
+                                </div>
+                                <div className="space-y-0.5">
+                                  <span className="font-bold text-slate-900 block leading-tight">
+                                    {item.frameName || item.product?.name || "Eyewear Frame"}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono block">
+                                    ID: {item.frameId || item.productId?.slice(0, 8)}
+                                  </span>
+                                  {frameCost !== null && (
+                                    <span className="text-xs font-semibold text-slate-700 block pt-0.5">
+                                      Frame Price: {formatPrice(frameCost)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </td>
                             <td className="py-4 px-3">
                               {item.prescription || humanLensName ? (
@@ -386,12 +449,12 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                                       {visionType}
                                     </span>
                                   )}
-                                  <span className="font-semibold text-slate-900 block text-xs">
+                                  <span className="font-bold text-slate-900 block text-xs">
                                     {humanLensName}
                                   </span>
                                   {lensCost !== null && (
-                                    <span className="text-xs font-medium text-slate-600 block">
-                                      Lens: {formatPrice(lensCost)}
+                                    <span className="text-xs font-semibold text-slate-700 block">
+                                      Lens Price: {formatPrice(lensCost)}
                                     </span>
                                   )}
                                 </div>
@@ -408,7 +471,6 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                         );
                       })}
                     </tbody>
-
                   </table>
                 </div>
               </div>
@@ -427,13 +489,16 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                     .filter((i) => i.prescription)
                     .map((item) => {
                       const rx = item.prescription!;
+                      const rxLensName = item.lensPackageName || item.selectedLensName || rx.lensType || "Standard Prescription Lenses";
+                      const rxVisionType = item.visionType || (rxLensName.toLowerCase().includes("progressive") ? "Progressive" : "Single Vision");
+
                       return (
                         <div key={item.id} className="space-y-2">
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="font-semibold text-slate-900">
-                              {item.product?.name} — {rx.lensType}
+                          <div className="flex justify-between items-center text-xs flex-wrap gap-2">
+                            <span className="font-bold text-slate-900">
+                              {item.frameName || item.product?.name} — [{rxVisionType}] {rxLensName}
                             </span>
-                            <span className="bg-slate-100 text-slate-700 border border-slate-200 font-medium text-xs px-2.5 py-1 rounded-md">
+                            <span className="bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs px-2.5 py-1 rounded-md">
                               Pupillary Distance (PD): {rx.pd} mm
                             </span>
                           </div>
@@ -480,21 +545,32 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
 
               {/* Pricing Breakdown & Grand Total */}
               <div className="flex justify-end mb-8">
-                <div className="w-64 space-y-2 text-right">
+                <div className="w-72 space-y-2 text-right">
+                  <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Frame(s) Total:</span>
+                    <span className="font-mono font-medium text-slate-800">{formatPrice(totalFrameCost)}</span>
+                  </div>
+                  {totalLensCost > 0 && (
+                    <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Lens(es) Total:</span>
+                      <span className="font-mono font-medium text-slate-800">{formatPrice(totalLensCost)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Subtotal:</span>
                     <span className="font-mono font-medium text-slate-800">{formatPrice(itemsSubtotal)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Standard Shipping:</span>
-                    <span className="font-mono font-medium text-slate-800">Rs. {shippingFee}</span>
+                    <span className="font-mono font-medium text-slate-800">{formatPrice(shippingFee)}</span>
                   </div>
                   <div className="flex justify-between text-slate-900 font-bold text-sm pt-1 border-b border-slate-300 pb-1">
                     <span>Grand Total:</span>
-                    <span className="font-mono text-base font-extrabold text-slate-900">{formatPrice(order.totalAmount)}</span>
+                    <span className="font-mono text-base font-extrabold text-slate-900">{formatPrice(order.totalAmount || grandTotal)}</span>
                   </div>
                 </div>
               </div>
+
             </div>
 
             {/* Footer Section */}

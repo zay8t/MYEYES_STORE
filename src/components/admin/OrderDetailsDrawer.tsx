@@ -22,7 +22,24 @@ import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
 
+function getFirstImage(imgData?: string | null): string {
+  if (!imgData) return "/placeholder-frame.png";
+  if (imgData.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      // Fallback
+    }
+  }
+  if (imgData.includes(",")) {
+    return imgData.split(",")[0].trim();
+  }
+  return imgData;
+}
+
 export interface OrderDetailsDrawerProps {
+
   order: OrderReceiptData;
   onClose: () => void;
   onReceiptClick: (order: OrderReceiptData) => void;
@@ -261,125 +278,142 @@ export default function OrderDetailsDrawer({
           </div>
 
           {/* Prescription Data Section (If Prescription Present) */}
-          {hasRx && rxItem?.prescription && (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/60 space-y-4 shadow-2xs">
-              <div className="flex items-center justify-between pb-3 border-b border-amber-200/60">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold">
-                    <Glasses className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                      Optical Prescription Specifications
-                    </h3>
-                    <p className="text-[11px] text-amber-900 font-bold">
-                      Package: {rxItem.prescription.lensType}
-                    </p>
-                  </div>
-                </div>
+          {hasRx && (
+            <div className="space-y-4">
+              {order.items
+                .filter((i) => i.prescription)
+                .map((item) => {
+                  const rx = item.prescription!;
+                  const humanLensName = item.lensPackageName || item.selectedLensName || rx.lensType || "Standard Prescription Lenses";
+                  const visionType = item.visionType || (rx.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive") ? "Progressive" : "Single Vision");
 
-                <div className="text-right">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                    Pupillary Distance
-                  </span>
-                  <span className="text-sm font-extrabold text-slate-900 font-mono">
-                    {rxItem.prescription.pd} mm
-                  </span>
-                </div>
-              </div>
+                  return (
+                    <div key={item.id} className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/60 space-y-4 shadow-2xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-amber-200/60 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold">
+                            <Glasses className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                              Optical Prescription Specifications
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                {visionType}
+                              </span>
+                              <span className="text-[11px] text-amber-950 font-bold">
+                                {item.frameName || item.product?.name} — {humanLensName}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-              {/* Eye Measurements Grid (OD Right vs OS Left) */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* OD - Right Eye */}
-                <div className="p-4 rounded-xl bg-white border border-amber-200/80 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                    <span className="text-xs font-extrabold text-slate-900">OD (Right Eye)</span>
-                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-900 text-[10px] font-bold">
-                      Right Lens
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.odSph > 0 ? `+${rxItem.prescription.odSph}` : rxItem.prescription.odSph}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.odCyl !== null ? rxItem.prescription.odCyl : "0.00"}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">AXIS</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.odAxis ? `${rxItem.prescription.odAxis}°` : "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                        <div className="text-right">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                            Pupillary Distance
+                          </span>
+                          <span className="text-sm font-extrabold text-slate-900 font-mono">
+                            {rx.pd} mm
+                          </span>
+                        </div>
+                      </div>
 
-                {/* OS - Left Eye */}
-                <div className="p-4 rounded-xl bg-white border border-amber-200/80 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                    <span className="text-xs font-extrabold text-slate-900">OS (Left Eye)</span>
-                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-900 text-[10px] font-bold">
-                      Left Lens
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.osSph > 0 ? `+${rxItem.prescription.osSph}` : rxItem.prescription.osSph}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.osCyl !== null ? rxItem.prescription.osCyl : "0.00"}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-lg">
-                      <span className="text-[9px] font-bold text-slate-400 block">AXIS</span>
-                      <span className="font-extrabold text-slate-900">
-                        {rxItem.prescription.osAxis ? `${rxItem.prescription.osAxis}°` : "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      {/* Eye Measurements Grid (OD Right vs OS Left) */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* OD - Right Eye */}
+                        <div className="p-4 rounded-xl bg-white border border-amber-200/80 shadow-2xs space-y-2">
+                          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                            <span className="text-xs font-extrabold text-slate-900">OD (Right Eye)</span>
+                            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-900 text-[10px] font-bold">
+                              Right Lens
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.odSph > 0 ? `+${rx.odSph.toFixed(2)}` : rx.odSph.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.odCyl !== null && rx.odCyl !== undefined ? rx.odCyl.toFixed(2) : "0.00"}
+                              </span>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">AXIS</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.odAxis ? `${rx.odAxis}°` : "-"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-              {/* Uploaded Rx Doctor Slip Image */}
-              {rxItem.prescription.fileUrl && (
-                <div className="p-3 rounded-xl bg-white border border-amber-200/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="relative w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border cursor-pointer group"
-                      onClick={() => setZoomImage(rxItem.prescription!.fileUrl)}
-                    >
-                      <Image
-                        src={rxItem.prescription.fileUrl}
-                        alt="Doctor Prescription Slip"
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">Uploaded Doctor Rx Slip</p>
-                      <p className="text-[11px] text-slate-500 font-medium">Click image to inspect high-res attachment</p>
-                    </div>
-                  </div>
+                        {/* OS - Left Eye */}
+                        <div className="p-4 rounded-xl bg-white border border-amber-200/80 shadow-2xs space-y-2">
+                          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                            <span className="text-xs font-extrabold text-slate-900">OS (Left Eye)</span>
+                            <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-900 text-[10px] font-bold">
+                              Left Lens
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.osSph > 0 ? `+${rx.osSph.toFixed(2)}` : rx.osSph.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.osCyl !== null && rx.osCyl !== undefined ? rx.osCyl.toFixed(2) : "0.00"}
+                              </span>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-lg">
+                              <span className="text-[9px] font-bold text-slate-400 block">AXIS</span>
+                              <span className="font-extrabold text-slate-900">
+                                {rx.osAxis ? `${rx.osAxis}°` : "-"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                  <button
-                    onClick={() => setZoomImage(rxItem.prescription!.fileUrl)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Inspect
-                  </button>
-                </div>
-              )}
+                      {/* Uploaded Rx Doctor Slip Image */}
+                      {rx.fileUrl && (
+                        <div className="p-3 rounded-xl bg-white border border-amber-200/80 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="relative w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border cursor-pointer group"
+                              onClick={() => setZoomImage(rx.fileUrl)}
+                            >
+                              <Image
+                                src={rx.fileUrl}
+                                alt="Doctor Prescription Slip"
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-900">Uploaded Doctor Rx Slip</p>
+                              <p className="text-[11px] text-slate-500 font-medium">Click image to inspect high-res attachment</p>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setZoomImage(rx.fileUrl)}
+                            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Inspect
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           )}
 
@@ -434,70 +468,158 @@ export default function OrderDetailsDrawer({
           </div>
 
           {/* Itemized Order Breakdown */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-3 shadow-2xs">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
-              <span>Ordered Frame & Lens Items ({order.items.length})</span>
-              <span className="text-slate-500 font-mono">Total Paid: {formatPrice(order.totalAmount)}</span>
-            </h3>
+          {(() => {
+            const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
 
-            <div className="divide-y divide-slate-100">
-              {order.items.map((item) => {
-                const frameCost = item.framePrice !== null && item.framePrice !== undefined
-                  ? Number(item.framePrice)
-                  : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+            const totalFrameCost = order.items.reduce((sum, item) => {
+              const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                ? Number(item.framePrice)
+                : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : Number(item.price));
+              return sum + (frameCost * item.quantity);
+            }, 0);
 
-                const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
-                  ? Number(item.lensPrice)
-                  : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+            const totalLensCost = order.items.reduce((sum, item) => {
+              const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                ? Number(item.lensPrice)
+                : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+              return sum + (lensCost * item.quantity);
+            }, 0);
 
-                const humanLensName = item.lensPackageName ||
-                  item.selectedLensName ||
-                  item.prescription?.lensType ||
-                  (item.prescription ? "Standard Prescription Lenses" : null);
+            const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+              ? (totalFrameCost + totalLensCost)
+              : order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-                const unitPrice = (frameCost !== null && lensCost !== null)
-                  ? (frameCost + lensCost)
-                  : item.price;
+            const grandTotal = itemsSubtotal + shippingFee;
 
-                return (
-                  <div key={item.id} className="py-3 flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold flex-shrink-0 mt-0.5">
-                        <Glasses className="w-5 h-5" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-slate-900">{item.product?.name || "Eyewear Frame"}</p>
-                        {frameCost !== null && (
-                          <p className="text-[11px] text-slate-500 font-medium">
-                            Frame: {formatPrice(frameCost)}
-                          </p>
-                        )}
-                        {humanLensName && (
-                          <div className="pt-0.5">
-                            <span className="text-[11px] font-semibold text-slate-800 block">
-                              Lens: {humanLensName}
-                            </span>
-                            {lensCost !== null && (
-                              <span className="text-[10px] text-slate-500 block">
-                                Lens Cost: {formatPrice(lensCost)}
-                              </span>
+            return (
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-4 shadow-2xs">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
+                  <span>Ordered Frame &amp; Lens Items ({order.items.length})</span>
+                  <span className="text-slate-500 font-mono">Total Paid: {formatPrice(order.totalAmount)}</span>
+                </h3>
+
+                <div className="divide-y divide-slate-100">
+                  {order.items.map((item) => {
+                    const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                      ? Number(item.framePrice)
+                      : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+
+                    const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                      ? Number(item.lensPrice)
+                      : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+                    const humanLensName = item.lensPackageName ||
+                      item.selectedLensName ||
+                      item.prescription?.lensType ||
+                      (item.prescription ? "Standard Prescription Lenses" : null);
+
+                    const visionType = item.visionType ||
+                      (item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
+                        ? "Progressive"
+                        : (item.prescription ? "Single Vision" : null));
+
+                    const unitPrice = (frameCost !== null && lensCost !== null)
+                      ? (frameCost + lensCost)
+                      : item.price;
+
+                    const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
+                    const frameName = item.frameName || item.product?.name || "Eyewear Frame";
+                    const frameId = item.frameId || item.productId?.slice(0, 8);
+
+                    return (
+                      <div key={item.id} className="py-4 flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                          <div className="w-20 h-20 rounded-xl border border-slate-200 bg-slate-50 p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            {itemFrameImg ? (
+                              <img
+                                src={itemFrameImg}
+                                alt={frameName}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                                }}
+                              />
+                            ) : (
+                              <Glasses className="w-8 h-8 text-slate-400" />
                             )}
                           </div>
-                        )}
-                        <p className="text-[10px] text-slate-400 font-mono">
-                          Qty: {item.quantity} × {formatPrice(unitPrice)}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-900 font-mono">
-                      {formatPrice(unitPrice * item.quantity)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                          <div className="space-y-1">
+                            <div>
+                              <p className="text-sm font-bold text-slate-900 leading-snug">{frameName}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">ID: {frameId}</p>
+                            </div>
 
-          </div>
+                            {frameCost !== null && (
+                              <p className="text-xs font-semibold text-slate-700">
+                                Frame: {formatPrice(frameCost)}
+                              </p>
+                            )}
+
+                            {humanLensName && (
+                              <div className="pt-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  {visionType && (
+                                    <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                      {visionType}
+                                    </span>
+                                  )}
+                                  <span className="text-xs font-bold text-slate-900">
+                                    {humanLensName}
+                                  </span>
+                                </div>
+                                {lensCost !== null && (
+                                  <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                                    Lens: {formatPrice(lensCost)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            <p className="text-[11px] text-slate-500 font-mono pt-1">
+                              Qty: {item.quantity} × {formatPrice(unitPrice)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right font-mono">
+                          <span className="text-sm font-black text-slate-900 block">
+                            {formatPrice(unitPrice * item.quantity)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Subtotal Breakdown Section */}
+                <div className="pt-4 border-t border-slate-200 space-y-2 bg-slate-50/80 p-4 rounded-xl">
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Frame Subtotal:</span>
+                    <span className="font-mono font-semibold text-slate-800">{formatPrice(totalFrameCost)}</span>
+                  </div>
+                  {totalLensCost > 0 && (
+                    <div className="flex justify-between text-xs text-slate-600">
+                      <span>Lens Subtotal:</span>
+                      <span className="font-mono font-semibold text-slate-800">{formatPrice(totalLensCost)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Total Subtotal:</span>
+                    <span className="font-mono font-semibold text-slate-800">{formatPrice(itemsSubtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Shipping:</span>
+                    <span className="font-mono font-semibold text-slate-800">{formatPrice(shippingFee)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                    <span>Grand Total:</span>
+                    <span className="font-mono text-base text-amber-900">{formatPrice(order.totalAmount || grandTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 

@@ -289,33 +289,66 @@ export async function GET(
 
     // Totals Summary
     y += 10;
-    const subtotal = order.items.reduce((sum, i) => {
-      const p = typeof i.price === "number" ? i.price : parseFloat(String(i.price || 0)) || 0;
-      const q = typeof i.quantity === "number" ? i.quantity : parseInt(String(i.quantity || 1), 10) || 1;
-      return sum + p * q;
+    const totalFrameCost = order.items.reduce((sum, item) => {
+      const q = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
+      const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
+      const frameCost = item.framePrice !== null && item.framePrice !== undefined
+        ? Number(item.framePrice)
+        : (item.prescription ? (rawPrice > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? rawPrice - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : rawPrice);
+      return sum + (frameCost * q);
     }, 0);
 
-    const totalAmount = typeof order.totalAmount === "number" ? order.totalAmount : subtotal + (order.shippingFee || 250);
+    const totalLensCost = order.items.reduce((sum, item) => {
+      const q = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
+      const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+        ? Number(item.lensPrice)
+        : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+      return sum + (lensCost * q);
+    }, 0);
+
+    const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+      ? (totalFrameCost + totalLensCost)
+      : order.items.reduce((sum, i) => {
+          const p = typeof i.price === "number" ? i.price : parseFloat(String(i.price || 0)) || 0;
+          const q = typeof i.quantity === "number" ? i.quantity : parseInt(String(i.quantity || 1), 10) || 1;
+          return sum + p * q;
+        }, 0);
+
+    const shippingFee = order.shippingFee !== undefined && order.shippingFee !== null ? order.shippingFee : 250;
+    const grandTotal = typeof order.totalAmount === "number" ? order.totalAmount : itemsSubtotal + shippingFee;
 
     doc
       .fontSize(8)
       .font("Helvetica")
       .fillColor("#64748b")
-      .text("Subtotal:", 380, y, { width: 80, align: "right" })
-      .text(`Rs. ${subtotal.toLocaleString()}`, 470, y, { width: 75, align: "right" });
+      .text("Frame(s) Total:", 360, y, { width: 100, align: "right" })
+      .text(`Rs. ${totalFrameCost.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+
+    if (totalLensCost > 0) {
+      y += 14;
+      doc
+        .text("Lens(es) Total:", 360, y, { width: 100, align: "right" })
+        .text(`Rs. ${totalLensCost.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+    }
 
     y += 14;
     doc
-      .text("Shipping Fee:", 380, y, { width: 80, align: "right" })
-      .text(`Rs. ${order.shippingFee || 250}`, 470, y, { width: 75, align: "right" });
+      .text("Subtotal:", 360, y, { width: 100, align: "right" })
+      .text(`Rs. ${itemsSubtotal.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+
+    y += 14;
+    doc
+      .text("Shipping Fee:", 360, y, { width: 100, align: "right" })
+      .text(`Rs. ${shippingFee.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
 
     y += 16;
     doc
       .fontSize(10)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("Grand Total:", 380, y, { width: 80, align: "right" })
-      .text(`Rs. ${totalAmount.toLocaleString()}`, 470, y, { width: 75, align: "right" });
+      .text("Grand Total:", 360, y, { width: 100, align: "right" })
+      .text(`Rs. ${grandTotal.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+
 
     // Footer
     doc
