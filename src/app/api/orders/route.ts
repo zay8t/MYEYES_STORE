@@ -3,9 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
 
 interface PrescriptionInput {
   lensUsage?: string;
@@ -64,7 +66,25 @@ export async function POST(request: NextRequest) {
       paymentSenderName,
       paymentSenderPhone,
       items,
+      token,
+      recaptchaToken,
     } = body;
+
+    const verificationToken = token || recaptchaToken;
+    if (!verificationToken) {
+      return NextResponse.json(
+        { error: "reCAPTCHA token is required." },
+        { status: 400 }
+      );
+    }
+
+    const recaptchaResult = await verifyRecaptchaToken(verificationToken, "checkout");
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Automated activity detected. Order rejected." },
+        { status: recaptchaResult.isBot ? 403 : 400 }
+      );
+    }
 
     if (
       !customerName ||

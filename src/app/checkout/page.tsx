@@ -27,6 +27,7 @@ import {
 import Link from "next/link";
 import LogoLoader from "@/components/ui/LogoLoader";
 import type { ValidateCouponResponse } from "@/types/discounts";
+import { executeRecaptcha } from "@/lib/recaptcha";
 
 type PaymentMethod = "COD" | "BANK_TRANSFER" | "EASYPAISA" | "JAZZCASH";
 
@@ -271,6 +272,15 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
+      // Generate reCAPTCHA v3 verification token
+      let recaptchaToken = "";
+      try {
+        recaptchaToken = await executeRecaptcha("checkout");
+      } catch (recaptchaErr) {
+        console.warn("reCAPTCHA execution warning:", recaptchaErr);
+        throw new Error("Security verification failed. Please refresh the page and try again.");
+      }
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,6 +298,8 @@ export default function CheckoutPage() {
           paymentSenderName: isOnlinePayment && paymentSenderName ? paymentSenderName.trim() : null,
           paymentSenderPhone: isOnlinePayment && paymentSenderPhone ? paymentSenderPhone.trim() : null,
           items,
+          token: recaptchaToken,
+          recaptchaToken,
         }),
       });
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,29 @@ const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2026
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, customerName = "Jane Doe", customerEmail = "jane.doe@example.com" } = body;
+    const {
+      items,
+      customerName = "Jane Doe",
+      customerEmail = "jane.doe@example.com",
+      token,
+      recaptchaToken,
+    } = body;
+
+    const verificationToken = token || recaptchaToken;
+    if (!verificationToken) {
+      return NextResponse.json(
+        { error: "reCAPTCHA token is required." },
+        { status: 400 }
+      );
+    }
+
+    const recaptchaResult = await verifyRecaptchaToken(verificationToken, "checkout");
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Automated activity detected. Order rejected." },
+        { status: recaptchaResult.isBot ? 403 : 400 }
+      );
+    }
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });

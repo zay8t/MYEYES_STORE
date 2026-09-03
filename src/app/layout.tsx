@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { GoogleTagManager } from "@next/third-parties/google";
 import Header from "@/components/Header";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
@@ -142,6 +143,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TDPFGB5P'} />
+      <Script
+        src={`https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LcO7qYtAAAAANUrfXfh0gmGbRRRkqefx1gtaisH'}`}
+        strategy="afterInteractive"
+      />
       <head>
         <meta name="theme-color" content="#ffffff" />
         <meta name="msapplication-TileColor" content="#ffffff" />
