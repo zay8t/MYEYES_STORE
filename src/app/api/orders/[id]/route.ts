@@ -53,6 +53,8 @@ export async function GET(
             price: true,
             quantity: true,
             framePrice: true,
+            lensPackageName: true,
+            lensPrice: true,
             lensFinalPrice: true,
             selectedLensName: true,
             totalAmount: true,

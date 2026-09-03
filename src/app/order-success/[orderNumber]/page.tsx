@@ -83,6 +83,8 @@ export default async function OrderSuccessPage({
       price: item.price,
       quantity: item.quantity,
       framePrice: item.framePrice,
+      lensPackageName: item.lensPackageName || item.selectedLensName || item.prescription?.lensType || null,
+      lensPrice: item.lensPrice ?? item.lensFinalPrice ?? null,
       lensFinalPrice: item.lensFinalPrice,
       selectedLensName: item.selectedLensName,
       totalAmount: item.totalAmount,

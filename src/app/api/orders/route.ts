@@ -12,6 +12,11 @@ export const revalidate = 0;
 interface PrescriptionInput {
   lensUsage?: string;
   lensMaterial?: string;
+  visionType?: string;
+  lensPackageName?: string;
+  lensPrice?: number | null;
+  frameName?: string;
+  framePrice?: number | null;
   odSph?: string | number;
   odCyl?: string | number | null;
   odAxis?: string | number | null;
@@ -20,11 +25,11 @@ interface PrescriptionInput {
   osAxis?: string | number | null;
   pd?: string | number;
   rxFileUrl?: string | null;
+  selectedLensName?: string;
   lensBasePriceKey?: string | null;
   lensBasePriceValue?: number | null;
   lensMultiplier?: number | null;
   lensFinalPrice?: number | null;
-  framePrice?: number | null;
   isAsymmetricRx?: boolean;
   rightEyeLensPrice?: number | null;
   leftEyeLensPrice?: number | null;
@@ -36,8 +41,16 @@ interface OrderItemInput {
   productId: string;
   price: string | number;
   quantity?: number;
+  frameName?: string;
+  framePrice?: string | number | null;
+  visionType?: string;
+  lensPackageName?: string;
+  lensPrice?: string | number | null;
+  unitPrice?: string | number;
+  totalPrice?: string | number;
   prescription?: PrescriptionInput;
 }
+
 
 function normalizePhoneNumber(phone: string): string {
   if (!phone) return "";
@@ -172,6 +185,9 @@ export async function POST(request: NextRequest) {
           const rxRecord = await tx.prescription.create({
             data: {
               lensType:
+                item.lensPackageName ||
+                item.prescription.lensPackageName ||
+                item.prescription.visionType ||
                 item.prescription.lensUsage ||
                 item.prescription.lensMaterial ||
                 "Prescription Lenses",
@@ -200,25 +216,49 @@ export async function POST(request: NextRequest) {
           prescriptionId = rxRecord.id;
         }
 
+        const itemFramePrice = item.framePrice !== undefined && item.framePrice !== null
+          ? parseFloat(String(item.framePrice))
+          : (item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null
+              ? parseFloat(String(item.prescription.framePrice))
+              : (item.prescription ? null : parseFloat(String(item.price)) || null));
+
+        const itemLensPackageName = item.lensPackageName ||
+          item.prescription?.lensPackageName ||
+          item.prescription?.selectedLensName ||
+          item.prescription?.lensMaterial ||
+          item.prescription?.lensUsage ||
+          (item.prescription ? "Standard Prescription Lenses" : null);
+
+        const itemLensPrice = item.lensPrice !== undefined && item.lensPrice !== null
+          ? parseFloat(String(item.lensPrice))
+          : (item.prescription?.lensPrice !== undefined && item.prescription?.lensPrice !== null
+              ? parseFloat(String(item.prescription.lensPrice))
+              : (item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null
+                  ? parseFloat(String(item.prescription.lensFinalPrice))
+                  : null));
+
         orderItemsData.push({
           productId: item.productId,
           prescriptionId: prescriptionId || null,
           price: parseFloat(String(item.price)) || 0,
           quantity: item.quantity || 1,
-          framePrice: item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null ? parseFloat(String(item.prescription.framePrice)) : null,
+          framePrice: itemFramePrice,
+          lensPackageName: itemLensPackageName,
+          lensPrice: itemLensPrice,
           lensBasePriceKey: item.prescription?.lensBasePriceKey || null,
           lensBasePriceValue: item.prescription?.lensBasePriceValue || null,
           lensMultiplier: item.prescription?.lensMultiplier || null,
-          lensFinalPrice: item.prescription?.lensFinalPrice || null,
+          lensFinalPrice: itemLensPrice ?? item.prescription?.lensFinalPrice ?? null,
           isAsymmetricRx: item.prescription?.isAsymmetricRx || false,
           rightEyeLensPrice: item.prescription?.rightEyeLensPrice || null,
           leftEyeLensPrice: item.prescription?.leftEyeLensPrice || null,
           rightMultiplier: item.prescription?.rightMultiplier || null,
           leftMultiplier: item.prescription?.leftMultiplier || null,
-          selectedLensName: item.prescription?.lensUsage || null,
-          calculatedLensPrice: item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null ? parseFloat(String(item.prescription.lensFinalPrice)) : null,
-          totalAmount: (item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null ? parseFloat(String(item.prescription.framePrice)) : 0) +
-                       (item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null ? parseFloat(String(item.prescription.lensFinalPrice)) : 0) || parseFloat(String(item.price)) || 0,
+          selectedLensName: itemLensPackageName,
+          calculatedLensPrice: itemLensPrice,
+          totalAmount: ((itemFramePrice || 0) + (itemLensPrice || 0)) > 0
+            ? ((itemFramePrice || 0) + (itemLensPrice || 0)) * (item.quantity || 1)
+            : (parseFloat(String(item.price)) || 0) * (item.quantity || 1),
         });
       }
 

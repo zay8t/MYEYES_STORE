@@ -34,17 +34,21 @@ interface OrderItem {
   quantity: number;
   product: Product;
   prescription: Prescription | null;
-  framePrice: number | null;
-  lensBasePriceKey: string | null;
-  lensBasePriceValue: number | null;
-  lensMultiplier: number | null;
-  lensFinalPrice: number | null;
+  framePrice?: number | null;
+  lensPackageName?: string | null;
+  lensPrice?: number | null;
+  selectedLensName?: string | null;
+  lensBasePriceKey?: string | null;
+  lensBasePriceValue?: number | null;
+  lensMultiplier?: number | null;
+  lensFinalPrice?: number | null;
   isAsymmetricRx?: boolean | null;
   rightEyeLensPrice?: number | null;
   leftEyeLensPrice?: number | null;
   rightMultiplier?: number | null;
   leftMultiplier?: number | null;
 }
+
 
 export interface OrderReceiptData {
   id: string;
@@ -339,56 +343,72 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-800 text-sm">
-                      {order.items.map((item) => (
-                        <tr key={item.id} className="border-b border-slate-100 align-top">
-                          <td className="py-4 px-3">
-                            <span className="font-semibold text-slate-900 block">{item.product?.name || "Eyewear Frame"}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">ID: {item.productId?.slice(0, 8)}</span>
-                            {item.framePrice !== null && item.framePrice !== undefined && (
-                              <span className="text-[10px] text-slate-500 block mt-0.5">Frame: {formatPrice(item.framePrice)}</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-3">
-                            {item.prescription ? (
-                              <div className="space-y-0.5">
-                                <span className="font-semibold text-slate-900 block">
-                                  {item.prescription.lensType}
+                      {order.items.map((item) => {
+                        const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                          ? Number(item.framePrice)
+                          : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+
+                        const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                          ? Number(item.lensPrice)
+                          : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+                        const humanLensName = item.lensPackageName ||
+                          item.selectedLensName ||
+                          item.prescription?.lensType ||
+                          (item.prescription ? "Standard Prescription Lenses" : null);
+
+                        const visionType = item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
+                          ? "Progressive"
+                          : (item.prescription ? "Single Vision" : null);
+
+                        const unitPrice = (frameCost !== null && lensCost !== null)
+                          ? (frameCost + lensCost)
+                          : item.price;
+
+                        const totalPrice = unitPrice * item.quantity;
+
+                        return (
+                          <tr key={item.id} className="border-b border-slate-100 align-top">
+                            <td className="py-4 px-3">
+                              <span className="font-semibold text-slate-900 block">{item.product?.name || "Eyewear Frame"}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">ID: {item.productId?.slice(0, 8)}</span>
+                              {frameCost !== null && (
+                                <span className="text-xs font-medium text-slate-600 block mt-1">
+                                  Frame: {formatPrice(frameCost)}
                                 </span>
-                                {item.isAsymmetricRx ? (
-                                  <div className="mt-1 space-y-0.5">
-                                    <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded block uppercase w-max">
-                                      OD: Tier {item.lensBasePriceKey} × {item.rightMultiplier}x → {formatPrice(item.rightEyeLensPrice || 0)}
+                              )}
+                            </td>
+                            <td className="py-4 px-3">
+                              {item.prescription || humanLensName ? (
+                                <div className="space-y-1">
+                                  {visionType && (
+                                    <span className="inline-block px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 text-[10px] font-bold uppercase tracking-wide border border-amber-200/80">
+                                      {visionType}
                                     </span>
-                                    <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded block uppercase w-max">
-                                      OS: Tier {item.lensBasePriceKey} × {item.leftMultiplier}x → {formatPrice(item.leftEyeLensPrice || 0)}
+                                  )}
+                                  <span className="font-semibold text-slate-900 block text-xs">
+                                    {humanLensName}
+                                  </span>
+                                  {lensCost !== null && (
+                                    <span className="text-xs font-medium text-slate-600 block">
+                                      Lens: {formatPrice(lensCost)}
                                     </span>
-                                    <span className="text-[10px] text-slate-500 block">Combined Lens: {formatPrice(item.lensFinalPrice || 0)}</span>
-                                  </div>
-                                ) : (
-                                  <>
-                                    {item.lensBasePriceKey && (
-                                      <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded inline-block uppercase mt-1">
-                                        Tier {item.lensBasePriceKey}: {formatPrice(item.lensBasePriceValue || 0)} × {item.lensMultiplier}x
-                                      </span>
-                                    )}
-                                    {item.lensFinalPrice !== null && item.lensFinalPrice !== undefined && (
-                                      <span className="text-[10px] text-slate-500 block">Lens: {formatPrice(item.lensFinalPrice)}</span>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-slate-500">Standard Frame Only</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-3 text-center font-semibold text-slate-900">{item.quantity}</td>
-                          <td className="py-4 px-3 text-right font-mono text-slate-700">{formatPrice(item.price)}</td>
-                          <td className="py-4 px-3 text-right font-bold font-mono text-slate-900">
-                            {formatPrice(item.price * item.quantity)}
-                          </td>
-                        </tr>
-                      ))}
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-slate-500 text-xs">Standard Frame Only</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-3 text-center font-semibold text-slate-900">{item.quantity}</td>
+                            <td className="py-4 px-3 text-right font-mono text-slate-700">{formatPrice(unitPrice)}</td>
+                            <td className="py-4 px-3 text-right font-bold font-mono text-slate-900">
+                              {formatPrice(totalPrice)}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
+
                   </table>
                 </div>
               </div>

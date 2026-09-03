@@ -160,29 +160,83 @@ export async function GET(
 
     // Items Rows
     for (const item of order.items) {
-      const price = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
       const qty = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
-      const itemTotal = price * qty;
+      const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
 
+      const frameCost = item.framePrice !== null && item.framePrice !== undefined
+        ? Number(item.framePrice)
+        : (item.prescription ? (rawPrice > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? rawPrice - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : rawPrice);
+
+      const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+        ? Number(item.lensPrice)
+        : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+      const humanLensName = item.lensPackageName ||
+        item.selectedLensName ||
+        item.prescription?.lensType ||
+        (item.prescription ? "Standard Prescription Lenses" : null);
+
+      const visionType = item.prescription?.lensType?.toLowerCase().includes("progressive") || humanLensName?.toLowerCase().includes("progressive")
+        ? "Progressive"
+        : (item.prescription ? "Single Vision" : null);
+
+      const unitPrice = (frameCost !== null && lensCost !== null)
+        ? (frameCost + lensCost)
+        : rawPrice;
+
+      const itemTotal = unitPrice * qty;
+
+      // Product details
       doc
         .fontSize(8)
         .font("Helvetica-Bold")
         .fillColor("#0f172a")
-        .text(item.product?.name || "Eyewear Frame", 50, y + 6);
+        .text(item.product?.name || "Eyewear Frame", 50, y + 4, { width: 160 });
+
+      if (frameCost !== null) {
+        doc
+          .fontSize(7)
+          .font("Helvetica")
+          .fillColor("#64748b")
+          .text(`Frame: Rs. ${frameCost.toLocaleString()}/-`, 50, y + 15, { width: 160 });
+      }
+
+      // Lens / Specs details
+      if (item.prescription || humanLensName) {
+        const lensLine = visionType ? `[${visionType}] ${humanLensName}` : (humanLensName || "Prescription Lens");
+        doc
+          .fontSize(7.5)
+          .font("Helvetica-Bold")
+          .fillColor("#0f172a")
+          .text(lensLine, 220, y + 4, { width: 155 });
+
+        if (lensCost !== null) {
+          doc
+            .fontSize(7)
+            .font("Helvetica")
+            .fillColor("#64748b")
+            .text(`Lens: Rs. ${lensCost.toLocaleString()}/-`, 220, y + 15, { width: 155 });
+        }
+      } else {
+        doc
+          .fontSize(7.5)
+          .font("Helvetica")
+          .fillColor("#64748b")
+          .text("Frame Only", 220, y + 4, { width: 155 });
+      }
 
       doc
         .fontSize(8)
         .font("Helvetica")
-        .fillColor("#475569")
-        .text(item.prescription ? item.prescription.lensType || "Standard Lens" : "Frame Only", 220, y + 6);
+        .fillColor("#0f172a")
+        .text(String(qty), 380, y + 6, { width: 30, align: "center" });
 
-      doc.text(String(qty), 380, y + 6, { width: 30, align: "center" });
-      doc.text(`Rs. ${price.toLocaleString()}`, 420, y + 6, { width: 60, align: "right" });
+      doc.text(`Rs. ${unitPrice.toLocaleString()}/-`, 415, y + 6, { width: 65, align: "right" });
       doc
         .font("Helvetica-Bold")
-        .text(`Rs. ${itemTotal.toLocaleString()}`, 490, y + 6, { width: 55, align: "right" });
+        .text(`Rs. ${itemTotal.toLocaleString()}/-`, 485, y + 6, { width: 60, align: "right" });
 
-      y += 20;
+      y += 28;
       doc
         .moveTo(40, y)
         .lineTo(555, y)
@@ -190,6 +244,7 @@ export async function GET(
         .strokeColor("#e2e8f0")
         .stroke();
     }
+
 
     // Optical Prescription Specifications Grid (If Order contains Rx)
     const rxItems = order.items.filter((i) => i.prescription);

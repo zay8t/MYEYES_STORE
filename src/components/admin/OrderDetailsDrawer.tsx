@@ -441,25 +441,62 @@ export default function OrderDetailsDrawer({
             </h3>
 
             <div className="divide-y divide-slate-100">
-              {order.items.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold">
-                      <Glasses className="w-5 h-5" />
+              {order.items.map((item) => {
+                const frameCost = item.framePrice !== null && item.framePrice !== undefined
+                  ? Number(item.framePrice)
+                  : (item.prescription ? (item.price > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? item.price - (item.lensPrice ?? item.lensFinalPrice ?? 0) : null) : Number(item.price));
+
+                const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+                  ? Number(item.lensPrice)
+                  : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : null);
+
+                const humanLensName = item.lensPackageName ||
+                  item.selectedLensName ||
+                  item.prescription?.lensType ||
+                  (item.prescription ? "Standard Prescription Lenses" : null);
+
+                const unitPrice = (frameCost !== null && lensCost !== null)
+                  ? (frameCost + lensCost)
+                  : item.price;
+
+                return (
+                  <div key={item.id} className="py-3 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold flex-shrink-0 mt-0.5">
+                        <Glasses className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-slate-900">{item.product?.name || "Eyewear Frame"}</p>
+                        {frameCost !== null && (
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Frame: {formatPrice(frameCost)}
+                          </p>
+                        )}
+                        {humanLensName && (
+                          <div className="pt-0.5">
+                            <span className="text-[11px] font-semibold text-slate-800 block">
+                              Lens: {humanLensName}
+                            </span>
+                            {lensCost !== null && (
+                              <span className="text-[10px] text-slate-500 block">
+                                Lens Cost: {formatPrice(lensCost)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <p className="text-[10px] text-slate-400 font-mono">
+                          Qty: {item.quantity} × {formatPrice(unitPrice)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">{item.product?.name || "Eyewear Frame"}</p>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        Qty: {item.quantity} × {formatPrice(item.price)}
-                      </p>
-                    </div>
+                    <span className="text-xs font-extrabold text-slate-900 font-mono">
+                      {formatPrice(unitPrice * item.quantity)}
+                    </span>
                   </div>
-                  <span className="text-xs font-extrabold text-slate-900 font-mono">
-                    {formatPrice(item.price * item.quantity)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
           </div>
         </div>
       </div>

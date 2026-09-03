@@ -24,12 +24,19 @@ export interface OpticalPrescription {
   slipUrl?: string | null;
   slipName?: string | null;
   notes?: string;
-  // Pricing breakdown
+  // Pricing breakdown & explicit specs
+  frameName?: string;
+  framePrice?: number;
+  visionType?: string;
+  lensPackageName?: string;
+  lensPrice?: number;
+  unitPrice?: number;
+  totalPrice?: number;
+  selectedLensName?: string;
   lensBasePriceKey?: string;
   lensBasePriceValue?: number;
   lensMultiplier?: number;
   lensFinalPrice?: number;
-  framePrice?: number;
   isAsymmetricRx?: boolean;
   rightEyeLensPrice?: number;
   leftEyeLensPrice?: number;
@@ -45,8 +52,16 @@ export interface CartItem {
   image: string;
   quantity: number;
   color?: string;
+  frameName?: string;
+  framePrice?: number;
+  visionType?: string;
+  lensPackageName?: string;
+  lensPrice?: number;
+  unitPrice?: number;
+  totalPrice?: number;
   prescription?: OpticalPrescription;
 }
+
 
 interface CartStore {
   items: CartItem[];

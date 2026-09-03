@@ -612,7 +612,10 @@ export function LensConfiguratorModal({
         }
       }
 
-      const lensLabel = `${selectedPackage?.name || 'Custom Lens'} (${isProgressive ? 'Progressive' : 'Standard'})`;
+      const tierMap = isProgressive ? PROGRESSIVE_TIER_INFO : SINGLE_VISION_TIER_INFO;
+      const tierInfo = selectedPackage?.code ? tierMap[selectedPackage.code] : undefined;
+      const humanLensName = tierInfo?.title || selectedPackage?.name || (isProgressive ? 'Progressive Free-Form Lenses' : 'Clear Everyday Lenses');
+      const lensLabel = `${humanLensName} (${isProgressive ? 'Progressive' : 'Single Vision'})`;
 
       const parseVal = (v: string) => {
         const num = parseFloat(v);
@@ -622,6 +625,8 @@ export function LensConfiguratorModal({
         const num = parseFloat(v);
         return isNaN(num) || num === 0 ? null : num;
       };
+
+      const calculatedUnitPrice = Number(totalPrice);
 
       const prescriptionDetails = {
         odSph: parseVal(odSph),
@@ -642,25 +647,39 @@ export function LensConfiguratorModal({
         },
         add: isProgressive ? parseVal(addPower) : null,
         lensUsage: isProgressive ? 'Progressive' : 'Single Vision',
+        visionType: isProgressive ? 'Progressive' : 'Single Vision',
         rxFileUrl: typeof finalRxUrl === 'string' ? finalRxUrl : undefined,
         slipUrl: typeof finalRxUrl === 'string' ? finalRxUrl : null,
         slipName: uploadedFile?.name || null,
+        frameName: frame.name,
+        framePrice: Number(frame.price),
+        lensPackageName: humanLensName,
+        lensPrice: Number(activeLensPrice),
+        selectedLensName: humanLensName,
+        unitPrice: calculatedUnitPrice,
+        totalPrice: calculatedUnitPrice,
       };
 
       const cartPayload = {
         productId: String(frame.id),
         name: `${frame.name} + ${lensLabel}`,
-        price: Number(totalPrice),
+        price: calculatedUnitPrice,
         image: frame.imageUrl || '/placeholder-frame.png',
         color: frame.color || undefined,
+        frameName: frame.name,
+        framePrice: Number(frame.price),
+        visionType: isProgressive ? 'Progressive' : 'Single Vision',
+        lensPackageName: humanLensName,
+        lensPrice: Number(activeLensPrice),
+        unitPrice: calculatedUnitPrice,
+        totalPrice: calculatedUnitPrice,
         prescription: {
           ...prescriptionDetails,
-          lensMaterial: String(selectedPackage?.name || ''),
+          lensMaterial: humanLensName,
           lensBasePriceKey: String(pricingResult?.basePriceKey || selectedPackage?.code || ''),
           lensBasePriceValue: Number(pricingResult?.basePriceValue || activeLensPrice),
           lensMultiplier: Number(pricingResult?.multiplier || 1),
           lensFinalPrice: Number(activeLensPrice),
-          framePrice: Number(frame.price),
           isAsymmetricRx: pricingResult?.isAsymmetricRx,
           rightEyeLensPrice: pricingResult?.rightEyeLensPrice,
           leftEyeLensPrice: pricingResult?.leftEyeLensPrice,

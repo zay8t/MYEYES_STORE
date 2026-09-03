@@ -53,6 +53,8 @@ export interface CustomerOrderData {
     price: number;
     quantity: number;
     framePrice?: number | null;
+    lensPackageName?: string | null;
+    lensPrice?: number | null;
     lensFinalPrice?: number | null;
     selectedLensName?: string | null;
     lensType?: string | null;
@@ -269,6 +271,8 @@ export default function CustomerOrderTrackingView({
       price: item.price,
       quantity: item.quantity,
       framePrice: item.framePrice ?? null,
+      lensPackageName: item.lensPackageName || item.selectedLensName || item.lensName || item.prescription?.lensType || null,
+      lensPrice: item.lensPrice ?? item.lensFinalPrice ?? null,
       lensBasePriceKey: null,
       lensBasePriceValue: null,
       lensMultiplier: null,

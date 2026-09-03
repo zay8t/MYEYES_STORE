@@ -303,6 +303,8 @@ model OrderItem {
   quantity       Int     @default(1)
 
   framePrice         Float?
+  lensPackageName    String?
+  lensPrice          Float?
   lensBasePriceKey   String?
   lensBasePriceValue Float?
   lensMultiplier     Float?
