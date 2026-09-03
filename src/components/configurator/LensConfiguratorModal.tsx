@@ -19,6 +19,7 @@ import {
 import { useCartStore } from '@/store/useCartStore';
 import { useLensPricing } from '@/hooks/useLensPricing';
 import { cn } from '@/lib/utils';
+import { sendGTMEvent } from '@/lib/gtm';
 import {
   SPH_OPTIONS,
   CYL_OPTIONS,
@@ -116,8 +117,8 @@ function StepBar({ current }: { current: number }) {
                   isCurrent
                     ? 'bg-amber-500 text-white ring-4 ring-amber-500/20 shadow-sm'
                     : isCompleted
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-100 text-slate-400'
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-100 text-slate-400'
                 )}
               >
                 {isCompleted ? <Check className="w-4 h-4 stroke-[2.5]" /> : s.num}
@@ -128,8 +129,8 @@ function StepBar({ current }: { current: number }) {
                   isCurrent
                     ? 'text-slate-900'
                     : isCompleted
-                    ? 'text-emerald-700'
-                    : 'text-slate-400'
+                      ? 'text-emerald-700'
+                      : 'text-slate-400'
                 )}
               >
                 {s.label}
@@ -442,6 +443,7 @@ export function LensConfiguratorModal({
     });
 
     setIsSavingLead(false);
+    sendGTMEvent({ event: 'configurator_step_1_contact', step: 1 });
     setStep(2);
   };
 
@@ -570,6 +572,29 @@ export function LensConfiguratorModal({
     setIsCheckingOut(true);
 
     try {
+      sendGTMEvent({
+        event: 'begin_checkout',
+        ecommerce: {
+          currency: 'PKR',
+          value: totalPrice,
+          items: [
+            {
+              item_id: frame?.id || 'frame',
+              item_name: frame?.name || 'Eyewear Frame',
+              price: frame?.price || 0,
+              item_category: 'Frames',
+            },
+            {
+              item_id: selectedLensId,
+              item_name: visionType === 'progressive' ? 'Progressive Lens' : 'Single Vision Lens',
+              price: pricingResult?.finalPrice || activeLensPrice || 0,
+              item_category: 'Lenses',
+              item_variant: visionType,
+            },
+          ],
+        },
+      });
+
       // Ensure slip is uploaded if file is chosen
       let finalRxUrl = rxFileUrl;
       if (uploadedFile && !finalRxUrl) {
@@ -827,7 +852,10 @@ export function LensConfiguratorModal({
               {/* Standard Vision Card */}
               <button
                 type="button"
-                onClick={() => setVisionType('standard')}
+                onClick={() => {
+                  setVisionType('standard');
+                  sendGTMEvent({ event: 'configurator_step_2_vision', step: 2, vision_type: 'standard' });
+                }}
                 className={cn(
                   'w-full text-left p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                   visionType === 'standard'
@@ -862,7 +890,10 @@ export function LensConfiguratorModal({
               {/* Progressive Card */}
               <button
                 type="button"
-                onClick={() => setVisionType('progressive')}
+                onClick={() => {
+                  setVisionType('progressive');
+                  sendGTMEvent({ event: 'configurator_step_2_vision', step: 2, vision_type: 'progressive' });
+                }}
                 className={cn(
                   'w-full text-left p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                   visionType === 'progressive'
@@ -911,7 +942,10 @@ export function LensConfiguratorModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
+                  onClick={() => {
+                    sendGTMEvent({ event: 'configurator_step_2_vision', step: 2, vision_type: visionType });
+                    setStep(3);
+                  }}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
                 >
                   <span>Choose Lenses</span>
@@ -959,7 +993,15 @@ export function LensConfiguratorModal({
                         <button
                           key={pkg.id}
                           type="button"
-                          onClick={() => setSelectedLensId(pkg.id)}
+                          onClick={() => {
+                            setSelectedLensId(pkg.id);
+                            sendGTMEvent({
+                              event: 'configurator_step_3_lens',
+                              step: 3,
+                              lens_id: pkg.id,
+                              lens_price: pricingResult?.finalPrice || price || 0,
+                            });
+                          }}
                           className={cn(
                             'w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer group bg-white',
                             isSelected
@@ -1018,7 +1060,17 @@ export function LensConfiguratorModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { if (selectedLensId) setStep(4); }}
+                  onClick={() => {
+                    if (selectedLensId) {
+                      sendGTMEvent({
+                        event: 'configurator_step_3_lens',
+                        step: 3,
+                        lens_id: selectedLensId,
+                        lens_price: pricingResult?.finalPrice || activeLensPrice || 0,
+                      });
+                      setStep(4);
+                    }
+                  }}
                   disabled={!selectedLensId}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition shadow-sm cursor-pointer active:scale-[0.99]"
                 >
