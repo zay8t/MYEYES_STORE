@@ -14,9 +14,10 @@ interface PrescriptionInput {
   lensMaterial?: string;
   visionType?: string;
   lensPackageName?: string;
-  lensPrice?: number | null;
+  selectedLensName?: string;
+  lensPrice?: number | string | null;
   frameName?: string;
-  framePrice?: number | null;
+  framePrice?: number | string | null;
   odSph?: string | number;
   odCyl?: string | number | null;
   odAxis?: string | number | null;
@@ -25,30 +26,35 @@ interface PrescriptionInput {
   osAxis?: string | number | null;
   pd?: string | number;
   rxFileUrl?: string | null;
-  selectedLensName?: string;
   lensBasePriceKey?: string | null;
-  lensBasePriceValue?: number | null;
-  lensMultiplier?: number | null;
-  lensFinalPrice?: number | null;
+  lensBasePriceValue?: number | string | null;
+  lensMultiplier?: number | string | null;
+  lensFinalPrice?: number | string | null;
   isAsymmetricRx?: boolean;
-  rightEyeLensPrice?: number | null;
-  leftEyeLensPrice?: number | null;
-  rightMultiplier?: number | null;
-  leftMultiplier?: number | null;
+  rightEyeLensPrice?: number | string | null;
+  leftEyeLensPrice?: number | string | null;
+  rightMultiplier?: number | string | null;
+  leftMultiplier?: number | string | null;
 }
 
 interface OrderItemInput {
-  productId: string;
-  price: string | number;
-  quantity?: number;
+  id?: string;
+  cartItemId?: string;
+  productId?: string;
+  frameId?: string;
+  name?: string;
   frameName?: string;
+  price?: string | number;
   framePrice?: string | number | null;
   visionType?: string;
   lensPackageName?: string;
+  selectedLensName?: string;
   lensPrice?: string | number | null;
+  quantity?: number;
   unitPrice?: string | number;
   totalPrice?: string | number;
   prescription?: PrescriptionInput;
+  [key: string]: any;
 }
 
 
@@ -150,7 +156,9 @@ export async function POST(request: NextRequest) {
     const itemsWithPrescription: { item: OrderItemInput; prescriptionId?: string }[] = [];
 
     for (const item of items as OrderItemInput[]) {
-      subtotal += (parseFloat(String(item.price)) || 0) * (item.quantity || 1);
+      const itemPrice = typeof item.price === "number" ? item.price : Number(item.price || 0);
+      const itemQuantity = typeof item.quantity === "number" && item.quantity > 0 ? Math.floor(item.quantity) : 1;
+      subtotal += itemPrice * itemQuantity;
       itemsWithPrescription.push({ item });
     }
 
@@ -165,9 +173,29 @@ export async function POST(request: NextRequest) {
         const item = entry.item;
         let prescriptionId: string | undefined;
 
+        // Defensive field coercions and fallbacks
+        const frameId = String(item.frameId || item.id || item.productId || "");
+        const frameName = String(item.frameName || item.name || "Optical Frame");
+        const framePrice = typeof item.framePrice === "number"
+          ? item.framePrice
+          : Number(item.framePrice || item.price || 0);
+        const lensPackageName = String(
+          item.lensPackageName ||
+          item.selectedLensName ||
+          item.prescription?.lensPackageName ||
+          item.prescription?.selectedLensName ||
+          (item.prescription ? "Standard Prescription Lenses" : "")
+        );
+        const lensPrice = typeof item.lensPrice === "number"
+          ? item.lensPrice
+          : Number(item.lensPrice || item.prescription?.lensPrice || 0);
+        const productId = String(item.productId || frameId || "").trim();
+        const quantity = typeof item.quantity === "number" && item.quantity > 0 ? Math.floor(item.quantity) : 1;
+        const linePrice = typeof item.price === "number" ? item.price : Number(item.price || 0);
+
         if (
           item.prescription &&
-          (item.prescription.odSph !== undefined || item.prescription.lensUsage)
+          (item.prescription.odSph !== undefined || item.prescription.lensUsage || item.prescription.visionType)
         ) {
           let rxUrl = item.prescription.rxFileUrl || null;
           let rxPublicId = null;
@@ -185,29 +213,36 @@ export async function POST(request: NextRequest) {
           const rxRecord = await tx.prescription.create({
             data: {
               lensType:
-                item.lensPackageName ||
-                item.prescription.lensPackageName ||
-                item.prescription.visionType ||
+                lensPackageName ||
                 item.prescription.lensUsage ||
                 item.prescription.lensMaterial ||
+                item.prescription.visionType ||
                 "Prescription Lenses",
-              odSph: parseFloat(String(item.prescription.odSph)) || 0,
+              odSph: typeof item.prescription.odSph === "number"
+                ? item.prescription.odSph
+                : parseFloat(String(item.prescription.odSph)) || 0,
               odCyl:
-                item.prescription.odCyl !== null && item.prescription.odCyl !== undefined
-                  ? parseFloat(String(item.prescription.odCyl))
+                item.prescription.odCyl !== null && item.prescription.odCyl !== undefined && item.prescription.odCyl !== ""
+                  ? (typeof item.prescription.odCyl === "number" ? item.prescription.odCyl : parseFloat(String(item.prescription.odCyl)) || null)
                   : null,
-              odAxis: item.prescription.odAxis !== null && item.prescription.odAxis !== undefined
-                ? parseInt(String(item.prescription.odAxis), 10)
-                : null,
-              osSph: parseFloat(String(item.prescription.osSph)) || 0,
+              odAxis:
+                item.prescription.odAxis !== null && item.prescription.odAxis !== undefined && item.prescription.odAxis !== ""
+                  ? (typeof item.prescription.odAxis === "number" ? Math.floor(item.prescription.odAxis) : parseInt(String(item.prescription.odAxis), 10) || null)
+                  : null,
+              osSph: typeof item.prescription.osSph === "number"
+                ? item.prescription.osSph
+                : parseFloat(String(item.prescription.osSph)) || 0,
               osCyl:
-                item.prescription.osCyl !== null && item.prescription.osCyl !== undefined
-                  ? parseFloat(String(item.prescription.osCyl))
+                item.prescription.osCyl !== null && item.prescription.osCyl !== undefined && item.prescription.osCyl !== ""
+                  ? (typeof item.prescription.osCyl === "number" ? item.prescription.osCyl : parseFloat(String(item.prescription.osCyl)) || null)
                   : null,
-              osAxis: item.prescription.osAxis !== null && item.prescription.osAxis !== undefined
-                ? parseInt(String(item.prescription.osAxis), 10)
-                : null,
-              pd: parseFloat(String(item.prescription.pd)) || 63,
+              osAxis:
+                item.prescription.osAxis !== null && item.prescription.osAxis !== undefined && item.prescription.osAxis !== ""
+                  ? (typeof item.prescription.osAxis === "number" ? Math.floor(item.prescription.osAxis) : parseInt(String(item.prescription.osAxis), 10) || null)
+                  : null,
+              pd: typeof item.prescription.pd === "number"
+                ? item.prescription.pd
+                : parseFloat(String(item.prescription.pd)) || 63,
               fileUrl: rxUrl,
               prescription_url: rxUrl,
               prescription_public_id: rxPublicId,
@@ -216,49 +251,44 @@ export async function POST(request: NextRequest) {
           prescriptionId = rxRecord.id;
         }
 
-        const itemFramePrice = item.framePrice !== undefined && item.framePrice !== null
-          ? parseFloat(String(item.framePrice))
-          : (item.prescription?.framePrice !== undefined && item.prescription?.framePrice !== null
-              ? parseFloat(String(item.prescription.framePrice))
-              : (item.prescription ? null : parseFloat(String(item.price)) || null));
-
-        const itemLensPackageName = item.lensPackageName ||
-          item.prescription?.lensPackageName ||
-          item.prescription?.selectedLensName ||
-          item.prescription?.lensMaterial ||
-          item.prescription?.lensUsage ||
-          (item.prescription ? "Standard Prescription Lenses" : null);
-
-        const itemLensPrice = item.lensPrice !== undefined && item.lensPrice !== null
-          ? parseFloat(String(item.lensPrice))
-          : (item.prescription?.lensPrice !== undefined && item.prescription?.lensPrice !== null
-              ? parseFloat(String(item.prescription.lensPrice))
-              : (item.prescription?.lensFinalPrice !== undefined && item.prescription?.lensFinalPrice !== null
-                  ? parseFloat(String(item.prescription.lensFinalPrice))
-                  : null));
+        const calculatedItemTotal = ((framePrice || 0) + (lensPrice || 0)) > 0
+          ? ((framePrice || 0) + (lensPrice || 0)) * quantity
+          : linePrice * quantity;
 
         orderItemsData.push({
-          productId: item.productId,
+          productId,
           prescriptionId: prescriptionId || null,
-          price: parseFloat(String(item.price)) || 0,
-          quantity: item.quantity || 1,
-          framePrice: itemFramePrice,
-          lensPackageName: itemLensPackageName,
-          lensPrice: itemLensPrice,
-          lensBasePriceKey: item.prescription?.lensBasePriceKey || null,
-          lensBasePriceValue: item.prescription?.lensBasePriceValue || null,
-          lensMultiplier: item.prescription?.lensMultiplier || null,
-          lensFinalPrice: itemLensPrice ?? item.prescription?.lensFinalPrice ?? null,
-          isAsymmetricRx: item.prescription?.isAsymmetricRx || false,
-          rightEyeLensPrice: item.prescription?.rightEyeLensPrice || null,
-          leftEyeLensPrice: item.prescription?.leftEyeLensPrice || null,
-          rightMultiplier: item.prescription?.rightMultiplier || null,
-          leftMultiplier: item.prescription?.leftMultiplier || null,
-          selectedLensName: itemLensPackageName,
-          calculatedLensPrice: itemLensPrice,
-          totalAmount: ((itemFramePrice || 0) + (itemLensPrice || 0)) > 0
-            ? ((itemFramePrice || 0) + (itemLensPrice || 0)) * (item.quantity || 1)
-            : (parseFloat(String(item.price)) || 0) * (item.quantity || 1),
+          price: linePrice,
+          quantity,
+          framePrice,
+          lensPackageName: lensPackageName || null,
+          lensPrice,
+          lensBasePriceKey: item.prescription?.lensBasePriceKey ? String(item.prescription.lensBasePriceKey) : null,
+          lensBasePriceValue: typeof item.prescription?.lensBasePriceValue === "number"
+            ? item.prescription.lensBasePriceValue
+            : (item.prescription?.lensBasePriceValue ? Number(item.prescription.lensBasePriceValue) : null),
+          lensMultiplier: typeof item.prescription?.lensMultiplier === "number"
+            ? item.prescription.lensMultiplier
+            : (item.prescription?.lensMultiplier ? Number(item.prescription.lensMultiplier) : null),
+          lensFinalPrice: typeof item.prescription?.lensFinalPrice === "number"
+            ? item.prescription.lensFinalPrice
+            : (lensPrice ?? null),
+          isAsymmetricRx: Boolean(item.prescription?.isAsymmetricRx),
+          rightEyeLensPrice: typeof item.prescription?.rightEyeLensPrice === "number"
+            ? item.prescription.rightEyeLensPrice
+            : (item.prescription?.rightEyeLensPrice ? Number(item.prescription.rightEyeLensPrice) : null),
+          leftEyeLensPrice: typeof item.prescription?.leftEyeLensPrice === "number"
+            ? item.prescription.leftEyeLensPrice
+            : (item.prescription?.leftEyeLensPrice ? Number(item.prescription.leftEyeLensPrice) : null),
+          rightMultiplier: typeof item.prescription?.rightMultiplier === "number"
+            ? item.prescription.rightMultiplier
+            : (item.prescription?.rightMultiplier ? Number(item.prescription.rightMultiplier) : null),
+          leftMultiplier: typeof item.prescription?.leftMultiplier === "number"
+            ? item.prescription.leftMultiplier
+            : (item.prescription?.leftMultiplier ? Number(item.prescription.leftMultiplier) : null),
+          selectedLensName: item.selectedLensName ? String(item.selectedLensName) : (lensPackageName || null),
+          calculatedLensPrice: lensPrice,
+          totalAmount: calculatedItemTotal,
         });
       }
 
@@ -267,20 +297,21 @@ export async function POST(request: NextRequest) {
       return await tx.order.create({
         data: {
           orderNumber,
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress,
-          shippingCity,
+          customerName: String(customerName).trim(),
+          customerEmail: String(customerEmail).trim().toLowerCase(),
+          customerPhone: customerPhone ? String(customerPhone).trim() : null,
+          shippingAddress: shippingAddress ? String(shippingAddress).trim() : null,
+          shippingCity: shippingCity ? String(shippingCity).trim() : null,
           paymentMethod: parsedMethod,
           paymentStatus: finalPaymentStatus,
           paymentReceiptUrl: finalReceiptUrl,
           transactionProofUrl: finalReceiptUrl,
           transactionId: transactionId ? String(transactionId).trim().toUpperCase() : null,
-          paymentSenderName: paymentSenderName || null,
-          paymentSenderPhone: paymentSenderPhone || null,
+          paymentSenderName: paymentSenderName ? String(paymentSenderName).trim() : null,
+          paymentSenderPhone: paymentSenderPhone ? String(paymentSenderPhone).trim() : null,
           shippingFee,
           totalAmount,
+          currency: "PKR",
           status: OrderStatus.PROCESSING,
           stripeSessionId: mockSessionId,
           items: {
@@ -354,10 +385,19 @@ export async function POST(request: NextRequest) {
       orderNumber: order.orderNumber,
       totalAmount: order.totalAmount,
     }, { status: 201 });
-  } catch (error) {
-    console.error("Orders API Error:", error);
+  } catch (error: any) {
+    console.error("Prisma Order Creation Detailed Error:", {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
     return NextResponse.json(
-      { error: "Failed to process and save customer order." },
+      {
+        success: false,
+        message: error.message || "Failed to process and save customer order.",
+        error: error.message || "Failed to process and save customer order.",
+        code: error.code,
+      },
       { status: 500 }
     );
   }
