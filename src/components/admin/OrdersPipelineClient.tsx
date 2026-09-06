@@ -306,6 +306,12 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                     return sum + (lensCost * item.quantity);
                   }, 0);
 
+                  const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+                    ? (totalFrameCost + totalLensCost)
+                    : order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+                  const grandTotal = itemsSubtotal + shippingFee;
+
                   return (
                     <tr key={order.id} className="hover:bg-slate-50/60 transition-colors align-top">
                       <td className="px-5 py-4 font-mono">
@@ -469,7 +475,25 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <WhatsAppDispatchButton order={order} variant="icon" />
+                          <WhatsAppDispatchButton
+                            order={{
+                              id: order.id,
+                              orderNumber: order.orderNumber || String(order.id).slice(0, 8),
+                              customerName: order.customerName,
+                              customerPhone: order.customerPhone || order.phone || "",
+                              shippingAddress: order.shippingAddress || "Standard Delivery Address",
+                              city: order.city || order.shippingCity || "Pakistan",
+                              paymentMethod: order.paymentMethod || "COD",
+                              paymentStatus: order.paymentStatus, // live state from dropdown
+                              status: order.status,               // live state from dropdown
+                              subtotal: itemsSubtotal,
+                              shippingFee: shippingFee,
+                              totalAmount: order.totalAmount || grandTotal,
+                              items: order.items || [],
+                              receiptUrl: `https://myeyes.pk/receipts/${order.id}`,
+                            }}
+                            variant="icon"
+                          />
                           <button
                             onClick={() => setSelectedDrawerOrder(order)}
                             className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold transition-colors cursor-pointer"
@@ -635,7 +659,25 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <WhatsAppDispatchButton order={order} variant="compact" />
+                    <WhatsAppDispatchButton
+                      order={{
+                        id: order.id,
+                        orderNumber: order.orderNumber || String(order.id).slice(0, 8),
+                        customerName: order.customerName,
+                        customerPhone: order.customerPhone || order.phone || "",
+                        shippingAddress: order.shippingAddress || "Standard Delivery Address",
+                        city: order.city || order.shippingCity || "Pakistan",
+                        paymentMethod: order.paymentMethod || "COD",
+                        paymentStatus: order.paymentStatus, // live state from dropdown
+                        status: order.status,               // live state from dropdown
+                        subtotal: itemsSubtotal,
+                        shippingFee: shippingFee,
+                        totalAmount: order.totalAmount || grandTotal,
+                        items: order.items || [],
+                        receiptUrl: `https://myeyes.pk/receipts/${order.id}`,
+                      }}
+                      variant="compact"
+                    />
                     <button
                       onClick={() => setSelectedDrawerOrder(order)}
                       className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold min-h-[38px] cursor-pointer"

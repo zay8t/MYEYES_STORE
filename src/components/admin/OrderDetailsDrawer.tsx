@@ -132,7 +132,10 @@ export default function OrderDetailsDrawer({
           </div>
 
           <div className="flex items-center gap-2">
-            <WhatsAppDispatchButton order={order} variant="compact" />
+            <WhatsAppDispatchButton
+              order={{ ...order, status: currentStatus, paymentStatus: paymentStatus }}
+              variant="compact"
+            />
 
             <button
               onClick={() => onReceiptClick(order)}
@@ -452,7 +455,10 @@ export default function OrderDetailsDrawer({
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-slate-900">{order.customerPhone || "N/A"}</span>
                     {order.customerPhone && (
-                      <WhatsAppDispatchButton order={order} variant="icon" />
+                      <WhatsAppDispatchButton
+                        order={{ ...order, status: currentStatus, paymentStatus: paymentStatus }}
+                        variant="icon"
+                      />
                     )}
                   </div>
                 </div>

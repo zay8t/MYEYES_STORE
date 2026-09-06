@@ -135,7 +135,10 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
         </div>
 
         <div className="flex items-center gap-2">
-          <WhatsAppDispatchButton order={order} variant="button" />
+          <WhatsAppDispatchButton
+            order={{ ...order, status: currentStatus, paymentStatus: paymentStatus }}
+            variant="button"
+          />
           <button
             onClick={() => setShowReceiptModal(true)}
             className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
@@ -311,7 +314,10 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
             <div className="flex items-center justify-between">
               <p><strong className="text-slate-900">Phone:</strong> {order.customerPhone || "N/A"}</p>
               {order.customerPhone && (
-                <WhatsAppDispatchButton order={order} variant="icon" />
+                <WhatsAppDispatchButton
+                  order={{ ...order, status: currentStatus, paymentStatus: paymentStatus }}
+                  variant="icon"
+                />
               )}
             </div>
           </div>
