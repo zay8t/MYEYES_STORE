@@ -524,6 +524,41 @@ export async function deleteProductAction(productId: string) {
 }
 
 /**
+ * Permanently delete an order and its associated records from the database.
+ */
+export async function deleteOrderAction(orderId: string) {
+  try {
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    if (!existingOrder) {
+      return { success: false, error: "Order not found" };
+    }
+
+    await prisma.$transaction([
+      prisma.paymentAuditLog.deleteMany({ where: { orderId } }),
+      prisma.orderItem.deleteMany({ where: { orderId } }),
+      prisma.order.delete({ where: { id: orderId } }),
+    ]);
+
+    revalidateInventory();
+    safeRevalidatePath("/admin");
+    safeRevalidatePath("/admin/overview");
+    safeRevalidatePath("/admin/orders");
+    safeRevalidatePath("/admin/verify-deposits");
+    safeRevalidatePath("/admin/customers");
+    safeRevalidatePath(`/admin/orders/${orderId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("deleteOrderAction error:", error);
+    return { success: false, error: error?.message || "Failed to delete order" };
+  }
+}
+
+/**
  * Send an incomplete lead follow-up email to assist with prescription and checkout.
  */
 export async function sendIncompleteLeadEmailAction(lead: {

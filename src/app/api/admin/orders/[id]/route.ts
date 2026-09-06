@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/auth/session";
-import { updateOrderStatusAction } from "@/app/actions/admin";
+import { updateOrderStatusAction, deleteOrderAction } from "@/app/actions/admin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,6 +34,33 @@ export async function PATCH(
     console.error("Failed to update order status:", error);
     return NextResponse.json(
       { error: "Failed to update order status" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE order permanently
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await requireAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized. Admin session required." }, { status: 403 });
+  }
+
+  try {
+    const { id } = await params;
+    const result = await deleteOrderAction(id);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, message: "Order permanently deleted" });
+  } catch (error) {
+    console.error("Failed to delete order:", error);
+    return NextResponse.json(
+      { error: "Failed to delete order" },
       { status: 500 }
     );
   }
