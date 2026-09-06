@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
+import { launchWhatsAppBusinessChat } from "@/lib/whatsapp";
 import AdminUserModal, { UserFormData } from "./AdminUserModal";
 import AdminResetPasswordModal from "./AdminResetPasswordModal";
 import AdminDeleteUserDialog from "./AdminDeleteUserDialog";
@@ -195,13 +196,6 @@ export default function AdminUsersClient() {
       month: "short",
       year: "numeric",
     });
-  };
-
-  const formatWhatsAppLink = (phoneStr: string) => {
-    const digits = phoneStr.replace(/\D/g, "");
-    if (digits.startsWith("92")) return `https://wa.me/${digits}`;
-    if (digits.startsWith("0")) return `https://wa.me/92${digits.slice(1)}`;
-    return `https://wa.me/92${digits}`;
   };
 
   // Open Edit User Modal
@@ -599,17 +593,16 @@ export default function AdminUsersClient() {
                           {/* Phone */}
                           {user.phone ? (
                             <div className="flex items-center gap-1.5">
-                              <a
-                                href={formatWhatsAppLink(user.phone)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1"
-                                title="Chat on WhatsApp"
+                              <button
+                                type="button"
+                                onClick={() => launchWhatsAppBusinessChat(user.phone || "", "")}
+                                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                                title="Chat on WhatsApp Business"
                               >
                                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
                                 <span>{user.phone}</span>
                                 <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                              </a>
+                              </button>
                               <button
                                 onClick={() => handleCopy(user.phone || "", phoneKey)}
                                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"

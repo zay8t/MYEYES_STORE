@@ -2,7 +2,11 @@
 
 import React from "react";
 import { MessageCircle } from "lucide-react";
-import { formatWhatsAppNumber, buildIncompleteLeadMessage } from "@/lib/whatsapp";
+import {
+  formatWhatsAppNumber,
+  buildIncompleteLeadMessage,
+  launchWhatsAppBusinessChat,
+} from "@/lib/whatsapp";
 
 export interface IncompleteLeadButtonProps {
   customerName: string;
@@ -23,6 +27,13 @@ export const IncompleteLeadWhatsAppButton: React.FC<IncompleteLeadButtonProps> =
     e.stopPropagation();
 
     const targetPhone = formatWhatsAppNumber(mobileNumber);
+    if (!targetPhone || targetPhone.length < 10) {
+      alert(
+        `Customer phone number is missing or invalid (${mobileNumber || "empty"}). Please verify customer contact information.`
+      );
+      return;
+    }
+
     const encodedPayload = buildIncompleteLeadMessage({
       customerName,
       mobileNumber,
@@ -30,8 +41,7 @@ export const IncompleteLeadWhatsAppButton: React.FC<IncompleteLeadButtonProps> =
       resumeUrl,
     });
 
-    const waUrl = `https://wa.me/${targetPhone}?text=${encodedPayload}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
+    launchWhatsAppBusinessChat(mobileNumber, encodedPayload);
   };
 
   return (

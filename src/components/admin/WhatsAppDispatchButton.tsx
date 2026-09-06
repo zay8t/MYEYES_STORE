@@ -5,6 +5,7 @@ import { MessageSquare } from "lucide-react";
 import {
   formatWhatsAppNumber,
   buildDetailedOrderMessage,
+  launchWhatsAppBusinessChat,
   FullOrderPayload,
 } from "@/lib/whatsapp";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
@@ -26,7 +27,7 @@ export const WhatsAppDispatchButton: React.FC<WhatsAppDispatchButtonProps> = ({
 
     const rawPhone =
       ("customerPhone" in order ? order.customerPhone : (order as OrderReceiptData).phone) ||
-      (order as any).phone ||
+      ((order as Record<string, unknown>).phone as string | undefined) ||
       "";
     const targetPhone = formatWhatsAppNumber(rawPhone);
 
@@ -38,8 +39,7 @@ export const WhatsAppDispatchButton: React.FC<WhatsAppDispatchButtonProps> = ({
     }
 
     const encodedPayload = buildDetailedOrderMessage(order);
-    const waUrl = `https://wa.me/${targetPhone}?text=${encodedPayload}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
+    launchWhatsAppBusinessChat(rawPhone, encodedPayload);
   };
 
   if (variant === "icon") {

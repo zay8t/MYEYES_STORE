@@ -77,6 +77,54 @@ export function formatWhatsAppNumber(phone: string): string {
 }
 
 /**
+ * Dedicated launcher for WhatsApp Business dispatches.
+ * On mobile (Android/iOS), strictly targets WhatsApp Business via direct intents/schemes.
+ * On desktop, triggers installed WhatsApp Desktop or maintains a single persistent session window.
+ */
+export function launchWhatsAppBusinessChat(phone: string, textPayload: string): void {
+  if (typeof window === "undefined") return;
+
+  const cleanedPhone = formatWhatsAppNumber(phone);
+  const win = window as unknown as Record<string, unknown>;
+  const userAgent = navigator.userAgent || navigator.vendor || (typeof win.opera === "string" ? win.opera : "") || "";
+  const isAndroid = /android/i.test(userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !win.MSStream;
+
+  // 1. Android: Force explicit WhatsApp Business package intent
+  if (isAndroid) {
+    const businessIntent = `intent://send?phone=${cleanedPhone}&text=${textPayload}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+    window.location.href = businessIntent;
+
+    // Fallback to standard app protocol if direct business intent is blocked
+    setTimeout(() => {
+      window.location.href = `whatsapp://send?phone=${cleanedPhone}&text=${textPayload}`;
+    }, 500);
+    return;
+  }
+
+  // 2. iOS: Delegate via app protocol (prioritizes installed WhatsApp Business)
+  if (isIOS) {
+    window.location.href = `whatsapp://send?phone=${cleanedPhone}&text=${textPayload}`;
+    setTimeout(() => {
+      window.location.href = `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${textPayload}`;
+    }, 600);
+    return;
+  }
+
+  // 3. Desktop: Trigger installed WhatsApp Desktop application or maintain single session window
+  const desktopAppUri = `whatsapp://send?phone=${cleanedPhone}&text=${textPayload}`;
+  try {
+    window.location.assign(desktopAppUri);
+  } catch {
+    // Target named window to preserve active WhatsApp Web session across dispatches
+    window.open(
+      `https://web.whatsapp.com/send?phone=${cleanedPhone}&text=${textPayload}`,
+      "myeyes_whatsapp_session"
+    );
+  }
+}
+
+/**
  * Normalizes an OrderReceiptData or partial order into FullOrderPayload.
  */
 export function normalizeToFullOrderPayload(
