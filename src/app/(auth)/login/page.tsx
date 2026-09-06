@@ -74,8 +74,14 @@ export default function LoginPage() {
 
       // Role-based auto redirection
       const role = data.user?.role;
-      if (role === "ADMIN" || role === "SUPER_ADMIN") {
+      if (role === "SUPER_ADMIN") {
         router.push("/admin");
+      } else if (
+        role === "ADMIN" ||
+        role === "STORE_ADMIN" ||
+        role === "OPTICIAN"
+      ) {
+        router.push("/admin/orders");
       } else {
         const rawRedirect = searchParams.get("redirect");
         const redirectTo = rawRedirect && rawRedirect !== "/profile" ? rawRedirect : "/";

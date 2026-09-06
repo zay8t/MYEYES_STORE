@@ -158,7 +158,13 @@ export default function Header() {
   if (pathname?.startsWith("/admin")) return null;
   if (pathname?.startsWith("/quiz")) return null;
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const isRestrictedAdmin =
+    user?.role === "ADMIN" ||
+    user?.role === "STORE_ADMIN" ||
+    user?.role === "OPTICIAN";
+  const isAdmin = isSuperAdmin || isRestrictedAdmin;
+  const adminHref = isSuperAdmin ? "/admin" : "/admin/orders";
   const firstName = user?.name?.split(" ")[0] || "";
   const initials = user?.name
     ? user.name
@@ -394,7 +400,7 @@ export default function Header() {
 
                         {isAdmin && (
                           <Link
-                            href="/admin"
+                            href={adminHref}
                             onClick={() => setUserDropdownOpen(false)}
                             className="text-xs font-medium text-[#ff7a00] hover:bg-orange-50/70 rounded-xl px-3 py-2 w-full flex items-center gap-2.5 transition-colors"
                           >

@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/components/AuthProvider";
+
 export interface NavItem {
   name: string;
   label: string;
@@ -31,7 +33,7 @@ export interface NavCategory {
   items: NavItem[];
 }
 
-const NAV_CATEGORIES: NavCategory[] = [
+const ALL_NAV_CATEGORIES: NavCategory[] = [
   {
     title: "1. DASHBOARD",
     items: [
@@ -71,7 +73,14 @@ const NAV_CATEGORIES: NavCategory[] = [
 
 export default function AdminSidebarNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [pendingCount, setPendingCount] = React.useState<number>(0);
+
+  // RBAC: SUPER_ADMIN gets all categories; STORE_ADMIN/ADMIN/OPTICIAN get Orders only.
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const visibleCategories = isSuperAdmin
+    ? ALL_NAV_CATEGORIES
+    : ALL_NAV_CATEGORIES.filter((category) => category.title.startsWith("2. ORDERS"));
 
   React.useEffect(() => {
     let isMounted = true;
@@ -98,7 +107,7 @@ export default function AdminSidebarNav() {
 
   return (
     <nav className="space-y-5">
-      {NAV_CATEGORIES.map((category) => (
+      {visibleCategories.map((category) => (
         <div key={category.title} className="space-y-1">
           <div className="px-3.5 py-1 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase select-none">
             {category.title}

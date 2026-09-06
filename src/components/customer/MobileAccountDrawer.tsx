@@ -59,7 +59,13 @@ export default function MobileAccountDrawer() {
         .slice(0, 2)
     : "";
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const isRestrictedAdmin =
+    user?.role === "ADMIN" ||
+    user?.role === "STORE_ADMIN" ||
+    user?.role === "OPTICIAN";
+  const isAdmin = isSuperAdmin || isRestrictedAdmin;
+  const adminHref = isSuperAdmin ? "/admin" : "/admin/orders";
 
   return (
     <AnimatePresence>
@@ -187,7 +193,7 @@ export default function MobileAccountDrawer() {
 
                     {isAdmin && (
                       <Link
-                        href="/admin"
+                        href={adminHref}
                         onClick={closeAccountDrawer}
                         className="w-full p-3.5 rounded-2xl bg-orange-50/70 hover:bg-orange-100/70 flex items-center justify-between text-left transition-colors"
                       >

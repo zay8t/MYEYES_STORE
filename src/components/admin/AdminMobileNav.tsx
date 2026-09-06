@@ -22,6 +22,7 @@ import {
   TicketPercent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/AuthProvider";
 
 export interface NavCategory {
   title: string;
@@ -34,7 +35,7 @@ export interface NavCategory {
   }[];
 }
 
-const NAV_CATEGORIES: NavCategory[] = [
+const ALL_NAV_CATEGORIES: NavCategory[] = [
   {
     title: "1. DASHBOARD",
     items: [
@@ -75,7 +76,14 @@ const NAV_CATEGORIES: NavCategory[] = [
 export default function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
   const [pendingCount, setPendingCount] = React.useState<number>(0);
+
+  // RBAC: SUPER_ADMIN gets all categories; STORE_ADMIN/ADMIN/OPTICIAN get Orders only.
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const visibleCategories = isSuperAdmin
+    ? ALL_NAV_CATEGORIES
+    : ALL_NAV_CATEGORIES.filter((category) => category.title.startsWith("2. ORDERS"));
 
   React.useEffect(() => {
     let isMounted = true;
@@ -148,7 +156,7 @@ export default function AdminMobileNav() {
 
         {/* Navigation Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
-          {NAV_CATEGORIES.map((category) => (
+          {visibleCategories.map((category) => (
             <div key={category.title} className="space-y-1">
               <div className="px-3 py-1 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase select-none">
                 {category.title}

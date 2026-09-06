@@ -49,7 +49,7 @@ const ROLE_OPTIONS = [
   {
     value: "OPTICIAN",
     label: "Optician",
-    description: "Lab & clinical staff: verify optical prescriptions and lab surfacing.",
+    description: "Optical order queue & prescription review access.",
     icon: ShieldCheck,
     color: "border-blue-200 hover:border-blue-300 text-blue-900",
     badge: "bg-blue-50 text-blue-700 border-blue-200",
@@ -57,7 +57,7 @@ const ROLE_OPTIONS = [
   {
     value: "ADMIN",
     label: "Store Admin",
-    description: "Store manager: full access to products, orders, verification & user management.",
+    description: "Order management & deposit verification access.",
     icon: Shield,
     color: "border-orange-200 hover:border-orange-300 text-orange-950",
     badge: "bg-orange-50 text-[#ff7a00] border-orange-200",

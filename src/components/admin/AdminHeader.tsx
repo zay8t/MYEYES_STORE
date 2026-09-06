@@ -4,11 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import AdminMobileNav from "./AdminMobileNav";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function AdminHeader() {
-  const handleLogout = () => {
+  const { user, logout } = useAuth();
+  const homeHref = user?.role === "SUPER_ADMIN" ? "/admin" : "/admin/orders";
+
+  const handleLogout = async () => {
     sessionStorage.removeItem("my_eyes_admin_auth_v1");
-    window.location.reload();
+    await logout();
   };
 
   return (
@@ -18,7 +22,7 @@ export default function AdminHeader() {
         <div className="lg:hidden flex items-center">
           <AdminMobileNav />
         </div>
-        <Link href="/admin" className="text-slate-900 font-bold text-base tracking-wide flex items-center gap-3 select-none">
+        <Link href={homeHref} className="text-slate-900 font-bold text-base tracking-wide flex items-center gap-3 select-none">
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 p-1.5 flex items-center justify-center border border-amber-300/40 shadow-3xs flex-shrink-0">
             <Image
               src="/logo.svg"

@@ -3,7 +3,16 @@ import { verifySession, SESSION_COOKIE_NAME, SessionPayload } from "./jwt";
 import prisma from "@/lib/prisma";
 
 export function isAdminRole(role?: string | null): boolean {
-  return role === "ADMIN" || role === "SUPER_ADMIN";
+  return (
+    role === "ADMIN" ||
+    role === "SUPER_ADMIN" ||
+    role === "STORE_ADMIN" ||
+    role === "OPTICIAN"
+  );
+}
+
+export function isSuperAdminRole(role?: string | null): boolean {
+  return role === "SUPER_ADMIN";
 }
 
 /**

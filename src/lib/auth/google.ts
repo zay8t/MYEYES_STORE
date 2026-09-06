@@ -190,9 +190,16 @@ export async function createGoogleSessionResponse(
     targetPath = "/" + targetPath;
   }
 
-  // Auto redirect admin roles to /admin if logging into home
-  if ((user.role === "ADMIN" || user.role === "SUPER_ADMIN") && targetPath === "/") {
+  // Auto redirect admin roles if logging into home
+  if (user.role === "SUPER_ADMIN" && targetPath === "/") {
     targetPath = "/admin";
+  } else if (
+    (user.role === "ADMIN" ||
+      user.role === "STORE_ADMIN" ||
+      user.role === "OPTICIAN") &&
+    targetPath === "/"
+  ) {
+    targetPath = "/admin/orders";
   }
 
   const finalUrl = new URL(targetPath, getBaseUrl(origin));
