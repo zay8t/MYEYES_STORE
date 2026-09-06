@@ -68,13 +68,18 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = async (orderOrId: OrderReceiptData | string, newStatus: OrderStatus) => {
+    const orderId = typeof orderOrId === "string" ? orderOrId : orderOrId.id;
+    const targetOrder = typeof orderOrId === "string" ? orders.find((o) => o.id === orderOrId) : orderOrId;
+    const orderDisplayNum = targetOrder?.orderNumber
+      ? String(targetOrder.orderNumber).padStart(8, "0")
+      : formatOrderNumber(targetOrder || orderId);
+
     const previousOrders = [...orders];
-    const targetOrder = orders.find((o) => o.id === orderId);
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as OrderReceiptData["status"] } : o))
     );
-    setToast({ message: `Order #${formatOrderNumber(targetOrder || orderId)} status updated to ${newStatus}`, type: "success" });
+    setToast({ message: `Order #${orderDisplayNum} status updated to ${newStatus}`, type: "success" });
 
     const result = await updateOrderStatusAction(orderId, newStatus);
     if (!result.success) {
@@ -83,13 +88,18 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
     }
   };
 
-  const handlePaymentStatusChange = async (orderId: string, newPaymentStatus: string) => {
+  const handlePaymentStatusChange = async (orderOrId: OrderReceiptData | string, newPaymentStatus: string) => {
+    const orderId = typeof orderOrId === "string" ? orderOrId : orderOrId.id;
+    const targetOrder = typeof orderOrId === "string" ? orders.find((o) => o.id === orderOrId) : orderOrId;
+    const orderDisplayNum = targetOrder?.orderNumber
+      ? String(targetOrder.orderNumber).padStart(8, "0")
+      : formatOrderNumber(targetOrder || orderId);
+
     const previousOrders = [...orders];
-    const targetOrder = orders.find((o) => o.id === orderId);
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: newPaymentStatus } : o))
     );
-    setToast({ message: `Order #${formatOrderNumber(targetOrder || orderId)} payment status updated to ${newPaymentStatus}`, type: "success" });
+    setToast({ message: `Order #${orderDisplayNum} payment status updated to ${newPaymentStatus}`, type: "success" });
 
     const result = await updatePaymentStatusAction(orderId, newPaymentStatus);
     if (!result.success) {
@@ -426,7 +436,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                           </span>
                           <select
                             value={order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")}
-                            onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                            onChange={(e) => handlePaymentStatusChange(order, e.target.value)}
                             className={cn(
                               "px-2 py-1 rounded-xl text-[11px] font-extrabold border cursor-pointer focus:outline-none transition-colors max-w-[140px]",
                               getPaymentStatusBadgeClass(order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED"))
@@ -444,7 +454,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                       <td className="px-5 py-4">
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                          onChange={(e) => handleStatusChange(order, e.target.value as OrderStatus)}
                           className={cn(
                             "px-2.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none",
                             getStatusBadgeClass(order.status)
@@ -596,7 +606,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                   <div className="grid grid-cols-2 gap-2">
                     <select
                       value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                      onChange={(e) => handleStatusChange(order, e.target.value as OrderStatus)}
                       className={cn(
                         "px-3 py-2 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none min-h-[38px]",
                         getStatusBadgeClass(order.status)
@@ -610,7 +620,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
                     <select
                       value={order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED")}
-                      onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                      onChange={(e) => handlePaymentStatusChange(order, e.target.value)}
                       className={cn(
                         "px-3 py-2 rounded-xl text-xs font-extrabold border cursor-pointer focus:outline-none min-h-[38px]",
                         getPaymentStatusBadgeClass(order.paymentStatus || (order.paymentMethod === "COD" ? "PENDING" : "RECEIPT_SUBMITTED"))

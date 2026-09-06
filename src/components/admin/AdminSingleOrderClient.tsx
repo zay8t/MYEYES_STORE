@@ -62,9 +62,12 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
   const handleStepClick = async (newStatus: OrderStatus) => {
     setIsUpdating(true);
     setCurrentStatus(newStatus);
+    const orderDisplayNum = order.orderNumber
+      ? String(order.orderNumber).padStart(8, "0")
+      : formatOrderNumber(order);
     const res = await updateOrderStatusAction(order.id, newStatus);
     if (res.success) {
-      setToast({ message: `Order #${formatOrderNumber(order)} status updated to ${newStatus}`, type: "success" });
+      setToast({ message: `Order #${orderDisplayNum} status updated to ${newStatus}`, type: "success" });
     } else {
       setToast({ message: res.error || "Failed to update status", type: "error" });
     }
@@ -74,9 +77,12 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
   const handlePaymentStatusChange = async (newPayStatus: string) => {
     setIsUpdating(true);
     setPaymentStatus(newPayStatus);
+    const orderDisplayNum = order.orderNumber
+      ? String(order.orderNumber).padStart(8, "0")
+      : formatOrderNumber(order);
     const res = await updatePaymentStatusAction(order.id, newPayStatus);
     if (res.success) {
-      setToast({ message: `Order #${formatOrderNumber(order)} payment status updated to ${newPayStatus}`, type: "success" });
+      setToast({ message: `Order #${orderDisplayNum} payment status updated to ${newPayStatus}`, type: "success" });
     } else {
       setToast({ message: res.error || "Failed to update payment status", type: "error" });
     }
