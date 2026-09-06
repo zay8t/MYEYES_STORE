@@ -234,94 +234,94 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
           <div
             ref={printRef}
             id="printable-receipt-canvas"
-            className="printable-area w-full max-w-[210mm] min-h-[297mm] bg-white border border-slate-200 rounded-xl shadow-lg p-6 sm:p-10 text-slate-900 font-sans leading-relaxed text-xs flex flex-col justify-between print:shadow-none print:border-none print:w-full print:min-h-0 print:p-6 print:rounded-none"
+            className="printable-area w-full max-w-[210mm] bg-white border border-slate-200 rounded-xl shadow-lg p-5 sm:p-8 text-slate-900 font-sans leading-normal text-xs flex flex-col justify-between print:shadow-none print:border-none print:w-full print:min-h-0 print:p-0 print:m-0 print:rounded-none"
           >
             <div>
               {/* Header Section */}
-              <div className="flex justify-between items-start border-b border-slate-200 pb-6 mb-6">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
+              <div className="receipt-section flex justify-between items-start border-b border-slate-200 pb-3 mb-3.5">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2.5">
                     <img
                       src="/logo.svg"
                       alt="My Eyes Logo"
-                      className="h-10 w-auto object-contain"
+                      className="h-8 w-auto object-contain"
                     />
                     <div>
-                      <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+                      <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase leading-none">
                         MY EYES
                       </h1>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-tight mt-0.5">
                         Optical Store &amp; Custom Lens Fitting Lab
                       </p>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-500 pt-1">
+                  <p className="text-[9px] text-slate-500 pt-0.5">
                     Website: www.myeyes.pk · Email: myeyes2026@gmail.com · Phone: +92 339 0103262
                   </p>
                 </div>
 
-                <div className="text-right space-y-1">
-                  <span className="text-sm font-semibold tracking-wider text-slate-500 uppercase block">
+                <div className="text-right space-y-0.5">
+                  <span className="text-xs font-semibold tracking-wider text-slate-500 uppercase block">
                     Order Receipt / Invoice
                   </span>
-                  <h2 className="text-xl font-bold text-slate-900 font-mono tracking-tight">
+                  <h2 className="text-lg font-bold text-slate-900 font-mono tracking-tight leading-none">
                     #{displayOrderNo}
                   </h2>
                 </div>
               </div>
 
               {/* Order Meta & Customer Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50/60 border border-slate-200 rounded-xl p-5 mb-6">
+              <div className="receipt-section grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 mb-3.5">
                 
                 {/* Order Information */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 pb-2">
+                <div className="space-y-2">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 pb-1">
                     Order Information
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Order Date:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">{orderDate} at {orderTime}</span>
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Order Date:</span>
+                      <span className="font-medium text-slate-800 text-right">{orderDate} at {orderTime}</span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Order Status:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Order Status:</span>
+                      <span className="font-medium text-slate-800 text-right">
                         {order.status === "DELIVERED" ? (
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             Delivered
                           </span>
                         ) : order.status === "SHIPPED" || order.status === "PROCESSING" ? (
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             {order.status === "PROCESSING" ? "In Lab Fitting" : "Shipped"}
                           </span>
                         ) : (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             {order.status}
                           </span>
                         )}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Payment Method:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">{getFriendlyPaymentMethod(order.paymentMethod)}</span>
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Payment Method:</span>
+                      <span className="font-medium text-slate-800 text-right">{getFriendlyPaymentMethod(order.paymentMethod)}</span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Payment Status:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Payment Status:</span>
+                      <span className="font-medium text-slate-800 text-right">
                         {isPaid ? (
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             Paid (Verified)
                           </span>
                         ) : order.paymentMethod === "COD" ? (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             Cash on Delivery
                           </span>
                         ) : isPending ? (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             Pending Verification
                           </span>
                         ) : (
-                          <span className="bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold px-2 py-0.5 rounded-md inline-block">
+                          <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold px-2 py-0.5 rounded-md inline-block">
                             {order.paymentStatus || "Unpaid"}
                           </span>
                         )}
@@ -331,32 +331,32 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                 </div>
 
                 {/* Customer Details */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 pb-2">
+                <div className="space-y-2">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 pb-1">
                     Customer Details
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Customer Name:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">{order.customerName}</span>
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Customer Name:</span>
+                      <span className="font-medium text-slate-800 text-right">{order.customerName}</span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Email:</span>
-                      <span className="text-sm font-medium text-slate-800 text-right">{order.customerEmail}</span>
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Email:</span>
+                      <span className="font-medium text-slate-800 text-right truncate max-w-[180px]">{order.customerEmail}</span>
                     </div>
                     {(order.customerPhone || order.phone) && (
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Phone:</span>
-                        <span className="text-sm font-mono font-medium text-slate-800 text-right">
+                        <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Phone:</span>
+                        <span className="font-mono font-medium text-slate-800 text-right">
                           {order.customerPhone || order.phone}
                         </span>
                       </div>
                     )}
-                    <div className="pt-1 border-t border-slate-200/60">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    <div className="pt-0.5 border-t border-slate-200/60">
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px] block mb-0.5">
                         Delivery Address:
                       </span>
-                      <p className="text-sm font-medium text-slate-800 leading-snug">
+                      <p className="font-medium text-slate-800 leading-snug">
                         {order.shippingAddress || "N/A"}, {order.shippingCity || order.city || ""}{" "}
                         {order.postalCode ? `- ${order.postalCode}` : ""}
                       </p>
@@ -367,22 +367,22 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
               </div>
 
               {/* Itemized Order Table */}
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
+              <div className="receipt-section mb-3.5">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                   Ordered Products &amp; Services
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left">
-                    <thead className="bg-slate-50 border-y border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                    <thead className="bg-slate-50 border-y border-slate-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
                       <tr>
-                        <th className="py-3 px-3">Product</th>
-                        <th className="py-3 px-3">Lens / Package Specs</th>
-                        <th className="py-3 px-3 text-center">Qty</th>
-                        <th className="py-3 px-3 text-right">Unit Price</th>
-                        <th className="py-3 px-3 text-right">Total</th>
+                        <th className="py-2 px-2.5">Product</th>
+                        <th className="py-2 px-2.5">Specs / Lens</th>
+                        <th className="py-2 px-2.5 text-center">Qty</th>
+                        <th className="py-2 px-2.5 text-right">Unit Price</th>
+                        <th className="py-2 px-2.5 text-right">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-800 text-sm">
+                    <tbody className="divide-y divide-slate-100 text-slate-800 text-xs">
                       {order.items.map((item) => {
                         const frameCost = item.framePrice !== null && item.framePrice !== undefined
                           ? Number(item.framePrice)
@@ -410,10 +410,10 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                         const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
 
                         return (
-                          <tr key={item.id} className="border-b border-slate-100 align-top">
-                            <td className="py-4 px-3">
-                              <div className="flex items-start gap-3">
-                                <div className="w-12 h-12 rounded-lg border border-slate-200 bg-slate-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          <tr key={item.id} className="receipt-table-row border-b border-slate-100 align-top">
+                            <td className="py-2.5 px-2.5">
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-10 h-10 rounded-lg border border-slate-200 bg-slate-50 p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
                                   {itemFrameImg ? (
                                     <img
                                       src={itemFrameImg}
@@ -424,48 +424,48 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                                       }}
                                     />
                                   ) : (
-                                    <Glasses className="w-6 h-6 text-slate-400" />
+                                    <Glasses className="w-5 h-5 text-slate-400" />
                                   )}
                                 </div>
-                                <div className="space-y-0.5">
-                                  <span className="font-bold text-slate-900 block leading-tight">
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <span className="font-bold text-slate-900 text-xs leading-snug">
                                     {item.frameName || item.product?.name || "Eyewear Frame"}
                                   </span>
-                                  <span className="text-[10px] text-slate-400 font-mono block">
+                                  <span className="text-[10px] text-slate-400 font-mono leading-none">
                                     ID: {item.frameId || item.productId?.slice(0, 8)}
                                   </span>
                                   {frameCost !== null && (
-                                    <span className="text-xs font-semibold text-slate-700 block pt-0.5">
-                                      Frame Price: {formatPrice(frameCost)}
+                                    <span className="text-[11px] font-medium text-slate-600 leading-tight pt-0.5">
+                                      Frame: {formatPrice(frameCost)}
                                     </span>
                                   )}
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-3">
+                            <td className="py-2.5 px-2.5">
                               {item.prescription || humanLensName ? (
-                                <div className="space-y-1">
+                                <div className="flex flex-col gap-1 text-xs">
                                   {visionType && (
-                                    <span className="inline-block px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 text-[10px] font-bold uppercase tracking-wide border border-amber-200/80">
+                                    <span className="inline-block w-fit px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 text-[9px] font-bold uppercase tracking-wide border border-amber-200/80 leading-none">
                                       {visionType}
                                     </span>
                                   )}
-                                  <span className="font-bold text-slate-900 block text-xs">
+                                  <span className="font-bold text-slate-900 text-xs leading-snug">
                                     {humanLensName}
                                   </span>
                                   {lensCost !== null && (
-                                    <span className="text-xs font-semibold text-slate-700 block">
-                                      Lens Price: {formatPrice(lensCost)}
+                                    <span className="text-[11px] font-medium text-slate-500 leading-tight">
+                                      Lens: {formatPrice(lensCost)}
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-500 text-xs">Standard Frame Only</span>
+                                <span className="text-slate-500 text-xs leading-snug">Standard Frame Only</span>
                               )}
                             </td>
-                            <td className="py-4 px-3 text-center font-semibold text-slate-900">{item.quantity}</td>
-                            <td className="py-4 px-3 text-right font-mono text-slate-700">{formatPrice(unitPrice)}</td>
-                            <td className="py-4 px-3 text-right font-bold font-mono text-slate-900">
+                            <td className="py-2.5 px-2.5 text-center font-semibold text-slate-900">{item.quantity}</td>
+                            <td className="py-2.5 px-2.5 text-right font-mono text-slate-700">{formatPrice(unitPrice)}</td>
+                            <td className="py-2.5 px-2.5 text-right font-bold font-mono text-slate-900">
                               {formatPrice(totalPrice)}
                             </td>
                           </tr>
@@ -478,10 +478,10 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
 
               {/* Optical Prescription Specification Section (If Present) */}
               {order.items.some((i) => i.prescription) && (
-                <div className="mb-6 bg-slate-50/60 p-5 rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
-                    <Glasses className="w-4 h-4 text-amber-600" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <div className="receipt-rx-box mb-3.5 bg-slate-50/60 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                  <div className="flex items-center gap-1.5 border-b border-slate-200/80 pb-1.5">
+                    <Glasses className="w-3.5 h-3.5 text-amber-600" />
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Optical Prescription Specifications (Rx)
                     </h3>
                   </div>
@@ -494,46 +494,46 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
                       const rxVisionType = item.visionType || (rxLensName.toLowerCase().includes("progressive") ? "Progressive" : "Single Vision");
 
                       return (
-                        <div key={item.id} className="space-y-2">
+                        <div key={item.id} className="space-y-1.5">
                           <div className="flex justify-between items-center text-xs flex-wrap gap-2">
                             <span className="font-bold text-slate-900">
                               {item.frameName || item.product?.name} — [{rxVisionType}] {rxLensName}
                             </span>
-                            <span className="bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs px-2.5 py-1 rounded-md">
+                            <span className="bg-slate-100 text-slate-700 border border-slate-200 font-bold text-[11px] px-2 py-0.5 rounded-md">
                               Pupillary Distance (PD): {rx.pd} mm
                             </span>
                           </div>
 
                           <div className="overflow-x-auto rounded-lg border border-slate-200">
                             <table className="w-full text-center font-mono text-xs border-collapse">
-                              <thead className="bg-slate-50 border-y border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                              <thead className="bg-slate-50 border-y border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
                                 <tr>
-                                  <th className="py-2.5 px-3 text-left font-sans">Eye</th>
-                                  <th className="py-2.5 px-3">Sphere (SPH)</th>
-                                  <th className="py-2.5 px-3">Cylinder (CYL)</th>
-                                  <th className="py-2.5 px-3">Axis</th>
+                                  <th className="py-1.5 px-2.5 text-left font-sans">Eye</th>
+                                  <th className="py-1.5 px-2.5">Sphere (SPH)</th>
+                                  <th className="py-1.5 px-2.5">Cylinder (CYL)</th>
+                                  <th className="py-1.5 px-2.5">Axis</th>
                                 </tr>
                               </thead>
                               <tbody className="bg-white divide-y divide-slate-100 text-slate-800">
                                 <tr>
-                                  <td className="py-2.5 px-3 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
+                                  <td className="py-1.5 px-2.5 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
                                     Right Eye (OD)
                                   </td>
-                                  <td className="py-2.5 px-3 border-r border-slate-100">{rx.odSph.toFixed(2)}</td>
-                                  <td className="py-2.5 px-3 border-r border-slate-100">
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100">{rx.odSph.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100">
                                     {rx.odCyl !== null && rx.odCyl !== undefined ? rx.odCyl.toFixed(2) : "0.00"}
                                   </td>
-                                  <td className="py-2.5 px-3">{rx.odAxis !== null && rx.odAxis !== undefined ? `${rx.odAxis}°` : "-"}</td>
+                                  <td className="py-1.5 px-2.5">{rx.odAxis !== null && rx.odAxis !== undefined ? `${rx.odAxis}°` : "-"}</td>
                                 </tr>
                                 <tr>
-                                  <td className="py-2.5 px-3 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
+                                  <td className="py-1.5 px-2.5 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
                                     Left Eye (OS)
                                   </td>
-                                  <td className="py-2.5 px-3 border-r border-slate-100">{rx.osSph.toFixed(2)}</td>
-                                  <td className="py-2.5 px-3 border-r border-slate-100">
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100">{rx.osSph.toFixed(2)}</td>
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100">
                                     {rx.osCyl !== null && rx.osCyl !== undefined ? rx.osCyl.toFixed(2) : "0.00"}
                                   </td>
-                                  <td className="py-2.5 px-3">{rx.osAxis !== null && rx.osAxis !== undefined ? `${rx.osAxis}°` : "-"}</td>
+                                  <td className="py-1.5 px-2.5">{rx.osAxis !== null && rx.osAxis !== undefined ? `${rx.osAxis}°` : "-"}</td>
                                 </tr>
                               </tbody>
                             </table>
@@ -545,29 +545,29 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
               )}
 
               {/* Pricing Breakdown & Grand Total */}
-              <div className="flex justify-end mb-8">
-                <div className="w-72 space-y-2 text-right">
+              <div className="receipt-totals-box flex justify-end mb-3">
+                <div className="w-64 space-y-1 text-right text-xs">
                   <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Frame(s) Total:</span>
+                    <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Frame(s) Total:</span>
                     <span className="font-mono font-medium text-slate-800">{formatPrice(totalFrameCost)}</span>
                   </div>
                   {totalLensCost > 0 && (
                     <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Lens(es) Total:</span>
+                      <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Lens(es) Total:</span>
                       <span className="font-mono font-medium text-slate-800">{formatPrice(totalLensCost)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Subtotal:</span>
+                    <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Subtotal:</span>
                     <span className="font-mono font-medium text-slate-800">{formatPrice(itemsSubtotal)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Standard Shipping:</span>
+                    <span className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Standard Shipping:</span>
                     <span className="font-mono font-medium text-slate-800">{formatPrice(shippingFee)}</span>
                   </div>
                   <div className="flex justify-between text-slate-900 font-bold text-sm pt-1 border-b border-slate-300 pb-1">
                     <span>Grand Total:</span>
-                    <span className="font-mono text-base font-extrabold text-slate-900">{formatPrice(order.totalAmount || grandTotal)}</span>
+                    <span className="font-mono text-sm font-extrabold text-slate-900">{formatPrice(order.totalAmount || grandTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -575,15 +575,15 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
             </div>
 
             {/* Footer Section */}
-            <div className="border-t border-slate-200 pt-6 mt-6 text-center space-y-2">
-              <p className="font-semibold text-slate-800 text-xs">
+            <div className="receipt-section border-t border-slate-200 pt-3 mt-3 text-center space-y-1">
+              <p className="font-semibold text-slate-800 text-[11px]">
                 Thank you for choosing My Eyes Optical Studio.
               </p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[9px] text-slate-500">
                 For optical queries or support regarding this order receipt, contact our lab team at support@myeyes.pk or +92 339 0103262.
               </p>
-              <div className="pt-2 text-[9px] text-slate-400 font-mono uppercase tracking-widest flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <div className="pt-0.5 text-[8px] text-slate-400 font-mono uppercase tracking-widest flex items-center justify-center gap-1">
+                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
                 Verified Electronic Invoice · My Eyes Store PK
               </div>
             </div>
@@ -594,20 +594,32 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
 
       </div>
 
-      {/* Global CSS for Clean, Ink-Friendly A4 Printing */}
+      {/* Global CSS for Clean, Ink-Friendly Strict Single-Page A4 Printing */}
       <style jsx global>{`
+        @page {
+          size: A4 portrait;
+          margin: 10mm 12mm;
+        }
+
         @media print {
-          /* Hide all app navigation, header buttons, modal backdrops, and close icons */
-          body > *:not(.printable-modal-wrapper),
-          header, nav, aside, button, .print\\:hidden, .no-print {
-            display: none !important;
+          *, *::before, *::after {
+            box-sizing: border-box !important;
           }
 
-          body {
+          html, body {
+            height: auto !important;
             background: #ffffff !important;
             color: #0f172a !important;
             margin: 0 !important;
             padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Hide all app navigation, header buttons, modal backdrops, and close icons */
+          body > *:not(.printable-modal-wrapper),
+          header, nav, aside, footer, button, .print\\:hidden, .no-print {
+            display: none !important;
           }
 
           /* Remove modal backdrop, overlays & shadows */
@@ -616,6 +628,7 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
             background: #ffffff !important;
             padding: 0 !important;
             box-shadow: none !important;
+            overflow: visible !important;
           }
 
           #printable-receipt-canvas {
@@ -626,8 +639,10 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
             top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
+            min-height: auto !important;
+            height: auto !important;
             margin: 0 !important;
-            padding: 8mm !important;
+            padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
             background: #ffffff !important;
@@ -636,6 +651,16 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
 
           #printable-receipt-canvas * {
             visibility: visible !important;
+          }
+
+          /* Prevent awkward mid-element splits across pages */
+          .receipt-section,
+          .receipt-table-row,
+          .receipt-rx-box,
+          .receipt-totals-box,
+          table, tr, td, th {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
           }
 
           /* Ensure thin borders stay sharp without printing solid blocks */

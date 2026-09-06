@@ -33,8 +33,8 @@ export async function GET(
     const orderNoStr = order.orderNumber || "00000000";
     const filename = `MYEYES-ORDER-${orderNoStr}.pdf`;
 
-    // Create PDFDocument for standard A4 paper
-    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    // Create PDFDocument for standard A4 paper with clean 36pt (0.5in) margins
+    const doc = new PDFDocument({ size: "A4", margin: 36 });
     const chunks: Uint8Array[] = [];
 
     doc.on("data", (chunk: Uint8Array) => chunks.push(chunk));
@@ -47,66 +47,66 @@ export async function GET(
     // --- PDF DRAWING ---
     // Header Branding
     doc
-      .fontSize(22)
+      .fontSize(20)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("MY EYES", 40, 40);
-
-    doc
-      .fontSize(8.5)
-      .font("Helvetica-Bold")
-      .fillColor("#64748b")
-      .text("OPTICAL STORE & CUSTOM LENS FITTING LAB", 40, 66);
+      .text("MY EYES", 36, 36);
 
     doc
       .fontSize(8)
+      .font("Helvetica-Bold")
+      .fillColor("#64748b")
+      .text("OPTICAL STORE & CUSTOM LENS FITTING LAB", 36, 58);
+
+    doc
+      .fontSize(7.5)
       .font("Helvetica")
       .fillColor("#94a3b8")
-      .text("Website: www.myeyes.pk  |  Email: myeyes2026@gmail.com  |  Phone: +92 339 0103262", 40, 78);
+      .text("Website: www.myeyes.pk  |  Email: myeyes2026@gmail.com  |  Phone: +92 339 0103262", 36, 70);
 
     // Right Header - Title & Order No
     doc
-      .fontSize(14)
+      .fontSize(13)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("ORDER RECEIPT / INVOICE", 330, 40, { align: "right" });
+      .text("ORDER RECEIPT / INVOICE", 330, 36, { align: "right" });
 
     doc
-      .fontSize(11)
+      .fontSize(10.5)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text(`Order No: ${orderNoStr}`, 330, 60, { align: "right" });
+      .text(`Order No: ${orderNoStr}`, 330, 54, { align: "right" });
 
     doc
-      .fontSize(8)
+      .fontSize(7.5)
       .font("Helvetica")
       .fillColor("#64748b")
       .text(
         `Date: ${new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
         330,
-        75,
+        68,
         { align: "right" }
       );
 
     // Header Divider Line
     doc
-      .moveTo(40, 95)
-      .lineTo(555, 95)
-      .lineWidth(1.5)
+      .moveTo(36, 84)
+      .lineTo(559, 84)
+      .lineWidth(1)
       .strokeColor("#0f172a")
       .stroke();
 
     // Customer & Order Info Box
-    let y = 110;
+    let y = 92;
     doc
-      .rect(40, y, 515, 80)
+      .rect(36, y, 523, 72)
       .fillAndStroke("#f8fafc", "#cbd5e1");
 
     doc
-      .fontSize(9)
+      .fontSize(8.5)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("Order Information", 52, y + 8);
+      .text("Order Information", 46, y + 7);
 
     const isLahore =
       order.shippingCity?.toLowerCase().includes("lhr") ||
@@ -116,49 +116,48 @@ export async function GET(
     const postalCode = isLahore ? "54000" : "44000";
 
     doc
-      .fontSize(8)
+      .fontSize(7.5)
       .font("Helvetica")
       .fillColor("#334155")
-      .text(`Ref ID: ${order.id}`, 52, y + 20)
-      .text(`Status: ${order.status}`, 52, y + 30)
-      .text(`Payment: ${order.paymentMethod || "COD"} (${order.paymentStatus === "PAID" ? "PAID (VERIFIED)" : order.paymentStatus === "FAILED" ? "FAILED" : order.paymentMethod === "COD" ? "COD" : "PENDING VERIFICATION"})`, 52, y + 42)
-      .text(`Shipping Fee: PKR ${order.shippingFee || 250}`, 52, y + 54);
+      .text(`Ref ID: ${order.id}`, 46, y + 19)
+      .text(`Status: ${order.status}`, 46, y + 30)
+      .text(`Payment: ${order.paymentMethod || "COD"} (${order.paymentStatus === "PAID" ? "PAID (VERIFIED)" : order.paymentStatus === "FAILED" ? "FAILED" : order.paymentMethod === "COD" ? "COD" : "PENDING VERIFICATION"})`, 46, y + 41)
+      .text(`Shipping Fee: PKR ${order.shippingFee || 250}`, 46, y + 52);
 
     doc
-      .fontSize(9)
+      .fontSize(8.5)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("Customer Details", 300, y + 8);
+      .text("Customer Details", 295, y + 7);
 
     doc
-      .fontSize(8)
+      .fontSize(7.5)
       .font("Helvetica")
       .fillColor("#334155")
-      .text(`Name: ${order.customerName || "Customer"}`, 300, y + 22)
-      .text(`Email: ${order.customerEmail || "N/A"}`, 300, y + 34)
-      .text(`Phone: ${order.customerPhone || "N/A"}`, 300, y + 46)
-      .text(`Address: ${order.shippingAddress || "N/A"}`, 300, y + 58)
-      .text(`City: ${order.shippingCity || "N/A"} - ${postalCode}`, 300, y + 68);
+      .text(`Name: ${order.customerName || "Customer"}`, 295, y + 19)
+      .text(`Email: ${order.customerEmail || "N/A"}`, 295, y + 30)
+      .text(`Phone: ${order.customerPhone || "N/A"}`, 295, y + 41)
+      .text(`Address: ${order.shippingAddress || "N/A"}, ${order.shippingCity || "N/A"} - ${postalCode}`, 295, y + 52);
 
     // Table Header
-    y += 90;
+    y += 80;
     doc
-      .rect(40, y, 515, 20)
+      .rect(36, y, 523, 18)
       .fillAndStroke("#f8fafc", "#e2e8f0");
 
     doc
-      .fontSize(8)
+      .fontSize(7.5)
       .font("Helvetica-Bold")
       .fillColor("#475569")
-      .text("PRODUCT", 50, y + 6)
-      .text("SPECS / LENS", 220, y + 6)
-      .text("QTY", 380, y + 6, { width: 30, align: "center" })
-      .text("UNIT PRICE", 420, y + 6, { width: 60, align: "right" })
-      .text("TOTAL", 490, y + 6, { width: 55, align: "right" });
+      .text("PRODUCT", 46, y + 5)
+      .text("SPECS / LENS", 215, y + 5)
+      .text("QTY", 375, y + 5, { width: 30, align: "center" })
+      .text("UNIT PRICE", 415, y + 5, { width: 65, align: "right" })
+      .text("TOTAL", 485, y + 5, { width: 65, align: "right" });
 
-    y += 20;
+    y += 18;
 
-    // Items Rows
+    // Items Rows (Dynamic text height calculation to prevent collisions)
     for (const item of order.items) {
       const qty = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
       const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
@@ -186,77 +185,84 @@ export async function GET(
 
       const itemTotal = unitPrice * qty;
 
-      // Product details
+      const productName = item.product?.name || "Eyewear Frame";
+      const lensLine = (item.prescription || humanLensName)
+        ? (visionType ? `[${visionType}] ${humanLensName}` : (humanLensName || "Prescription Lens"))
+        : "Standard Frame Only";
+
+      // Measure text heights dynamically to calculate accurate row height
+      doc.fontSize(8).font("Helvetica-Bold");
+      const productTitleHeight = doc.heightOfString(productName, { width: 155 });
+
+      doc.fontSize(7.5).font(item.prescription || humanLensName ? "Helvetica-Bold" : "Helvetica");
+      const lensTitleHeight = doc.heightOfString(lensLine, { width: 155 });
+
+      const productColHeight = productTitleHeight + (frameCost !== null ? 11 : 0);
+      const specsColHeight = lensTitleHeight + (lensCost !== null ? 11 : 0);
+      const rowHeight = Math.max(productColHeight, specsColHeight, 18) + 6;
+
+      // Draw Product Column
       doc
         .fontSize(8)
         .font("Helvetica-Bold")
         .fillColor("#0f172a")
-        .text(item.product?.name || "Eyewear Frame", 50, y + 4, { width: 160 });
+        .text(productName, 46, y + 3, { width: 155 });
 
       if (frameCost !== null) {
         doc
           .fontSize(7)
           .font("Helvetica")
           .fillColor("#64748b")
-          .text(`Frame: Rs. ${frameCost.toLocaleString()}/-`, 50, y + 15, { width: 160 });
+          .text(`Frame: Rs. ${frameCost.toLocaleString()}/-`, 46, y + 3 + productTitleHeight + 1, { width: 155 });
       }
 
-      // Lens / Specs details
-      if (item.prescription || humanLensName) {
-        const lensLine = visionType ? `[${visionType}] ${humanLensName}` : (humanLensName || "Prescription Lens");
-        doc
-          .fontSize(7.5)
-          .font("Helvetica-Bold")
-          .fillColor("#0f172a")
-          .text(lensLine, 220, y + 4, { width: 155 });
+      // Draw Specs / Lens Column (Never overlaps baseline)
+      doc
+        .fontSize(7.5)
+        .font(item.prescription || humanLensName ? "Helvetica-Bold" : "Helvetica")
+        .fillColor(item.prescription || humanLensName ? "#0f172a" : "#64748b")
+        .text(lensLine, 215, y + 3, { width: 155 });
 
-        if (lensCost !== null) {
-          doc
-            .fontSize(7)
-            .font("Helvetica")
-            .fillColor("#64748b")
-            .text(`Lens: Rs. ${lensCost.toLocaleString()}/-`, 220, y + 15, { width: 155 });
-        }
-      } else {
+      if (lensCost !== null) {
         doc
-          .fontSize(7.5)
+          .fontSize(7)
           .font("Helvetica")
           .fillColor("#64748b")
-          .text("Frame Only", 220, y + 4, { width: 155 });
+          .text(`Lens: Rs. ${lensCost.toLocaleString()}/-`, 215, y + 3 + lensTitleHeight + 1, { width: 155 });
       }
 
+      // Draw QTY, Unit Price, Total
       doc
-        .fontSize(8)
+        .fontSize(7.5)
         .font("Helvetica")
         .fillColor("#0f172a")
-        .text(String(qty), 380, y + 6, { width: 30, align: "center" });
+        .text(String(qty), 375, y + 4, { width: 30, align: "center" });
 
-      doc.text(`Rs. ${unitPrice.toLocaleString()}/-`, 415, y + 6, { width: 65, align: "right" });
+      doc.text(`Rs. ${unitPrice.toLocaleString()}/-`, 415, y + 4, { width: 65, align: "right" });
       doc
         .font("Helvetica-Bold")
-        .text(`Rs. ${itemTotal.toLocaleString()}/-`, 485, y + 6, { width: 60, align: "right" });
+        .text(`Rs. ${itemTotal.toLocaleString()}/-`, 485, y + 4, { width: 65, align: "right" });
 
-      y += 28;
+      y += rowHeight;
       doc
-        .moveTo(40, y)
-        .lineTo(555, y)
+        .moveTo(36, y)
+        .lineTo(559, y)
         .lineWidth(0.5)
         .strokeColor("#e2e8f0")
         .stroke();
     }
 
-
     // Optical Prescription Specifications Grid (If Order contains Rx)
     const rxItems = order.items.filter((i) => i.prescription);
     if (rxItems.length > 0) {
-      y += 15;
+      y += 10;
       doc
-        .fontSize(9)
+        .fontSize(8.5)
         .font("Helvetica-Bold")
         .fillColor("#0f172a")
-        .text("OPTICAL PRESCRIPTION SPECIFICATIONS", 40, y);
+        .text("OPTICAL PRESCRIPTION SPECIFICATIONS (RX)", 36, y);
 
-      y += 15;
+      y += 13;
       for (const item of rxItems) {
         const rx = item.prescription!;
         const odSph = rx.odSph != null ? Number(rx.odSph).toFixed(2) : "0.00";
@@ -267,28 +273,28 @@ export async function GET(
         const osAxis = rx.osAxis ? rx.osAxis + "°" : "-";
 
         doc
-          .rect(40, y, 515, 55)
+          .rect(36, y, 523, 46)
           .fillAndStroke("#f8fafc", "#cbd5e1");
 
         doc
-          .fontSize(8)
+          .fontSize(7.5)
           .font("Helvetica-Bold")
           .fillColor("#0f172a")
-          .text(`Lens Package: ${rx.lensType || "Standard"}`, 50, y + 8)
-          .text(`Pupillary Distance (PD): ${rx.pd || "63"} mm`, 350, y + 8, { align: "right" });
+          .text(`Lens Package: ${rx.lensType || "Standard"}`, 46, y + 6)
+          .text(`Pupillary Distance (PD): ${rx.pd || "63"} mm`, 340, y + 6, { width: 210, align: "right" });
 
         doc
           .font("Helvetica")
           .fillColor("#334155")
-          .text(`OD (Right Eye):  SPH: ${odSph}  |  CYL: ${odCyl}  |  AXIS: ${odAxis}`, 50, y + 24)
-          .text(`OS (Left Eye):   SPH: ${osSph}  |  CYL: ${osCyl}  |  AXIS: ${osAxis}`, 50, y + 38);
+          .text(`OD (Right Eye):  SPH: ${odSph}  |  CYL: ${odCyl}  |  AXIS: ${odAxis}`, 46, y + 19)
+          .text(`OS (Left Eye):   SPH: ${osSph}  |  CYL: ${osCyl}  |  AXIS: ${osAxis}`, 46, y + 31);
 
-        y += 65;
+        y += 52;
       }
     }
 
     // Totals Summary
-    y += 10;
+    y += 8;
     const totalFrameCost = order.items.reduce((sum, item) => {
       const q = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
       const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
@@ -318,57 +324,56 @@ export async function GET(
     const grandTotal = typeof order.totalAmount === "number" ? order.totalAmount : itemsSubtotal + shippingFee;
 
     doc
-      .fontSize(8)
+      .fontSize(7.5)
       .font("Helvetica")
       .fillColor("#64748b")
       .text("Frame(s) Total:", 360, y, { width: 100, align: "right" })
-      .text(`Rs. ${totalFrameCost.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+      .text(`Rs. ${totalFrameCost.toLocaleString()}/-`, 470, y, { width: 80, align: "right" });
 
     if (totalLensCost > 0) {
-      y += 14;
+      y += 12;
       doc
         .text("Lens(es) Total:", 360, y, { width: 100, align: "right" })
-        .text(`Rs. ${totalLensCost.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+        .text(`Rs. ${totalLensCost.toLocaleString()}/-`, 470, y, { width: 80, align: "right" });
     }
 
-    y += 14;
+    y += 12;
     doc
       .text("Subtotal:", 360, y, { width: 100, align: "right" })
-      .text(`Rs. ${itemsSubtotal.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
+      .text(`Rs. ${itemsSubtotal.toLocaleString()}/-`, 470, y, { width: 80, align: "right" });
+
+    y += 12;
+    doc
+      .text("Standard Shipping:", 360, y, { width: 100, align: "right" })
+      .text(`Rs. ${shippingFee.toLocaleString()}/-`, 470, y, { width: 80, align: "right" });
 
     y += 14;
     doc
-      .text("Shipping Fee:", 360, y, { width: 100, align: "right" })
-      .text(`Rs. ${shippingFee.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
-
-    y += 16;
-    doc
-      .fontSize(10)
+      .fontSize(9.5)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
       .text("Grand Total:", 360, y, { width: 100, align: "right" })
-      .text(`Rs. ${grandTotal.toLocaleString()}/-`, 470, y, { width: 75, align: "right" });
-
+      .text(`Rs. ${grandTotal.toLocaleString()}/-`, 470, y, { width: 80, align: "right" });
 
     // Footer
     doc
-      .moveTo(40, 780)
-      .lineTo(555, 780)
+      .moveTo(36, 785)
+      .lineTo(559, 785)
       .lineWidth(0.5)
       .strokeColor("#cbd5e1")
       .stroke();
 
     doc
-      .fontSize(9)
+      .fontSize(8.5)
       .font("Helvetica-Bold")
       .fillColor("#0f172a")
-      .text("Thank you for choosing My Eyes.", 40, 790, { align: "center" });
+      .text("Thank you for choosing My Eyes Optical Studio.", 36, 793, { align: "center" });
 
     doc
       .fontSize(7)
       .font("Helvetica")
       .fillColor("#94a3b8")
-      .text("Verified Official Electronic Invoice · My Eyes PK", 40, 804, { align: "center" });
+      .text("Verified Official Electronic Invoice · My Eyes PK", 36, 805, { align: "center" });
 
     doc.end();
 
