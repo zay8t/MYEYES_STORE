@@ -120,7 +120,93 @@ export default function A4ReceiptModal({ order, onClose, isOpen }: A4ReceiptModa
   });
 
   const handlePrint = () => {
-    window.print();
+    const receiptElement =
+      document.getElementById("printable-receipt-card") ||
+      document.getElementById("printable-receipt-canvas") ||
+      printRef.current;
+
+    if (!receiptElement) {
+      const printTab = window.open(
+        `/receipts/${order.orderNumber || order.id}?print=true`,
+        "_blank"
+      );
+      if (printTab) printTab.focus();
+      return;
+    }
+
+    const printIframe = document.createElement("iframe");
+    printIframe.style.position = "fixed";
+    printIframe.style.right = "0";
+    printIframe.style.bottom = "0";
+    printIframe.style.width = "0";
+    printIframe.style.height = "0";
+    printIframe.style.border = "0";
+    document.body.appendChild(printIframe);
+
+    const frameDoc =
+      printIframe.contentDocument || printIframe.contentWindow?.document;
+    if (!frameDoc) return;
+
+    // Grab all global stylesheets and Tailwind styles
+    const styles = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style')
+    )
+      .map((el) => el.outerHTML)
+      .join("");
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Order Receipt #${order.orderNumber || order.id}</title>
+          ${styles}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 10mm 12mm;
+            }
+            html, body {
+              background: #ffffff !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            #printable-receipt-card, #printable-receipt-canvas {
+              width: 100% !important;
+              max-width: 100% !important;
+              box-shadow: none !important;
+              border: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .receipt-section,
+            .receipt-table-row,
+            .receipt-rx-box,
+            .receipt-totals-box,
+            table, tr, td, th {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${receiptElement.outerHTML}
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    printIframe.contentWindow?.focus();
+    setTimeout(() => {
+      printIframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe);
+        }
+      }, 1000);
+    }, 350);
   };
 
   const handleDownloadPdf = () => {
@@ -238,7 +324,7 @@ export default function A4ReceiptModal({ order, onClose, isOpen }: A4ReceiptModa
           
           <div
             ref={printRef}
-            id="printable-receipt-canvas"
+            id="printable-receipt-card"
             className="printable-area w-full max-w-[210mm] bg-white border border-slate-200 rounded-xl shadow-lg p-5 sm:p-8 text-slate-900 font-sans leading-normal text-xs flex flex-col justify-between print:shadow-none print:border-none print:w-full print:min-h-0 print:p-0 print:m-0 print:rounded-none"
           >
             <div>
