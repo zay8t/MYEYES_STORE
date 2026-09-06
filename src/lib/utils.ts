@@ -18,6 +18,15 @@ export function formatPrice(price: number): string {
   return `Rs. ${Math.round(price).toLocaleString()}/-`;
 }
 
+export function formatDiopter(val: string | number | null | undefined): string {
+  if (val === null || val === undefined || val === "") return "0.00";
+  const num = parseFloat(String(val));
+  if (isNaN(num)) return String(val);
+  if (num === 0) return "0.00";
+  const formatted = num.toFixed(2);
+  return num > 0 ? `+${formatted}` : formatted;
+}
+
 export function formatFrameShape(shape?: string | null): string {
   if (!shape || shape.toUpperCase() === "NILL") return "Classic";
   const map: Record<string, string> = {

@@ -17,7 +17,7 @@ import {
   X,
   CheckCircle2,
 } from "lucide-react";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, formatDiopter } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import { formatOrderNumber } from "@/lib/order-number";
@@ -285,16 +285,16 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
             <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-2">
               <p className="text-xs font-extrabold text-slate-900">OD (Right Eye)</p>
               <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
-                <div className="bg-slate-50 p-2 rounded">SPH: {rxItem.prescription.odSph}</div>
-                <div className="bg-slate-50 p-2 rounded">CYL: {rxItem.prescription.odCyl || "0.00"}</div>
+                <div className="bg-slate-50 p-2 rounded">SPH: {formatDiopter(rxItem.prescription.odSph)}</div>
+                <div className="bg-slate-50 p-2 rounded">CYL: {formatDiopter(rxItem.prescription.odCyl)}</div>
                 <div className="bg-slate-50 p-2 rounded">AXIS: {rxItem.prescription.odAxis ? `${rxItem.prescription.odAxis}°` : "-"}</div>
               </div>
             </div>
             <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-2">
               <p className="text-xs font-extrabold text-slate-900">OS (Left Eye)</p>
               <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
-                <div className="bg-slate-50 p-2 rounded">SPH: {rxItem.prescription.osSph}</div>
-                <div className="bg-slate-50 p-2 rounded">CYL: {rxItem.prescription.osCyl || "0.00"}</div>
+                <div className="bg-slate-50 p-2 rounded">SPH: {formatDiopter(rxItem.prescription.osSph)}</div>
+                <div className="bg-slate-50 p-2 rounded">CYL: {formatDiopter(rxItem.prescription.osCyl)}</div>
                 <div className="bg-slate-50 p-2 rounded">AXIS: {rxItem.prescription.osAxis ? `${rxItem.prescription.osAxis}°` : "-"}</div>
               </div>
             </div>

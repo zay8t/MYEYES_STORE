@@ -17,7 +17,7 @@ import {
   FileCheck,
   ExternalLink,
 } from "lucide-react";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, formatDiopter } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import { formatOrderNumber } from "@/lib/order-number";
@@ -339,13 +339,13 @@ export default function OrderDetailsDrawer({
                             <div className="bg-slate-50 p-2 rounded-lg">
                               <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
                               <span className="font-extrabold text-slate-900">
-                                {rx.odSph > 0 ? `+${rx.odSph.toFixed(2)}` : rx.odSph.toFixed(2)}
+                                {formatDiopter(rx.odSph)}
                               </span>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg">
                               <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
                               <span className="font-extrabold text-slate-900">
-                                {rx.odCyl !== null && rx.odCyl !== undefined ? rx.odCyl.toFixed(2) : "0.00"}
+                                {formatDiopter(rx.odCyl)}
                               </span>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg">
@@ -369,13 +369,13 @@ export default function OrderDetailsDrawer({
                             <div className="bg-slate-50 p-2 rounded-lg">
                               <span className="text-[9px] font-bold text-slate-400 block">SPH</span>
                               <span className="font-extrabold text-slate-900">
-                                {rx.osSph > 0 ? `+${rx.osSph.toFixed(2)}` : rx.osSph.toFixed(2)}
+                                {formatDiopter(rx.osSph)}
                               </span>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg">
                               <span className="text-[9px] font-bold text-slate-400 block">CYL</span>
                               <span className="font-extrabold text-slate-900">
-                                {rx.osCyl !== null && rx.osCyl !== undefined ? rx.osCyl.toFixed(2) : "0.00"}
+                                {formatDiopter(rx.osCyl)}
                               </span>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg">

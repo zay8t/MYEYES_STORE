@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { X, Printer, Download, Glasses, CheckCircle2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { formatDiopter } from "@/lib/prescription";
 import { formatOrderNumber } from "@/lib/order-number";
 
 interface Prescription {
@@ -610,9 +611,9 @@ export default function A4ReceiptModal({ order, onClose, isOpen }: A4ReceiptModa
                                   <td className="py-1.5 px-2.5 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
                                     Right Eye (OD)
                                   </td>
-                                  <td className="py-1.5 px-2.5 border-r border-slate-100">{rx.odSph.toFixed(2)}</td>
-                                  <td className="py-1.5 px-2.5 border-r border-slate-100">
-                                    {rx.odCyl !== null && rx.odCyl !== undefined ? rx.odCyl.toFixed(2) : "0.00"}
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100 font-bold text-slate-900">{formatDiopter(rx.odSph)}</td>
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100 font-bold text-slate-900">
+                                    {formatDiopter(rx.odCyl)}
                                   </td>
                                   <td className="py-1.5 px-2.5">{rx.odAxis !== null && rx.odAxis !== undefined ? `${rx.odAxis}°` : "-"}</td>
                                 </tr>
@@ -620,9 +621,9 @@ export default function A4ReceiptModal({ order, onClose, isOpen }: A4ReceiptModa
                                   <td className="py-1.5 px-2.5 text-left font-sans font-semibold text-slate-900 border-r border-slate-100">
                                     Left Eye (OS)
                                   </td>
-                                  <td className="py-1.5 px-2.5 border-r border-slate-100">{rx.osSph.toFixed(2)}</td>
-                                  <td className="py-1.5 px-2.5 border-r border-slate-100">
-                                    {rx.osCyl !== null && rx.osCyl !== undefined ? rx.osCyl.toFixed(2) : "0.00"}
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100 font-bold text-slate-900">{formatDiopter(rx.osSph)}</td>
+                                  <td className="py-1.5 px-2.5 border-r border-slate-100 font-bold text-slate-900">
+                                    {formatDiopter(rx.osCyl)}
                                   </td>
                                   <td className="py-1.5 px-2.5">{rx.osAxis !== null && rx.osAxis !== undefined ? `${rx.osAxis}°` : "-"}</td>
                                 </tr>

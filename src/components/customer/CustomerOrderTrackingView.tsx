@@ -22,7 +22,7 @@ import {
   CreditCard,
   Building2,
 } from "lucide-react";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, formatDiopter } from "@/lib/utils";
 import { formatOrderNumber } from "@/lib/order-number";
 import OrderReceiptModal, { OrderReceiptData } from "@/components/receipt/OrderReceiptModal";
 
@@ -925,10 +925,10 @@ export default function CustomerOrderTrackingView({
                               Prescription Specifications (PD: {item.prescription.pd} mm)
                             </p>
                             <p className="font-mono text-[11px] text-slate-600">
-                              OD: SPH {item.prescription.odSph.toFixed(2)} | CYL {item.prescription.odCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}
+                              OD: SPH {formatDiopter(item.prescription.odSph)} | CYL {formatDiopter(item.prescription.odCyl)} | AXIS {item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}
                             </p>
                             <p className="font-mono text-[11px] text-slate-600">
-                              OS: SPH {item.prescription.osSph.toFixed(2)} | CYL {item.prescription.osCyl?.toFixed(2) || "0.00"} | AXIS {item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}
+                              OS: SPH {formatDiopter(item.prescription.osSph)} | CYL {formatDiopter(item.prescription.osCyl)} | AXIS {item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}
                             </p>
                           </div>
                         )}

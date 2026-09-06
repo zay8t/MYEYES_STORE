@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import PDFDocument from "pdfkit/js/pdfkit.standalone";
+import { formatDiopter } from "@/lib/prescription";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -265,11 +266,11 @@ export async function GET(
       y += 13;
       for (const item of rxItems) {
         const rx = item.prescription!;
-        const odSph = rx.odSph != null ? Number(rx.odSph).toFixed(2) : "0.00";
-        const odCyl = rx.odCyl != null ? Number(rx.odCyl).toFixed(2) : "0.00";
+        const odSph = formatDiopter(rx.odSph);
+        const odCyl = formatDiopter(rx.odCyl);
         const odAxis = rx.odAxis ? rx.odAxis + "°" : "-";
-        const osSph = rx.osSph != null ? Number(rx.osSph).toFixed(2) : "0.00";
-        const osCyl = rx.osCyl != null ? Number(rx.osCyl).toFixed(2) : "0.00";
+        const osSph = formatDiopter(rx.osSph);
+        const osCyl = formatDiopter(rx.osCyl);
         const osAxis = rx.osAxis ? rx.osAxis + "°" : "-";
 
         doc
