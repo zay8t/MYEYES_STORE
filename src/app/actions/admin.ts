@@ -17,6 +17,9 @@ import { sendEmail } from "@/lib/email";
 import {
   buildPaymentApprovedEmail,
   buildPaymentRejectionEmail,
+  buildOrderDispatchedEmail,
+  buildOrderDeliveredEmail,
+  buildIncompleteLeadEmail,
 } from "@/lib/emailTemplates";
 
 export interface ProductInput {
@@ -41,7 +44,12 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-export async function updateOrderStatusAction(orderId: string, status: OrderStatus | string) {
+export async function updateOrderStatusAction(
+  orderId: string,
+  status: OrderStatus | string,
+  courierName?: string,
+  trackingNumber?: string
+) {
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -113,6 +121,45 @@ export async function updateOrderStatusAction(orderId: string, status: OrderStat
       },
       { maxWait: 5000, timeout: 15000 }
     );
+
+    // Concurrently dispatch transactional lifecycle email based on new status (non-blocking)
+    if (updatedOrder.customerEmail) {
+      const normalizedStatus = String(status).toUpperCase();
+      const displayId = updatedOrder.orderNumber || updatedOrder.id;
+
+      switch (normalizedStatus) {
+        case "VERIFIED":
+        case "PROCESSING":
+        case "ADVANCE_VERIFIED":
+          sendEmail({
+            to: updatedOrder.customerEmail,
+            subject: `Deposit Confirmed - Order #${displayId} in Lab Production`,
+            html: buildPaymentApprovedEmail(updatedOrder),
+          }).catch((err) => console.error("[Processing Email Error]:", err));
+          break;
+
+        case "DISPATCHED":
+        case "SHIPPED":
+        case "DISPATCHED_WITH_COURIER":
+          sendEmail({
+            to: updatedOrder.customerEmail,
+            subject: `Order Dispatched #${displayId} - Tracking Details`,
+            html: buildOrderDispatchedEmail(updatedOrder, courierName, trackingNumber),
+          }).catch((err) => console.error("[Dispatched Email Error]:", err));
+          break;
+
+        case "DELIVERED":
+          sendEmail({
+            to: updatedOrder.customerEmail,
+            subject: `Delivered: Order #${displayId} Receipt & Care Guide`,
+            html: buildOrderDeliveredEmail(updatedOrder),
+          }).catch((err) => console.error("[Delivered Email Error]:", err));
+          break;
+
+        default:
+          break;
+      }
+    }
 
     revalidateInventory();
     safeRevalidatePath("/admin");
@@ -475,3 +522,33 @@ export async function deleteProductAction(productId: string) {
     return { success: false, error: "Failed to delete product" };
   }
 }
+
+/**
+ * Send an incomplete lead follow-up email to assist with prescription and checkout.
+ */
+export async function sendIncompleteLeadEmailAction(lead: {
+  customerName?: string;
+  name?: string;
+  email: string;
+  mobileNumber?: string;
+  whatsapp?: string;
+  frameName?: string;
+  resumeUrl?: string;
+}) {
+  if (!lead.email) {
+    return { success: false, error: "Lead email is required" };
+  }
+
+  try {
+    await sendEmail({
+      to: lead.email,
+      subject: "Need Help Completing Your Eyewear Order? - MY EYES Optical Studio",
+      html: buildIncompleteLeadEmail(lead),
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("sendIncompleteLeadEmailAction error:", error);
+    return { success: false, error: error?.message || "Failed to send email" };
+  }
+}
+

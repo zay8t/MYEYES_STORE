@@ -3,12 +3,71 @@ import { formatPrice } from "@/lib/utils";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://myeyes.pk";
 
+export interface OrderEmailItem {
+  frameName?: string;
+  name?: string;
+  product?: { name?: string; price?: number };
+  framePrice?: number;
+  price?: number;
+  lensPackageName?: string;
+  selectedLensName?: string;
+  lensFinalPrice?: number;
+  lensPrice?: number;
+  quantity?: number;
+  prescription?: {
+    odSph?: number | string | null;
+    odCyl?: number | string | null;
+    odAxis?: number | string | null;
+    osSph?: number | string | null;
+    osCyl?: number | string | null;
+    osAxis?: number | string | null;
+    pd?: number | string | null;
+    pupillaryDistance?: number | string | null;
+    lensPackageName?: string | null;
+    selectedLensName?: string | null;
+    lensType?: string | null;
+    rightEye?: { sph?: number | string | null; cyl?: number | string | null; axis?: number | string | null };
+    leftEye?: { sph?: number | string | null; cyl?: number | string | null; axis?: number | string | null };
+  } | null;
+  prescriptionData?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+
+export interface OrderEmailPayload {
+  id?: string;
+  orderNumber?: string | null;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string | null;
+  shippingAddress?: string | null;
+  shippingCity?: string | null;
+  city?: string | null;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  totalAmount?: number;
+  shippingFee?: number | null;
+  createdAt?: string | Date;
+  items?: OrderEmailItem[];
+  [key: string]: unknown;
+}
+
+export interface LeadEmailPayload {
+  customerName?: string;
+  name?: string;
+  email?: string;
+  mobileNumber?: string;
+  whatsapp?: string;
+  frameName?: string;
+  resumeUrl?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Defensive item extraction helper for emails.
  */
-function extractOrderItems(order: any) {
-  const items = Array.isArray(order.items) ? order.items : [];
-  return items.map((item: any) => {
+function extractOrderItems(order: OrderEmailPayload | Record<string, unknown>) {
+  const items = Array.isArray(order.items) ? (order.items as OrderEmailItem[]) : [];
+  return items.map((item: OrderEmailItem) => {
     const frameName =
       item.frameName ||
       item.name ||
@@ -43,7 +102,7 @@ function extractOrderItems(order: any) {
 
     // Prescription Data Extraction
     let rx = null;
-    const rawRx = item.prescription || item.prescriptionData;
+    const rawRx = (item.prescription || item.prescriptionData) as Record<string, any> | undefined;
 
     if (rawRx) {
       const odSph = rawRx.odSph !== undefined ? rawRx.odSph : rawRx.rightEye?.sph;
@@ -219,11 +278,11 @@ function wrapEmailHtml(contentHtml: string, previewText: string = ""): string {
 /**
  * 1. Build Order Confirmation Email (Zero Emojis, Client-Safe Table Layout)
  */
-export function buildOrderConfirmationEmail(order: any): string {
-  const orderNumber = order.orderNumber || order.id || "N/A";
-  const customerName = order.customerName || "Valued Customer";
+export function buildOrderConfirmationEmail(order: OrderEmailPayload | Record<string, unknown>): string {
+  const orderNumber = (order.orderNumber as string) || (order.id as string) || "N/A";
+  const customerName = (order.customerName as string) || "Valued Customer";
   const dateStr = order.createdAt
-    ? new Date(order.createdAt).toLocaleDateString("en-US", {
+    ? new Date(order.createdAt as string | Date).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -234,8 +293,8 @@ export function buildOrderConfirmationEmail(order: any): string {
         day: "numeric",
       });
 
-  const address = order.shippingAddress || "Delivery Address on Record";
-  const city = order.shippingCity || order.city || "";
+  const address = (order.shippingAddress as string) || "Delivery Address on Record";
+  const city = (order.shippingCity as string) || (order.city as string) || "";
   const fullAddress = city ? `${address}, ${city}` : address;
 
   const items = extractOrderItems(order);
@@ -251,7 +310,7 @@ export function buildOrderConfirmationEmail(order: any): string {
 
   // Items HTML
   const itemsRowsHtml = items
-    .map((item, idx) => {
+    .map((item) => {
       const rxSection = item.rx
         ? `
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 11px; font-family: monospace;">
@@ -403,9 +462,9 @@ export function buildOrderConfirmationEmail(order: any): string {
 /**
  * 2. Build Payment Approved / Deposit Verified Email
  */
-export function buildPaymentApprovedEmail(order: any): string {
-  const orderNumber = order.orderNumber || order.id || "N/A";
-  const customerName = order.customerName || "Valued Customer";
+export function buildPaymentApprovedEmail(order: OrderEmailPayload | Record<string, unknown>): string {
+  const orderNumber = (order.orderNumber as string) || (order.id as string) || "N/A";
+  const customerName = (order.customerName as string) || "Valued Customer";
   const totalAmount = Number(order.totalAmount || 0);
   const isCOD = String(order.paymentMethod || "").toUpperCase().includes("COD");
   const advancePaid = Math.round(totalAmount * 0.25);
@@ -498,12 +557,12 @@ export function buildPaymentApprovedEmail(order: any): string {
  * 3. Build Payment Rejection / Verification Issue Email
  */
 export function buildPaymentRejectionEmail(
-  order: any,
+  order: OrderEmailPayload | Record<string, unknown>,
   reason: string,
   customReason?: string
 ): string {
-  const orderNumber = order.orderNumber || order.id || "N/A";
-  const customerName = order.customerName || "Valued Customer";
+  const orderNumber = (order.orderNumber as string) || (order.id as string) || "N/A";
+  const customerName = (order.customerName as string) || "Valued Customer";
   const uploadUrl = `${APP_URL}/orders/${order.orderNumber || order.id}`;
 
   const finalReasonText =
@@ -580,4 +639,351 @@ export function buildPaymentRejectionEmail(
   `;
 
   return wrapEmailHtml(content, `Payment Verification Issue for Order #${orderNumber} - MY EYES Optical Studio`);
+}
+
+/**
+ * 4. Build Order Dispatched / En Route Email (Zero Emojis, Client-Safe Table Layout)
+ */
+export function buildOrderDispatchedEmail(
+  order: OrderEmailPayload | Record<string, unknown>,
+  courierName?: string,
+  trackingNumber?: string
+): string {
+  const orderNumber = (order.orderNumber as string) || (order.id as string) || "N/A";
+  const customerName = (order.customerName as string) || "Valued Customer";
+  const address = (order.shippingAddress as string) || "Delivery Address on Record";
+  const city = (order.shippingCity as string) || (order.city as string) || "";
+  const fullAddress = city ? `${address}, ${city}` : address;
+  const items = extractOrderItems(order);
+  const totalAmount = Number(order.totalAmount || 0);
+  const isCOD = String(order.paymentMethod || "").toUpperCase().includes("COD");
+  const advancePaid = Math.round(totalAmount * 0.25);
+  const remainingDoorstepBalance = isCOD ? Math.max(0, totalAmount - advancePaid) : 0;
+  const trackingUrl = `${APP_URL}/orders/${order.orderNumber || order.id}`;
+
+  const resolvedCourier = courierName && courierName.trim() !== "" ? courierName.trim() : "Express Insured Courier";
+  const resolvedTrackingNumber = trackingNumber && trackingNumber.trim() !== "" ? trackingNumber.trim() : "Assigned (En Route)";
+
+  const itemsRowsHtml = items
+    .map((item) => {
+      const rxSection = item.rx
+        ? `
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; font-size: 11px; font-family: monospace;">
+          <tr>
+            <td style="padding: 2px 4px; color: #334155;"><strong>OD (Right):</strong> SPH ${item.rx.od.sph} | CYL ${item.rx.od.cyl} | AXIS ${item.rx.od.axis}</td>
+          </tr>
+          <tr>
+            <td style="padding: 2px 4px; color: #334155;"><strong>OS (Left):</strong> SPH ${item.rx.os.sph} | CYL ${item.rx.os.cyl} | AXIS ${item.rx.os.axis}</td>
+          </tr>
+          <tr>
+            <td style="padding: 2px 4px; color: #64748b;"><strong>PD:</strong> ${item.rx.pd} &bull; <strong>Lens Package:</strong> ${item.lensPackageName}</td>
+          </tr>
+        </table>
+      `
+        : "";
+
+      return `
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+          <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="vertical-align: top;">
+                <p style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">
+                  ${item.frameName} <span style="font-size: 11px; font-weight: 500; color: #64748b;">(Qty: ${item.quantity})</span>
+                </p>
+                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">
+                  Lens: ${item.lensPackageName}
+                </p>
+                ${rxSection}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+    })
+    .join("");
+
+  const paymentNoticeHtml = isCOD
+    ? `
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 16px; background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px 16px;">
+      <tr>
+        <td>
+          <p style="margin: 0; font-size: 11px; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
+            Payment Due at Doorstep (COD)
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: 700; color: #78350f;">
+            Remaining Payable Balance: ${formatPrice(remainingDoorstepBalance)}
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 11px; color: #92400e; line-height: 1.4;">
+            Please keep the exact cash amount ready for the delivery rider upon arrival.
+          </p>
+        </td>
+      </tr>
+    </table>
+  `
+    : `
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #10b981; border-radius: 6px; padding: 12px 16px;">
+      <tr>
+        <td>
+          <p style="margin: 0; font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.05em;">
+            Payment Status: Fully Paid &amp; Verified
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #15803d;">
+            Zero balance is due at doorstep. Simply inspect and receive your parcel.
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const content = `
+    <!-- Header Title -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 20px;">
+      <tr>
+        <td>
+          <span style="font-size: 11px; font-weight: 800; color: #0284c7; letter-spacing: 0.1em; text-transform: uppercase;">DISPATCH NOTIFICATION</span>
+          <h1 style="margin: 4px 0 0 0; font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+            Order Dispatched &bull; En Route
+          </h1>
+        </td>
+        <td align="right" style="vertical-align: bottom;">
+          <span style="font-size: 13px; font-weight: 700; font-family: monospace; color: #0369a1; background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 4px;">
+            #${orderNumber}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 16px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Dear ${customerName},
+    </p>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Great news! Your custom prescription eyewear for <strong>Order #${orderNumber}</strong> has completed laboratory edging, optical alignment, and multi-point QA inspection. It has now been securely handed over to our logistics partner for express delivery.
+    </p>
+
+    <!-- Shipment & Tracking Card -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <tr>
+        <td style="width: 50%; vertical-align: top; padding-right: 12px;">
+          <p style="margin: 0; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Courier Partner</p>
+          <p style="margin: 2px 0 10px 0; font-size: 13px; font-weight: 700; color: #0f172a;">${resolvedCourier}</p>
+
+          <p style="margin: 0; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Tracking / Consignment Number</p>
+          <p style="margin: 2px 0 0 0; font-size: 13px; font-weight: 700; font-family: monospace; color: #0284c7;">${resolvedTrackingNumber}</p>
+        </td>
+        <td style="width: 50%; vertical-align: top; padding-left: 12px;">
+          <p style="margin: 0; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Estimated Delivery Window</p>
+          <p style="margin: 2px 0 10px 0; font-size: 13px; font-weight: 700; color: #0f172a;">2 to 4 Business Days</p>
+
+          <p style="margin: 0; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Destination Address</p>
+          <p style="margin: 2px 0 0 0; font-size: 12px; font-weight: 600; color: #0f172a; line-height: 1.4;">${fullAddress}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Items in Transit -->
+    <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 0.05em; text-transform: uppercase;">
+      Items in Shipment
+    </p>
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
+      ${itemsRowsHtml}
+    </table>
+
+    ${paymentNoticeHtml}
+
+    <!-- Call to Action -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 24px; text-align: center;">
+      <tr>
+        <td align="center">
+          <a href="${trackingUrl}" class="btn-primary" target="_blank">
+            Track Shipment Status &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return wrapEmailHtml(content, `Order Dispatched #${orderNumber} - Tracking Details - MY EYES Optical Studio`);
+}
+
+/**
+ * 5. Build Order Delivered Email (Receipt & Care Guide)
+ */
+export function buildOrderDeliveredEmail(order: OrderEmailPayload | Record<string, unknown>): string {
+  const orderNumber = (order.orderNumber as string) || (order.id as string) || "N/A";
+  const customerName = (order.customerName as string) || "Valued Customer";
+  const items = extractOrderItems(order);
+  const totalAmount = Number(order.totalAmount || 0);
+  const trackingUrl = `${APP_URL}/orders/${order.orderNumber || order.id}`;
+
+  const itemsSummaryHtml = items
+    .map((item) => {
+      return `
+      <tr>
+        <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+          <p style="margin: 0; font-size: 12px; font-weight: 700; color: #0f172a;">
+            ${item.frameName} <span style="font-size: 11px; font-weight: 500; color: #64748b;">(Qty: ${item.quantity})</span>
+          </p>
+          <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">
+            Lens: ${item.lensPackageName}
+          </p>
+        </td>
+        <td align="right" style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; vertical-align: top;">
+          <p style="margin: 0; font-size: 12px; font-weight: 700; color: #0f172a; font-family: monospace;">
+            ${formatPrice((item.framePrice + item.lensPrice) * item.quantity)}
+          </p>
+        </td>
+      </tr>
+    `;
+    })
+    .join("");
+
+  const content = `
+    <!-- Header Title -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-bottom: 2px solid #10b981; padding-bottom: 12px; margin-bottom: 20px;">
+      <tr>
+        <td>
+          <span style="font-size: 11px; font-weight: 800; color: #059669; letter-spacing: 0.1em; text-transform: uppercase;">DELIVERY CONFIRMATION</span>
+          <h1 style="margin: 4px 0 0 0; font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+            Order Delivered &bull; Receipt &amp; Care Guide
+          </h1>
+        </td>
+        <td align="right" style="vertical-align: bottom;">
+          <span style="font-size: 13px; font-weight: 700; font-family: monospace; color: #0f172a; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 8px; border-radius: 4px;">
+            #${orderNumber}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 16px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Dear ${customerName},
+    </p>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Your package for <strong>Order #${orderNumber}</strong> has been marked as successfully delivered. Thank you for choosing MY EYES Optical Studio for your vision care.
+    </p>
+
+    <!-- Optical Care & Adaptation Guide -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+      <tr>
+        <td>
+          <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;">
+            Precision Eyewear &bull; Optical Care Guide
+          </p>
+          <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 12px; color: #475569; line-height: 1.6;">
+            <tr>
+              <td style="padding: 4px 0; vertical-align: top; width: 16px;">&bull;</td>
+              <td style="padding: 4px 0;"><strong>Prescription Adaptation:</strong> Please allow 2 to 3 days for your visual cortex and eyes to fully adapt to your new prescription power and lens curvature.</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; vertical-align: top; width: 16px;">&bull;</td>
+              <td style="padding: 4px 0;"><strong>Lens Cleaning:</strong> Clean exclusively with lukewarm water and the provided microfiber optical cloth. Avoid paper towels, shirts, and household cleaners that can damage anti-glare coatings.</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; vertical-align: top; width: 16px;">&bull;</td>
+              <td style="padding: 4px 0;"><strong>Protective Storage:</strong> When not being worn, always store your eyewear in its rigid hard case to prevent hinge pressure and temple misalignment.</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; vertical-align: top; width: 16px;">&bull;</td>
+              <td style="padding: 4px 0;"><strong>Adjustment Support:</strong> If you experience loose temples or pressure at the bridge, reply directly to this email for optical support.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Delivered Items Summary -->
+    <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 0.05em; text-transform: uppercase;">
+      Delivered Items
+    </p>
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 16px;">
+      ${itemsSummaryHtml}
+      <tr style="border-top: 1px solid #e2e8f0;">
+        <td style="padding: 10px 0; font-size: 13px; font-weight: 800; color: #0f172a;">Total Paid</td>
+        <td align="right" style="padding: 10px 0; font-size: 14px; font-weight: 800; color: #0f172a; font-family: monospace;">${formatPrice(totalAmount)}</td>
+      </tr>
+    </table>
+
+    <!-- Call to Action -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 24px; text-align: center;">
+      <tr>
+        <td align="center">
+          <a href="${trackingUrl}" class="btn-primary" target="_blank">
+            View Official Order Receipt &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return wrapEmailHtml(content, `Delivered: Order #${orderNumber} Receipt & Care Guide - MY EYES Optical Studio`);
+}
+
+/**
+ * 6. Build Incomplete Lead Email (Assistance with Prescription & Checkout)
+ */
+export function buildIncompleteLeadEmail(lead: LeadEmailPayload): string {
+  const customerName = lead.customerName || lead.name || "Valued Customer";
+  const frameName = lead.frameName || "Premium Optical Frame";
+  const resumeUrl = lead.resumeUrl || `${APP_URL}/catalog`;
+
+  const content = `
+    <!-- Header Title -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 20px;">
+      <tr>
+        <td>
+          <span style="font-size: 11px; font-weight: 800; color: #d97706; letter-spacing: 0.1em; text-transform: uppercase;">PRESCRIPTION ASSISTANCE</span>
+          <h1 style="margin: 4px 0 0 0; font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+            Need Help Completing Your Eyewear Order?
+          </h1>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 16px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Dear ${customerName},
+    </p>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      We noticed you started configuring custom prescription lenses for <strong>${frameName}</strong> on MY EYES Optical Studio, but were unable to complete your checkout.
+    </p>
+
+    <!-- Help Box -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+      <tr>
+        <td>
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
+            Our Optical Specialists Are Standing By:
+          </p>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #78350f; line-height: 1.6;">
+            Entering sphere (SPH), cylinder (CYL), axis, and pupillary distance (PD) parameters can be complex. We make it completely effortless:
+          </p>
+          <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #78350f; line-height: 1.6;">
+            <li><strong>Prescription Slip Upload:</strong> Simply reply directly to this email or send a clear WhatsApp photo of your doctor's slip. Our certified lab team will configure your exact lens parameters.</li>
+            <li><strong>Lens Coating Recommendations:</strong> Need advice on Blue Defense, Photochromic Sun-Adaptive, or Ultra-Thin 1.67 High Index lenses? We will match the perfect package for your optical power.</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Your frame selection and configuration are saved. Click below whenever you are ready to continue:
+    </p>
+
+    <!-- Call to Action -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 24px; text-align: center;">
+      <tr>
+        <td align="center">
+          <a href="${resumeUrl}" class="btn-primary" target="_blank">
+            Resume Your Order &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return wrapEmailHtml(content, `Need Help Completing Your Eyewear Order? - MY EYES Optical Studio`);
 }

@@ -17,13 +17,13 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status } = body;
+    const { status, courierName, trackingNumber } = body;
 
     if (!status) {
       return NextResponse.json({ error: "status is required" }, { status: 400 });
     }
 
-    const result = await updateOrderStatusAction(id, status);
+    const result = await updateOrderStatusAction(id, status, courierName, trackingNumber);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
