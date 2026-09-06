@@ -325,3 +325,35 @@ export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderRe
 
   return encodeURIComponent(lines.join("\n"));
 }
+
+export interface IncompleteLeadPayload {
+  customerName: string;
+  mobileNumber: string;
+  frameName: string;
+  resumeUrl?: string; // Optional direct link back to configurator/cart
+}
+
+export function buildIncompleteLeadMessage(lead: IncompleteLeadPayload): string {
+  const frame = lead.frameName || "your selected frame";
+  const resumeLink = lead.resumeUrl || "https://myeyes.pk";
+
+  const lines = [
+    `*MY EYES OPTICAL - INCOMPLETE ORDER ASSISTANCE*`,
+    `----------------------------------------`,
+    `Dear ${lead.customerName},`,
+    ``,
+    `We noticed you were configuring your prescription lenses for the *${frame}* on our website but could not complete your order.`,
+    ``,
+    `If you experienced any difficulty entering your prescription (OD/OS/PD values) or choosing the right lens coating, we are here to assist you.`,
+    ``,
+    `You can simply reply here with a clear photo or copy of your prescription slip, and our optical team will configure your lenses for you.`,
+    ``,
+    `If you would like to complete your order online, visit:`,
+    `${resumeLink}`,
+    ``,
+    `----------------------------------------`,
+    `MY EYES Customer Care`,
+  ];
+
+  return encodeURIComponent(lines.join("\n"));
+}

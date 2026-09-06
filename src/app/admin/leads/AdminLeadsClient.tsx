@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { ClipboardList, MessageCircle, User, Calendar, Phone, CheckCircle2, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { ClipboardList, User, Calendar, Phone, CheckCircle2, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { IncompleteLeadWhatsAppButton } from "@/components/admin/IncompleteLeadWhatsAppButton";
 
 export interface LeadItem {
   id: string;
@@ -154,8 +155,6 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredLeads.map(lead => {
-                  const waNumber = lead.whatsapp.replace(/\D/g, "");
-                  const waHref = `https://wa.me/92${waNumber.startsWith("92") ? waNumber.slice(2) : (waNumber.startsWith("0") ? waNumber.slice(1) : waNumber)}`;
                   const isDeleting = deletingId === lead.id;
 
                   return (
@@ -190,15 +189,12 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <a
-                            href={waHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/80 transition-colors font-semibold text-[11px]"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            WhatsApp
-                          </a>
+                          <IncompleteLeadWhatsAppButton
+                            customerName={lead.name}
+                            mobileNumber={lead.whatsapp}
+                            frameName={lead.frameName || "your selected frame"}
+                            resumeUrl={lead.frameId ? `https://myeyes.pk/catalogue/${lead.frameId}` : "https://myeyes.pk"}
+                          />
 
                           <button
                             onClick={() => handleDeleteLead(lead.id)}
