@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { formatOrderNumber } from "@/lib/order-number";
-import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
+import OrderReceiptModal, { OrderReceiptData } from "@/components/receipt/OrderReceiptModal";
 
 function getFirstImage(imgData?: string | null): string {
   if (!imgData) return "/placeholder-frame.png";
@@ -1104,9 +1104,10 @@ export default function CustomerOrderTrackingView({
 
       </div>
 
-      {/* Interactive A4 Invoice Modal */}
+      {/* Interactive A4 Order Receipt Preview Modal */}
       {isInvoiceOpen && (
-        <A4ReceiptModal
+        <OrderReceiptModal
+          isOpen={isInvoiceOpen}
           order={modalReceiptData}
           onClose={() => setIsInvoiceOpen(false)}
         />

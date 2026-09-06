@@ -95,13 +95,18 @@ export interface OrderReceiptData {
   items: OrderItem[];
 }
 
-interface A4ReceiptModalProps {
+export interface A4ReceiptModalProps {
   order: OrderReceiptData;
   onClose: () => void;
+  isOpen?: boolean;
 }
 
-export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) {
+export type OrderReceiptModalProps = A4ReceiptModalProps;
+
+export default function A4ReceiptModal({ order, onClose, isOpen }: A4ReceiptModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
+
+  if (isOpen === false) return null;
 
   const displayOrderNo = formatOrderNumber(order);
   const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
@@ -120,7 +125,7 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
 
   const handleDownloadPdf = () => {
     // Triggers direct backend A4 PDF streaming
-    window.open(`/api/admin/orders/${order.id}/pdf`, "_blank");
+    window.open(`/api/orders/${order.id}/pdf`, "_blank");
   };
 
   const shippingFee = order.shippingFee !== undefined ? order.shippingFee : 250;
@@ -673,4 +678,4 @@ export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) 
   );
 }
 
-export { A4ReceiptModal };
+export { A4ReceiptModal, A4ReceiptModal as OrderReceiptModal };
