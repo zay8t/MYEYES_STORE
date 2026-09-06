@@ -102,16 +102,18 @@ function extractOrderItems(order: OrderEmailPayload | Record<string, unknown>) {
 
     // Prescription Data Extraction
     let rx = null;
-    const rawRx = (item.prescription || item.prescriptionData) as Record<string, any> | undefined;
+    const rawRx = (item.prescription || item.prescriptionData) as Record<string, unknown> | undefined;
 
     if (rawRx) {
-      const odSph = rawRx.odSph !== undefined ? rawRx.odSph : rawRx.rightEye?.sph;
-      const odCyl = rawRx.odCyl !== undefined ? rawRx.odCyl : rawRx.rightEye?.cyl;
-      const odAxis = rawRx.odAxis !== undefined ? rawRx.odAxis : rawRx.rightEye?.axis;
-      const osSph = rawRx.osSph !== undefined ? rawRx.osSph : rawRx.leftEye?.sph;
-      const osCyl = rawRx.osCyl !== undefined ? rawRx.osCyl : rawRx.leftEye?.cyl;
-      const osAxis = rawRx.osAxis !== undefined ? rawRx.osAxis : rawRx.leftEye?.axis;
-      const pd = rawRx.pd !== undefined ? rawRx.pd : rawRx.pupillaryDistance;
+      const rightEye = rawRx.rightEye as Record<string, unknown> | undefined;
+      const leftEye = rawRx.leftEye as Record<string, unknown> | undefined;
+      const odSph = (rawRx.odSph !== undefined ? rawRx.odSph : rightEye?.sph) as number | string | null | undefined;
+      const odCyl = (rawRx.odCyl !== undefined ? rawRx.odCyl : rightEye?.cyl) as number | string | null | undefined;
+      const odAxis = (rawRx.odAxis !== undefined ? rawRx.odAxis : rightEye?.axis) as number | string | null | undefined;
+      const osSph = (rawRx.osSph !== undefined ? rawRx.osSph : leftEye?.sph) as number | string | null | undefined;
+      const osCyl = (rawRx.osCyl !== undefined ? rawRx.osCyl : leftEye?.cyl) as number | string | null | undefined;
+      const osAxis = (rawRx.osAxis !== undefined ? rawRx.osAxis : leftEye?.axis) as number | string | null | undefined;
+      const pd = (rawRx.pd !== undefined ? rawRx.pd : rawRx.pupillaryDistance) as number | string | null | undefined;
 
       if (odSph !== undefined || osSph !== undefined || odCyl !== undefined || osCyl !== undefined) {
         rx = {

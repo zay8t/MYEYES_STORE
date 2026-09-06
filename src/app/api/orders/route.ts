@@ -57,7 +57,7 @@ interface OrderItemInput {
   unitPrice?: string | number;
   totalPrice?: string | number;
   prescription?: PrescriptionInput;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 
@@ -398,22 +398,31 @@ export async function POST(request: NextRequest) {
     // Revalidate inventory cache across storefront and admin views
     revalidateInventory();
 
-    // 1. Asynchronously dispatch Customer Confirmation Email (non-blocking)
-    if (order.customerEmail) {
-      sendEmail({
-        to: order.customerEmail,
-        subject: `Order Confirmation #${order.orderNumber} - MY EYES Optical Studio`,
-        html: buildOrderConfirmationEmail(order),
-      }).catch((err) => console.error("[Order Confirmation Email Error]:", err));
-    }
+    // Trigger transactional email
+    try {
+      const newOrder = order;
+      console.log(`[Email Engine] Starting email dispatch for Order #${newOrder.orderNumber} to ${newOrder.customerEmail}`);
+      
+      const emailHtml = buildOrderConfirmationEmail(newOrder);
+      
+      // Send to customer
+      const customerRes = await sendEmail({
+        to: newOrder.customerEmail,
+        subject: `Order Confirmed #${newOrder.orderNumber} - MY EYES Optical Studio`,
+        html: emailHtml,
+      });
+      console.log("[Email Engine] Customer notification status:", customerRes);
 
-    // 2. Asynchronously dispatch Staff Notification Alert (non-blocking)
-    const staffEmail = process.env.GMAIL_USER || "myeyes2026@gmail.com";
-    sendEmail({
-      to: staffEmail,
-      subject: `[NEW ORDER] #${order.orderNumber} placed by ${order.customerName}`,
-      html: buildOrderConfirmationEmail(order),
-    }).catch((err) => console.error("[Staff Alert Email Error]:", err));
+      // Send alert to store official email
+      const storeRes = await sendEmail({
+        to: process.env.GMAIL_USER || "myeyes2026@gmail.com",
+        subject: `[NEW ORDER] #${newOrder.orderNumber} - Rs. ${newOrder.totalAmount}`,
+        html: emailHtml,
+      });
+      console.log("[Email Engine] Admin alert status:", storeRes);
+    } catch (mailError) {
+      console.error("[Email Engine Error]: Failed to dispatch confirmation email:", mailError);
+    }
 
     return NextResponse.json({
       success: true,
@@ -421,25 +430,26 @@ export async function POST(request: NextRequest) {
       orderNumber: order.orderNumber,
       totalAmount: order.totalAmount,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string; meta?: unknown };
     console.error("Prisma Order Creation Detailed Error:", {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
+      message: err.message,
+      code: err.code,
+      meta: err.meta,
     });
 
     const isClientError =
-      typeof error?.message === "string" &&
-      (error.message.includes("Insufficient stock") ||
-        error.message.includes("Product not found") ||
-        error.message.includes("required"));
+      typeof err?.message === "string" &&
+      (err.message.includes("Insufficient stock") ||
+        err.message.includes("Product not found") ||
+        err.message.includes("required"));
 
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to process and save customer order.",
-        error: error.message || "Failed to process and save customer order.",
-        code: error.code,
+        message: err.message || "Failed to process and save customer order.",
+        error: err.message || "Failed to process and save customer order.",
+        code: err.code,
       },
       { status: isClientError ? 400 : 500 }
     );
