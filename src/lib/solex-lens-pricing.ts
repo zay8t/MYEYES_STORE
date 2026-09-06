@@ -51,7 +51,7 @@ export const SOLEX_LENS_OPTIONS: SolexLensOption[] = [
   },
   {
     id: "sv-156-photogrey-bluecut",
-    name: "All-in-One (Screen Guard + Sun)",
+    name: "Sun & Screen Protection (Blue Light + Sun)",
     coating: "Screen Guard + Sun Adaptive",
     index: "1.56",
     description: "Blocks harsh screen glare and darkens automatically when you step outside.",

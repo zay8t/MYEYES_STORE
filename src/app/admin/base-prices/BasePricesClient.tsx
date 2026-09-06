@@ -13,7 +13,7 @@ export default function BasePricesClient({ initialPrices }: { initialPrices: Bas
     B1: "Clear Everyday Lenses",
     B2: "Screen Protection (Blue Light)",
     B3: "Auto-Darkening (Transitions)",
-    B4: "All-in-One (Screen Guard + Sun)",
+    B4: "Sun & Screen Protection (Blue Light + Sun)",
     B5: "Ultra Thin Slim Lenses",
   };
 

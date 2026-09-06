@@ -69,7 +69,7 @@ export interface LensConfiguratorModalProps {
   onClose: () => void;
   frame: FrameDetails;
   currentUser?: UserSessionProfile | null;
-  onAddToCart?: (config: any) => void;
+  onAddToCart?: (config: Record<string, unknown>) => void;
 }
 
 export interface CustomerProfile {
@@ -176,7 +176,7 @@ const SINGLE_VISION_TIER_INFO: Record<string, { title: string; bullets: string[]
     ],
   },
   B4: {
-    title: "All-in-One (Screen Guard + Sun)",
+    title: "Sun & Screen Protection (Blue Light + Sun)",
     bullets: [
       "Blocks harsh screen glare while you work",
       "Darkens automatically when you step outside",
@@ -262,7 +262,6 @@ export function LensConfiguratorModal({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [rxFileUrl, setRxFileUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
   // AI Scanner state
   const [isScanning, setIsScanning] = useState(false);

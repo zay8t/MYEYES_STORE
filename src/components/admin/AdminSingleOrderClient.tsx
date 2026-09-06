@@ -83,6 +83,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
   };
 
   const hasRx = order.items.some((item) => item.prescription);
+  const rxItem = order.items.find((item) => item.prescription);
   const receiptUrl = order.paymentReceiptUrl || order.transactionProofUrl;
 
   const getPaymentBadgeClass = (status: string) => {

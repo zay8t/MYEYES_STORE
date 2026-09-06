@@ -89,7 +89,7 @@ export const LENS_PACKAGES: LensPackageDefinition[] = [
   },
   {
     id: "sv-156-photogrey-bluecut",
-    name: "All-in-One (Screen Guard + Sun)",
+    name: "Sun & Screen Protection (Blue Light + Sun)",
     baseKey: "B4",
     standardBasePrice: 3250,
     presbyopiaBasePrice: 3650,
