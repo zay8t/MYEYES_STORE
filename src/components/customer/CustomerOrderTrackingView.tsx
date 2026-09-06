@@ -11,16 +11,20 @@ import {
   Check,
   FileText,
   Printer,
+  Download,
   Glasses,
   Truck,
-  RefreshCw,
   Loader2,
   ArrowLeft,
   Sparkles,
   Smartphone,
   ShieldCheck,
+  Package,
+  MapPin,
   CreditCard,
   Building2,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import { formatPrice, cn, formatDiopter } from "@/lib/utils";
 import { formatOrderNumber } from "@/lib/order-number";
@@ -43,7 +47,6 @@ function getFirstImage(imgData?: string | null): string {
 }
 
 export interface CustomerOrderData {
-
   id: string;
   orderNumber?: string | null;
   customerName: string;
@@ -124,12 +127,41 @@ export default function CustomerOrderTrackingView({
   const [resubmitSuccess, setResubmitSuccess] = useState(false);
 
   const isCOD = order.paymentMethod === "COD";
-  const isOnlinePayment = !isCOD;
   const displayOrderNo = formatOrderNumber(order);
 
-  // ================================================================
-  // CONDITIONAL COD ADVANCE LOGIC (25% vs 40%)
-  // ================================================================
+  // Date Formatting
+  const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const orderTime = new Date(order.createdAt).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  // Calculate Frame & Lens Totals
+  const totalFrameCost = order.items.reduce((sum, item) => {
+    const q = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
+    const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)) || 0;
+    const frameCost = item.framePrice !== null && item.framePrice !== undefined
+      ? Number(item.framePrice)
+      : (item.prescription ? (rawPrice > (item.lensPrice ?? item.lensFinalPrice ?? 0) ? rawPrice - (item.lensPrice ?? item.lensFinalPrice ?? 0) : 0) : rawPrice);
+    return sum + (frameCost * q);
+  }, 0);
+
+  const totalLensCost = order.items.reduce((sum, item) => {
+    const q = typeof item.quantity === "number" ? item.quantity : parseInt(String(item.quantity || 1), 10) || 1;
+    const lensCost = item.lensPrice !== null && item.lensPrice !== undefined
+      ? Number(item.lensPrice)
+      : (item.lensFinalPrice !== null && item.lensFinalPrice !== undefined ? Number(item.lensFinalPrice) : 0);
+    return sum + (lensCost * q);
+  }, 0);
+
+  const shippingFee = order.shippingFee !== undefined && order.shippingFee !== null ? order.shippingFee : 250;
+
+  // Conditional Advance Logic (25% vs 40%)
   const isProgressive = order.items.some((item) => {
     const rawLensType =
       item.lensType ||
@@ -146,18 +178,15 @@ export default function CustomerOrderTrackingView({
     );
   });
 
-  const hasAnyPrescription = order.items.some((item) => item.prescription !== null && item.prescription !== undefined);
-
   const advancePercentage = isProgressive ? 0.4 : 0.25;
   const advancePercentageLabel = isProgressive ? "40%" : "25%";
-  const lensTierLabel = isProgressive
-    ? "Progressive Custom Prescription"
-    : hasAnyPrescription
-      ? "Standard Custom Prescription"
-      : "Standard Optical Assembly";
-
   const advanceRequired = Math.round(order.totalAmount * advancePercentage);
   const remainingAtDoorstep = order.totalAmount - advanceRequired;
+
+  const isDepositVerified =
+    order.paymentStatus === "PAID" ||
+    order.paymentStatus === "PAID (VERIFIED)" ||
+    !!order.verifiedAt;
 
   const handleCopyTid = (tid: string) => {
     navigator.clipboard.writeText(tid);
@@ -234,6 +263,7 @@ export default function CustomerOrderTrackingView({
       }));
 
       setResubmitSuccess(true);
+      setShowUploadAdvance(false);
     } catch (err) {
       console.error("Resubmit error:", err);
       setResubmitError(err instanceof Error ? err.message : "Failed to resubmit proof.");
@@ -247,7 +277,7 @@ export default function CustomerOrderTrackingView({
       case "COD":
         return "Cash on Delivery (COD)";
       case "BANK_TRANSFER":
-        return "Bank Transfer / IBFT (Manual Verification)";
+        return "Bank Transfer / IBFT";
       case "EASYPAISA":
         return "EasyPaisa Direct Transfer";
       case "JAZZCASH":
@@ -260,13 +290,13 @@ export default function CustomerOrderTrackingView({
   };
 
   const getDigitalInvoiceStatus = () => {
-    if (isCOD) return `COD (ADVANCE ${advancePercentageLabel} REQUIRED)`;
-    if (order.paymentStatus === "PAID") return "PAID (VERIFIED)";
+    if (isDepositVerified) return "PAID (VERIFIED)";
+    if (isCOD) return `COD (${advancePercentageLabel} ADVANCE REQUIRED)`;
     if (order.paymentStatus === "FAILED") return "PAYMENT FAILED / REJECTED";
     return "PENDING VERIFICATION";
   };
 
-  // Convert for A4 Modal
+  // Convert for Single-Page A4 Modal
   const modalReceiptData: OrderReceiptData = {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -278,7 +308,7 @@ export default function CustomerOrderTrackingView({
     paymentMethod: order.paymentMethod,
     paymentStatus: getDigitalInvoiceStatus(),
     paymentReceiptUrl: order.paymentReceiptUrl,
-    shippingFee: order.shippingFee ?? 250,
+    shippingFee: shippingFee,
     totalAmount: order.totalAmount,
     status: (order.status as "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED") || "PROCESSING",
     createdAt: order.createdAt,
@@ -304,539 +334,246 @@ export default function CustomerOrderTrackingView({
       },
       prescription: item.prescription
         ? {
-          id: item.prescription.id,
-          lensType: item.prescription.lensType,
-          odSph: item.prescription.odSph,
-          odCyl: item.prescription.odCyl,
-          odAxis: item.prescription.odAxis,
-          osSph: item.prescription.osSph,
-          osCyl: item.prescription.osCyl,
-          osAxis: item.prescription.osAxis,
-          pd: item.prescription.pd,
-          fileUrl: item.prescription.fileUrl,
-          createdAt: order.createdAt,
-        }
+            id: item.prescription.id,
+            lensType: item.prescription.lensType,
+            odSph: item.prescription.odSph,
+            odCyl: item.prescription.odCyl,
+            odAxis: item.prescription.odAxis,
+            osSph: item.prescription.osSph,
+            osCyl: item.prescription.osCyl,
+            osAxis: item.prescription.osAxis,
+            pd: item.prescription.pd,
+            fileUrl: item.prescription.fileUrl,
+            createdAt: order.createdAt,
+          }
         : null,
     })),
   };
 
   const whatsappMessage = encodeURIComponent(
-    `Assalam-o-Alaikum! I have placed Order #${displayOrderNo} on My Eyes.\n\nCustomer: ${order.customerName}\nLens Category: ${lensTierLabel}\nOrder Total: Rs. ${order.totalAmount.toLocaleString()}/-\n${advancePercentageLabel} Advance Required: Rs. ${advanceRequired.toLocaleString()}/-\nRemaining at Doorstep: Rs. ${remainingAtDoorstep.toLocaleString()}/-\n\nHere is my advance deposit payment confirmation.`
+    `Assalam-o-Alaikum! I have placed Order #${displayOrderNo} on My Eyes.\n\nCustomer: ${order.customerName}\nOrder Total: Rs. ${order.totalAmount.toLocaleString()}/-\n${advancePercentageLabel} Advance: Rs. ${advanceRequired.toLocaleString()}/-\nRemaining on Delivery: Rs. ${remainingAtDoorstep.toLocaleString()}/-\n\nHere is my advance deposit payment confirmation.`
   );
 
-  return (
-    <div className="min-h-screen bg-[#ffffff] py-10 sm:py-14 text-slate-900 selection:bg-orange-100 selection:text-orange-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+  // 4-Step Progress Calculation
+  const isStep1Done = true; // Order Placed
+  const isStep2Done = isDepositVerified || (!isCOD && order.paymentStatus === "PAID");
+  const isStep3Done = order.status === "SHIPPED" || order.status === "DELIVERED";
+  const isStep4Done = order.status === "DELIVERED";
 
-        {/* Navigation & Header Actions */}
-        <div className="flex items-center justify-between gap-3 mb-6">
+  const isStep2Active = !isStep2Done;
+  const isStep3Active = isStep2Done && (order.status === "PROCESSING" || order.status === "PENDING");
+  const isStep4Active = order.status === "SHIPPED";
+
+  return (
+    <div className="min-h-screen bg-slate-50/60 py-8 px-4 sm:px-6 text-slate-900 selection:bg-amber-100 selection:text-amber-900">
+      <div className="max-w-5xl mx-auto space-y-6">
+
+        {/* ─────────────────────────────────────────────────────────────
+            1. TOP BAR (BREADCRUMB + ACTION BUTTONS)
+        ───────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Store
+            <span>Back to Store</span>
           </Link>
 
-          <button
-            onClick={() => setIsInvoiceOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-bold shadow-xs transition-all cursor-pointer"
-          >
-            <FileText className="w-4 h-4 text-slate-600" />
-            <span>Digital Invoice</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-stretch sm:self-auto justify-end">
+            <button
+              onClick={() => setIsInvoiceOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold shadow-xs transition-all cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-slate-600" />
+              <span>View &amp; Print Invoice</span>
+            </button>
+
+            <button
+              onClick={() => window.open(`/api/orders/${order.id}/pdf`, "_blank")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download PDF</span>
+            </button>
+          </div>
         </div>
 
-        {/* ================================================================ */}
-        {/* 1. TOP CONFIRMATION BANNER (PURE WHITE CARD & LUXURY ACCENTS)    */}
-        {/* ================================================================ */}
-        {isSuccessView ? (
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 mb-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-semibold text-emerald-700 mb-3">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Order Confirmed</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Thank you, {order.customerName}!
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Your order has been registered under permanent order number{" "}
-                  <strong className="text-slate-900 font-mono font-bold">#{displayOrderNo}</strong>.
-                </p>
-              </div>
-
-              {/* Total Payable Box (Clean Minimal Pill Card) */}
-              <div className="w-full sm:w-auto mt-2 sm:mt-0 p-4 sm:px-6 sm:py-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-start sm:items-end shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                  TOTAL PAYABLE
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-[#ff7a00]">
-                  Rs. {order.totalAmount.toLocaleString()}/-
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 mb-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-semibold text-slate-700 mb-3">
-                  <Glasses className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Live Order Tracking</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        {/* ─────────────────────────────────────────────────────────────
+            2. ORDER HEADER BANNER (CLEAN WHITE CARD)
+        ───────────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-7 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-mono">
                   Order #{displayOrderNo}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Tracking fulfillment for customer <strong className="text-slate-900 font-bold">{order.customerName}</strong>.
-                </p>
-              </div>
-
-              {/* Total Payable Box */}
-              <div className="w-full sm:w-auto mt-2 sm:mt-0 p-4 sm:px-6 sm:py-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-start sm:items-end shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                  TOTAL PAYABLE
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-[#ff7a00]">
-                  Rs. {order.totalAmount.toLocaleString()}/-
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* 2 & 3. PAYMENT METHOD CARD (WHITE AESTHETIC & COD ADVANCE LOGIC)  */}
-        {/* ================================================================ */}
-        <div className="mb-6">
-          {/* A. Cash on Delivery (COD) with 25% vs 40% Advance Deposit Logic */}
-          {isCOD && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5 animate-fade-in">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-200/80 text-[#ff7a00] flex items-center justify-center shrink-0">
-                    <Truck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-extrabold text-slate-900">Payment Method</h3>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-[#ff7a00] border border-orange-200/80">
-                        Cash on Delivery (COD)
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                        {lensTierLabel}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Prescription lab manufacturing requires advance deposit confirmation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Explanatory Notice */}
-              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-950 leading-relaxed font-medium">
-                <p>
-                  Custom optical lenses are tailored specifically to your prescription. A{" "}
-                  <strong className="text-amber-900 font-extrabold">
-                    {advancePercentageLabel} advance deposit (Rs. {advanceRequired.toLocaleString()}/-)
-                  </strong>{" "}
-                  is required to begin precision lab cutting. The remaining{" "}
-                  <strong className="text-slate-900 font-extrabold">
-                    Rs. {remainingAtDoorstep.toLocaleString()}/-
-                  </strong>{" "}
-                  is payable at your doorstep.
-                </p>
-              </div>
-
-              {/* Advance vs Balance Summary Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div>
-                  <p className="text-[11px] font-medium text-slate-500 uppercase">
-                    Advance Required ({advancePercentageLabel})
-                  </p>
-                  <p className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">
-                    Rs. {advanceRequired.toLocaleString()}/-
-                  </p>
-                </div>
-                <div className="border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 sm:pl-3">
-                  <p className="text-[11px] font-medium text-slate-500 uppercase">
-                    Remaining at Doorstep
-                  </p>
-                  <p className="text-base sm:text-lg font-bold text-[#ff7a00] mt-0.5">
-                    Rs. {remainingAtDoorstep.toLocaleString()}/-
-                  </p>
-                </div>
-              </div>
-
-              {/* Advance Action Buttons */}
-              <div className="space-y-3 pt-1">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  {/* WhatsApp Receipt Confirmation */}
-                  <a
-                    href={`https://wa.me/923390103262?text=${whatsappMessage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold transition-all shadow-xs"
-                  >
-                    <Smartphone className="w-4 h-4" />
-                    <span>Submit Advance via WhatsApp (+92 339 0103262)</span>
-                  </a>
-
-                  {/* Toggle Upload Advance Form */}
-                  <button
-                    onClick={() => setShowUploadAdvance(!showUploadAdvance)}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  >
-                    <Upload className="w-4 h-4 text-slate-600" />
-                    <span>{showUploadAdvance ? "Hide Upload Form" : "Upload Receipt Online"}</span>
-                  </button>
-                </div>
-
-                {/* Quick Transfer Bank / EasyPaisa Details */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-700 space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-slate-900">EasyPaisa / JazzCash / Raast:</span>
-                      <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
-                        03006694928
-                      </span>
-                      <span className="text-slate-500 font-medium">(MUHAMMAD AASIM MUSHTAQ)</span>
-                    </div>
-
-                    <button
-                      onClick={() => handleCopyTid("03006694928")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 cursor-pointer transition-colors shrink-0"
-                    >
-                      {copiedTid ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-                      <span>{copiedTid ? "Copied!" : "Copy Number"}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Optional Online Advance Upload Form */}
-                {showUploadAdvance && (
-                  <form
-                    onSubmit={handleResubmitProof}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs mt-3 animate-fade-in"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                        <Upload className="w-4 h-4 text-[#ff7a00]" />
-                        Submit Advance Deposit Proof
-                      </h4>
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        Order #{displayOrderNo}
-                      </span>
-                    </div>
-
-                    {resubmitError && (
-                      <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl font-medium">
-                        {resubmitError}
-                      </div>
-                    )}
-
-                    {resubmitSuccess && (
-                      <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-medium flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        Advance payment proof successfully submitted for optical verification!
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                          Transaction ID (TID / Ref #)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 123456789012"
-                          value={resubmitTid}
-                          onChange={(e) => setResubmitTid(e.target.value.toUpperCase())}
-                          className="w-full text-xs font-mono font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-slate-900"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                          Sender Account Title
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Eleanor Vance"
-                          value={resubmitSenderName}
-                          onChange={(e) => setResubmitSenderName(e.target.value)}
-                          className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-slate-900"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                        Advance Receipt Screenshot
-                      </label>
-                      <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 hover:border-slate-400 rounded-xl p-3 text-center cursor-pointer transition-colors bg-slate-50">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) handleFileUpload(f);
-                          }}
-                        />
-                        {uploadingReceipt ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
-                            <span className="text-xs font-bold text-slate-700">Uploading receipt screenshot...</span>
-                          </>
-                        ) : resubmitReceiptUrl ? (
-                          <>
-                            <Check className="w-4 h-4 text-emerald-600" />
-                            <span className="text-xs font-bold text-emerald-700">Receipt Attached! Click to change</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs font-bold text-slate-600">Select Receipt Image (JPG, PNG)</span>
-                          </>
-                        )}
-                      </label>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={resubmitting || uploadingReceipt}
-                      className="w-full py-3 rounded-xl bg-[#ff7a00] hover:bg-[#e06c00] disabled:opacity-50 text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                    >
-                      {resubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Submitting Advance Proof...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4" />
-                          <span>Submit Advance Proof for Approval</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
+                {isSuccessView && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Order Confirmed</span>
+                  </span>
                 )}
               </div>
+              <p className="text-xs text-slate-500">
+                Placed on <strong className="text-slate-800 font-semibold">{orderDate}</strong> at {orderTime} • Customer:{" "}
+                <strong className="text-slate-800 font-semibold">{order.customerName}</strong>
+              </p>
             </div>
-          )}
 
-          {/* B. Online Payment: PENDING_VERIFICATION */}
-          {isOnlinePayment &&
-            (order.paymentStatus === "PENDING_VERIFICATION" ||
-              order.paymentStatus === "UNPAID" ||
-              order.paymentStatus === "PENDING") && (
-              <div className="bg-white border border-amber-200/90 rounded-3xl p-6 shadow-xs flex items-start gap-4 animate-fade-in">
-                <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200/80">
-                  <Clock className="w-5 h-5 animate-pulse" />
+            {/* Right: Status Badge + Grand Total */}
+            <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100">
+              <div>
+                {isDepositVerified ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>In Production</span>
+                  </span>
+                ) : order.status === "SHIPPED" ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <Truck className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Dispatched</span>
+                  </span>
+                ) : order.status === "DELIVERED" ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Delivered</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{isCOD ? "Awaiting Deposit" : "Order Placed"}</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="text-right">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Grand Total
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-[#ff7a00] font-mono">
+                  Rs. {order.totalAmount.toLocaleString()}/-
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────
+            3. TWO-COLUMN CONTENT GRID (60% / 40%)
+        ───────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          {/* ═══════════════════════════════════════════════════════════
+              LEFT COLUMN (MAIN DETAILS - ~60% WIDTH)
+          ═══════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-7 space-y-6">
+
+            {/* A. 4-Step Order Progress Stepper */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-4">
+              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                Fulfillment &amp; Lab Production Stepper
+              </h2>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
+                {/* Step 1: Order Placed */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5 text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5 text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Step 1</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-900">Order Placed</p>
+                  <p className="text-[10px] text-slate-500">Registered in system</p>
                 </div>
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wider">
-                      ⏳ Payment Verification Under Review
+
+                {/* Step 2: Deposit Confirmed */}
+                <div
+                  className={cn(
+                    "p-3 rounded-xl border space-y-1.5 text-center sm:text-left transition-all",
+                    isStep2Done
+                      ? "bg-emerald-50/50 border-emerald-200 text-slate-900"
+                      : isStep2Active
+                      ? "bg-amber-50/70 border-amber-300 ring-2 ring-amber-400/30"
+                      : "bg-slate-50 border-slate-200/70 text-slate-400"
+                  )}
+                >
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                    {isStep2Done ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                    )}
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider", isStep2Done ? "text-emerald-700" : "text-amber-700")}>
+                      Step 2
                     </span>
                   </div>
-                  <p className="text-xs font-medium text-slate-700 leading-relaxed">
-                    We are verifying your online transfer of{" "}
-                    <strong className="text-slate-900 font-bold">Rs. {order.totalAmount.toLocaleString()}/-</strong>
-                    {order.transactionId ? (
-                      <>
-                        {" "}
-                        (TID:{" "}
-                        <span className="font-mono font-bold bg-slate-100 text-slate-900 px-1.5 py-0.5 rounded border border-slate-200">
-                          {order.transactionId}
-                        </span>
-                        )
-                      </>
-                    ) : null}
-                    . Your order will enter custom optical lab production once approved by our accounts team.
+                  <p className="text-xs font-bold text-slate-900">Deposit Confirmed</p>
+                  <p className="text-[10px] text-slate-500">
+                    {isStep2Done ? "Verified by optician" : "Advance required"}
                   </p>
-                  {order.paymentReceiptUrl && (
-                    <div className="pt-1 flex items-center gap-2">
-                      <a
-                        href={order.paymentReceiptUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-950 underline"
-                      >
-                        <FileText className="w-3.5 h-3.5" /> View Submitted Receipt
-                      </a>
-                    </div>
+                </div>
+
+                {/* Step 3: Lab Cutting */}
+                <div
+                  className={cn(
+                    "p-3 rounded-xl border space-y-1.5 text-center sm:text-left transition-all",
+                    isStep3Done
+                      ? "bg-emerald-50/50 border-emerald-200 text-slate-900"
+                      : isStep3Active
+                      ? "bg-blue-50/70 border-blue-300 ring-2 ring-blue-400/30"
+                      : "bg-slate-50 border-slate-200/70 text-slate-400"
                   )}
-                </div>
-              </div>
-            )}
-
-          {/* C. Online Payment: PAID (VERIFIED) */}
-          {isOnlinePayment && order.paymentStatus === "PAID" && (
-            <div className="bg-white border border-emerald-200/90 rounded-3xl p-6 shadow-xs flex items-start gap-4 animate-fade-in">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200/80">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
-                    ✅ Payment Verified & Received
-                  </span>
-                </div>
-                <p className="text-xs font-medium text-slate-700 leading-relaxed">
-                  Your full payment of <strong className="text-slate-900 font-bold">Rs. {order.totalAmount.toLocaleString()}/-</strong> has been verified. Your order is now queued in optical lab production and will be custom crafted to your exact prescription specifications.
-                </p>
-                {order.verifiedAt && (
-                  <p className="text-[11px] text-emerald-700 font-medium">
-                    Verified on: {new Date(order.verifiedAt).toLocaleString("en-PK")}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* D. Online Payment: FAILED (REJECTED) WITH 1-CLICK RESUBMISSION */}
-          {isOnlinePayment && order.paymentStatus === "FAILED" && (
-            <div className="bg-white border border-rose-200 rounded-3xl p-6 shadow-xs space-y-4 animate-fade-in">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center shrink-0 border border-rose-200">
-                  <XCircle className="w-5 h-5" />
-                </div>
-                <div className="space-y-1 flex-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-50 text-rose-900 border border-rose-200 uppercase tracking-wider">
-                    ⚠️ Payment Verification Unsuccessful
-                  </span>
-                  <p className="text-xs font-bold text-rose-950 pt-1">
-                    Reason: {order.rejectionReason || "Payment receipt or TID could not be verified."}
-                  </p>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Your order #{displayOrderNo} is safely preserved. Please review and resubmit your valid Transaction ID (TID) and receipt screenshot below.
-                  </p>
-                </div>
-              </div>
-
-              {/* Resubmit Proof Form */}
-              <form
-                onSubmit={handleResubmitProof}
-                className="bg-slate-50/70 rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-4"
-              >
-                <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <RefreshCw className="w-4 h-4 text-rose-600" />
-                  Resubmit Valid Payment Proof
-                </h3>
-
-                {resubmitError && (
-                  <div className="p-3 bg-rose-100 border border-rose-200 text-rose-800 text-xs rounded-xl font-medium">
-                    {resubmitError}
-                  </div>
-                )}
-
-                {resubmitSuccess && (
-                  <div className="p-3 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-medium flex items-center gap-2">
-                    <Check className="w-4 h-4" />
-                    Payment proof successfully updated. Your status is now under review!
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                      Correct Transaction ID (TID) *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 123456789012"
-                      value={resubmitTid}
-                      onChange={(e) => setResubmitTid(e.target.value.toUpperCase())}
-                      className="w-full text-xs font-mono font-bold border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:border-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                      Sender Account Title / Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Muhammad Ali"
-                      value={resubmitSenderName}
-                      onChange={(e) => setResubmitSenderName(e.target.value)}
-                      className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:border-slate-900"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                    Upload New Receipt Screenshot
-                  </label>
-                  <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 hover:border-slate-400 rounded-xl p-3 text-center cursor-pointer transition-colors bg-white">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleFileUpload(f);
-                      }}
-                    />
-                    {uploadingReceipt ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
-                        <span className="text-xs font-bold text-slate-700">Uploading screenshot...</span>
-                      </>
-                    ) : resubmitReceiptUrl ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="text-xs font-bold text-emerald-700">Screenshot Attached! Click to change</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 text-slate-500" />
-                        <span className="text-xs font-bold text-slate-600">Select Screenshot (JPG, PNG)</span>
-                      </>
-                    )}
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={resubmitting || uploadingReceipt}
-                  className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
-                  {resubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Resubmitting Proof...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Submit Payment Proof for Verification</span>
-                    </>
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                    {isStep3Done ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Glasses className={cn("w-4 h-4", isStep3Active ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                    )}
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider", isStep3Done ? "text-emerald-700" : isStep3Active ? "text-blue-700" : "text-slate-400")}>
+                      Step 3
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-900">Lab Cutting</p>
+                  <p className="text-[10px] text-slate-500">
+                    {isStep3Done ? "Fitted & QC checked" : isStep3Active ? "Fitting custom lenses" : "Awaiting deposit"}
+                  </p>
+                </div>
+
+                {/* Step 4: Dispatched */}
+                <div
+                  className={cn(
+                    "p-3 rounded-xl border space-y-1.5 text-center sm:text-left transition-all",
+                    isStep4Done
+                      ? "bg-emerald-50/50 border-emerald-200 text-slate-900"
+                      : isStep4Active
+                      ? "bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-400/30"
+                      : "bg-slate-50 border-slate-200/70 text-slate-400"
                   )}
-                </button>
-              </form>
+                >
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                    {isStep4Done ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Truck className={cn("w-4 h-4", isStep4Active ? "text-indigo-600 animate-pulse" : "text-slate-400")} />
+                    )}
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider", isStep4Done ? "text-emerald-700" : isStep4Active ? "text-indigo-700" : "text-slate-400")}>
+                      Step 4
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-900">Dispatched</p>
+                  <p className="text-[10px] text-slate-500">
+                    {isStep4Done ? "Delivered to door" : isStep4Active ? "In courier transit" : "Final step"}
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* ================================================================ */}
-        {/* 4. ORDER OVERVIEW & ITEM DETAILS (CLEAN WHITE CARDS)              */}
-        {/* ================================================================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-          {/* Main Column: Items & Prescription */}
-          <div className="lg:col-span-8 space-y-6">
-
-            {/* Products Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xs space-y-4">
+            {/* B. Purchased Items Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-4">
               <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Order Items ({order.items.length})
+                Purchased Items ({order.items.length})
               </h2>
 
               <div className="divide-y divide-slate-100">
@@ -862,237 +599,366 @@ export default function CustomerOrderTrackingView({
                   const itemFrameImg = getFirstImage(item.product?.images);
 
                   return (
-                    <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0 flex items-center justify-center p-1">
-                        {itemFrameImg ? (
-                          <img
-                            src={itemFrameImg}
-                            alt={item.product?.name || "Frame"}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
-                            }}
-                          />
-                        ) : (
-                          <Glasses className="w-7 h-7 text-slate-400" />
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="text-sm font-extrabold text-slate-900 truncate">
-                              {item.product?.name || "Eyewear Frame"}
-                            </h3>
-                            {frameCost !== null && (
-                              <p className="text-xs font-semibold text-slate-600 mt-0.5">
-                                Frame Price: {formatPrice(frameCost)}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-sm font-mono font-bold text-slate-900 shrink-0">
-                            {formatPrice(item.price * item.quantity)}
-                          </span>
+                    <div key={item.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center p-1">
+                          {itemFrameImg ? (
+                            <img
+                              src={itemFrameImg}
+                              alt={item.product?.name || "Frame"}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
+                              }}
+                            />
+                          ) : (
+                            <Glasses className="w-6 h-6 text-slate-400" />
+                          )}
                         </div>
 
-                        {humanLensName && (
-                          <div className="mt-2 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs">
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-900 truncate">
+                                {item.product?.name || "Eyewear Frame"}
+                              </h3>
+                              {frameCost !== null && (
+                                <p className="text-xs text-slate-500 font-medium">
+                                  Frame: {formatPrice(frameCost)} · Qty: {item.quantity}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-xs font-mono font-bold text-slate-900 shrink-0">
+                              {formatPrice(item.price * item.quantity)}
+                            </span>
+                          </div>
+
+                          {/* Lens Package Badge */}
+                          {humanLensName && (
+                            <div className="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-xs">
                               {visionType && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-900 font-extrabold text-[9px] uppercase tracking-wider">
+                                <span className="font-extrabold text-[9px] uppercase tracking-wider text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded">
                                   {visionType}
                                 </span>
                               )}
-                              <span className="font-bold text-slate-900">
+                              <span className="font-semibold text-slate-900 text-[11px] truncate max-w-[220px] sm:max-w-xs">
                                 {humanLensName}
                               </span>
                               {lensCost !== null && (
-                                <span className="text-slate-600 font-medium ml-auto">
-                                  Lens Price: {formatPrice(lensCost)}
+                                <span className="text-slate-600 font-mono text-[11px] ml-auto">
+                                  {formatPrice(lensCost)}
                                 </span>
                               )}
                             </div>
-                          </div>
-                        )}
-
-                        <p className="text-xs text-slate-400 mt-1 font-mono">
-                          Qty: {item.quantity} · Unit Total: {formatPrice(item.price)}
-                        </p>
-
-                        {item.prescription && (
-                          <div className="mt-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1">
-                            <p className="font-bold text-slate-900">
-                              Prescription Specifications (PD: {item.prescription.pd} mm)
-                            </p>
-                            <p className="font-mono text-[11px] text-slate-600">
-                              OD: SPH {formatDiopter(item.prescription.odSph)} | CYL {formatDiopter(item.prescription.odCyl)} | AXIS {item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}
-                            </p>
-                            <p className="font-mono text-[11px] text-slate-600">
-                              OS: SPH {formatDiopter(item.prescription.osSph)} | CYL {formatDiopter(item.prescription.osCyl)} | AXIS {item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}
-                            </p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
+
+                      {/* Optical Prescription Parameters Card */}
+                      {item.prescription && (
+                        <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                              <Glasses className="w-3.5 h-3.5 text-amber-600" />
+                              Prescription Specifications
+                            </span>
+                            <span className="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                              PD: {item.prescription.pd} mm
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                            {/* OD - Right Eye */}
+                            <div className="bg-white p-2.5 rounded-lg border border-slate-200/80 space-y-0.5">
+                              <span className="text-[10px] font-bold text-slate-400 font-sans block">OD (Right Eye)</span>
+                              <p className="text-slate-900 font-semibold">
+                                SPH: <strong className="text-slate-950">{formatDiopter(item.prescription.odSph)}</strong> · CYL:{" "}
+                                <strong className="text-slate-950">{formatDiopter(item.prescription.odCyl)}</strong> · Axis:{" "}
+                                <strong>{item.prescription.odAxis ? `${item.prescription.odAxis}°` : "-"}</strong>
+                              </p>
+                            </div>
+
+                            {/* OS - Left Eye */}
+                            <div className="bg-white p-2.5 rounded-lg border border-slate-200/80 space-y-0.5">
+                              <span className="text-[10px] font-bold text-slate-400 font-sans block">OS (Left Eye)</span>
+                              <p className="text-slate-900 font-semibold">
+                                SPH: <strong className="text-slate-950">{formatDiopter(item.prescription.osSph)}</strong> · CYL:{" "}
+                                <strong className="text-slate-950">{formatDiopter(item.prescription.osCyl)}</strong> · Axis:{" "}
+                                <strong>{item.prescription.osAxis ? `${item.prescription.osAxis}°` : "-"}</strong>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-
             </div>
 
-            {/* Live Progress Timeline */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xs space-y-4">
-              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Fulfillment & Production Progress
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Step 1</span>
-                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Order Placed
-                  </span>
+            {/* C. Advance Payment Card (If Deposit Required or Verified) */}
+            {isDepositVerified ? (
+              <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 shadow-xs flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
-
-                <div
-                  className={cn(
-                    "p-3.5 rounded-2xl border",
-                    order.paymentStatus === "PAID" || isCOD
-                      ? "bg-emerald-50/70 border-emerald-200"
-                      : order.paymentStatus === "FAILED"
-                        ? "bg-rose-50/70 border-rose-200"
-                        : "bg-amber-50/70 border-amber-200"
-                  )}
-                >
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Step 2</span>
-                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-                    {order.paymentStatus === "PAID" || isCOD ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5 text-amber-600" />
-                    )}
-                    {isCOD ? "COD Registered" : order.paymentStatus === "PAID" ? "Payment Verified" : "Verification"}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Step 3</span>
-                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-                    <Glasses className="w-3.5 h-3.5 text-slate-600" /> Lab Production
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Step 4</span>
-                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-                    <Truck className="w-3.5 h-3.5 text-slate-600" /> Dispatch
-                  </span>
+                <div>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-emerald-900">
+                    Advance Deposit Verified
+                  </h4>
+                  <p className="text-xs text-emerald-800 mt-0.5">
+                    Your advance payment has been confirmed. Your custom prescription lenses are currently in precision lab cutting.
+                  </p>
                 </div>
               </div>
-            </div>
+            ) : isCOD ? (
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                      {advancePercentageLabel} Advance Required for Custom Lenses
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    Awaiting Deposit
+                  </span>
+                </div>
+
+                {/* Two side-by-side metric tiles */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                      Advance Payable ({advancePercentageLabel})
+                    </span>
+                    <p className="text-lg font-black text-amber-950 font-mono">
+                      Rs. {advanceRequired.toLocaleString()}/-
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Payable on Delivery
+                    </span>
+                    <p className="text-lg font-black text-slate-900 font-mono">
+                      Rs. {remainingAtDoorstep.toLocaleString()}/-
+                    </p>
+                  </div>
+                </div>
+
+                {/* Account Details */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-slate-900">EasyPaisa / JazzCash / Raast:</span>{" "}
+                    <span className="font-mono font-bold text-slate-950">03006694928</span>{" "}
+                    <span className="text-slate-500 font-medium">(MUHAMMAD AASIM MUSHTAQ)</span>
+                  </div>
+                  <button
+                    onClick={() => handleCopyTid("03006694928")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 cursor-pointer transition-colors shrink-0"
+                  >
+                    {copiedTid ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                    <span>{copiedTid ? "Copied!" : "Copy"}</span>
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch gap-2.5 pt-1">
+                  <a
+                    href={`https://wa.me/923390103262?text=${whatsappMessage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold transition shadow-xs"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>Send Deposit Slip via WhatsApp</span>
+                  </a>
+
+                  <button
+                    onClick={() => setShowUploadAdvance(!showUploadAdvance)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4 text-slate-600" />
+                    <span>{showUploadAdvance ? "Hide Upload" : "Upload Receipt Online"}</span>
+                  </button>
+                </div>
+
+                {/* Upload Form (If Toggled) */}
+                {showUploadAdvance && (
+                  <form onSubmit={handleResubmitProof} className="bg-slate-50/80 rounded-xl border border-slate-200 p-4 space-y-3 mt-2">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                      Submit Advance Deposit Proof
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                          Transaction ID (TID)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 123456789012"
+                          value={resubmitTid}
+                          onChange={(e) => setResubmitTid(e.target.value.toUpperCase())}
+                          className="w-full text-xs font-mono font-bold border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                          Sender Account Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Muhammad Ali"
+                          value={resubmitSenderName}
+                          onChange={(e) => setResubmitSenderName(e.target.value)}
+                          className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                        Screenshot of Payment
+                      </label>
+                      <label className="flex items-center justify-center gap-2 border border-dashed border-slate-300 hover:border-slate-400 rounded-lg p-2.5 text-center cursor-pointer bg-white transition">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleFileUpload(f);
+                          }}
+                        />
+                        {uploadingReceipt ? (
+                          <span className="text-xs text-slate-600 font-medium">Uploading...</span>
+                        ) : resubmitReceiptUrl ? (
+                          <span className="text-xs text-emerald-700 font-bold">Screenshot Attached ✓</span>
+                        ) : (
+                          <span className="text-xs text-slate-600 font-medium">Select Image (JPG, PNG)</span>
+                        )}
+                      </label>
+                    </div>
+
+                    {resubmitError && (
+                      <p className="text-xs text-rose-600 font-medium">{resubmitError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={resubmitting || uploadingReceipt}
+                      className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {resubmitting ? "Submitting..." : "Submit Proof"}
+                    </button>
+                  </form>
+                )}
+
+                {resubmitSuccess && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Deposit proof submitted! Our team will verify it shortly.</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
           </div>
 
-          {/* Sidebar Column: Summary & Invoice Info */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* ═══════════════════════════════════════════════════════════
+              RIGHT COLUMN (SIDEBAR SUMMARY - ~40% WIDTH)
+          ═══════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-5 space-y-6">
 
-            {/* Payment Summary */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Payment Summary
-              </h2>
+            {/* A. Payment & Total Breakdown Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                  Financial Summary
+                </h3>
+                <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                  {getFriendlyPaymentMethod(order.paymentMethod)}
+                </span>
+              </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600">
-                  <span>Payment Method:</span>
-                  <span className="font-bold text-slate-900 text-right">
-                    {getFriendlyPaymentMethod(order.paymentMethod)}
+                  <span>Frame(s) Subtotal:</span>
+                  <span className="font-mono font-medium text-slate-900">
+                    {formatPrice(totalFrameCost)}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-slate-600 items-center">
-                  <span>Status:</span>
-                  <span
-                    className={cn(
-                      "font-extrabold text-right text-[10px] px-2.5 py-0.5 rounded-full",
-                      order.paymentStatus === "PAID"
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : order.paymentStatus === "FAILED"
-                          ? "bg-rose-50 text-rose-800 border border-rose-200"
-                          : isCOD
-                            ? "bg-orange-50 text-[#ff7a00] border border-orange-200/80"
-                            : "bg-amber-50 text-amber-800 border border-amber-200"
-                    )}
-                  >
-                    {isCOD ? `COD (${advancePercentageLabel} ADVANCE)` : getDigitalInvoiceStatus()}
-                  </span>
-                </div>
-
-                {order.transactionId && (
-                  <div className="flex justify-between text-slate-600 items-center">
-                    <span>Submitted TID:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono font-bold text-slate-900 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                        {order.transactionId}
-                      </span>
-                      <button
-                        onClick={() => handleCopyTid(order.transactionId!)}
-                        className="p-1 hover:text-slate-900 text-slate-400 transition-colors cursor-pointer"
-                        title="Copy TID"
-                      >
-                        {copiedTid ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
+                {totalLensCost > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Lens(es) Subtotal:</span>
+                    <span className="font-mono font-medium text-slate-900">
+                      {formatPrice(totalLensCost)}
+                    </span>
                   </div>
                 )}
 
-                <div className="border-t border-slate-100 pt-2 flex justify-between text-slate-600">
-                  <span>Delivery Fee:</span>
-                  <span className="font-mono font-medium">{formatPrice(order.shippingFee || 250)}</span>
+                <div className="flex justify-between text-slate-600">
+                  <span>Standard Shipping:</span>
+                  <span className="font-mono font-medium text-slate-900">
+                    {formatPrice(shippingFee)}
+                  </span>
                 </div>
 
-                {/* Conditional COD advance and doorstep breakdown in sidebar */}
-                {isCOD && (
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 my-1">
-                    <div className="flex justify-between text-slate-600">
-                      <span className="text-[11px] font-medium">Advance Deposit ({advancePercentageLabel}):</span>
-                      <span className="font-mono font-bold text-slate-900">
+                {/* Conditional advance breakdown for COD */}
+                {isCOD && !isDepositVerified && (
+                  <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1 my-2">
+                    <div className="flex justify-between text-amber-900 text-[11px]">
+                      <span>Advance Required ({advancePercentageLabel}):</span>
+                      <span className="font-mono font-bold">
                         Rs. {advanceRequired.toLocaleString()}/-
                       </span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span className="text-[11px] font-medium">At Doorstep:</span>
-                      <span className="font-mono font-bold text-[#ff7a00]">
+                    <div className="flex justify-between text-slate-600 text-[11px]">
+                      <span>Balance on Delivery:</span>
+                      <span className="font-mono font-bold text-slate-900">
                         Rs. {remainingAtDoorstep.toLocaleString()}/-
                       </span>
                     </div>
                   </div>
                 )}
 
-                <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-black text-slate-950">
+                <div className="border-t border-slate-200 pt-3 flex justify-between items-baseline text-sm font-black text-slate-950">
                   <span>Grand Total:</span>
-                  <span className="font-mono text-[#ff7a00]">Rs. {order.totalAmount.toLocaleString()}/-</span>
+                  <span className="text-lg font-mono font-black text-[#ff7a00]">
+                    Rs. {order.totalAmount.toLocaleString()}/-
+                  </span>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsInvoiceOpen(true)}
-                className="w-full py-3.5 px-4 rounded-2xl bg-[#ff7a00] hover:bg-[#e06c00] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
               >
-                <Printer className="w-4 h-4" />
-                <span>View & Print Invoice</span>
+                <FileText className="w-4 h-4" />
+                <span>View Full Invoice</span>
               </button>
             </div>
 
-            {/* Delivery Destination */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-3">
-              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Delivery Destination
-              </h2>
-              <div className="text-xs text-slate-700 space-y-1 leading-relaxed">
-                <p className="font-bold text-slate-900">{order.customerName}</p>
-                <p>{order.customerEmail}</p>
-                {order.customerPhone && <p>{order.customerPhone}</p>}
-                <p className="pt-1 text-slate-600 font-medium">
+            {/* B. Delivery Address Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                <MapPin className="w-4 h-4 text-slate-500" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                  Delivery Destination
+                </h3>
+              </div>
+
+              <div className="text-xs text-slate-700 space-y-1.5 leading-relaxed">
+                <p className="font-bold text-slate-900 text-sm">{order.customerName}</p>
+                <p className="text-slate-600">{order.customerEmail}</p>
+                {order.customerPhone && (
+                  <p className="text-slate-600 font-mono">{order.customerPhone}</p>
+                )}
+                <p className="pt-1 text-slate-700 font-medium">
                   {order.shippingAddress || "Standard Address"}, {order.shippingCity || ""}
                 </p>
               </div>
@@ -1104,7 +970,7 @@ export default function CustomerOrderTrackingView({
 
       </div>
 
-      {/* Interactive A4 Order Receipt Preview Modal */}
+      {/* Interactive Single-Page A4 Order Receipt Modal */}
       {isInvoiceOpen && (
         <OrderReceiptModal
           isOpen={isInvoiceOpen}
