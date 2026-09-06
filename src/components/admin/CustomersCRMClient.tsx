@@ -10,6 +10,7 @@ import {
   FileText,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { formatOrderNumber } from "@/lib/order-number";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 
 export interface CustomerData {
@@ -130,7 +131,7 @@ export default function CustomersCRMClient({ initialCustomers }: CustomersCRMCli
                   {c.orders.slice(0, 3).map((ord) => (
                     <div key={ord.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 text-xs">
                       <span className="font-mono font-extrabold text-slate-900">
-                        {ord.orderNumber || "ORDER-000"}
+                        #{formatOrderNumber(ord)}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono font-bold text-slate-700">{formatPrice(ord.totalAmount)}</span>

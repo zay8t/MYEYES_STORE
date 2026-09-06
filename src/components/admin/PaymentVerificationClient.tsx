@@ -14,7 +14,6 @@ import {
   Eye,
   Clock,
   TrendingUp,
-  Banknote,
   Phone,
   Mail,
   User,
@@ -37,6 +36,7 @@ import {
   rejectPaymentAction,
   flagPaymentAction,
 } from "@/app/actions/admin";
+import { formatOrderNumber } from "@/lib/order-number";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Types
@@ -333,7 +333,7 @@ function RejectDialog({
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="font-extrabold text-slate-900">Reject Payment</h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">Order #{order.orderNumber || order.id.slice(0, 8)}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Order #{formatOrderNumber(order)}</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 cursor-pointer">
             <X className="w-4 h-4" />
@@ -529,7 +529,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
         verifiedBy: ADMIN_EMAIL,
         verifiedAt: new Date().toISOString(),
       });
-      showToast(`✅ Order #${targetOrder.orderNumber || targetOrder.id.slice(0, 8)} approved & customer notified.`, "success");
+      showToast(`✅ Order #${formatOrderNumber(targetOrder)} approved & customer notified.`, "success");
     } else {
       showToast(result.error || "Failed to approve", "error");
     }
@@ -547,7 +547,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     const result = await rejectPaymentAction(targetOrder.id, ADMIN_EMAIL, reason);
     if (result.success) {
       updateOrderInState(targetOrder.id, { paymentStatus: "FAILED", rejectionReason: reason });
-      showToast(`❌ Order #${targetOrder.orderNumber || targetOrder.id.slice(0, 8)} rejected. Customer notified.`, "error");
+      showToast(`❌ Order #${formatOrderNumber(targetOrder)} rejected. Customer notified.`, "error");
       setShowRejectDialog(false);
     } else {
       showToast(result.error || "Failed to reject", "error");
@@ -566,7 +566,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     const result = await flagPaymentAction(selected.id, ADMIN_EMAIL, "Flagged for manager review via hotkey.");
     if (result.success) {
       updateOrderInState(selected.id, { paymentStatus: "FLAGGED_SUSPICIOUS", flaggedSuspicious: true });
-      showToast(`⚠️ Order #${selected.orderNumber || selected.id.slice(0, 8)} flagged for review.`, "info");
+      showToast(`⚠️ Order #${formatOrderNumber(selected)} flagged for review.`, "info");
     } else {
       showToast(result.error || "Failed to flag", "error");
     }
@@ -624,7 +624,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
           <div className="w-full max-w-5xl flex items-center justify-between py-3 px-4 sm:px-5 bg-slate-900/90 border border-slate-800 rounded-2xl mb-3 text-white">
             <div className="min-w-0 pr-2">
               <h3 className="font-extrabold text-sm sm:text-base tracking-tight truncate">
-                Verifying Payment for Order #{selected.orderNumber || selected.id.slice(0, 8)}
+                Verifying Payment for Order #{formatOrderNumber(selected)}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5 truncate">
                 Customer: <strong className="text-slate-200">{selected.customerName}</strong> · Total: <strong className="text-emerald-400">{formatPKR(selected.totalAmount)}</strong> · TID: <strong className="font-mono text-amber-300">{selected.transactionId || "N/A"}</strong>
@@ -664,7 +664,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Order Information</p>
               <div>
                 <span className="text-slate-400 text-[11px] block">Order Number:</span>
-                <span className="font-mono font-bold text-sm text-white">#{selected.orderNumber || selected.id.slice(0, 8)}</span>
+                <span className="font-mono font-bold text-sm text-white">#{formatOrderNumber(selected)}</span>
               </div>
               <div>
                 <span className="text-slate-400 text-[11px] block">Total Amount:</span>
@@ -844,7 +844,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                         className="font-mono font-bold text-xs bg-slate-900 hover:bg-black text-white px-2 py-0.5 rounded-md transition-colors inline-block"
                         title="Click to open order breakdown page"
                       >
-                        #{order.orderNumber || order.id.slice(0, 8)}
+                        #{formatOrderNumber(order)}
                       </Link>
                       {order.paymentMethod && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
@@ -997,7 +997,7 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
                     className="font-mono font-bold text-xs sm:text-sm bg-slate-900 hover:bg-black text-white px-2.5 py-1.5 rounded-lg transition-colors inline-block"
                     title="Open Order Details"
                   >
-                    #{selected.orderNumber || selected.id.slice(0, 8)}
+                    #{formatOrderNumber(selected)}
                   </Link>
                   <div className="min-w-0">
                     <h2 className="font-extrabold text-slate-900 text-sm truncate">

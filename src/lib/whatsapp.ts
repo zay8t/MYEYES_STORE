@@ -1,4 +1,5 @@
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
+import { formatOrderNumber } from "@/lib/order-number";
 
 export interface WhatsAppOrderItem {
   id?: string;
@@ -46,7 +47,7 @@ export function formatWhatsAppNumber(phone: string): string {
  */
 export function buildRawOrderMessage(order: OrderReceiptData): string {
   const customerName = order.customerName || "Customer";
-  const orderIdentifier = order.orderNumber || order.id;
+  const orderIdentifier = formatOrderNumber(order);
   const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
   const address = order.shippingAddress || "Standard Delivery Address";
   const city = order.shippingCity || order.city || "Pakistan";

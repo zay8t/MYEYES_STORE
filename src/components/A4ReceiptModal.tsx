@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { X, Printer, Download, Glasses, CheckCircle2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { formatOrderNumber } from "@/lib/order-number";
 
 interface Prescription {
   id: string;
@@ -102,7 +103,7 @@ interface A4ReceiptModalProps {
 export default function A4ReceiptModal({ order, onClose }: A4ReceiptModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
-  const displayOrderNo = order.orderNumber || order.id?.slice(-8) || "00000000";
+  const displayOrderNo = formatOrderNumber(order);
   const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",

@@ -13,6 +13,7 @@ import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
+import { formatOrderNumber } from "@/lib/order-number";
 import Toast from "./Toast";
 
 function getFirstImage(imgData?: string | null): string {
@@ -69,10 +70,11 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     const previousOrders = [...orders];
+    const targetOrder = orders.find((o) => o.id === orderId);
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as OrderReceiptData["status"] } : o))
     );
-    setToast({ message: `Order #${orderId.slice(0, 8)} status updated to ${newStatus}`, type: "success" });
+    setToast({ message: `Order #${formatOrderNumber(targetOrder || orderId)} status updated to ${newStatus}`, type: "success" });
 
     const result = await updateOrderStatusAction(orderId, newStatus);
     if (!result.success) {
@@ -83,10 +85,11 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
   const handlePaymentStatusChange = async (orderId: string, newPaymentStatus: string) => {
     const previousOrders = [...orders];
+    const targetOrder = orders.find((o) => o.id === orderId);
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: newPaymentStatus } : o))
     );
-    setToast({ message: `Order #${orderId.slice(0, 8)} payment status updated to ${newPaymentStatus}`, type: "success" });
+    setToast({ message: `Order #${formatOrderNumber(targetOrder || orderId)} payment status updated to ${newPaymentStatus}`, type: "success" });
 
     const result = await updatePaymentStatusAction(orderId, newPaymentStatus);
     if (!result.success) {
@@ -297,7 +300,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                     <tr key={order.id} className="hover:bg-slate-50/60 transition-colors align-top">
                       <td className="px-5 py-4 font-mono">
                         <span className="px-2.5 py-1 rounded bg-slate-100 border border-slate-200/80 text-slate-900 font-mono font-extrabold text-xs block w-max">
-                          {order.orderNumber || "ORDER-000"}
+                          #{formatOrderNumber(order)}
                         </span>
                         <span className="text-[10px] text-slate-400 mt-1 block">
                           {new Date(order.createdAt).toLocaleDateString()}
@@ -530,7 +533,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                   <div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-mono font-extrabold text-xs text-slate-900 bg-amber-500/20 px-2 py-0.5 rounded-md">
-                        {order.orderNumber || order.id.slice(0, 8)}
+                        #{formatOrderNumber(order)}
                       </span>
                       <span className="text-[10px] text-slate-400">
                         {new Date(order.createdAt).toLocaleDateString()}

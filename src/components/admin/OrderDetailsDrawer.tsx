@@ -20,6 +20,7 @@ import {
 import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
+import { formatOrderNumber } from "@/lib/order-number";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
 import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 
@@ -123,7 +124,7 @@ export default function OrderDetailsDrawer({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 font-mono font-extrabold text-xs tracking-wider">
-                {order.orderNumber || "ORDER-000"}
+                #{formatOrderNumber(order)}
               </span>
               <span className="text-xs text-slate-400 font-mono">Ref #{order.id.slice(0, 8)}</span>
             </div>

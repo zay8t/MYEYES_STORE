@@ -20,6 +20,7 @@ import {
 import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
+import { formatOrderNumber } from "@/lib/order-number";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 import Toast from "./Toast";
@@ -63,7 +64,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
     setCurrentStatus(newStatus);
     const res = await updateOrderStatusAction(order.id, newStatus);
     if (res.success) {
-      setToast({ message: `Order status updated to ${newStatus}`, type: "success" });
+      setToast({ message: `Order #${formatOrderNumber(order)} status updated to ${newStatus}`, type: "success" });
     } else {
       setToast({ message: res.error || "Failed to update status", type: "error" });
     }
@@ -75,7 +76,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
     setPaymentStatus(newPayStatus);
     const res = await updatePaymentStatusAction(order.id, newPayStatus);
     if (res.success) {
-      setToast({ message: `Payment status updated to ${newPayStatus}`, type: "success" });
+      setToast({ message: `Order #${formatOrderNumber(order)} payment status updated to ${newPayStatus}`, type: "success" });
     } else {
       setToast({ message: res.error || "Failed to update payment status", type: "error" });
     }
@@ -119,7 +120,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-slate-900 font-mono">
-              Order #{order.orderNumber || "ORDER-000"}
+              Order #{formatOrderNumber(order)}
             </h1>
             <span className="px-3 py-1 rounded-full bg-slate-900 text-white font-mono text-xs font-bold">
               {order.status}

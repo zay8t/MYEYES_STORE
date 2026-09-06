@@ -23,6 +23,7 @@ import {
   Building2,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
+import { formatOrderNumber } from "@/lib/order-number";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
 
 function getFirstImage(imgData?: string | null): string {
@@ -124,7 +125,7 @@ export default function CustomerOrderTrackingView({
 
   const isCOD = order.paymentMethod === "COD";
   const isOnlinePayment = !isCOD;
-  const displayOrderNo = order.orderNumber || order.id.slice(0, 8);
+  const displayOrderNo = formatOrderNumber(order);
 
   // ================================================================
   // CONDITIONAL COD ADVANCE LOGIC (25% vs 40%)
