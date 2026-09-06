@@ -73,7 +73,8 @@ async function getDashboardMetrics() {
             productSalesMap[pId] = { product: item.product, qty: 0, revenue: 0 };
           }
           productSalesMap[pId].qty += item.quantity || 1;
-          productSalesMap[pId].revenue += (item.price || 0) * (item.quantity || 1);
+          const frameRetailPrice = item.product.price ?? item.framePrice ?? 0;
+          productSalesMap[pId].revenue += frameRetailPrice * (item.quantity || 1);
         }
       });
     });
@@ -347,32 +348,41 @@ export default async function AdminDashboardPage() {
                   Sales rankings will generate as orders come in.
                 </div>
               ) : (
-                metrics.topSellingFrames.map((item, idx) => (
-                  <div
-                    key={item.product.id}
-                    className="border border-slate-100 rounded-xl p-3.5 flex items-center justify-between gap-3 bg-white"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
-                        #{idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-slate-900 truncate">{item.product.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {item.product.material} · {item.product.frameShape}
-                        </p>
+                metrics.topSellingFrames.map((item, idx) => {
+                  const displayFramePrice =
+                    item.product?.price ??
+                    (item as any).frame?.price ??
+                    (item as any).framePrice ??
+                    (item as any).basePrice ??
+                    0;
+
+                  return (
+                    <div
+                      key={item.product.id}
+                      className="border border-slate-100 rounded-xl p-3.5 flex items-center justify-between gap-3 bg-white"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                          #{idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900 truncate">{item.product.name}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            {item.product.material} · {item.product.frameShape}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
+                        <span className="text-sm font-semibold text-slate-900 block font-mono">
+                          {formatPrice(displayFramePrice)}
+                        </span>
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          {item.qty} Sold
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="text-sm font-semibold text-slate-900 block font-mono">
-                        {formatPrice(item.revenue)}
-                      </span>
-                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                        {item.qty} Sold
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
