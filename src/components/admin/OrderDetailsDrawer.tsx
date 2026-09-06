@@ -21,6 +21,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import { OrderReceiptData } from "@/components/A4ReceiptModal";
+import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 
 function getFirstImage(imgData?: string | null): string {
   if (!imgData) return "/placeholder-frame.png";
@@ -86,7 +87,6 @@ export default function OrderDetailsDrawer({
   };
 
   const hasRx = order.items.some((item) => item.prescription);
-  const rxItem = order.items.find((item) => item.prescription);
   const receiptUrl = order.paymentReceiptUrl || order.transactionProofUrl;
 
   const getPaymentBadgeClass = (status: string) => {
@@ -131,6 +131,8 @@ export default function OrderDetailsDrawer({
           </div>
 
           <div className="flex items-center gap-2">
+            <WhatsAppDispatchButton order={order} variant="compact" />
+
             <button
               onClick={() => onReceiptClick(order)}
               className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-200 transition-colors cursor-pointer"
@@ -446,7 +448,12 @@ export default function OrderDetailsDrawer({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 font-medium">Phone Number:</span>
-                  <span className="font-extrabold text-slate-900">{order.customerPhone || "N/A"}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-slate-900">{order.customerPhone || "N/A"}</span>
+                    {order.customerPhone && (
+                      <WhatsAppDispatchButton order={order} variant="icon" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

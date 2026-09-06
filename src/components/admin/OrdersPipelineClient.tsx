@@ -10,6 +10,7 @@ import {
 import { formatPrice, cn } from "@/lib/utils";
 import OrderDetailsDrawer from "./OrderDetailsDrawer";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
+import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import Toast from "./Toast";
@@ -455,6 +456,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
 
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <WhatsAppDispatchButton order={order} variant="icon" />
                           <button
                             onClick={() => setSelectedDrawerOrder(order)}
                             className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold transition-colors cursor-pointer"
@@ -512,66 +514,83 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
               return sum + (lensCost * item.quantity);
             }, 0);
 
+            const itemsSubtotal = (totalFrameCost + totalLensCost) > 0
+              ? (totalFrameCost + totalLensCost)
+              : order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+            const grandTotal = itemsSubtotal + shippingFee;
+
             return (
-              <div key={order.id} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="px-2.5 py-1 rounded bg-slate-900 text-white font-mono font-extrabold text-xs">
-                    {order.orderNumber || "ORDER-000"}
-                  </span>
+              <div
+                key={order.id}
+                className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs space-y-3.5"
+              >
+                {/* Card Top Details */}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono font-extrabold text-xs text-slate-900 bg-amber-500/20 px-2 py-0.5 rounded-md">
+                        {order.orderNumber || order.id.slice(0, 8)}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-sm mt-1">{order.customerName}</h4>
+                    <p className="text-slate-500 text-xs">{order.customerEmail}</p>
+                    {(order.customerPhone || order.phone) && (
+                      <p className="text-slate-400 text-xs font-mono">{order.customerPhone || order.phone}</p>
+                    )}
+                  </div>
+
                   <div className="text-right">
-                    <span className="font-mono font-black text-slate-900 text-base block">
-                      {formatPrice(order.totalAmount)}
+                    <span className="font-mono font-extrabold text-slate-900 text-sm block">
+                      {formatPrice(order.totalAmount || grandTotal)}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono block">
-                      Frame: {formatPrice(totalFrameCost)} | Lens: {formatPrice(totalLensCost)}
+                    <span className="text-[10px] text-slate-500 block uppercase font-extrabold">
+                      {order.paymentMethod || "COD"}
                     </span>
                   </div>
                 </div>
 
-                <div>
-                  <p className="font-extrabold text-slate-900 text-sm">{order.customerName}</p>
-                  <p className="text-xs text-slate-500">{order.customerEmail}</p>
-                </div>
-
-                {/* Items preview in mobile */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
+                {/* Card Items */}
+                <div className="p-3 bg-slate-50 rounded-xl space-y-2 border border-slate-100">
                   {order.items.map((item) => {
                     const itemFrameImg = item.frameImage || getFirstImage(item.product?.images);
                     const rx = item.prescription;
-                    const lensName = item.lensPackageName || item.selectedLensName || rx?.lensType || "Prescription Lenses";
+                    const lensName = item.lensPackageName || item.selectedLensName || rx?.lensType || (rx ? "Prescription Lenses" : "Frame Only");
+                    const visionType = item.visionType || (rx?.lensType?.toLowerCase().includes("progressive") || lensName.toLowerCase().includes("progressive") ? "Progressive" : (rx ? "Single Vision" : "Frame Only"));
 
                     return (
-                      <div key={item.id} className="flex items-start gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          {itemFrameImg ? (
-                            <img
-                              src={itemFrameImg}
-                              alt={item.frameName || item.product?.name || "Frame"}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = "/placeholder-frame.png";
-                              }}
-                            />
-                          ) : (
-                            <Glasses className="w-5 h-5 text-slate-400" />
-                          )}
-                        </div>
-                        <div className="space-y-0.5 text-xs">
-                          <p className="font-bold text-slate-900">{item.frameName || item.product?.name || "Frame"}</p>
-                          <p className="text-[11px] text-amber-900 font-semibold">{lensName}</p>
-                          {rx && (
-                            <p className="text-[10px] text-slate-500 font-mono">
-                              OD: {rx.odSph} | OS: {rx.osSph} | PD: {rx.pd}mm
+                      <div key={item.id} className="flex items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 p-0.5 flex-shrink-0 flex items-center justify-center">
+                            {itemFrameImg ? (
+                              <img src={itemFrameImg} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <Glasses className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-800 line-clamp-1">
+                              {item.frameName || item.product?.name || "Eyewear Frame"}
                             </p>
-                          )}
+                            <span className="text-[10px] text-amber-900 font-bold block">
+                              {visionType} • {lensName}
+                            </span>
+                          </div>
                         </div>
+                        <span className="text-slate-500 font-mono font-bold flex-shrink-0">
+                          {item.quantity}x
+                        </span>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center gap-2 flex-wrap">
+                {/* Card Status Selectors & Action Buttons */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="grid grid-cols-2 gap-2">
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
@@ -603,6 +622,7 @@ export default function OrdersPipelineClient({ initialOrders }: OrdersPipelineCl
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    <WhatsAppDispatchButton order={order} variant="compact" />
                     <button
                       onClick={() => setSelectedDrawerOrder(order)}
                       className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold min-h-[38px] cursor-pointer"

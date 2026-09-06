@@ -21,6 +21,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/actions/admin";
 import A4ReceiptModal, { OrderReceiptData } from "@/components/A4ReceiptModal";
+import WhatsAppDispatchButton from "./WhatsAppDispatchButton";
 import Toast from "./Toast";
 
 function getFirstImage(imgData?: string | null): string {
@@ -82,7 +83,6 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
   };
 
   const hasRx = order.items.some((item) => item.prescription);
-  const rxItem = order.items.find((item) => item.prescription);
   const receiptUrl = order.paymentReceiptUrl || order.transactionProofUrl;
 
   const getPaymentBadgeClass = (status: string) => {
@@ -127,6 +127,7 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
         </div>
 
         <div className="flex items-center gap-2">
+          <WhatsAppDispatchButton order={order} variant="button" />
           <button
             onClick={() => setShowReceiptModal(true)}
             className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
@@ -299,7 +300,12 @@ export default function AdminSingleOrderClient({ order }: { order: OrderReceiptD
           <div className="space-y-2 text-xs">
             <p><strong className="text-slate-900">Name:</strong> {order.customerName}</p>
             <p><strong className="text-slate-900">Email:</strong> {order.customerEmail}</p>
-            <p><strong className="text-slate-900">Phone:</strong> {order.customerPhone || "N/A"}</p>
+            <div className="flex items-center justify-between">
+              <p><strong className="text-slate-900">Phone:</strong> {order.customerPhone || "N/A"}</p>
+              {order.customerPhone && (
+                <WhatsAppDispatchButton order={order} variant="icon" />
+              )}
+            </div>
           </div>
         </div>
 
