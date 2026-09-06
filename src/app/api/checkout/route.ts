@@ -4,6 +4,8 @@ import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
 import { deductStockForOrder, revalidateInventory } from "@/lib/inventory";
+import { sendEmail } from "@/lib/email";
+import { buildOrderConfirmationEmail } from "@/lib/emailTemplates";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -245,6 +247,23 @@ export async function POST(request: NextRequest) {
 
     // Revalidate inventory cache across storefront and admin views
     revalidateInventory();
+
+    // 1. Asynchronously dispatch Customer Confirmation Email (non-blocking)
+    if (order.customerEmail) {
+      sendEmail({
+        to: order.customerEmail,
+        subject: `Order Confirmation #${order.orderNumber} - MY EYES Optical Studio`,
+        html: buildOrderConfirmationEmail(order),
+      }).catch((err) => console.error("[Checkout Customer Email Error]:", err));
+    }
+
+    // 2. Asynchronously dispatch Staff Notification Alert (non-blocking)
+    const staffEmail = process.env.GMAIL_USER || "myeyes2026@gmail.com";
+    sendEmail({
+      to: staffEmail,
+      subject: `[NEW ORDER] #${order.orderNumber} placed by ${order.customerName}`,
+      html: buildOrderConfirmationEmail(order),
+    }).catch((err) => console.error("[Checkout Staff Alert Error]:", err));
 
     // Direct return for instant order completion in demo/local mode
     return NextResponse.json({

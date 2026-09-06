@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
       });
     } else if (action === "REJECT") {
       const reason = rejectionReason || "Payment receipt or TID could not be verified";
-      const result = await rejectPaymentAction(orderId, adminEmail, reason);
+      const extraCustomReason = body.rejectionCustomReason || body.customReason || undefined;
+      const result = await rejectPaymentAction(orderId, adminEmail, reason, extraCustomReason);
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.error }, { status: 400 });
       }

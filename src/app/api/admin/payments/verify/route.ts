@@ -17,7 +17,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { orderId, action, rejectionReason, adminEmail = session.email || "admin@myeyes.pk" } = body;
+    const {
+      orderId,
+      action,
+      rejectionReason,
+      rejectionCustomReason,
+      customReason,
+      adminEmail = session.email || "admin@myeyes.pk",
+    } = body;
 
     if (!orderId || !action) {
       return NextResponse.json(
@@ -38,7 +45,8 @@ export async function POST(request: NextRequest) {
       });
     } else if (action === "REJECT") {
       const reason = rejectionReason || "Payment receipt could not be verified by admin";
-      const result = await rejectPaymentAction(orderId, adminEmail, reason);
+      const extraCustomReason = rejectionCustomReason || customReason || undefined;
+      const result = await rejectPaymentAction(orderId, adminEmail, reason, extraCustomReason);
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.error }, { status: 400 });
       }

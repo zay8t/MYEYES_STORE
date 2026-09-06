@@ -13,6 +13,11 @@ import {
   restockOrderItems,
   redeductOrderItems,
 } from "@/lib/inventory";
+import { sendEmail } from "@/lib/email";
+import {
+  buildPaymentApprovedEmail,
+  buildPaymentRejectionEmail,
+} from "@/lib/emailTemplates";
 
 export interface ProductInput {
   name: string;
@@ -275,6 +280,14 @@ export async function verifyPaymentAction(
         verifiedAt: new Date(),
         customerNotified: false,
       },
+      include: {
+        items: {
+          include: {
+            product: true,
+            prescription: true,
+          },
+        },
+      },
     });
 
     await prisma.paymentAuditLog.create({
@@ -286,7 +299,16 @@ export async function verifyPaymentAction(
       },
     });
 
-    // Trigger WhatsApp notification
+    // 1. Asynchronously dispatch Approval Email to customer (non-blocking)
+    if (order.customerEmail) {
+      sendEmail({
+        to: order.customerEmail,
+        subject: `Advance Deposit Verified for Order #${order.orderNumber || order.id} - MY EYES Optical Studio`,
+        html: buildPaymentApprovedEmail(order),
+      }).catch((emailErr) => console.error("[Payment Approved Email Error]:", emailErr));
+    }
+
+    // 2. Trigger WhatsApp notification
     try {
       await sendApprovalNotification(order);
       await prisma.order.update({
@@ -322,17 +344,31 @@ export async function verifyPaymentAction(
 export async function rejectPaymentAction(
   orderId: string,
   adminEmail: string,
-  reason: string
+  reason: string,
+  customReason?: string
 ) {
   try {
+    const fullReason =
+      customReason && customReason.trim() !== ""
+        ? `${reason}: ${customReason.trim()}`
+        : reason;
+
     const order = await prisma.order.update({
       where: { id: orderId },
       data: {
         paymentStatus: PaymentStatus.FAILED,
         verifiedBy: adminEmail,
         verifiedAt: new Date(),
-        rejectionReason: reason,
+        rejectionReason: fullReason,
         customerNotified: false,
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+            prescription: true,
+          },
+        },
       },
     });
 
@@ -341,13 +377,22 @@ export async function rejectPaymentAction(
         orderId,
         action: "REJECTED",
         actor: adminEmail,
-        notes: `Rejection reason: ${reason}`,
+        notes: `Rejection reason: ${fullReason}`,
       },
     });
 
-    // Trigger rejection notification
+    // 1. Asynchronously dispatch Rejection Email to customer (non-blocking)
+    if (order.customerEmail) {
+      sendEmail({
+        to: order.customerEmail,
+        subject: `Payment Verification Issue for Order #${order.orderNumber || order.id} - MY EYES Optical Studio`,
+        html: buildPaymentRejectionEmail(order, reason, customReason),
+      }).catch((emailErr) => console.error("[Payment Rejection Email Error]:", emailErr));
+    }
+
+    // 2. Trigger rejection notification
     try {
-      await sendRejectionNotification(order, reason);
+      await sendRejectionNotification(order, fullReason);
       await prisma.order.update({
         where: { id: orderId },
         data: { customerNotified: true },
