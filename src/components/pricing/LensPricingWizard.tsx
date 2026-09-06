@@ -15,7 +15,14 @@ import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator"
 import { useLensPricing, LensPricingTier } from "@/hooks/useLensPricing";
 import Step1VisionType, { VisionType } from "@/components/pricing/Step1VisionType";
 import Step2LensPackages from "@/components/pricing/Step2LensPackages";
-import Step3Prescription, { EyeRx, SPH_ALL, CYL_ALL, AXIS_OPTIONS } from "@/components/pricing/Step3Prescription";
+import Step3Prescription, {
+  EyeRx,
+  ScannedRxPayload,
+  SPH_ALL,
+  CYL_ALL,
+  AXIS_OPTIONS,
+  formatDiopter,
+} from "@/components/pricing/Step3Prescription";
 
 interface WizardState {
   visionType: VisionType;
@@ -70,6 +77,48 @@ export function LensPricingWizard() {
 
   const setAdd = useCallback((which: "od" | "os", v: string) => {
     setState((p) => p.addLinked ? { ...p, odAdd: v, osAdd: v } : { ...p, [`${which}Add`]: v });
+  }, []);
+
+  const handleApplyScannedPrescription = useCallback((data: ScannedRxPayload) => {
+    setState((prev) => {
+      const nextOd = { ...prev.od };
+      const nextOs = { ...prev.os };
+      let nextOdAdd = prev.odAdd;
+      let nextOsAdd = prev.osAdd;
+      let nextVisionType = prev.visionType;
+
+      if (data.od?.sph && SPH_ALL.includes(data.od.sph)) nextOd.sph = data.od.sph;
+      else if (data.od?.sph) nextOd.sph = formatDiopter(data.od.sph);
+
+      if (data.od?.cyl && CYL_ALL.includes(data.od.cyl)) nextOd.cyl = data.od.cyl;
+      else if (data.od?.cyl) nextOd.cyl = formatDiopter(data.od.cyl);
+
+      if (data.od?.axis && AXIS_OPTIONS.includes(data.od.axis)) nextOd.axis = data.od.axis;
+
+      if (data.os?.sph && SPH_ALL.includes(data.os.sph)) nextOs.sph = data.os.sph;
+      else if (data.os?.sph) nextOs.sph = formatDiopter(data.os.sph);
+
+      if (data.os?.cyl && CYL_ALL.includes(data.os.cyl)) nextOs.cyl = data.os.cyl;
+      else if (data.os?.cyl) nextOs.cyl = formatDiopter(data.os.cyl);
+
+      if (data.os?.axis && AXIS_OPTIONS.includes(data.os.axis)) nextOs.axis = data.os.axis;
+
+      if (data.add) {
+        nextOdAdd = data.add;
+        nextOsAdd = data.add;
+        nextVisionType = "progressive";
+      }
+
+      return {
+        ...prev,
+        od: nextOd,
+        os: nextOs,
+        odAdd: nextOdAdd,
+        osAdd: nextOsAdd,
+        visionType: nextVisionType,
+        noRxFallback: false,
+      };
+    });
   }, []);
 
   useEffect(() => {
@@ -205,6 +254,7 @@ export function LensPricingWizard() {
             onSetAdd={setAdd}
             onToggleAddLinked={() => set("addLinked", !state.addLinked)}
             onToggleNoRxFallback={() => set("noRxFallback", !state.noRxFallback)}
+            onApplyScannedPrescription={handleApplyScannedPrescription}
           />
 
           {/* STEP 4: Total Price */}
