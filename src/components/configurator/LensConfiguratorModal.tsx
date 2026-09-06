@@ -262,6 +262,7 @@ export function LensConfiguratorModal({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [rxFileUrl, setRxFileUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // AI Scanner state
   const [isScanning, setIsScanning] = useState(false);

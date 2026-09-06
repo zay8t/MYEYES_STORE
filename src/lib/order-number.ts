@@ -7,12 +7,11 @@ import { Prisma } from "@prisma/client";
 export async function generateNextOrderNumber(
   tx: Prisma.TransactionClient
 ): Promise<string> {
-  // 1. Find or create the sequence record
-  let seqRecord = await tx.orderSequence.findUnique({
+  const existingSeq = await tx.orderSequence.findUnique({
     where: { id: 1 },
   });
 
-  if (!seqRecord) {
+  if (!existingSeq) {
     // Find maximum numeric value among existing assigned order numbers
     const existingOrders = await tx.order.findMany({
       where: { orderNumber: { not: null } },
@@ -29,19 +28,22 @@ export async function generateNextOrderNumber(
       }
     }
 
-    seqRecord = await tx.orderSequence.create({
-      data: { id: 1, lastValue: maxVal },
+    const created = await tx.orderSequence.create({
+      data: { id: 1, lastValue: maxVal + 1 },
     });
+    return String(created.lastValue).padStart(8, "0");
   }
 
-  const nextSeq = seqRecord.lastValue + 1;
-
-  // 2. Update sequence record
-  await tx.orderSequence.update({
+  // Atomic increment within Prisma transaction
+  const updated = await tx.orderSequence.update({
     where: { id: 1 },
-    data: { lastValue: nextSeq },
+    data: {
+      lastValue: {
+        increment: 1,
+      },
+    },
   });
 
-  // 3. Format as strictly 8 digits padded with zeros (e.g., "00000001")
-  return String(nextSeq).padStart(8, "0");
+  // Format as strictly 8 digits padded with zeros (e.g., "00000001")
+  return String(updated.lastValue).padStart(8, "0");
 }
