@@ -5,7 +5,6 @@ import { updateOrderStatusAction } from "@/app/actions/admin";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// PATCH update order status
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,4 +36,11 @@ export async function PATCH(
       { status: 500 }
     );
   }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return PATCH(request, { params });
 }

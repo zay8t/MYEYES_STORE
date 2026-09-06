@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
+import { deductStockForOrder, revalidateInventory } from "@/lib/inventory";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +70,18 @@ export async function POST(request: NextRequest) {
 
     // Create Order with permanent 8-digit orderNumber inside Prisma transaction
     const order = await prisma.$transaction(async (tx) => {
+      // 1. Atomically verify and deduct stock
+      const stockDeductionTargets = (items || [])
+        .map((item: any) => {
+          const pId = String(item.productId || item.frameId || item.id || "").trim();
+          const quantity = typeof item.quantity === "number" && item.quantity > 0 ? Math.floor(item.quantity) : 1;
+          const name = String(item.name || item.frameName || "");
+          return { productId: pId, quantity, name };
+        })
+        .filter((target: any) => Boolean(target.productId));
+
+      await deductStockForOrder(tx, stockDeductionTargets);
+
       const orderItemsData = [];
 
       for (const item of items) {
@@ -181,7 +194,7 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-    });
+    }, { maxWait: 5000, timeout: 15000 });
 
     // If Stripe client is configured, create real Stripe Checkout Session
     if (stripe) {
@@ -230,6 +243,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Revalidate inventory cache across storefront and admin views
+    revalidateInventory();
+
     // Direct return for instant order completion in demo/local mode
     return NextResponse.json({
       success: true,
@@ -237,11 +253,20 @@ export async function POST(request: NextRequest) {
       orderNumber: order.orderNumber,
       totalAmount: order.totalAmount,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Checkout API Error:", error);
+    const isClientError =
+      typeof error?.message === "string" &&
+      (error.message.includes("Insufficient stock") ||
+        error.message.includes("Product not found") ||
+        error.message.includes("Cart is empty"));
+
     return NextResponse.json(
-      { error: "Failed to process checkout session" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to process checkout session",
+        message: error instanceof Error ? error.message : "Failed to process checkout session",
+      },
+      { status: isClientError ? 400 : 500 }
     );
   }
 }

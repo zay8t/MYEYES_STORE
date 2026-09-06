@@ -24,7 +24,7 @@ interface ProductSalesItem {
 
 async function getDashboardMetrics() {
   try {
-    const [products, orders, totalCustomersCount] = await Promise.all([
+    const [products, orders, totalCustomersCount, stockAgg] = await Promise.all([
       prisma.product.findMany({ orderBy: { createdAt: "desc" } }),
       prisma.order.findMany({
         include: {
@@ -40,6 +40,9 @@ async function getDashboardMetrics() {
       prisma.order.groupBy({
         by: ["customerEmail"],
         _count: { customerEmail: true },
+      }),
+      prisma.product.aggregate({
+        _sum: { stock: true },
       }),
     ]);
 
@@ -59,8 +62,8 @@ async function getDashboardMetrics() {
       (o) => o.status === "PENDING" || o.status === "PROCESSING"
     ).length;
 
-    // Total In-Stock Frames
-    const totalStockCount = (products || []).reduce((sum, p) => sum + (p.stock || 0), 0);
+    // Total In-Stock Frames (Live Aggregation)
+    const totalStockCount = stockAgg._sum.stock ?? (products || []).reduce((sum, p) => sum + (p.stock || 0), 0);
     const lowStockProductsCount = (products || []).filter((p) => (p.stock || 0) < 5).length;
 
     // Top Selling Frames Calculation

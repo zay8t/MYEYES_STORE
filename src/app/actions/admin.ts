@@ -8,6 +8,11 @@ import {
   sendRejectionNotification,
   sendFlaggedAlert,
 } from "@/lib/notifications/paymentAlert";
+import {
+  revalidateInventory,
+  restockOrderItems,
+  redeductOrderItems,
+} from "@/lib/inventory";
 
 export interface ProductInput {
   name: string;
@@ -31,20 +36,88 @@ function safeRevalidatePath(path: string) {
   }
 }
 
-export async function updateOrderStatusAction(orderId: string, status: OrderStatus) {
+export async function updateOrderStatusAction(orderId: string, status: OrderStatus | string) {
   try {
-    const updatedOrder = await prisma.order.update({
+    const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
-      data: { status },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
 
+    if (!existingOrder) {
+      return { success: false, error: "Order not found" };
+    }
+
+    const previousStatus = existingOrder.status;
+    const isCancelling =
+      (status === OrderStatus.CANCELLED ||
+        (status as string) === "CANCELLED" ||
+        (status as string) === "REJECTED") &&
+      previousStatus !== OrderStatus.CANCELLED;
+
+    const isReopening =
+      previousStatus === OrderStatus.CANCELLED &&
+      status !== OrderStatus.CANCELLED &&
+      (status as string) !== "REJECTED";
+
+    const updatedOrder = await prisma.$transaction(
+      async (tx) => {
+        if (isCancelling) {
+          // Increment stock for all items
+          await restockOrderItems(tx, existingOrder.items);
+
+          await tx.paymentAuditLog.create({
+            data: {
+              orderId,
+              action: "RESTOCKED",
+              actor: "ADMIN",
+              notes: `Stock automatically returned to inventory due to order status transition to ${status}.`,
+            },
+          });
+        } else if (isReopening) {
+          // Rededuct stock if order is uncancelled / reopened
+          await redeductOrderItems(tx, existingOrder.items);
+
+          await tx.paymentAuditLog.create({
+            data: {
+              orderId,
+              action: "DEDUCTED",
+              actor: "ADMIN",
+              notes: `Stock re-deducted from inventory due to order reactivation to ${status}.`,
+            },
+          });
+        }
+
+        return await tx.order.update({
+          where: { id: orderId },
+          data: { status: status as OrderStatus },
+          include: {
+            items: {
+              include: {
+                product: true,
+                prescription: true,
+              },
+            },
+          },
+        });
+      },
+      { maxWait: 5000, timeout: 15000 }
+    );
+
+    revalidateInventory();
     safeRevalidatePath("/admin");
     safeRevalidatePath("/admin/orders");
     safeRevalidatePath("/admin/customers");
+    safeRevalidatePath(`/admin/orders/${orderId}`);
     return { success: true, order: updatedOrder };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating order status:", error);
-    return { success: false, error: "Failed to update order status" };
+    return { success: false, error: error?.message || "Failed to update order status" };
   }
 }
 
@@ -72,17 +145,7 @@ export async function updateProductStockAction(productId: string, newStock: numb
       data: { stock: Math.max(0, newStock) },
     });
 
-    safeRevalidatePath("/admin");
-    safeRevalidatePath("/admin/products");
-    safeRevalidatePath("/admin/inventory");
-    safeRevalidatePath("/");
-    safeRevalidatePath("/eyeglasses");
-    safeRevalidatePath("/sunglasses");
-    safeRevalidatePath("/men");
-    safeRevalidatePath("/women");
-    safeRevalidatePath("/kids");
-    safeRevalidatePath("/collections");
-    safeRevalidatePath("/products");
+    revalidateInventory(updated.slug);
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error updating product stock:", error);
@@ -101,17 +164,7 @@ export async function adjustStockDeltaAction(productId: string, delta: number) {
       data: { stock: newStock },
     });
 
-    safeRevalidatePath("/admin");
-    safeRevalidatePath("/admin/products");
-    safeRevalidatePath("/admin/inventory");
-    safeRevalidatePath("/");
-    safeRevalidatePath("/eyeglasses");
-    safeRevalidatePath("/sunglasses");
-    safeRevalidatePath("/men");
-    safeRevalidatePath("/women");
-    safeRevalidatePath("/kids");
-    safeRevalidatePath("/collections");
-    safeRevalidatePath("/products");
+    revalidateInventory(updated.slug);
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error adjusting stock delta:", error);
@@ -157,17 +210,7 @@ export async function createProductAction(input: ProductInput) {
       },
     });
 
-    safeRevalidatePath("/admin");
-    safeRevalidatePath("/admin/products");
-    safeRevalidatePath("/admin/inventory");
-    safeRevalidatePath("/");
-    safeRevalidatePath("/eyeglasses");
-    safeRevalidatePath("/sunglasses");
-    safeRevalidatePath("/men");
-    safeRevalidatePath("/women");
-    safeRevalidatePath("/kids");
-    safeRevalidatePath("/collections");
-    safeRevalidatePath("/products");
+    revalidateInventory(product.slug);
     return { success: true, product };
   } catch (error) {
     console.error("Error creating product:", error);
@@ -202,12 +245,7 @@ export async function updateProductAction(productId: string, input: Partial<Prod
       data: updateData,
     });
 
-    safeRevalidatePath("/admin");
-    safeRevalidatePath("/admin/products");
-    safeRevalidatePath("/admin/inventory");
-    safeRevalidatePath("/");
-    safeRevalidatePath("/eyeglasses");
-    safeRevalidatePath("/sunglasses");
+    revalidateInventory(updated.slug);
     return { success: true, product: updated };
   } catch (error) {
     console.error("Error updating product:", error);
@@ -267,6 +305,7 @@ export async function verifyPaymentAction(
       console.error("Notification failed (non-fatal):", notifErr);
     }
 
+    revalidateInventory();
     safeRevalidatePath("/admin");
     safeRevalidatePath("/admin/payments");
     safeRevalidatePath("/admin/orders");
@@ -380,16 +419,11 @@ export async function deleteProductAction(productId: string) {
       where: { productId },
     });
 
-    await prisma.product.delete({
+    const deleted = await prisma.product.delete({
       where: { id: productId },
     });
 
-    safeRevalidatePath("/admin");
-    safeRevalidatePath("/admin/products");
-    safeRevalidatePath("/admin/inventory");
-    safeRevalidatePath("/");
-    safeRevalidatePath("/eyeglasses");
-    safeRevalidatePath("/sunglasses");
+    revalidateInventory(deleted?.slug);
     return { success: true };
   } catch (error) {
     console.error("Error deleting product:", error);

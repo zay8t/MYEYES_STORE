@@ -4,6 +4,7 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import { generateNextOrderNumber } from "@/lib/order-number";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
+import { deductStockForOrder, revalidateInventory } from "@/lib/inventory";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -167,6 +168,19 @@ export async function POST(request: NextRequest) {
     const mockSessionId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     const order = await prisma.$transaction(async (tx) => {
+      // 1. Verify stock and deduct quantities atomically
+      const stockDeductionTargets = itemsWithPrescription
+        .map((entry) => {
+          const item = entry.item;
+          const pId = String(item.productId || item.frameId || item.id || "").trim();
+          const quantity = typeof item.quantity === "number" && item.quantity > 0 ? Math.floor(item.quantity) : 1;
+          const name = String(item.frameName || item.name || "");
+          return { productId: pId, quantity, name };
+        })
+        .filter((target) => Boolean(target.productId));
+
+      await deductStockForOrder(tx, stockDeductionTargets);
+
       const orderItemsData = [];
 
       for (const entry of itemsWithPrescription) {
@@ -327,7 +341,7 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-    });
+    }, { maxWait: 5000, timeout: 15000 });
 
     // Write initial payment audit log entry
     if (order.paymentReceiptUrl) {
@@ -379,6 +393,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Revalidate inventory cache across storefront and admin views
+    revalidateInventory();
+
     return NextResponse.json({
       success: true,
       orderId: order.id,
@@ -391,6 +408,13 @@ export async function POST(request: NextRequest) {
       code: error.code,
       meta: error.meta,
     });
+
+    const isClientError =
+      typeof error?.message === "string" &&
+      (error.message.includes("Insufficient stock") ||
+        error.message.includes("Product not found") ||
+        error.message.includes("required"));
+
     return NextResponse.json(
       {
         success: false,
@@ -398,7 +422,7 @@ export async function POST(request: NextRequest) {
         error: error.message || "Failed to process and save customer order.",
         code: error.code,
       },
-      { status: 500 }
+      { status: isClientError ? 400 : 500 }
     );
   }
 }
