@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 import { formatDiopter } from "@/lib/prescription";
 import { formatOrderNumber } from "@/lib/order-number";
 
-interface Prescription {
+export interface Prescription {
   id: string;
   lensType: string;
   odSph: number;
@@ -20,7 +20,7 @@ interface Prescription {
   createdAt: string;
 }
 
-interface Product {
+export interface Product {
   id: string;
   name: string;
   price: number;
@@ -28,7 +28,7 @@ interface Product {
   category: string;
 }
 
-interface OrderItem {
+export interface OrderItem {
   id: string;
   productId: string;
   prescriptionId: string | null;

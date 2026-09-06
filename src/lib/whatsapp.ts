@@ -1,5 +1,12 @@
-import { OrderReceiptData } from "@/components/A4ReceiptModal";
+import { OrderReceiptData, OrderItem } from "@/components/A4ReceiptModal";
 import { formatOrderNumber } from "@/lib/order-number";
+
+export interface OrderPrescriptionPayload {
+  rightEye?: { sph?: string | null; cyl?: string | null; axis?: string | null };
+  leftEye?: { sph?: string | null; cyl?: string | null; axis?: string | null };
+  pd?: string | null;
+  [key: string]: unknown;
+}
 
 export interface OrderItemPayload {
   frameName?: string | null;
@@ -8,12 +15,8 @@ export interface OrderItemPayload {
   framePrice?: number | null;
   lensPackageName?: string | null;
   lensPrice?: number | null;
-  prescription?: {
-    rightEye?: { sph?: string | null; cyl?: string | null; axis?: string | null };
-    leftEye?: { sph?: string | null; cyl?: string | null; axis?: string | null };
-    pd?: string | null;
-  } | any;
-  [key: string]: any;
+  prescription?: OrderPrescriptionPayload | Record<string, unknown> | null;
+  [key: string]: unknown;
 }
 
 export interface FullOrderPayload {
@@ -24,14 +27,17 @@ export interface FullOrderPayload {
   shippingAddress: string;
   city: string;
   paymentMethod: string;
-  paymentStatus?: "PENDING_VERIFICATION" | "PAID" | "FAILED" | "UNPAID" | "REFUNDED" | string | null;
+  paymentStatus?: "PENDING_VERIFICATION" | "PAID" | "FAILED" | "REJECTED" | "UNPAID" | "REFUNDED" | string | null;
   status?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | string | null;
   subtotal?: number | null;
   shippingFee?: number | null;
   totalAmount: number;
-  items: OrderItemPayload[] | any[];
+  items: OrderItemPayload[] | OrderItem[] | Array<Record<string, unknown>>;
   receiptUrl?: string | null;
-  [key: string]: any;
+  rejectionReason?: string;
+  rejectionCustomReason?: string;
+  advanceRequired?: number;
+  [key: string]: unknown;
 }
 
 export interface WhatsAppOrderItem {
@@ -128,35 +134,41 @@ export function launchWhatsAppBusinessChat(phone: string, textPayload: string): 
  * Normalizes an OrderReceiptData or partial order into FullOrderPayload.
  */
 export function normalizeToFullOrderPayload(
-  order: FullOrderPayload | OrderReceiptData | any
+  order: FullOrderPayload | OrderReceiptData | Record<string, unknown>
 ): FullOrderPayload {
   const displayId = formatOrderNumber(order);
-  const shippingFee = order.shippingFee !== undefined ? Number(order.shippingFee) : 250;
-  const subtotal = order.subtotal !== undefined
-    ? Number(order.subtotal)
-    : (order.items && order.items.length > 0
-        ? order.items.reduce((sum: number, item: any) => sum + (Number(item.price) || 0) * (item.quantity || 1), 0)
-        : Number(order.totalAmount || 0) - shippingFee);
-  const totalAmount = order.totalAmount !== undefined ? Number(order.totalAmount) : subtotal + shippingFee;
+  const raw = order as Record<string, unknown>;
+  const shippingFee = raw.shippingFee !== undefined ? Number(raw.shippingFee) : 250;
+  const rawItems = Array.isArray(raw.items) ? (raw.items as Array<Record<string, unknown>>) : [];
+  const subtotal = raw.subtotal !== undefined
+    ? Number(raw.subtotal)
+    : (rawItems.length > 0
+        ? rawItems.reduce((sum: number, item: Record<string, unknown>) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0)
+        : Number(raw.totalAmount || 0) - shippingFee);
+  const totalAmount = raw.totalAmount !== undefined ? Number(raw.totalAmount) : subtotal + shippingFee;
 
-  const rawPhone = order.customerPhone || order.phone || "";
+  const rawPhone = (raw.customerPhone as string) || (raw.phone as string) || "";
 
-  const items: OrderItemPayload[] = (order.items || []).map((item: any) => {
+  const items: OrderItemPayload[] = rawItems.map((item: Record<string, unknown>) => {
     let prescription: OrderItemPayload["prescription"] = undefined;
     if (item.prescription) {
-      const rx = item.prescription;
+      const rx = item.prescription as Record<string, unknown>;
       if (rx.rightEye || rx.leftEye) {
-        prescription = rx;
+        prescription = rx as OrderItemPayload["prescription"];
       } else {
+        const odSph = rx.odSph as number | undefined;
+        const odCyl = rx.odCyl as number | undefined;
+        const osSph = rx.osSph as number | undefined;
+        const osCyl = rx.osCyl as number | undefined;
         prescription = {
           rightEye: {
-            sph: rx.odSph != null ? (rx.odSph > 0 ? `+${rx.odSph.toFixed(2)}` : rx.odSph.toFixed(2)) : "0.00",
-            cyl: rx.odCyl != null && rx.odCyl !== 0 ? (rx.odCyl > 0 ? `+${rx.odCyl.toFixed(2)}` : rx.odCyl.toFixed(2)) : "0.00",
+            sph: odSph != null ? (odSph > 0 ? `+${odSph.toFixed(2)}` : odSph.toFixed(2)) : "0.00",
+            cyl: odCyl != null && odCyl !== 0 ? (odCyl > 0 ? `+${odCyl.toFixed(2)}` : odCyl.toFixed(2)) : "0.00",
             axis: rx.odAxis ? `${rx.odAxis}` : "0",
           },
           leftEye: {
-            sph: rx.osSph != null ? (rx.osSph > 0 ? `+${rx.osSph.toFixed(2)}` : rx.osSph.toFixed(2)) : "0.00",
-            cyl: rx.osCyl != null && rx.osCyl !== 0 ? (rx.osCyl > 0 ? `+${rx.osCyl.toFixed(2)}` : rx.osCyl.toFixed(2)) : "0.00",
+            sph: osSph != null ? (osSph > 0 ? `+${osSph.toFixed(2)}` : osSph.toFixed(2)) : "0.00",
+            cyl: osCyl != null && osCyl !== 0 ? (osCyl > 0 ? `+${osCyl.toFixed(2)}` : osCyl.toFixed(2)) : "0.00",
             axis: rx.osAxis ? `${rx.osAxis}` : "0",
           },
           pd: rx.pd ? (typeof rx.pd === "number" ? `${rx.pd}` : String(rx.pd).replace(" mm", "")) : undefined,
@@ -164,14 +176,17 @@ export function normalizeToFullOrderPayload(
       }
     }
 
+    const prod = item.product as { name?: string } | undefined;
+    const rxObj = item.prescription as { lensType?: string } | undefined;
+
     return {
-      frameName: item.frameName || item.product?.name || item.name || "Optical Frame",
-      name: item.name || item.frameName || item.product?.name,
-      color: item.color || item.selectedColor || item.frameColor,
+      frameName: (item.frameName as string) || prod?.name || (item.name as string) || "Optical Frame",
+      name: (item.name as string) || (item.frameName as string) || prod?.name,
+      color: (item.color as string) || (item.selectedColor as string) || (item.frameColor as string),
       framePrice: item.framePrice !== undefined && item.framePrice !== null
         ? Number(item.framePrice)
         : (item.price ? Number(item.price) : undefined),
-      lensPackageName: item.lensPackageName || item.selectedLensName || item.prescription?.lensType,
+      lensPackageName: (item.lensPackageName as string) || (item.selectedLensName as string) || rxObj?.lensType,
       lensPrice: item.lensPrice !== undefined && item.lensPrice !== null
         ? Number(item.lensPrice)
         : (item.lensFinalPrice !== undefined && item.lensFinalPrice !== null ? Number(item.lensFinalPrice) : undefined),
@@ -180,33 +195,64 @@ export function normalizeToFullOrderPayload(
   });
 
   return {
-    id: order.id,
+    id: (raw.id as string) || "",
     orderNumber: displayId,
-    customerName: order.customerName || "Customer",
+    customerName: (raw.customerName as string) || "Customer",
     customerPhone: rawPhone,
-    shippingAddress: order.shippingAddress || order.address || "Standard Delivery Address",
-    city: order.city || order.shippingCity || "Pakistan",
-    paymentMethod: order.paymentMethod || "COD",
-    paymentStatus: order.paymentStatus || "PENDING_VERIFICATION",
-    status: order.status || "PENDING",
+    shippingAddress: (raw.shippingAddress as string) || (raw.address as string) || "Standard Delivery Address",
+    city: (raw.city as string) || (raw.shippingCity as string) || "Pakistan",
+    paymentMethod: (raw.paymentMethod as string) || "COD",
+    paymentStatus: (raw.paymentStatus as string) || "PENDING_VERIFICATION",
+    status: (raw.status as string) || "PENDING",
     subtotal: subtotal > 0 ? subtotal : 0,
     shippingFee,
     totalAmount,
     items,
-    receiptUrl: order.receiptUrl || `https://myeyes.pk/receipts/${order.id}`,
+    receiptUrl: (raw.receiptUrl as string) || `https://myeyes.pk/receipts/${raw.id}`,
+    rejectionReason: raw.rejectionReason as string | undefined,
+    rejectionCustomReason: raw.rejectionCustomReason as string | undefined,
+    advanceRequired: raw.advanceRequired !== undefined ? Number(raw.advanceRequired) : undefined,
   };
 }
 
 /**
  * Builds dynamic status-aware WhatsApp message payload based on paymentStatus and fulfillment status.
  */
-export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderReceiptData | any): string {
+export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderReceiptData | Record<string, unknown>): string {
   const order = normalizeToFullOrderPayload(orderInput);
   const displayId = order.orderNumber || order.id;
   const paymentStatus = (order.paymentStatus || "").toUpperCase();
   const fulfillmentStatus = (order.status || "").toUpperCase();
 
   // 1. Payment-specific triggers (priority over fulfillment if flagged)
+  if (paymentStatus === "REJECTED") {
+    const selectedReason =
+      order.rejectionCustomReason?.trim() ||
+      order.rejectionReason ||
+      "Payment proof could not be verified";
+    const orderLink = order.receiptUrl || `https://myeyes.pk/orders/${displayId}`;
+
+    const lines = [
+      `*MY EYES OPTICAL - PAYMENT VERIFICATION ISSUE*`,
+      `----------------------------------------`,
+      `Dear ${order.customerName},`,
+      ``,
+      `Your deposit verification for Order #${displayId} could not be confirmed.`,
+      ``,
+      `*Reason:*`,
+      selectedReason,
+      ``,
+      `*Action Required:*`,
+      `Please resubmit clear proof of transfer or transaction ID (TID) using your order link:`,
+      orderLink,
+      ``,
+      `Alternatively, you may reply directly to this message with a clear transfer receipt or screenshot.`,
+      `----------------------------------------`,
+      `MY EYES Optical Verification Team`,
+    ];
+    return encodeURIComponent(lines.join("\n"));
+  }
+
   if (paymentStatus === "PAID" && fulfillmentStatus !== "DELIVERED") {
     const lines = [
       `*MY EYES OPTICAL - PAYMENT RECEIVED*`,
@@ -319,7 +365,7 @@ export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderRe
   }
 
   // 3. Initial Default State (PENDING / PENDING_VERIFICATION / Initial Confirmation)
-  const itemsList = order.items
+  const itemsList = (order.items as OrderItemPayload[])
     .map((item, index) => {
       const frameTitle = item.frameName || item.name || "Optical Frame";
       const color = item.color ? ` (${item.color})` : "";
@@ -330,9 +376,10 @@ export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderRe
       let block = `${index + 1}. ${frameTitle}${color} - ${frameCost}\n   - Lens: ${lensTitle} (${lensCost})`;
 
       if (item.prescription) {
-        const r = item.prescription.rightEye;
-        const l = item.prescription.leftEye;
-        const pd = item.prescription.pd;
+        const rx = item.prescription as OrderPrescriptionPayload;
+        const r = rx.rightEye;
+        const l = rx.leftEye;
+        const pd = rx.pd;
 
         block += `\n   - OD (Right Eye): SPH ${r?.sph || "0.00"}, CYL ${r?.cyl || "0.00"}, AXIS ${r?.axis || "0"}`;
         block += `\n   - OS (Left Eye): SPH ${l?.sph || "0.00"}, CYL ${l?.cyl || "0.00"}, AXIS ${l?.axis || "0"}`;

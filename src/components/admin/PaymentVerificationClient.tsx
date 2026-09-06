@@ -37,6 +37,10 @@ import {
   flagPaymentAction,
 } from "@/app/actions/admin";
 import { formatOrderNumber } from "@/lib/order-number";
+import {
+  launchWhatsAppBusinessChat,
+  buildDetailedOrderMessage,
+} from "@/lib/whatsapp";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Types
@@ -320,12 +324,11 @@ function RejectDialog({
 }: {
   order: PaymentOrder;
   onClose: () => void;
-  onConfirm: (reason: string) => void;
+  onConfirm: (selectedReason: string, customReasonText?: string) => void;
   loading: boolean;
 }) {
   const [selected, setSelected] = useState(REJECTION_REASONS[0]);
   const [custom, setCustom] = useState("");
-  const finalReason = custom.trim() || selected;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -374,7 +377,7 @@ function RejectDialog({
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(finalReason)}
+            onClick={() => onConfirm(selected, custom)}
             disabled={loading}
             className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
@@ -541,24 +544,43 @@ export default function PaymentVerificationClient({ initialOrders }: PaymentVeri
     await handleApproveTarget(selected);
   }, [selected, handleApproveTarget]);
 
-  const handleRejectTarget = useCallback(async (targetOrder: PaymentOrder, reason: string) => {
-    if (actionLoading) return;
-    setActionLoading(true);
-    const result = await rejectPaymentAction(targetOrder.id, ADMIN_EMAIL, reason);
-    if (result.success) {
-      updateOrderInState(targetOrder.id, { paymentStatus: "FAILED", rejectionReason: reason });
-      showToast(`❌ Order #${formatOrderNumber(targetOrder)} rejected. Customer notified.`, "error");
-      setShowRejectDialog(false);
-    } else {
-      showToast(result.error || "Failed to reject", "error");
-    }
-    setActionLoading(false);
-  }, [actionLoading, updateOrderInState]);
+  const handleRejectTarget = useCallback(
+    async (targetOrder: PaymentOrder, selectedReason: string, customReasonText?: string) => {
+      if (actionLoading) return;
+      setActionLoading(true);
+      const finalReason = customReasonText?.trim() || selectedReason;
+      const result = await rejectPaymentAction(targetOrder.id, ADMIN_EMAIL, finalReason);
+      if (result.success) {
+        updateOrderInState(targetOrder.id, { paymentStatus: "FAILED", rejectionReason: finalReason });
+        showToast(`❌ Order #${formatOrderNumber(targetOrder)} rejected. Customer notified.`, "error");
 
-  const handleReject = useCallback(async (reason: string) => {
-    if (!selected) return;
-    await handleRejectTarget(selected, reason);
-  }, [selected, handleRejectTarget]);
+        launchWhatsAppBusinessChat(
+          targetOrder.customerPhone || "",
+          buildDetailedOrderMessage({
+            ...targetOrder,
+            paymentStatus: "REJECTED",
+            rejectionReason: selectedReason,
+            rejectionCustomReason: customReasonText,
+            receiptUrl: `https://myeyes.pk/orders/${targetOrder.orderNumber || targetOrder.id}`,
+          })
+        );
+
+        setShowRejectDialog(false);
+      } else {
+        showToast(result.error || "Failed to reject", "error");
+      }
+      setActionLoading(false);
+    },
+    [actionLoading, updateOrderInState]
+  );
+
+  const handleReject = useCallback(
+    async (selectedReason: string, customReasonText?: string) => {
+      if (!selected) return;
+      await handleRejectTarget(selected, selectedReason, customReasonText);
+    },
+    [selected, handleRejectTarget]
+  );
 
   const handleFlag = useCallback(async () => {
     if (!selected || actionLoading) return;
