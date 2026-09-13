@@ -29,11 +29,6 @@ export interface Hero3DViewerProps {
 
 // ─── PBR Material Configs ─────────────────────────────────────────────────────
 
-/**
- * Two-tier frame materials:
- *  • Acetate (onyx / rosegold)   – dielectric, deep clearcoat gloss
- *  • Metal   (gold / silver)     – high metalness, low roughness
- */
 const FINISH_CONFIG: Record<
   FrameFinish,
   {
@@ -42,7 +37,6 @@ const FINISH_CONFIG: Record<
     roughness:         number;
     clearcoat:         number;
     clearcoatRoughness:number;
-    sheenColor?:       string;
   }
 > = {
   onyx: {
@@ -72,18 +66,9 @@ const FINISH_CONFIG: Record<
     roughness:          0.20,
     clearcoat:          1.0,
     clearcoatRoughness: 0.09,
-    sheenColor:         '#f4b8b8',
   },
 };
 
-/**
- * Physical optical glass lens parameters.
- * - transmission: fraction of light transmitted (1.0 = fully transparent)
- * - ior: index of refraction (real glass ≈ 1.52)
- * - thickness: physical depth of the lens slab in world units (drives refraction parallax)
- * - attenuationColor: beer-law colour deep inside the glass
- * - attenuationDistance: how deep (in world units) before the colour saturates
- */
 const LENS_CONFIG: Record<
   LensTint,
   {
@@ -99,7 +84,6 @@ const LENS_CONFIG: Record<
     opacity:             number;
   }
 > = {
-  // Anti-Blue Light – very faint cyan tint, slight mirror coating
   blue: {
     color:               '#c8e8ff',
     transmission:        0.88,
@@ -112,7 +96,6 @@ const LENS_CONFIG: Record<
     attenuationDistance: 0.6,
     opacity:             1.0,
   },
-  // Sun / Amber – warm amber photochromic
   amber: {
     color:               '#ffe8a0',
     transmission:        0.68,
@@ -125,7 +108,6 @@ const LENS_CONFIG: Record<
     attenuationDistance: 0.28,
     opacity:             1.0,
   },
-  // Emerald – rich green tint
   emerald: {
     color:               '#a0ffd8',
     transmission:        0.72,
@@ -138,7 +120,6 @@ const LENS_CONFIG: Record<
     attenuationDistance: 0.30,
     opacity:             1.0,
   },
-  // Ultra Clear – near-invisible optical glass
   clear: {
     color:               '#edf6ff',
     transmission:        0.97,
@@ -153,119 +134,166 @@ const LENS_CONFIG: Record<
   },
 };
 
-// ─── Geometry Helpers ─────────────────────────────────────────────────────────
+// ─── Shared extrude options ────────────────────────────────────────────────────
 
-/**
- * Build a rounded-rectangle (stadium) 2-D shape for the Square Browline lens cutout.
- * Uses four arc corners for a realistic squared lens.
- */
-function makeRoundedRect(w: number, h: number, r: number): THREE.Shape {
-  const hw = w / 2;
-  const hh = h / 2;
-  const shape = new THREE.Shape();
-  shape.moveTo(-hw + r, -hh);
-  shape.lineTo( hw - r, -hh);
-  shape.quadraticCurveTo( hw, -hh,  hw, -hh + r);
-  shape.lineTo( hw,  hh - r);
-  shape.quadraticCurveTo( hw,  hh,  hw - r,  hh);
-  shape.lineTo(-hw + r,  hh);
-  shape.quadraticCurveTo(-hw,  hh, -hw,  hh - r);
-  shape.lineTo(-hw, -hh + r);
-  shape.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
-  return shape;
+const RIM_EXTRUDE: THREE.ExtrudeGeometryOptions = {
+  depth:          0.085,
+  bevelEnabled:   true,
+  bevelThickness: 0.014,
+  bevelSize:      0.012,
+  bevelSegments:  4,
+};
+
+const LENS_EXTRUDE: THREE.ExtrudeGeometryOptions = {
+  depth:          0.055,
+  bevelEnabled:   true,
+  bevelThickness: 0.008,
+  bevelSize:      0.006,
+  bevelSegments:  3,
+};
+
+// ─── Helper: build a TubeGeometry rim from a closed 2-D shape ─────────────────
+
+function tubeRimFromShape(
+  shape: THREE.Shape,
+  tubularSegments = 96,
+  tubeRadius      = 0.028,
+  radialSegments  = 12
+): THREE.TubeGeometry {
+  const pts2d = shape.getPoints(80);
+  const pts3d = pts2d.map((p) => new THREE.Vector3(p.x, p.y, 0));
+  const curve  = new THREE.CatmullRomCurve3(pts3d, true);
+  return new THREE.TubeGeometry(curve, tubularSegments, tubeRadius, radialSegments, true);
 }
 
-/** Extrude options for frame rims that need bevel depth */
-const FRAME_EXTRUDE_OPTS: THREE.ExtrudeGeometryOptions = {
-  depth:           0.09,
-  bevelEnabled:    true,
-  bevelThickness:  0.016,
-  bevelSize:       0.014,
-  bevelSegments:   4,
-};
+// ─── Helper: rounded-rectangle shape ─────────────────────────────────────────
 
-/** Extrude options for lens slabs (thinner, smooth chamfer) */
-const LENS_EXTRUDE_OPTS: THREE.ExtrudeGeometryOptions = {
-  depth:           0.06,
-  bevelEnabled:    true,
-  bevelThickness:  0.010,
-  bevelSize:       0.008,
-  bevelSegments:   3,
-};
+function roundedRect(w: number, h: number, r: number): THREE.Shape {
+  const hw = w / 2, hh = h / 2;
+  const s  = new THREE.Shape();
+  s.moveTo(-hw + r, -hh);
+  s.lineTo( hw - r, -hh);
+  s.quadraticCurveTo( hw, -hh,  hw, -hh + r);
+  s.lineTo( hw,  hh - r);
+  s.quadraticCurveTo( hw,  hh,  hw - r,  hh);
+  s.lineTo(-hw + r,  hh);
+  s.quadraticCurveTo(-hw,  hh, -hw,  hh - r);
+  s.lineTo(-hw, -hh + r);
+  s.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
+  return s;
+}
 
-// ─── Aviator Teardrop shapes (module-level, created once) ─────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// GEOMETRY — lazy singleton, initialised on first WebGL render (browser only).
+// Keeping construction out of module scope prevents Next.js / webpack from
+// statically analysing or minifying large Three.js call-chains at build time,
+// which was causing the Node.js OOM during production compilation.
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function buildTeardropShape(isLeft: boolean): THREE.Shape {
+function buildAviatorShape(isLeft: boolean): THREE.Shape {
   const s = isLeft ? 1 : -1;
-  const shape = new THREE.Shape();
-  shape.moveTo( 0.52 * s,  0.48);
-  shape.bezierCurveTo( 0.15 * s,  0.52, -0.55 * s,  0.46, -0.78 * s,  0.34);
-  shape.bezierCurveTo(-0.98 * s,  0.20, -0.95 * s, -0.30, -0.70 * s, -0.72);
-  shape.bezierCurveTo(-0.50 * s, -0.96, -0.06 * s, -0.98,  0.22 * s, -0.82);
-  shape.bezierCurveTo( 0.54 * s, -0.64,  0.66 * s, -0.16,  0.60 * s,  0.20);
-  shape.bezierCurveTo( 0.57 * s,  0.36,  0.54 * s,  0.44,  0.52 * s,  0.48);
-  return shape;
+  const sh = new THREE.Shape();
+  sh.moveTo(0.46 * s, 0.54);
+  sh.bezierCurveTo( 0.12 * s,  0.60, -0.50 * s,  0.58, -0.88 * s,  0.40);
+  sh.bezierCurveTo(-1.08 * s,  0.20, -1.06 * s, -0.28, -0.78 * s, -0.68);
+  sh.bezierCurveTo(-0.52 * s, -0.92, -0.04 * s, -0.96,  0.20 * s, -0.78);
+  sh.bezierCurveTo( 0.50 * s, -0.58,  0.60 * s, -0.12,  0.55 * s,  0.22);
+  sh.bezierCurveTo( 0.52 * s,  0.38,  0.48 * s,  0.48,  0.46 * s,  0.54);
+  return sh;
+}
+
+function buildBrowShape(): THREE.Shape {
+  const sh = new THREE.Shape();
+  const hw = 0.80, top = 0.58, bot = 0.10, r = 0.10;
+  sh.moveTo(-hw + r, bot);
+  sh.bezierCurveTo(-hw * 0.6, -0.02, hw * 0.6, -0.02, hw - r, bot);
+  sh.quadraticCurveTo(hw, bot, hw, bot + r);
+  sh.lineTo(hw, top - r);
+  sh.quadraticCurveTo(hw, top, hw - r, top);
+  sh.lineTo(-hw + r, top);
+  sh.quadraticCurveTo(-hw, top, -hw, top - r);
+  sh.lineTo(-hw, bot + r);
+  sh.quadraticCurveTo(-hw, bot, -hw + r, bot);
+  return sh;
+}
+
+function buildBrowlineWireShape(): THREE.Shape {
+  const sh = new THREE.Shape();
+  const hw = 0.72, ty = 0.10;
+  sh.moveTo(-hw, ty);
+  sh.bezierCurveTo(-hw, -0.24, -hw, -0.58, 0, -0.66);
+  sh.bezierCurveTo( hw, -0.58,  hw, -0.24, hw, ty);
+  sh.lineTo(-hw, ty);
+  return sh;
 }
 
 function buildCatEyeShape(isLeft: boolean): THREE.Shape {
   const s = isLeft ? 1 : -1;
-  const shape = new THREE.Shape();
-  // Bottom inner nose side
-  shape.moveTo( 0.50 * s, -0.42);
-  // Sweep along bottom
-  shape.bezierCurveTo( 0.60 * s, -0.52, -0.55 * s, -0.58, -0.72 * s, -0.28);
-  // Up the outer side
-  shape.bezierCurveTo(-0.95 * s, -0.05, -0.90 * s,  0.38, -0.68 * s,  0.54);
-  // Cat-eye upswept outer-top corner
-  shape.bezierCurveTo(-0.50 * s,  0.68, -0.22 * s,  0.88,  0.05 * s,  0.82);
-  // Inner brow, angled inward
-  shape.bezierCurveTo( 0.35 * s,  0.74,  0.58 * s,  0.38,  0.56 * s,  0.10);
-  shape.bezierCurveTo( 0.55 * s, -0.08,  0.50 * s, -0.28,  0.50 * s, -0.42);
-  return shape;
+  const sh = new THREE.Shape();
+  sh.moveTo( 0.42 * s, -0.35);
+  sh.bezierCurveTo( 0.14 * s, -0.58, -0.44 * s, -0.62, -0.72 * s, -0.44);
+  sh.bezierCurveTo(-0.96 * s, -0.24, -1.00 * s,  0.02, -0.94 * s,  0.28);
+  sh.bezierCurveTo(-0.86 * s,  0.52, -0.70 * s,  0.82, -0.50 * s,  0.96);
+  sh.bezierCurveTo(-0.24 * s,  0.72,  0.08 * s,  0.52,  0.30 * s,  0.40);
+  sh.bezierCurveTo( 0.50 * s,  0.28,  0.56 * s,  0.04,  0.54 * s, -0.12);
+  sh.bezierCurveTo( 0.52 * s, -0.22,  0.46 * s, -0.30,  0.42 * s, -0.35);
+  return sh;
 }
 
-const leftTeardropShape  = buildTeardropShape(true);
-const rightTeardropShape = buildTeardropShape(false);
-const leftCatEyeShape    = buildCatEyeShape(true);
-const rightCatEyeShape   = buildCatEyeShape(false);
+// Lazy singleton cache — populated on first render, never at module-eval time
+let _geo: {
+  leftAviatorRim:   THREE.TubeGeometry;
+  rightAviatorRim:  THREE.TubeGeometry;
+  leftAviatorLens:  THREE.BufferGeometry;
+  rightAviatorLens: THREE.BufferGeometry;
+  brow:             THREE.BufferGeometry;
+  squareLens:       THREE.BufferGeometry;
+  browlineWire:     THREE.TubeGeometry;
+  leftCatEyeRim:    THREE.TubeGeometry;
+  rightCatEyeRim:   THREE.TubeGeometry;
+  leftCatEyeLens:   THREE.BufferGeometry;
+  rightCatEyeLens:  THREE.BufferGeometry;
+} | null = null;
 
-// Pre-bake geometries (expensive; do once at module level)
-function buildTubeRimGeo(shape: THREE.Shape, tubularSeg = 96, tubeR = 0.028): THREE.TubeGeometry {
-  const pts2d = shape.getPoints(72);
-  const pts3d = pts2d.map((p) => new THREE.Vector3(p.x, p.y, 0));
-  const curve  = new THREE.CatmullRomCurve3(pts3d, true);
-  return new THREE.TubeGeometry(curve, tubularSeg, tubeR, 14, true);
+function getGeo() {
+  if (_geo) return _geo;
+
+  const leftAv  = buildAviatorShape(true);
+  const rightAv = buildAviatorShape(false);
+  const leftCE  = buildCatEyeShape(true);
+  const rightCE = buildCatEyeShape(false);
+  const brow    = buildBrowShape();
+  const wire    = buildBrowlineWireShape();
+  const sqLens  = roundedRect(1.44, 1.06, 0.08);
+
+  _geo = {
+    leftAviatorRim:   tubeRimFromShape(leftAv,   96, 0.026, 12),
+    rightAviatorRim:  tubeRimFromShape(rightAv,  96, 0.026, 12),
+    leftAviatorLens:  new THREE.ExtrudeGeometry(leftAv,  LENS_EXTRUDE),
+    rightAviatorLens: new THREE.ExtrudeGeometry(rightAv, LENS_EXTRUDE),
+    brow: new THREE.ExtrudeGeometry(brow, {
+      depth: 0.13, bevelEnabled: true,
+      bevelThickness: 0.018, bevelSize: 0.014, bevelSegments: 5,
+    }),
+    squareLens:      new THREE.ExtrudeGeometry(sqLens, LENS_EXTRUDE),
+    browlineWire:    tubeRimFromShape(wire, 64, 0.014, 8),
+    leftCatEyeRim:   tubeRimFromShape(leftCE,  88, 0.030, 12),
+    rightCatEyeRim:  tubeRimFromShape(rightCE, 88, 0.030, 12),
+    leftCatEyeLens:  new THREE.ExtrudeGeometry(leftCE,  LENS_EXTRUDE),
+    rightCatEyeLens: new THREE.ExtrudeGeometry(rightCE, LENS_EXTRUDE),
+  };
+  return _geo;
 }
 
-const leftAviatorRimGeo  = buildTubeRimGeo(leftTeardropShape);
-const rightAviatorRimGeo = buildTubeRimGeo(rightTeardropShape);
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-const leftAviatorLensGeo  = new THREE.ExtrudeGeometry(leftTeardropShape,  LENS_EXTRUDE_OPTS);
-const rightAviatorLensGeo = new THREE.ExtrudeGeometry(rightTeardropShape, LENS_EXTRUDE_OPTS);
-
-const leftCatEyeRimGeo   = buildTubeRimGeo(leftCatEyeShape,  88, 0.032);
-const rightCatEyeRimGeo  = buildTubeRimGeo(rightCatEyeShape, 88, 0.032);
-
-const leftCatEyeLensGeo  = new THREE.ExtrudeGeometry(leftCatEyeShape,  LENS_EXTRUDE_OPTS);
-const rightCatEyeLensGeo = new THREE.ExtrudeGeometry(rightCatEyeShape, LENS_EXTRUDE_OPTS);
-
-// Square lens: rounded rect
-const squareLensShape  = makeRoundedRect(1.52, 1.10, 0.10);
-const squareLensGeo    = new THREE.ExtrudeGeometry(squareLensShape,  LENS_EXTRUDE_OPTS);
-const squareFrameShape = makeRoundedRect(1.68, 1.26, 0.12);
-const squareFrameGeo   = new THREE.ExtrudeGeometry(squareFrameShape, FRAME_EXTRUDE_OPTS);
-
-// ─── Sub-Components ──────────────────────────────────────────────────────────
-
-/**
- * Silicone nose pads — semi-transparent, soft silicone appearance.
- * Two angled pads symmetrically placed at the bridge nasal rest.
- */
 function NosePads({ frameMat }: { frameMat: THREE.MeshPhysicalMaterial }) {
   const padMat = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
-        color:       '#e8edf2',
+        color:        '#e8edf2',
         transmission: 0.55,
         roughness:    0.30,
         ior:          1.42,
@@ -277,22 +305,18 @@ function NosePads({ frameMat }: { frameMat: THREE.MeshPhysicalMaterial }) {
   );
   return (
     <group>
-      {/* Left pad arm */}
       <mesh position={[-0.30, -0.24, 0.08]} rotation={[0.15, 0.35, -0.18]}>
         <cylinderGeometry args={[0.018, 0.018, 0.20, 14]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      {/* Left silicone pad */}
       <mesh position={[-0.34, -0.32, 0.14]} rotation={[0.25, 0.42, 0.0]}>
         <boxGeometry args={[0.038, 0.13, 0.06]} />
         <primitive object={padMat} attach="material" />
       </mesh>
-      {/* Right pad arm */}
       <mesh position={[0.30, -0.24, 0.08]} rotation={[0.15, -0.35, 0.18]}>
         <cylinderGeometry args={[0.018, 0.018, 0.20, 14]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      {/* Right silicone pad */}
       <mesh position={[0.34, -0.32, 0.14]} rotation={[0.25, -0.42, 0.0]}>
         <boxGeometry args={[0.038, 0.13, 0.06]} />
         <primitive object={padMat} attach="material" />
@@ -301,10 +325,6 @@ function NosePads({ frameMat }: { frameMat: THREE.MeshPhysicalMaterial }) {
   );
 }
 
-/**
- * Temple arm — three-segment: thick hinge block → slim straight arm → tapered tip.
- * Hinge is a small bevelled box; the arm uses a rounded cylinder cross-section.
- */
 function TempleArm({
   position,
   rotation,
@@ -317,21 +337,21 @@ function TempleArm({
   return (
     <group position={position} rotation={rotation}>
       {/* Hinge block */}
-      <mesh position={[0, 0, 0]}>
+      <mesh>
         <boxGeometry args={[0.10, 0.13, 0.09]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      {/* Hinge screw cylinder */}
-      <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      {/* Hinge screw */}
+      <mesh rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.016, 0.016, 0.11, 10]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      {/* Main arm shaft */}
+      {/* Arm shaft */}
       <mesh position={[0, 0, -1.15]}>
-        <boxGeometry args={[0.055, 0.075, 2.30]} />
+        <boxGeometry args={[0.055, 0.070, 2.30]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
-      {/* Tapered tip / ear hook */}
+      {/* Ear-hook tip */}
       <mesh position={[0, -0.18, -2.32]} rotation={[0.42, 0, 0]}>
         <cylinderGeometry args={[0.022, 0.012, 0.38, 12]} />
         <primitive object={frameMat} attach="material" />
@@ -340,7 +360,12 @@ function TempleArm({
   );
 }
 
-// ─── 1. Classic Round ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// FRAME COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── 1. Classic Round ─────────────────────────────────────────────────────────
+//   Two perfect circular torus eye wires + keyhole bridge (arch + nose pads)
 
 function RoundFrame({
   frameMat,
@@ -349,49 +374,71 @@ function RoundFrame({
   frameMat: THREE.MeshPhysicalMaterial;
   lensMat:  THREE.MeshPhysicalMaterial;
 }) {
-  // Lens disc geometry (flat cylinder with bevel-ish edge)
+  const LENS_R   = 0.80;   // eye-wire circle radius
+  const LENS_CX  = 1.10;   // horizontal centre of each lens
+  const RIM_TUBE = 0.066;  // rim cross-section radius
+
   const lensGeo = useMemo(
-    () => new THREE.CylinderGeometry(0.78, 0.78, 0.055, 72, 1, false),
+    () => new THREE.CylinderGeometry(LENS_R - 0.01, LENS_R - 0.01, 0.052, 80, 1, false),
     []
   );
+
+  // Keyhole bridge geometry: a narrow arch bar + two diagonal pad arms
+  // Bridge inner gap = LENS_CX - LENS_R = 0.30 per side → bridge spans ±0.30
+  const BRIDGE_R  = 0.30;
+  const BRIDGE_TH = 0.024;
+
   return (
     <group>
-      {/* Nose bridge – arched torus */}
-      <mesh position={[0, 0.08, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <torusGeometry args={[0.28, 0.030, 14, 32, Math.PI]} />
-        <primitive object={frameMat} attach="material" />
-      </mesh>
-
-      {/* Left rim */}
-      <mesh position={[-1.12, 0, 0]}>
-        <torusGeometry args={[0.82, 0.068, 22, 96]} />
+      {/* ── Left eye wire ── */}
+      <mesh position={[-LENS_CX, 0, 0]}>
+        <torusGeometry args={[LENS_R, RIM_TUBE, 22, 96]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
       {/* Left lens */}
-      <mesh position={[-1.12, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[-LENS_CX, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <primitive object={lensGeo} />
         <primitive object={lensMat} attach="material" />
       </mesh>
 
-      {/* Right rim */}
-      <mesh position={[1.12, 0, 0]}>
-        <torusGeometry args={[0.82, 0.068, 22, 96]} />
+      {/* ── Right eye wire ── */}
+      <mesh position={[LENS_CX, 0, 0]}>
+        <torusGeometry args={[LENS_R, RIM_TUBE, 22, 96]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
       {/* Right lens */}
-      <mesh position={[1.12, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[LENS_CX, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <primitive object={lensGeo} />
         <primitive object={lensMat} attach="material" />
       </mesh>
 
+      {/* ── Keyhole bridge ──
+           The arch rises above the nose, opening downward — classic keyhole.
+           rotation [0,0,π/2] makes the torus face forward as a half-circle. */}
+      <mesh position={[0, 0.04, 0.01]} rotation={[Math.PI, 0, Math.PI / 2]}>
+        <torusGeometry args={[BRIDGE_R, BRIDGE_TH, 12, 32, Math.PI]} />
+        <primitive object={frameMat} attach="material" />
+      </mesh>
+
+      {/* Bridge diagonal arms connecting rim to arch */}
+      <mesh position={[-0.22, -0.06, 0.01]} rotation={[0, 0,  0.55]}>
+        <cylinderGeometry args={[BRIDGE_TH * 0.7, BRIDGE_TH * 0.7, 0.24, 10]} />
+        <primitive object={frameMat} attach="material" />
+      </mesh>
+      <mesh position={[0.22, -0.06, 0.01]} rotation={[0, 0, -0.55]}>
+        <cylinderGeometry args={[BRIDGE_TH * 0.7, BRIDGE_TH * 0.7, 0.24, 10]} />
+        <primitive object={frameMat} attach="material" />
+      </mesh>
+
       <NosePads frameMat={frameMat} />
-      <TempleArm position={[-1.96, 0.05, -0.04]} rotation={[0, -0.10, 0]} frameMat={frameMat} />
-      <TempleArm position={[ 1.96, 0.05, -0.04]} rotation={[0,  0.10, 0]} frameMat={frameMat} />
+      <TempleArm position={[-1.96, 0.04, -0.04]} rotation={[0, -0.10, 0]} frameMat={frameMat} />
+      <TempleArm position={[ 1.96, 0.04, -0.04]} rotation={[0,  0.10, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
-// ─── 2. Titanium Aviator ─────────────────────────────────────────────────────
+// ── 2. Titanium Aviator ────────────────────────────────────────────────────────
+//   Straight horizontal top brow bar + slim single lower bridge + teardrop lenses
 
 function AviatorFrame({
   frameMat,
@@ -400,52 +447,51 @@ function AviatorFrame({
   frameMat: THREE.MeshPhysicalMaterial;
   lensMat:  THREE.MeshPhysicalMaterial;
 }) {
+  // The teardrop centroid is offset so the top sits near y=0.50
+  // Lenses are positioned so their top edge aligns with the brow bar
   return (
     <group>
-      {/* Slim titanium top-brow bar */}
-      <mesh position={[0, 0.47, 0.01]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.018, 0.018, 1.52, 20]} />
+      {/* ── Straight top brow bar (hallmark of the aviator style) ── */}
+      <mesh position={[0, 0.54, 0.01]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.018, 0.018, 2.10, 18]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
 
-      {/* Double-wire arched nose bridge */}
-      <mesh position={[0, 0.16, 0.01]} rotation={[0, 0, Math.PI / 2]}>
-        <torusGeometry args={[0.24, 0.020, 12, 28, Math.PI]} />
-        <primitive object={frameMat} attach="material" />
-      </mesh>
-      <mesh position={[0, 0.08, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <torusGeometry args={[0.18, 0.014, 10, 24, Math.PI]} />
+      {/* ── Slim lower nose bridge (single wire arch, not double) ── */}
+      <mesh position={[0, 0.18, 0.01]} rotation={[Math.PI, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.22, 0.016, 10, 24, Math.PI]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
 
-      {/* Left teardrop */}
-      <group position={[-1.02, -0.05, 0]}>
+      {/* ── Left teardrop ── */}
+      <group position={[-1.06, -0.02, 0]}>
         <mesh geometry={leftAviatorRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh geometry={leftAviatorLensGeo} position={[0, 0, -0.010]}>
+        <mesh geometry={leftAviatorLensGeo} position={[0, 0, -0.008]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      {/* Right teardrop */}
-      <group position={[1.02, -0.05, 0]}>
+      {/* ── Right teardrop ── */}
+      <group position={[1.06, -0.02, 0]}>
         <mesh geometry={rightAviatorRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh geometry={rightAviatorLensGeo} position={[0, 0, -0.010]}>
+        <mesh geometry={rightAviatorLensGeo} position={[0, 0, -0.008]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
       <NosePads frameMat={frameMat} />
-      <TempleArm position={[-1.92, 0.30, -0.04]} rotation={[0, -0.12, 0]} frameMat={frameMat} />
-      <TempleArm position={[ 1.92, 0.30, -0.04]} rotation={[0,  0.12, 0]} frameMat={frameMat} />
+      <TempleArm position={[-1.96, 0.34, -0.04]} rotation={[0, -0.12, 0]} frameMat={frameMat} />
+      <TempleArm position={[ 1.96, 0.34, -0.04]} rotation={[0,  0.12, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
-// ─── 3. Square Browline ──────────────────────────────────────────────────────
+// ── 3. Square Browline ────────────────────────────────────────────────────────
+//   THICK acetate brow on the upper half (per lens) + THIN wire bottom rim
 
 function SquareFrame({
   frameMat,
@@ -454,59 +500,54 @@ function SquareFrame({
   frameMat: THREE.MeshPhysicalMaterial;
   lensMat:  THREE.MeshPhysicalMaterial;
 }) {
-  // Thick upper browbar
-  const browbarGeo = useMemo(
-    () =>
-      new THREE.BoxGeometry(4.52, 0.20, 0.15),
-    []
-  );
-  // Bridge
-  const bridgeGeo = useMemo(
-    () => new THREE.BoxGeometry(0.42, 0.10, 0.09),
-    []
-  );
+  const LCX = 1.18; // lens centre x
 
   return (
     <group>
-      {/* Upper brow bar */}
-      <mesh position={[0, 0.42, 0]} geometry={browbarGeo}>
-        <primitive object={frameMat} attach="material" />
-      </mesh>
-      {/* Bridge connector */}
-      <mesh position={[0, 0.17, 0]} geometry={bridgeGeo}>
+      {/* ── Bridge between the two brows ── */}
+      <mesh position={[0, 0.38, 0]}>
+        <boxGeometry args={[0.50, 0.14, 0.12]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
 
-      {/* Left lens assembly */}
-      <group position={[-1.22, -0.09, 0]}>
-        {/* Frame rim (extruded rounded rect) */}
-        <mesh geometry={squareFrameGeo} position={[0, 0, -0.045]}>
+      {/* ── Left lens assembly ── */}
+      <group position={[-LCX, 0, 0]}>
+        {/* Thick upper acetate brow — extruded crescent */}
+        <mesh geometry={browGeo} position={[0, 0.06, -0.065]}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        {/* Lens slab inset slightly */}
-        <mesh geometry={squareLensGeo} position={[0, 0, -0.010]}>
+        {/* Thin bottom wire rim — traces the lower half perimeter */}
+        <mesh geometry={browlineWireGeo} position={[0, -0.16, 0]}>
+          <primitive object={frameMat} attach="material" />
+        </mesh>
+        {/* Lens slab */}
+        <mesh geometry={squareLensGeo} position={[0, -0.06, -0.006]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      {/* Right lens assembly */}
-      <group position={[1.22, -0.09, 0]}>
-        <mesh geometry={squareFrameGeo} position={[0, 0, -0.045]}>
+      {/* ── Right lens assembly ── */}
+      <group position={[LCX, 0, 0]}>
+        <mesh geometry={browGeo} position={[0, 0.06, -0.065]}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh geometry={squareLensGeo} position={[0, 0, -0.010]}>
+        <mesh geometry={browlineWireGeo} position={[0, -0.16, 0]}>
+          <primitive object={frameMat} attach="material" />
+        </mesh>
+        <mesh geometry={squareLensGeo} position={[0, -0.06, -0.006]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
       <NosePads frameMat={frameMat} />
-      <TempleArm position={[-2.18, 0.37, -0.04]} rotation={[0, -0.10, 0]} frameMat={frameMat} />
-      <TempleArm position={[ 2.18, 0.37, -0.04]} rotation={[0,  0.10, 0]} frameMat={frameMat} />
+      <TempleArm position={[-2.04, 0.38, -0.04]} rotation={[0, -0.10, 0]} frameMat={frameMat} />
+      <TempleArm position={[ 2.04, 0.38, -0.04]} rotation={[0,  0.10, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
-// ─── 4. Cat-Eye Luxe ─────────────────────────────────────────────────────────
+// ── 4. Cat-Eye Luxe ────────────────────────────────────────────────────────────
+//   Sharp upswept outer corners + slim bridge
 
 function CatEyeFrame({
   frameMat,
@@ -517,40 +558,42 @@ function CatEyeFrame({
 }) {
   return (
     <group>
-      {/* Centre decorative bridge cylinder */}
-      <mesh position={[0, 0.24, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.038, 0.038, 0.50, 18]} />
+      {/* ── Slim horizontal bridge ── */}
+      <mesh position={[0, 0.20, 0.01]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.028, 0.028, 0.52, 14]} />
         <primitive object={frameMat} attach="material" />
       </mesh>
 
-      {/* Left cat-eye */}
-      <group position={[-1.22, 0.06, 0]}>
+      {/* ── Left cat-eye ── */}
+      <group position={[-1.18, 0.04, 0]}>
         <mesh geometry={leftCatEyeRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh geometry={leftCatEyeLensGeo} position={[0, 0, -0.010]}>
+        <mesh geometry={leftCatEyeLensGeo} position={[0, 0, -0.008]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
-      {/* Right cat-eye */}
-      <group position={[1.22, 0.06, 0]}>
+      {/* ── Right cat-eye ── */}
+      <group position={[1.18, 0.04, 0]}>
         <mesh geometry={rightCatEyeRimGeo}>
           <primitive object={frameMat} attach="material" />
         </mesh>
-        <mesh geometry={rightCatEyeLensGeo} position={[0, 0, -0.010]}>
+        <mesh geometry={rightCatEyeLensGeo} position={[0, 0, -0.008]}>
           <primitive object={lensMat} attach="material" />
         </mesh>
       </group>
 
       <NosePads frameMat={frameMat} />
-      <TempleArm position={[-2.18, 0.28, -0.04]} rotation={[0, -0.14, 0]} frameMat={frameMat} />
-      <TempleArm position={[ 2.18, 0.28, -0.04]} rotation={[0,  0.14, 0]} frameMat={frameMat} />
+      <TempleArm position={[-2.14, 0.32, -0.04]} rotation={[0, -0.14, 0]} frameMat={frameMat} />
+      <TempleArm position={[ 2.14, 0.32, -0.04]} rotation={[0,  0.14, 0]} frameMat={frameMat} />
     </group>
   );
 }
 
-// ─── Main Scene Model ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN SCENE MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function EyewearStudioModel({
   shape     = 'round',
@@ -570,12 +613,10 @@ function EyewearStudioModel({
   const groupRef     = useRef<THREE.Group>(null);
   const currentScale = useRef<number>(1.0);
 
-  // Colour lerp targets (no allocations in useFrame)
   const frameColTarget = useRef(new THREE.Color());
   const lensColTarget  = useRef(new THREE.Color());
   const lensAttTarget  = useRef(new THREE.Color());
 
-  // ── Create long-lived PBR materials ──────────────────────────────────────
   const [frameMaterial] = useState(() => {
     const cfg = FINISH_CONFIG.onyx;
     return new THREE.MeshPhysicalMaterial({
@@ -584,7 +625,7 @@ function EyewearStudioModel({
       roughness:          cfg.roughness,
       clearcoat:          cfg.clearcoat,
       clearcoatRoughness: cfg.clearcoatRoughness,
-      envMapIntensity:    1.4,
+      envMapIntensity:    1.0,
     });
   });
 
@@ -603,23 +644,20 @@ function EyewearStudioModel({
       transparent:         true,
       opacity:             cfg.opacity,
       side:                THREE.FrontSide,
-      envMapIntensity:     1.6,
+      envMapIntensity:     1.2,
     });
   });
 
-  // Elastic scale pop on shape switch
   useEffect(() => { currentScale.current = 0.88; }, [shape]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     const t = state.clock.getElapsedTime();
 
-    // Gentle floating + breathing tilt
-    groupRef.current.position.y = Math.sin(t * 1.5) * 0.065;
-    groupRef.current.rotation.z = Math.sin(t * 0.85) * 0.022;
-    groupRef.current.rotation.x = Math.cos(t * 0.65) * 0.013;
+    groupRef.current.position.y = Math.sin(t * 1.5) * 0.055;
+    groupRef.current.rotation.z = Math.sin(t * 0.85) * 0.018;
+    groupRef.current.rotation.x = Math.cos(t * 0.65) * 0.010;
 
-    // Mobile drag / auto-spin
     if (isMobile) {
       if (autoRotate) targetRotationY.current += delta * 0.38;
       groupRef.current.rotation.y = THREE.MathUtils.damp(
@@ -630,11 +668,10 @@ function EyewearStudioModel({
       );
     }
 
-    // Scale spring
     currentScale.current = THREE.MathUtils.damp(currentScale.current, 1.0, 10, delta);
     groupRef.current.scale.setScalar(currentScale.current);
 
-    // ── Smooth frame material transitions ────────────────────────────────
+    // Frame material smooth transition
     const tf = FINISH_CONFIG[finish] ?? FINISH_CONFIG.onyx;
     frameColTarget.current.set(tf.color);
     frameMaterial.color.lerp(frameColTarget.current, delta * 7);
@@ -644,7 +681,7 @@ function EyewearStudioModel({
     frameMaterial.clearcoatRoughness = THREE.MathUtils.damp(frameMaterial.clearcoatRoughness, tf.clearcoatRoughness, 8, delta);
     frameMaterial.needsUpdate        = true;
 
-    // ── Smooth lens material transitions ──────────────────────────────────
+    // Lens material smooth transition
     const tl = LENS_CONFIG[lens] ?? LENS_CONFIG.blue;
     lensColTarget.current.set(tl.color);
     lensAttTarget.current.set(tl.attenuationColor);
@@ -670,7 +707,9 @@ function EyewearStudioModel({
   );
 }
 
-// ─── Canvas Root ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANVAS ROOT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function Hero3DViewerInner({
   frameShape  = 'round',
@@ -686,8 +725,6 @@ export default function Hero3DViewerInner({
       dpr={[1, 2]}
       performance={{ min: 0.5 }}
       onCreated={({ gl }) => {
-        // Physically correct lighting mode for accurate PBR
-        // Graceful context-loss recovery
         const domElement = gl.domElement;
         if (domElement) {
           domElement.addEventListener(
@@ -698,14 +735,15 @@ export default function Hero3DViewerInner({
         }
       }}
       gl={{
-        powerPreference:      'high-performance',
-        antialias:            true,
-        alpha:                true,
+        powerPreference:       'high-performance',
+        antialias:             true,
+        alpha:                 true,
         preserveDrawingBuffer: false,
-        stencil:              false,
-        depth:                true,
-        toneMapping:          THREE.ACESFilmicToneMapping,
-        toneMappingExposure:  1.05,
+        stencil:               false,
+        depth:                 true,
+        toneMapping:           THREE.ACESFilmicToneMapping,
+        // ↓ Reduced from 1.05 — prevents blown-out whites on metal/glass
+        toneMappingExposure:   0.72,
       }}
       style={{
         width:         '100%',
@@ -716,45 +754,45 @@ export default function Hero3DViewerInner({
     >
       <PerspectiveCamera makeDefault position={[0, 0, 6.8]} fov={32} />
 
-      {/* ── HDR Environment (studio preset) for reflections ── */}
+      {/* HDR environment — reduced intensity so it fills without washing out */}
       <Environment
         preset="studio"
         background={false}
-        environmentIntensity={1.15}
+        environmentIntensity={0.65}
       />
 
-      {/* ── Commercial Studio Lighting ───────────────────────────────────── */}
-      {/* Key light — warm, soft, upper-left */}
+      {/*
+        ── Studio Lighting — dialled back for crisp, natural accents ──
+        SpotLight intensities are in candela with physical lighting.
+        Key: warm upper-left  │  Fill: cool upper-right  │  Rim: back-centre
+      */}
       <spotLight
-        position={[4.5, 8, 5]}
-        angle={0.28}
-        penumbra={0.55}
-        intensity={28}
-        color="#fff8f2"
+        position={[4.5, 7, 5]}
+        angle={0.30}
+        penumbra={0.60}
+        intensity={5.5}
+        color="#fff9f4"
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0004}
+        shadow-bias={-0.0003}
       />
-      {/* Fill / rim — cool blue, upper-right */}
       <spotLight
-        position={[-5, 5, 2]}
-        angle={0.38}
-        penumbra={0.70}
-        intensity={12}
-        color="#d6eeff"
+        position={[-5, 4.5, 2]}
+        angle={0.40}
+        penumbra={0.72}
+        intensity={2.2}
+        color="#daeeff"
       />
-      {/* Back rim — top-center for lens edge highlight */}
       <spotLight
-        position={[0, 6, -3]}
-        angle={0.45}
-        penumbra={0.80}
-        intensity={9}
+        position={[0, 5.5, -3]}
+        angle={0.50}
+        penumbra={0.85}
+        intensity={1.6}
         color="#ffffff"
       />
-      {/* Soft ambient fill — very low so PBR shadows stay deep */}
-      <ambientLight intensity={0.22} color="#f0f4ff" />
+      {/* Very soft ambient — keeps shadow areas readable without flattening */}
+      <ambientLight intensity={0.18} color="#f2f4ff" />
 
-      {/* ── 3D Eyewear Model ─────────────────────────────────────────────── */}
       <EyewearStudioModel
         shape={frameShape}
         finish={frameFinish}
@@ -764,28 +802,26 @@ export default function Hero3DViewerInner({
         isMobile={isMobile}
       />
 
-      {/* ── High-Resolution Contact Shadows ─────────────────────────────── */}
       <ContactShadows
         position={[0, -1.60, 0]}
-        opacity={0.55}
+        opacity={0.45}
         scale={10}
-        blur={3.2}
+        blur={3.0}
         far={4.0}
         resolution={1024}
-        color="#0a0e1a"
+        color="#080c18"
       />
 
-      {/* ── Subtle Bloom for polished lens/frame highlights ──────────────── */}
+      {/* Bloom: very conservative — only the brightest specular highlights glow */}
       <EffectComposer>
         <Bloom
-          luminanceThreshold={0.72}
-          luminanceSmoothing={0.30}
-          intensity={0.28}
+          luminanceThreshold={0.85}
+          luminanceSmoothing={0.20}
+          intensity={0.18}
           mipmapBlur
         />
       </EffectComposer>
 
-      {/* ── Desktop OrbitControls ─────────────────────────────────────────── */}
       {!isMobile && (
         <OrbitControls
           makeDefault
