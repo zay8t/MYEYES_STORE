@@ -33,14 +33,14 @@ const FACE_SHAPES: FaceShapeData[] = [
       "Soft, high cheekbones",
     ],
     recommendedFrames: [
-      "Sharp Geometric",
-      "Wide Rectangle",
-      "Classic Square",
-      "Classic Aviator",
+      "Classic Wayfarer",
+      "Subtle Cat-Eye",
+      "Soft Oval",
+      "Versatile Shapes",
     ],
     stylingPrinciple:
-      "Pick frames that are just as wide as or slightly wider than your face.",
-    targetShapeKeys: ["RECTANGLE", "GEOMETRIC", "SQUARE", "AVIATOR", "WAYFARER"],
+      "Versatile silhouettes! Accentuate your balanced proportions with Wayfarer, Cat Eye, or Oval frames.",
+    targetShapeKeys: ["WAYFARER", "CAT_EYE", "OVAL"],
   },
   {
     id: "round",
@@ -55,11 +55,10 @@ const FACE_SHAPES: FaceShapeData[] = [
       "Sharp Rectangle",
       "Wide Square",
       "Geometric Shapes",
-      "Classic Wayfarer",
     ],
     stylingPrinciple:
-      "Choose angular and rectangular frames to add sharp lines and make your face look slimmer.",
-    targetShapeKeys: ["RECTANGLE", "SQUARE", "WAYFARER", "GEOMETRIC"],
+      "Choose angular frames like Rectangle, Square, or Geometric to add sharp lines and structural definition.",
+    targetShapeKeys: ["RECTANGLE", "SQUARE", "GEOMETRIC"],
   },
   {
     id: "square",
@@ -71,14 +70,14 @@ const FACE_SHAPES: FaceShapeData[] = [
       "Straight sides with clear lines",
     ],
     recommendedFrames: [
-      "Round Frames",
-      "Soft Oval",
+      "Curved Round",
       "Classic Aviator",
-      "Thin Metal Wireframes",
+      "Cat-Eye Frames",
+      "Soft Oval",
     ],
     stylingPrinciple:
-      "Pick round or oval frames to soften strong jawlines and balance your look.",
-    targetShapeKeys: ["ROUND", "OVAL", "AVIATOR", "RIMLESS"],
+      "Pick curved frames like Round, Aviator, or Cat Eye to soften strong jawlines and balance your facial angles.",
+    targetShapeKeys: ["ROUND", "AVIATOR", "CAT_EYE", "OVAL"],
   },
   {
     id: "heart",
@@ -90,14 +89,14 @@ const FACE_SHAPES: FaceShapeData[] = [
       "Small, tapered chin",
     ],
     recommendedFrames: [
-      "Round Wireframes",
-      "Soft Oval",
+      "Classic Wayfarer",
       "Subtle Cat-Eye",
-      "Light Rimless Frames",
+      "Soft Oval",
+      "Balanced Rims",
     ],
     stylingPrinciple:
-      "Pick round or bottom-wider frames to balance your forehead and chin.",
-    targetShapeKeys: ["ROUND", "CAT_EYE", "OVAL", "RIMLESS", "AVIATOR"],
+      "Versatile frames like Wayfarer, Cat Eye, or Oval balance forehead width and highlight your cheekbones.",
+    targetShapeKeys: ["WAYFARER", "CAT_EYE", "OVAL"],
   },
 ];
 
