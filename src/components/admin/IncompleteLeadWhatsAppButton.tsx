@@ -9,6 +9,7 @@ import {
 } from "@/lib/whatsapp";
 
 export interface IncompleteLeadButtonProps {
+  leadId?: string;
   customerName: string;
   mobileNumber: string;
   frameName: string;
@@ -17,6 +18,7 @@ export interface IncompleteLeadButtonProps {
 }
 
 export const IncompleteLeadWhatsAppButton: React.FC<IncompleteLeadButtonProps> = ({
+  leadId,
   customerName,
   mobileNumber,
   frameName,
@@ -34,11 +36,14 @@ export const IncompleteLeadWhatsAppButton: React.FC<IncompleteLeadButtonProps> =
       return;
     }
 
+    const effectiveResumeUrl = resumeUrl || (leadId ? `https://myeyes.pk/configurator?resumeLeadId=${leadId}` : "https://myeyes.pk/configurator");
+
     const encodedPayload = buildIncompleteLeadMessage({
+      id: leadId,
       customerName,
       mobileNumber,
       frameName,
-      resumeUrl,
+      resumeUrl: effectiveResumeUrl,
     });
 
     launchWhatsAppBusinessChat(mobileNumber, encodedPayload);

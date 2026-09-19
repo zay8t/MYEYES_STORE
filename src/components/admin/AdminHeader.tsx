@@ -5,6 +5,7 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 import AdminMobileNav from "./AdminMobileNav";
 import { useAuth } from "@/components/AuthProvider";
+import PushNotificationToggle from "./PushNotificationToggle";
 
 export default function AdminHeader() {
   const { user, logout } = useAuth();
@@ -39,10 +40,13 @@ export default function AdminHeader() {
         </Link>
       </div>
 
-      {/* Center: System Status Badge */}
-      <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200/80 text-slate-600 text-xs px-3 py-1 rounded-full select-none">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span className="font-semibold">System Online & Connected</span>
+      {/* Center: System Status Badge & Push Notifications */}
+      <div className="hidden md:flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 text-slate-600 text-xs px-3 py-1 rounded-full select-none">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="font-semibold">System Online & Connected</span>
+        </div>
+        <PushNotificationToggle />
       </div>
 
       {/* Far Right: Logout Button */}

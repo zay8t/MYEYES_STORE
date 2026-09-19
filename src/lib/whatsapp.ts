@@ -422,33 +422,61 @@ export function buildDetailedOrderMessage(orderInput: FullOrderPayload | OrderRe
 }
 
 export interface IncompleteLeadPayload {
+  id?: string;
   customerName: string;
   mobileNumber: string;
   frameName: string;
   resumeUrl?: string; // Optional direct link back to configurator/cart
 }
 
-export function buildIncompleteLeadMessage(lead: IncompleteLeadPayload): string {
-  const frame = lead.frameName || "your selected frame";
-  const resumeLink = lead.resumeUrl || "https://myeyes.pk";
+export function getWhatsAppRecoveryUrl(lead: {
+  id: string;
+  customerName: string;
+  mobileNumber: string;
+  frameName: string;
+}): string {
+  // Format to international Pakistan dialing format
+  let cleanPhone = (lead.mobileNumber || "").replace(/[^0-9]/g, "");
+  if (cleanPhone.startsWith("0")) {
+    cleanPhone = "92" + cleanPhone.slice(1);
+  } else if (!cleanPhone.startsWith("92") && cleanPhone.length === 10) {
+    cleanPhone = "92" + cleanPhone;
+  }
 
-  const lines = [
-    `*MY EYES OPTICAL - INCOMPLETE ORDER ASSISTANCE*`,
-    `----------------------------------------`,
-    `Dear ${lead.customerName},`,
-    ``,
-    `We noticed you were configuring your prescription lenses for the *${frame}* on our website but could not complete your order.`,
-    ``,
-    `If you experienced any difficulty entering your prescription (OD/OS/PD values) or choosing the right lens coating, we are here to assist you.`,
-    ``,
-    `You can simply reply here with a clear photo or copy of your prescription slip, and our optical team will configure your lenses for you.`,
-    ``,
-    `If you would like to complete your order online, visit:`,
-    `${resumeLink}`,
-    ``,
-    `----------------------------------------`,
-    `MY EYES Customer Care`,
-  ];
+  // Direct 1-click resume link
+  const resumeUrl = `https://myeyes.pk/configurator?resumeLeadId=${lead.id}`;
 
-  return encodeURIComponent(lines.join("\n"));
+  const message = 
+`Salam ${lead.customerName || "there"}! 👓
+
+We saved your customized *${lead.frameName || "selected"}* frame at My Eyes.
+
+If you paused because you don't have your doctor's slip handy, don't worry! You can complete your order now and simply *send a photo of your prescription slip right here on WhatsApp*.
+
+👉 Tap here to reopen your saved pair in 1 click:
+${resumeUrl}
+
+Our certified lab team verifies all measurements before edging your lenses. Let us know if you have any questions!`;
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
+export function buildIncompleteLeadMessage(lead: IncompleteLeadPayload): string {
+  const frame = lead.frameName || "selected";
+  const resumeLink = lead.resumeUrl || (lead.id ? `https://myeyes.pk/configurator?resumeLeadId=${lead.id}` : "https://myeyes.pk/configurator");
+
+  const message = 
+`Salam ${lead.customerName || "there"}! 👓
+
+We saved your customized *${frame}* frame at My Eyes.
+
+If you paused because you don't have your doctor's slip handy, don't worry! You can complete your order now and simply *send a photo of your prescription slip right here on WhatsApp*.
+
+👉 Tap here to reopen your saved pair in 1 click:
+${resumeLink}
+
+Our certified lab team verifies all measurements before edging your lenses. Let us know if you have any questions!`;
+
+  return encodeURIComponent(message);
+}
+

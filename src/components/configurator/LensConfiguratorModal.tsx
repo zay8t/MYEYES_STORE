@@ -69,6 +69,13 @@ export interface LensConfiguratorModalProps {
   onClose: () => void;
   frame: FrameDetails;
   currentUser?: UserSessionProfile | null;
+  initialStep?: 1 | 2 | 3 | 4;
+  initialCustomer?: {
+    name?: string;
+    phone?: string;
+    whatsapp?: string;
+  } | null;
+  resumeLeadId?: string | null;
   onAddToCart?: (config: Record<string, unknown>) => void;
 }
 
@@ -236,6 +243,9 @@ export function LensConfiguratorModal({
   onClose,
   frame,
   currentUser,
+  initialStep,
+  initialCustomer,
+  resumeLeadId,
   onAddToCart,
 }: LensConfiguratorModalProps) {
   const router = useRouter();
@@ -285,12 +295,34 @@ export function LensConfiguratorModal({
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
-  // Pre-fill name from authenticated user
+  // Pre-fill name from authenticated user or lead data
   useEffect(() => {
     if (isOpen) {
       refresh();
-      if (currentUser?.name) setFullName(currentUser.name);
-      if (currentUser?.phone) setWhatsapp(currentUser.phone.replace(/\D/g, '').replace(/^92/, '0'));
+      if (initialCustomer?.name) {
+        setFullName(initialCustomer.name);
+      } else if (currentUser?.name) {
+        setFullName(currentUser.name);
+      }
+
+      const initialPhone = initialCustomer?.whatsapp || initialCustomer?.phone || currentUser?.phone;
+      if (initialPhone) {
+        setWhatsapp(initialPhone.replace(/\D/g, '').replace(/^92/, '0'));
+      }
+
+      if (initialStep) {
+        setStep(initialStep);
+      } else if (initialCustomer?.name) {
+        setStep(2);
+      }
+
+      if (resumeLeadId && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('resumeLeadId', resumeLeadId);
+        } catch {
+          // ignore
+        }
+      }
     } else {
       // Reset on close
       setStep(1);

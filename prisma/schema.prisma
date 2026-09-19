@@ -415,3 +415,18 @@ model DiscountCode {
   @@map("discount_codes")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Web Push Notifications — Admin Subscriptions
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AdminPushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@map("admin_push_subscriptions")
+}
+
+

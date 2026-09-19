@@ -271,6 +271,13 @@ export default function CheckoutPage() {
         throw new Error("Security verification failed. Please refresh the page and try again.");
       }
 
+      let resumeLeadId: string | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          resumeLeadId = localStorage.getItem("resumeLeadId");
+        } catch {}
+      }
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,6 +295,7 @@ export default function CheckoutPage() {
           paymentSenderName: isOnlinePayment && paymentSenderName ? paymentSenderName.trim() : null,
           paymentSenderPhone: isOnlinePayment && paymentSenderPhone ? paymentSenderPhone.trim() : null,
           items,
+          resumeLeadId,
           token: recaptchaToken,
           recaptchaToken,
         }),
@@ -300,6 +308,11 @@ export default function CheckoutPage() {
       }
 
       if (data.orderNumber || data.orderId) {
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.removeItem("resumeLeadId");
+          } catch {}
+        }
         clearCart();
         router.push(`/order-success/${data.orderNumber || data.orderId}`);
       }

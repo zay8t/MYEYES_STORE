@@ -6,6 +6,7 @@ import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
 import { deductStockForOrder, revalidateInventory } from "@/lib/inventory";
 import { sendEmail } from "@/lib/email";
 import { buildOrderConfirmationEmail } from "@/lib/emailTemplates";
+import { sendAdminPushAlert } from "@/lib/push-notifications";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -219,6 +220,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url, orderId: order.id, orderNumber: order.orderNumber });
     }
 
+    // If the checkout request includes resumeLeadId, update the CRM status directly:
+    if (body.resumeLeadId) {
+      try {
+        await prisma.lead.update({
+          where: { id: String(body.resumeLeadId) },
+          data: {
+            status: "CONVERTED",
+            updatedAt: new Date(),
+          },
+        });
+        console.log(`[Lead Conversion] Direct lead conversion for resumeLeadId: ${body.resumeLeadId}`);
+      } catch (resumeErr) {
+        console.warn(`[Lead Conversion] Direct resumeLeadId update failed:`, resumeErr);
+      }
+    }
+
     // CRM Lead Deduplication & Conversion Algorithm
     if (customerName || customerEmail) {
       try {
@@ -264,6 +281,17 @@ export async function POST(request: NextRequest) {
       subject: `[NEW ORDER] #${order.orderNumber} placed by ${order.customerName}`,
       html: buildOrderConfirmationEmail(order),
     }).catch((err) => console.error("[Checkout Staff Alert Error]:", err));
+
+    // 3. Dispatch native system push alert to all registered admin devices
+    try {
+      sendAdminPushAlert({
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        total: order.totalAmount,
+      });
+    } catch (pushErr) {
+      console.warn("[Push Alerts] Checkout dispatch notice:", pushErr);
+    }
 
     // Direct return for instant order completion in demo/local mode
     return NextResponse.json({

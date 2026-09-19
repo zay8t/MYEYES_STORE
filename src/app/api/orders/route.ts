@@ -7,6 +7,7 @@ import { verifyRecaptchaToken } from "@/lib/recaptcha-server";
 import { deductStockForOrder, revalidateInventory } from "@/lib/inventory";
 import { sendEmail } from "@/lib/email";
 import { buildOrderConfirmationEmail } from "@/lib/emailTemplates";
+import { sendAdminPushAlert } from "@/lib/push-notifications";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -361,6 +362,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // If the checkout request includes resumeLeadId, update the CRM status directly:
+    if (body.resumeLeadId) {
+      try {
+        await prisma.lead.update({
+          where: { id: String(body.resumeLeadId) },
+          data: {
+            status: "CONVERTED",
+            updatedAt: new Date(),
+          },
+        });
+        console.log(`[Lead Conversion] Direct lead conversion for resumeLeadId: ${body.resumeLeadId}`);
+      } catch (resumeErr) {
+        console.warn(`[Lead Conversion] Direct resumeLeadId update failed:`, resumeErr);
+      }
+    }
+
     // CRM Lead Deduplication & Conversion Algorithm
     const normalizedPhone = normalizePhoneNumber(customerPhone);
     if (normalizedPhone || customerName) {
@@ -397,6 +414,17 @@ export async function POST(request: NextRequest) {
 
     // Revalidate inventory cache across storefront and admin views
     revalidateInventory();
+
+    // Dispatch native system push alert to all subscribed admin devices
+    try {
+      sendAdminPushAlert({
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        total: order.totalAmount,
+      });
+    } catch (pushErr) {
+      console.warn("[Push Alerts] Dispatch notice:", pushErr);
+    }
 
     // Trigger transactional email
     try {

@@ -190,10 +190,11 @@ export default function AdminLeadsClient({ initialLeads }: { initialLeads: LeadI
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
                           <IncompleteLeadWhatsAppButton
+                            leadId={lead.id}
                             customerName={lead.name}
                             mobileNumber={lead.whatsapp}
                             frameName={lead.frameName || "your selected frame"}
-                            resumeUrl={lead.frameId ? `https://myeyes.pk/catalogue/${lead.frameId}` : "https://myeyes.pk"}
+                            resumeUrl={`https://myeyes.pk/configurator?resumeLeadId=${lead.id}`}
                           />
 
                           <button
