@@ -84,7 +84,7 @@ export default function PushNotificationToggle() {
       onClick={enableNotifications}
       disabled={isSubscribed || loading}
       title={isSubscribed ? "System push alerts active on this device" : "Enable native order push alerts"}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+      className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all ${
         isSubscribed
           ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 cursor-default"
           : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-xs cursor-pointer active:scale-95"
