@@ -262,7 +262,7 @@ function wrapEmailHtml(contentHtml: string, previewText: string = ""): string {
                 Precision Rx Lab &bull; Premium Frames &bull; Nationwide Verification
               </p>
               <p style="margin: 12px 0 0 0; font-size: 11px; color: #94a3b8;">
-                Support: <a href="mailto:myeyes2026@gmail.com" style="color: #64748b; font-weight: 600; text-decoration: underline;">myeyes2026@gmail.com</a> &bull; WhatsApp: +92 300 0000000
+                Support: <a href="mailto:myeyes2026@gmail.com" style="color: #64748b; font-weight: 600; text-decoration: underline;">myeyes2026@gmail.com</a> &bull; WhatsApp: <a href="https://wa.me/923390103262" style="color: #64748b; font-weight: 600; text-decoration: underline;">+92 339 0103262</a>
               </p>
               <p style="margin: 8px 0 0 0; font-size: 10px; color: #cbd5e1;">
                 &copy; ${new Date().getFullYear()} MY EYES Optical. All rights reserved.
@@ -622,7 +622,7 @@ export function buildPaymentRejectionEmail(
           <ol style="margin: 0; padding-left: 18px; font-size: 12px; color: #475569; line-height: 1.6;">
             <li>Click the button below to access your live order dashboard.</li>
             <li>Re-upload a clear, readable screenshot of your bank transfer or mobile wallet receipt showing the Transaction ID (TID), timestamp, and amount.</li>
-            <li>Alternatively, contact our billing desk directly via WhatsApp at +92 300 0000000 with your Order Number.</li>
+            <li>Alternatively, contact our billing desk directly via WhatsApp at +92 339 0103262 with your Order Number.</li>
           </ol>
         </td>
       </tr>

@@ -19,7 +19,10 @@ export async function sendOrderConfirmationEmail(orderData: {
           <p><strong>Order Number:</strong> #${orderData.orderNumber}</p>
           <p><strong>Total Amount:</strong> Rs. ${orderData.total.toLocaleString()}</p>
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
-          <p style="color: #666; font-size: 13px;">If you have any questions, reply directly to this message.</p>
+          <p style="color: #666; font-size: 12px; margin: 0 0 6px 0;">
+            Support: <a href="mailto:myeyes2026@gmail.com" style="color: #111; text-decoration: underline;">myeyes2026@gmail.com</a> &bull; WhatsApp: <a href="https://wa.me/923390103262" style="color: #111; text-decoration: underline;">+92 339 0103262</a>
+          </p>
+          <p style="color: #999; font-size: 11px; margin: 0;">If you have any questions, reply directly to this email or reach us on WhatsApp.</p>
         </div>
       `,
     });
