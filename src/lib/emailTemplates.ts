@@ -78,10 +78,10 @@ function extractOrderItems(order: OrderEmailPayload | Record<string, unknown>) {
       typeof item.framePrice === "number"
         ? item.framePrice
         : typeof item.product?.price === "number"
-        ? item.product.price
-        : typeof item.price === "number"
-        ? item.price
-        : 0;
+          ? item.product.price
+          : typeof item.price === "number"
+            ? item.price
+            : 0;
 
     const lensPackageName =
       item.lensPackageName ||
@@ -95,8 +95,8 @@ function extractOrderItems(order: OrderEmailPayload | Record<string, unknown>) {
       typeof item.lensFinalPrice === "number"
         ? item.lensFinalPrice
         : typeof item.lensPrice === "number"
-        ? item.lensPrice
-        : 0;
+          ? item.lensPrice
+          : 0;
 
     const quantity = typeof item.quantity === "number" && item.quantity > 0 ? item.quantity : 1;
 
@@ -285,15 +285,15 @@ export function buildOrderConfirmationEmail(order: OrderEmailPayload | Record<st
   const customerName = (order.customerName as string) || "Valued Customer";
   const dateStr = order.createdAt
     ? new Date(order.createdAt as string | Date).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
   const address = (order.shippingAddress as string) || "Delivery Address on Record";
   const city = (order.shippingCity as string) || (order.city as string) || "";
@@ -523,21 +523,20 @@ export function buildPaymentApprovedEmail(order: OrderEmailPayload | Record<stri
         <td style="padding: 4px 0; font-size: 12px; color: #059669; font-weight: 600;">Verified Advance Deposit</td>
         <td align="right" style="padding: 4px 0; font-size: 12px; font-weight: 700; color: #059669; font-family: monospace;">${formatPrice(advancePaid)}</td>
       </tr>
-      ${
-        isCOD
-          ? `
+      ${isCOD
+      ? `
       <tr style="border-top: 1px solid #e2e8f0;">
         <td style="padding: 8px 0 0 0; font-size: 13px; font-weight: 800; color: #0f172a;">Remaining COD Doorstep Balance</td>
         <td align="right" style="padding: 8px 0 0 0; font-size: 14px; font-weight: 800; color: #0f172a; font-family: monospace;">${formatPrice(remainingDoorstepBalance)}</td>
       </tr>
       `
-          : `
+      : `
       <tr style="border-top: 1px solid #e2e8f0;">
         <td style="padding: 8px 0 0 0; font-size: 13px; font-weight: 800; color: #059669;">Balance Remaining</td>
         <td align="right" style="padding: 8px 0 0 0; font-size: 14px; font-weight: 800; color: #059669; font-family: monospace;">Rs. 0/- (Fully Paid)</td>
       </tr>
       `
-      }
+    }
     </table>
 
     <!-- Call to Action -->
