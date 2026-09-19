@@ -16,18 +16,13 @@ export interface SendEmailResult {
 /**
  * Configures Nodemailer Transporter for Gmail SMTP using runtime environment variables.
  */
-function getTransporter() {
-  const user = process.env.GMAIL_USER || "myeyes2026@gmail.com";
-  const pass = process.env.GMAIL_APP_PASSWORD || "jzrftsddidvaokmu";
-
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user,
-      pass,
-    },
-  });
-}
+export const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER || process.env.GMAIL_USER || "myeyes2026@gmail.com",
+    pass: process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || "pjvoapwjphefjeru",
+  },
+});
 
 /**
  * Dispatches an automated transactional email asynchronously.
@@ -38,10 +33,10 @@ export async function sendEmail({
   html,
   replyTo,
 }: SendEmailPayload): Promise<SendEmailResult> {
-  const fromAddress = process.env.GMAIL_USER || "myeyes2026@gmail.com";
+  const fromAddress =
+    process.env.EMAIL_USER || process.env.GMAIL_USER || "myeyes2026@gmail.com";
 
   try {
-    const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: `"MY EYES Optical Studio" <${fromAddress}>`,
       to,
