@@ -77,6 +77,14 @@ export default function Footer() {
                   Style &amp; Fit Quiz
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/faq"
+                  className="hover:text-[#ff7a00] transition-colors font-medium text-slate-700"
+                >
+                  Optical FAQ &amp; Guide
+                </Link>
+              </li>
             </ul>
           </div>
 

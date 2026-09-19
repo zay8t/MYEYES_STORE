@@ -10,6 +10,7 @@ import {
   Percent,
   Sparkles,
   Ruler,
+  HelpCircle,
   ChevronRight,
 } from "lucide-react";
 
@@ -177,6 +178,18 @@ export function NavigationSidebar({
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ff7a00] transition-colors" />
             </button>
+
+            <Link
+              className="flex items-center justify-between p-3 rounded-xl text-slate-800 hover:text-[#ff7a00] hover:bg-amber-50/50 active:bg-amber-100/60 transition group cursor-pointer"
+              href="/faq"
+              onClick={onClose}
+            >
+              <div className="flex items-center gap-3.5">
+                <HelpCircle className="w-4 h-4 text-slate-500 group-hover:text-[#ff7a00] transition-colors" />
+                <span className="text-sm font-medium">Optical FAQ &amp; Guide</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ff7a00] transition-colors" />
+            </Link>
           </div>
         </div>
       </aside>
