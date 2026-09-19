@@ -13,7 +13,9 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const now = new Date();
-    const active = await prisma.discountCode.findFirst({
+    
+    // First priority: active discount explicitly marked to show announcement banner
+    let active = await prisma.discountCode.findFirst({
       where: {
         isActive: true,
         showAnnouncementBanner: true,
@@ -23,18 +25,42 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
+    // Second priority: any active discount within valid date range
+    if (!active) {
+      active = await prisma.discountCode.findFirst({
+        where: {
+          isActive: true,
+          startsAt: { lte: now },
+          OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
     if (!active) {
       return NextResponse.json({ banner: null });
     }
+
+    const discountLabel =
+      active.type === "percentage"
+        ? `${active.amount}% OFF`
+        : `Rs. ${active.amount.toLocaleString()} OFF`;
+
+    const formattedText =
+      active.bannerText?.trim() ||
+      `🎉 Special Offer: Use code ${active.code} to get ${discountLabel} sitewide! Limited time only.`;
 
     return NextResponse.json({
       banner: {
         id: active.id,
         code: active.code,
-        bannerText: active.bannerText,
-        bannerTheme: active.bannerTheme,
+        title: active.title,
+        bannerText: formattedText,
+        bannerTheme: active.bannerTheme || "dark",
         type: active.type,
         amount: active.amount,
+        minCartTotal: active.minCartTotal || 0,
+        endsAt: active.endsAt ? active.endsAt.toISOString() : null,
       },
     });
   } catch (error) {

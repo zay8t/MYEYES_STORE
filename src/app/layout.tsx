@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import { GoogleTagManager } from "@next/third-parties/google";
 import Header from "@/components/Header";
-import AnnouncementBanner from "@/components/AnnouncementBanner";
+import DiscountBanner from "@/components/DiscountBanner";
 import Footer from "@/components/layout/Footer";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -184,7 +184,7 @@ export default function RootLayout({
             </Suspense>
             {/* Manages .has-bottom-nav and .standalone-mode on body strictly in standalone mode */}
             <StandaloneBodyManager />
-            <AnnouncementBanner />
+            <DiscountBanner />
             <Header />
             <main className="flex-1 pb-16 md:pb-0">{children}</main>
             <Footer />
