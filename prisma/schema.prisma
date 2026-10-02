@@ -50,6 +50,10 @@ enum FrameShape {
   GEOMETRIC
   RIMLESS
   SEMI_RIMLESS
+  HEXAGON
+  BROWLINE
+  BUTTERFLY
+  PANTOS
 }
 
 enum Material {
@@ -61,6 +65,8 @@ enum Material {
   STAINLESS_STEEL
   WOOD
   HYBRID
+  ULTEM
+  CARBON_FIBER
 }
 
 enum OrderStatus {

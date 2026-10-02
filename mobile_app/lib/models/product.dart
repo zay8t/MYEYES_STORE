@@ -12,6 +12,10 @@ enum FrameShape {
   geometric,
   rimless,
   semiRimless,
+  hexagon,
+  browline,
+  butterfly,
+  pantos,
 }
 
 enum MaterialType {
@@ -23,6 +27,8 @@ enum MaterialType {
   stainlessSteel,
   wood,
   hybrid,
+  ultem,
+  carbonFiber,
 }
 
 enum ProductCategory {
@@ -109,6 +115,14 @@ class Product {
         return 'Rimless';
       case 'SEMI_RIMLESS':
         return 'Semi-Rimless';
+      case 'HEXAGON':
+        return 'Hexagon / Polygon';
+      case 'BROWLINE':
+        return 'Browline';
+      case 'BUTTERFLY':
+        return 'Butterfly / Oversized';
+      case 'PANTOS':
+        return 'Pantos';
       default:
         return 'Classic';
     }
@@ -131,6 +145,10 @@ class Product {
         return 'Natural Wood';
       case 'HYBRID':
         return 'Hybrid Alloy';
+      case 'ULTEM':
+        return 'Ultem (PEI)';
+      case 'CARBON_FIBER':
+        return 'Carbon Fiber';
       default:
         return 'Standard Alloy';
     }

@@ -40,6 +40,10 @@ export function formatFrameShape(shape?: string | null): string {
     GEOMETRIC: "Geometric",
     RIMLESS: "Rimless",
     SEMI_RIMLESS: "Semi-Rimless",
+    HEXAGON: "Hexagon / Polygon",
+    BROWLINE: "Browline",
+    BUTTERFLY: "Butterfly / Oversized",
+    PANTOS: "Pantos",
   };
   return map[shape.toUpperCase()] || shape.replace("_", " ");
 }
@@ -54,6 +58,8 @@ export function formatMaterial(material?: string | null): string {
     STAINLESS_STEEL: "Stainless Steel",
     WOOD: "Wood Finish",
     HYBRID: "Hybrid",
+    ULTEM: "Ultem (PEI)",
+    CARBON_FIBER: "Carbon Fiber",
   };
   return map[material.toUpperCase()] || material.replace("_", " ");
 }

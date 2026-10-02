@@ -78,9 +78,15 @@ export const SHAPE_SVG_PATHS: Record<string, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  15 COLOR SWATCH DEFINITIONS
+//  COLOR SWATCH DEFINITIONS
 // ─────────────────────────────────────────────────────────────
 export const COLOR_SWATCH_DEFINITIONS = [
+  { id: "matte_black", label: "Matte Black", category: "Neutrals", colorHex: "#1C1917" },
+  { id: "burgundy", label: "Dark Wine / Burgundy", category: "Vibrant", colorHex: "#581C25" },
+  { id: "navy_blue", label: "Navy Blue", category: "Neutrals", colorHex: "#1E3A8A" },
+  { id: "gunmetal", label: "Gunmetal", category: "Metals", colorHex: "#475569" },
+  { id: "gradient", label: "Gradient / Two-Tone", category: "Vibrant", colorHex: "#334155" },
+  { id: "olive_green", label: "Olive Green", category: "Neutrals", colorHex: "#3F4E3A" },
   { id: "black", label: "Solid Black", category: "Neutrals", colorHex: "#18181B" },
   { id: "tortoise", label: "Classic Tortoise", category: "Neutrals", colorHex: "#6B3E11" },
   { id: "crystal", label: "Crystal Clear", category: "Neutrals", colorHex: "#E2E8F0" },
@@ -118,7 +124,11 @@ export function matchesShape(product: SafeProduct, shapeVal: string): boolean {
 
   if (target === "cateye" && (pShape === "cateye" || pShape === "cat_eye")) return true;
   if (target === "wayfarer" && (pShape === "wayfarer" || pShape === "square")) return true;
-  if (target === "geometric" && (pShape === "geometric" || pShape === "hexagonal" || pShape === "octagonal")) return true;
+  if (target === "geometric" && (pShape === "geometric" || pShape === "hexagonal" || pShape === "hexagon" || pShape === "octagonal" || pShape === "polygon")) return true;
+  if (target === "hexagon" && (pShape === "hexagon" || pShape === "polygon" || pShape === "geometric")) return true;
+  if (target === "browline" && (pShape === "browline" || pShape === "semirimless" || pShape === "semi_rimless" || pShape === "clubmaster")) return true;
+  if (target === "butterfly" && (pShape === "butterfly" || pShape === "oversized" || pShape === "cateye")) return true;
+  if (target === "pantos" && (pShape === "pantos" || pShape === "round" || pShape === "oval")) return true;
   if (target === "rimless" && (pShape === "rimless" || pShape === "semirimless" || pShape === "semi_rimless")) return true;
 
   return pShape === target || pShape.includes(target) || target.includes(pShape);
@@ -149,6 +159,8 @@ export function matchesMaterial(product: SafeProduct, materialVal: string): bool
   if (target === "acetate") return pMat.includes("acetate") || pMat.includes("plastic") || pMat.includes("celluloid");
   if (target === "metal") return pMat.includes("metal") || pMat.includes("titanium") || pMat.includes("steel") || pMat.includes("stainless");
   if (target === "tr90") return pMat.includes("tr90") || pMat.includes("flexible") || pMat.includes("lightweight") || pMat.includes("nylon");
+  if (target === "ultem") return pMat.includes("ultem") || pMat.includes("pei");
+  if (target === "carbon_fiber" || target === "carbon") return pMat.includes("carbon") || pMat.includes("fiber");
   if (target === "mixed") return pMat.includes("hybrid") || pMat.includes("mixed") || pMat.includes("wood") || pMat === "" || pMat === "nill";
 
   return pMat.includes(target);
@@ -371,7 +383,9 @@ export function aggregateFacets(
   const rawMaterialOptions = [
     { id: "acetate", label: "Handcrafted Acetate", hint: "Rich organic cotton polymer lustre" },
     { id: "metal", label: "Titanium & Metal", hint: "Featherlight aerospace-grade resilience" },
-    { id: "tr90", label: "TR90 Lightweight Flexible", hint: "Flexible thermoplastic memory memory" },
+    { id: "tr90", label: "TR90 Lightweight Flexible", hint: "Flexible thermoplastic memory" },
+    { id: "ultem", label: "Ultem (PEI)", hint: "Ultra-durable, high-heat aerospace polymer" },
+    { id: "carbon_fiber", label: "Carbon Fiber", hint: "Ultra-lightweight high-tensile strength" },
     { id: "mixed", label: "Mixed Material", hint: "Acetate front with titanium temples" },
   ];
 

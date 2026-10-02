@@ -14,6 +14,10 @@ export type FrameShapeDB =
   | "GEOMETRIC"
   | "RIMLESS"
   | "SEMI_RIMLESS"
+  | "HEXAGON"
+  | "BROWLINE"
+  | "BUTTERFLY"
+  | "PANTOS"
   | "NILL";
 
 export type MaterialDB =
@@ -24,6 +28,8 @@ export type MaterialDB =
   | "STAINLESS_STEEL"
   | "WOOD"
   | "HYBRID"
+  | "ULTEM"
+  | "CARBON_FIBER"
   | "NILL";
 
 export type CategoryDB = "EYEGLASSES" | "SUNGLASSES" | "CONTACT_LENSES" | "ACCESSORIES" | "NILL" | "all";

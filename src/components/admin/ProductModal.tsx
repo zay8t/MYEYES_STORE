@@ -28,6 +28,10 @@ export const FRAME_SHAPES_OPTIONS = [
   { label: "Geometric / Octagon", value: "GEOMETRIC" },
   { label: "Rimless", value: "RIMLESS" },
   { label: "Semi-Rimless / Clubmaster", value: "SEMI_RIMLESS" },
+  { label: "Hexagon / Polygon", value: "HEXAGON" },
+  { label: "Browline", value: "BROWLINE" },
+  { label: "Butterfly / Oversized", value: "BUTTERFLY" },
+  { label: "Pantos", value: "PANTOS" },
 ];
 
 export const MATERIALS_OPTIONS = [
@@ -39,6 +43,8 @@ export const MATERIALS_OPTIONS = [
   { label: "Stainless Steel", value: "STAINLESS_STEEL" },
   { label: "Wood Finish", value: "WOOD" },
   { label: "Hybrid / Combination", value: "HYBRID" },
+  { label: "Ultem (PEI)", value: "ULTEM" },
+  { label: "Carbon Fiber", value: "CARBON_FIBER" },
 ];
 
 export const GENDER_OPTIONS = [
@@ -49,18 +55,24 @@ export const GENDER_OPTIONS = [
 ];
 
 export const ALL_COLORS = [
+  { value: "matte_black", label: "Matte Black", hex: "#1c1917" },
+  { value: "burgundy", label: "Dark Wine / Burgundy", hex: "#581c25" },
+  { value: "navy_blue", label: "Navy Blue", hex: "#1e3a8a" },
+  { value: "gunmetal", label: "Gunmetal", hex: "#475569" },
+  { value: "gradient", label: "Gradient / Two-Tone", hex: "linear-gradient(135deg, #0f172a 0%, #ca8a04 100%)" },
+  { value: "olive_green", label: "Olive Green", hex: "#3f4e3a" },
   { value: "black", label: "Solid Black & Midnight", hex: "#18181B" },
   { value: "tortoise", label: "Classic Tortoise & Havana", hex: "#6B3E11" },
   { value: "crystal", label: "Crystal Clear & Ice", hex: "#E2E8F0" },
   { value: "grey", label: "Smoked Slate & Grey", hex: "#64748B" },
   { value: "amber", label: "Warm Amber & Honey Brown", hex: "#D97706" },
   { value: "gold", label: "Classic Gold & Champagne", hex: "#EAB308" },
-  { value: "silver", label: "Silver & Gunmetal Steel", hex: "#94A3B8" },
+  { value: "silver", label: "Silver & Metallic Steel", hex: "#94A3B8" },
   { value: "rose_gold", label: "Rose Gold & Warm Copper", hex: "#FB7185" },
   { value: "red", label: "Crimson & Bold Red", hex: "#DC2626" },
-  { value: "blue", label: "Electric Cobalt & Deep Navy", hex: "#2563EB" },
+  { value: "blue", label: "Electric Cobalt & Blue", hex: "#2563EB" },
   { value: "teal", label: "Bright Cyan & Tropical Teal", hex: "#06B6D4" },
-  { value: "green", label: "Emerald & Olive Green", hex: "#16A34A" },
+  { value: "green", label: "Emerald Green", hex: "#16A34A" },
   { value: "orange", label: "Vivid Orange & Sunburst", hex: "#EA580C" },
   { value: "pink", label: "Bubblegum & Pastel Pink", hex: "#EC4899" },
   { value: "purple", label: "Lilac & Royal Purple", hex: "#9333EA" }
@@ -373,10 +385,21 @@ export default function ProductModal({
 
             {/* Multi-Select Color Picker */}
             <div className="pt-4 border-t border-slate-200 space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                Available Frame Colors *
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Available Frame Colors * ({selectedColors.length} selected)
+                </label>
+                {selectedColors.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedColors([])}
+                    className="text-[10px] font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-56 overflow-y-auto pr-1">
                 {ALL_COLORS.map((c) => {
                   const isSelected = selectedColors.includes(c.value);
                   return (
@@ -384,8 +407,8 @@ export default function ProductModal({
                       key={c.value}
                       className={`flex items-center gap-2 p-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer select-none
                         ${isSelected
-                          ? "border-amber-500 bg-amber-50/40 text-amber-950"
-                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                          ? "border-amber-500 bg-amber-50/50 text-amber-950 ring-1 ring-amber-400/40"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50/50"
                         }`}
                     >
                       <input
@@ -401,10 +424,10 @@ export default function ProductModal({
                         className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer shrink-0"
                       />
                       <span
-                        className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-2xs block shrink-0"
-                        style={{ backgroundColor: c.hex }}
+                        className="w-3.5 h-3.5 rounded-full border border-slate-300/80 shadow-2xs block shrink-0"
+                        style={{ background: c.hex }}
                       />
-                      <span className="truncate">{c.label.split(" & ")[0]}</span>
+                      <span className="truncate" title={c.label}>{c.label}</span>
                     </label>
                   );
                 })}
