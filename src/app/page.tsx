@@ -13,6 +13,7 @@ import FaceShapeMatcher from "@/components/home/FaceShapeMatcher";
 import OrderingJourney from "@/components/home/OrderingJourney";
 import PopularFramesSection from "@/components/home/PopularFramesSection";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
+import ProductDrawer from "@/components/ProductDrawer";
 
 const Frame3DCanvasWrapper = dynamic(
   () => import("@/components/3d/Frame3DCanvasWrapper"),
@@ -23,9 +24,11 @@ export default function HomePage() {
   const [products, setProducts] = useState<SafeProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State
+  // Modal & Drawer State
   const [rxModalOpen, setRxModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<SafeProduct | null>(null);
+  const [drawerProduct, setDrawerProduct] = useState<SafeProduct | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -208,6 +211,10 @@ export default function HomePage() {
       <PopularFramesSection
         products={products}
         loading={loading}
+        onCardClick={(product) => {
+          setDrawerProduct(product);
+          setDrawerOpen(true);
+        }}
         onAddLenses={(product) => {
           setSelectedProduct(product);
           setRxModalOpen(true);
@@ -226,6 +233,28 @@ export default function HomePage() {
       {/*  CATEGORY SPOTLIGHT & LENS PRICING                           */}
       {/* ============================================================ */}
       <CategorySpotlight />
+
+      {/* Slide-over Product Detail Drawer */}
+      <ProductDrawer
+        isOpen={drawerOpen}
+        product={drawerProduct}
+        onClose={() => {
+          setDrawerOpen(false);
+          setDrawerProduct(null);
+        }}
+        onAddLenses={(p) => {
+          setSelectedProduct(p as SafeProduct);
+          setRxModalOpen(true);
+        }}
+        onAddToCart={(p) => {
+          addItem({
+            productId: p.id,
+            name: `${p.name} (Standard Sun Lenses)`,
+            price: p.price,
+            image: p.images[0] || "",
+          });
+        }}
+      />
 
       {/* Lens Configurator Modal for Eyeglasses */}
       {rxModalOpen && selectedProduct && (

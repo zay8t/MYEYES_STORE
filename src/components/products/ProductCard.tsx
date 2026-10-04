@@ -53,9 +53,10 @@ interface ProductCardProps {
   product: Product | SafeProduct;
   onAddLenses?: (product: Product | SafeProduct) => void;
   onAddToCart?: (product: Product | SafeProduct) => void;
+  onCardClick?: (product: Product | SafeProduct) => void;
 }
 
-export default function ProductCard({ product, onAddLenses, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ product, onAddLenses, onAddToCart, onCardClick }: ProductCardProps) {
   const { getPricing } = useDiscount();
   const pricing = getPricing(product.price);
 
@@ -127,7 +128,13 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
       <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] bg-neutral-100 overflow-hidden group/img">
         <Link
           href={`/products/${product.slug}`}
-          className="block absolute inset-0 w-full h-full"
+          onClick={(e) => {
+            if (onCardClick) {
+              e.preventDefault();
+              onCardClick(product);
+            }
+          }}
+          className="block absolute inset-0 w-full h-full cursor-pointer"
         >
           <Image
             src={activeImageUrl || "/placeholder-frame.png"}
@@ -180,8 +187,16 @@ export default function ProductCard({ product, onAddLenses, onAddToCart }: Produ
 
         {/* Title & Description */}
         <div>
-          <Link href={`/products/${product.slug}`}>
-            <h3 className="text-base font-bold text-slate-900 line-clamp-1 group-hover:underline">
+          <Link
+            href={`/products/${product.slug}`}
+            onClick={(e) => {
+              if (onCardClick) {
+                e.preventDefault();
+                onCardClick(product);
+              }
+            }}
+          >
+            <h3 className="text-base font-bold text-slate-900 line-clamp-1 group-hover:underline cursor-pointer">
               {product.name}
             </h3>
           </Link>

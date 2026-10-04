@@ -10,6 +10,7 @@ interface PopularFramesSectionProps {
   loading: boolean;
   onAddLenses: (product: SafeProduct) => void;
   onAddToCart: (product: SafeProduct) => void;
+  onCardClick?: (product: SafeProduct) => void;
 }
 
 export default function PopularFramesSection({
@@ -17,6 +18,7 @@ export default function PopularFramesSection({
   loading,
   onAddLenses,
   onAddToCart,
+  onCardClick,
 }: PopularFramesSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -183,6 +185,7 @@ export default function PopularFramesSection({
                   product={product}
                   onAddLenses={(p) => onAddLenses(p as SafeProduct)}
                   onAddToCart={(p) => onAddToCart(p as SafeProduct)}
+                  onCardClick={(p) => onCardClick && onCardClick(p as SafeProduct)}
                 />
               </div>
             ))}

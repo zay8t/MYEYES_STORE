@@ -10,6 +10,7 @@ import MobileFilterDrawer from "@/components/catalog/MobileFilterDrawer";
 import ActiveFilterRibbon from "@/components/catalog/ActiveFilterRibbon";
 import ProductCard, { Product } from "@/components/products/ProductCard";
 import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
+import ProductDrawer from "@/components/ProductDrawer";
 import { useCartStore } from "@/lib/cart-store";
 import { Sparkles, RotateCcw, EyeOff } from "lucide-react";
 
@@ -29,6 +30,8 @@ export default function StorefrontCatalogLayout({
 }: StorefrontCatalogLayoutProps) {
   const { filters, resetFilters } = useCatalogFilters();
   const [selectedProduct, setSelectedProduct] = useState<SafeProduct | null>(null);
+  const [drawerProduct, setDrawerProduct] = useState<SafeProduct | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [rxModalOpen, setRxModalOpen] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
@@ -155,6 +158,10 @@ export default function StorefrontCatalogLayout({
                   <ProductCard
                     key={product.id}
                     product={product}
+                    onCardClick={(p) => {
+                      setDrawerProduct(p as SafeProduct);
+                      setDrawerOpen(true);
+                    }}
                     onAddLenses={handleAddLenses}
                     onAddToCart={handleAddToCart}
                   />
@@ -164,6 +171,18 @@ export default function StorefrontCatalogLayout({
           </div>
         </div>
       </div>
+
+      {/* Slide-over Product Detail Drawer */}
+      <ProductDrawer
+        isOpen={drawerOpen}
+        product={drawerProduct}
+        onClose={() => {
+          setDrawerOpen(false);
+          setDrawerProduct(null);
+        }}
+        onAddLenses={handleAddLenses}
+        onAddToCart={handleAddToCart}
+      />
 
       {/* 4-Step Lens Configurator */}
       {selectedProduct && (
