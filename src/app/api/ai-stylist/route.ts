@@ -8,40 +8,43 @@ export async function POST(req: Request) {
     const { message, products = [] } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
-
     if (!apiKey) {
       return NextResponse.json({
         reply:
-          "Welcome to MY EYES! For custom prescription eyewear in Pakistan, we offer nationwide flat-rate delivery (Rs. 250), single vision, blue light blocking, high-index, and progressive lenses. How can I help you choose the right frame or lenses?",
+          "Welcome to MY EYES! We offer custom prescription eyewear with flat-rate nationwide delivery (Rs. 250) across Pakistan. How can I assist you with frame styles or lenses today?",
       });
     }
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const inventoryList = Array.isArray(products)
-      ? products.map((p: { id?: string; name?: string; price?: number; category?: string; description?: string }) => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          category: p.category,
-          description: p.description,
-        }))
-      : [];
-
-    const prompt = `You are an expert optical assistant for MY EYES, an elite custom prescription eyewear store in Pakistan.
+    const prompt = `You are an expert optical assistant for MY EYES, an elite custom prescription eyewear store in Pakistan (https://myeyes.pk).
 A customer is asking: "${message}"
 
 Here is our active store product inventory:
-${JSON.stringify(inventoryList)}
+${JSON.stringify((products || []).map((p: { id?: string; name?: string; price?: number; category?: string; description?: string }) => ({ id: p.id, name: p.name, price: p.price, category: p.category })))}
 
-Provide a helpful, polite, and detailed answer regarding frame fit, face shapes, lens types, or prices. Keep it conversational and professional.`;
+Provide a helpful, polite, and detailed answer regarding frame fit, face shapes, lens types, or prices. Keep it conversational, warm, and professional in clear English.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
+    let responseText = "";
+    // Try latest models supported by Google GenAI
+    const modelCandidates = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
 
-    const reply = response.text || "How else can I assist you with your eyewear today?";
+    for (const model of modelCandidates) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+        });
+        if (response && response.text) {
+          responseText = response.text;
+          break;
+        }
+      } catch (err) {
+        console.warn(`Model ${model} attempt error, checking next candidate...`);
+      }
+    }
+
+    const reply = responseText || "How else can I assist you with your eyewear today?";
 
     return NextResponse.json({ reply });
   } catch (error) {

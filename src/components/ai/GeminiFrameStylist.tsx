@@ -73,17 +73,16 @@ export default function GeminiFrameStylist({
   }, [isOpen, messages]);
 
   const handleSendMessage = async (textToSend?: string) => {
-    const query = (textToSend || inputQuery).trim();
-    if (!query || isLoading) return;
+    const userText = (textToSend || inputQuery).trim();
+    if (!userText || isLoading) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: query,
+      content: userText,
     };
 
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    setMessages((prev) => [...prev, userMessage]);
     setInputQuery("");
     setIsLoading(true);
 
@@ -91,31 +90,20 @@ export default function GeminiFrameStylist({
       const res = await fetch("/api/ai-stylist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: query,
-          messages: updatedMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          products,
-        }),
+        body: JSON.stringify({ message: userText, products }),
       });
-
       const data = await res.json();
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content:
-          data.reply ||
-          "I'm here to help you select the finest frames and lenses for your vision profile.",
-        productIds: data.recommendedProductIds || [],
-        suggestedQuestions: data.suggestedQuestions || [],
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (data.reply) {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.reply,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
     } catch (err) {
-      console.error("Chat error:", err);
+      console.error("Failed to send message", err);
       setMessages((prev) => [
         ...prev,
         {
@@ -123,7 +111,6 @@ export default function GeminiFrameStylist({
           role: "assistant",
           content:
             "I'm currently unable to reach the optical server. Please browse our frame collection or try again shortly.",
-          suggestedQuestions: DEFAULT_SUGGESTIONS,
         },
       ]);
     } finally {
