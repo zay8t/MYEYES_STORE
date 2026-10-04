@@ -14,6 +14,7 @@ import OrderingJourney from "@/components/home/OrderingJourney";
 import PopularFramesSection from "@/components/home/PopularFramesSection";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 import ProductDrawer from "@/components/ProductDrawer";
+import GeminiFrameStylist from "@/components/ai/GeminiFrameStylist";
 
 const Frame3DCanvasWrapper = dynamic(
   () => import("@/components/3d/Frame3DCanvasWrapper"),
@@ -268,6 +269,15 @@ export default function HomePage() {
           }}
         />
       )}
+
+      {/* Interactive Gemini Optical Stylist Consultation Widget */}
+      <GeminiFrameStylist
+        products={products}
+        onSelectProduct={(product) => {
+          setDrawerProduct(product);
+          setDrawerOpen(true);
+        }}
+      />
     </div>
   );
 }
