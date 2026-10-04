@@ -52,18 +52,18 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="bg-white text-slate-900">
+    <div className="bg-white text-slate-900 selection:bg-slate-900 selection:text-white">
       {/* ============================================================ */}
-      {/*  HERO SECTION                                                */}
+      {/* HERO SECTION                                                 */}
       {/* ============================================================ */}
-      <section className="relative pt-6 sm:pt-10 pb-2 sm:pb-3 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 bg-white">
-        <div className="max-w-5xl mx-auto text-center space-y-3">
-          <div className="mb-2 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
+      <section className="relative pt-12 sm:pt-16 pb-6 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 bg-white">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold uppercase tracking-widest text-amber-800 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#ff7a00] animate-pulse" />
             Pakistan&apos;s #1 Online Eyewear Store
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1]">
             Pakistan&apos;s First
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
@@ -71,69 +71,61 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-medium max-w-xl mx-auto leading-relaxed">
             Custom glasses made to your exact eye numbers — delivered to your doorstep anywhere in Pakistan.
           </p>
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/*  SEAMLESS HERO BANNER SECTION (bg-white)                     */}
+      {/* FIND YOUR LOOK / ACTION BUTTONS BAR                          */}
       {/* ============================================================ */}
-      <section className="w-full bg-white pt-2 sm:pt-4 pb-4 sm:pb-6">
+      <section className="w-full bg-white pb-6">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="max-w-xl space-y-4 text-left">
-            {/* 1. Category Pill Badge */}
+          <div className="max-w-3xl mx-auto text-center space-y-3 bg-slate-50/60 p-6 sm:p-8 rounded-3xl border border-slate-100">
             <span className="inline-block text-[11px] sm:text-xs font-bold tracking-wider text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-1 rounded-full uppercase">
               FIND YOUR LOOK
             </span>
 
-            {/* 2. Main Headline */}
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none uppercase text-[#0F172A]">
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight uppercase text-[#0F172A]">
               Find Your <span className="text-[#F59E0B]">Perfect Pair</span>
             </h2>
 
-            {/* 3. Subtitle */}
-            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-lg mx-auto leading-relaxed">
               Great-looking glasses made with clear, high-quality lenses. Take our quick 1-minute quiz or browse all styles.
             </p>
 
-            {/* 4. 4-Button Arrangement */}
-            <div className="pt-2 grid grid-cols-2 gap-2.5 w-full max-w-md sm:flex sm:flex-wrap sm:items-center">
-              {/* Button 1: Start with a quiz */}
+            <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/quiz"
-                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
               >
-                <Sparkles className="w-3.5 h-3.5 shrink-0 text-white" />
-                <span className="truncate">Take 1-Min Quiz</span>
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span>Take 1-Min Quiz</span>
               </Link>
 
-              {/* Button 2: Shop eyeglasses */}
               <Link
                 href="/eyeglasses"
-                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#F0F4F8] text-[#0B132B] shadow-sm hover:bg-[#E2E8F0] border border-slate-200/60 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap"
+                className="h-[42px] px-6 rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm"
               >
-                <Glasses className="w-3.5 h-3.5 shrink-0 text-[#0B132B]" />
-                <span className="truncate">Shop Eyeglasses</span>
+                <Glasses className="w-3.5 h-3.5 text-[#0B132B]" />
+                <span>Shop Eyeglasses</span>
               </Link>
 
-              {/* Button 3: Shop sunglasses */}
               <Link
                 href="/sunglasses"
-                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] px-6 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
               >
-                <Sun className="w-3.5 h-3.5 shrink-0 text-white" />
-                <span className="truncate">Shop Sunglasses</span>
+                <Sun className="w-3.5 h-3.5 text-white" />
+                <span>Shop Sunglasses</span>
               </Link>
 
-              {/* Button 4: Lens Pricing */}
               <Link
                 href="/lens-pricing"
-                className="h-[42px] w-full sm:w-auto px-4 sm:px-6 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-100 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="h-[42px] px-6 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
               >
-                <Calculator className="w-3.5 h-3.5 shrink-0 text-[#0B132B]" />
-                <span className="truncate">See Lens Prices</span>
+                <Calculator className="w-3.5 h-3.5 text-[#0B132B]" />
+                <span>See Lens Prices</span>
               </Link>
             </div>
           </div>
@@ -141,7 +133,7 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  3D MODEL DISPLAY                                            */}
+      {/* 3D MODEL DISPLAY (UNTOUCHED)                                 */}
       {/* ============================================================ */}
       <section className="relative pb-16 sm:pb-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -152,7 +144,7 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  EDITORIAL VALUE STRIP                                       */}
+      {/* EDITORIAL VALUE STRIP                                        */}
       {/* ============================================================ */}
       <section className="py-12 border-t border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -190,7 +182,7 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================ */}
-      {/*  FIND BY FACE SHAPE: PRECISION FIT MATCHER                   */}
+      {/* FIND BY FACE SHAPE: PRECISION FIT MATCHER                    */}
       {/* ============================================================ */}
       <FaceShapeMatcher
         products={products}
@@ -201,12 +193,12 @@ export default function HomePage() {
       />
 
       {/* ============================================================ */}
-      {/*  4-STEP PRESCRIPTION ORDERING JOURNEY                         */}
+      {/* 4-STEP PRESCRIPTION ORDERING JOURNEY                         */}
       {/* ============================================================ */}
       <OrderingJourney />
 
       {/* ============================================================ */}
-      {/*  FEATURED POPULAR FRAMES CAROUSEL & GRID                     */}
+      {/* FEATURED POPULAR FRAMES CAROUSEL & GRID                      */}
       {/* ============================================================ */}
       <PopularFramesSection
         products={products}
@@ -230,7 +222,7 @@ export default function HomePage() {
       />
 
       {/* ============================================================ */}
-      {/*  CATEGORY SPOTLIGHT & LENS PRICING                           */}
+      {/* CATEGORY SPOTLIGHT & LENS PRICING                            */}
       {/* ============================================================ */}
       <CategorySpotlight />
 
