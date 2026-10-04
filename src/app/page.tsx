@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 import LensConfiguratorModal from "@/components/configurator/LensConfiguratorModal";
 import FaceShapeMatcher from "@/components/home/FaceShapeMatcher";
 import OrderingJourney from "@/components/home/OrderingJourney";
+import PopularFramesSection from "@/components/home/PopularFramesSection";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 
 const Frame3DCanvasWrapper = dynamic(
@@ -202,55 +203,24 @@ export default function HomePage() {
       <OrderingJourney />
 
       {/* ============================================================ */}
-      {/*  FEATURED COLLECTION GRID                                    */}
+      {/*  FEATURED POPULAR FRAMES CAROUSEL & GRID                     */}
       {/* ============================================================ */}
-      <section className="py-16 sm:py-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-10 bg-white">
-        <div className="text-center space-y-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            TOP PICKS
-          </span>
-          <h2 className="text-3xl font-extrabold text-slate-900">
-            Popular Frames
-          </h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-            Explore our most loved eyeglasses and sunglasses, made with lightweight, long-lasting materials.
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start shrink-0 md:shrink h-[340px] bg-slate-50 rounded-2xl border border-slate-100 animate-pulse" />
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="p-16 text-center border border-slate-200 rounded-2xl text-slate-400 font-medium">
-            No frames currently in catalog. Check back soon.
-          </div>
-        ) : (
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-            {products.slice(0, 6).map((product) => (
-              <div key={product.id} className="min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start shrink-0 md:shrink w-[280px] sm:w-[320px] md:w-auto">
-                <ProductCard
-                  product={product}
-                  onAddLenses={(p) => {
-                    setSelectedProduct(p as unknown as SafeProduct);
-                    setRxModalOpen(true);
-                  }}
-                  onAddToCart={(p) => {
-                    addItem({
-                      productId: p.id,
-                      name: `${p.name} (Standard Sun Lenses)`,
-                      price: p.price,
-                      image: p.images[0] || "",
-                    });
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <PopularFramesSection
+        products={products}
+        loading={loading}
+        onAddLenses={(product) => {
+          setSelectedProduct(product);
+          setRxModalOpen(true);
+        }}
+        onAddToCart={(product) => {
+          addItem({
+            productId: product.id,
+            name: `${product.name} (Standard Sun Lenses)`,
+            price: product.price,
+            image: product.images[0] || "",
+          });
+        }}
+      />
 
       {/* ============================================================ */}
       {/*  CATEGORY SPOTLIGHT & LENS PRICING                           */}
