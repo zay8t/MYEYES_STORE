@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Sparkles, X, Loader2, ArrowRight, RotateCcw, CheckCircle2 } from "lucide-react";
+import { Sparkles, X, Loader2, ArrowRight, RotateCcw } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
 
 interface GeminiFrameStylistProps {
@@ -71,18 +71,18 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="group bg-neutral-900 hover:bg-black text-white px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 border border-neutral-800 cursor-pointer active:scale-95"
+          className="group bg-neutral-900 hover:bg-black text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 border border-neutral-800 cursor-pointer active:scale-95"
         >
           <div className="w-6 h-6 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/30">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-left">
-            <span className="block text-[10px] uppercase tracking-widest text-neutral-400 font-semibold">Gemini Powered</span>
-            <span className="block text-xs font-bold tracking-wide text-white">AI Optical Stylist</span>
+            <span className="block text-[10px] uppercase tracking-widest text-neutral-400 font-semibold">MY EYES</span>
+            <span className="block text-xs font-bold tracking-wide text-white">Virtual Frame Stylist</span>
           </div>
         </button>
       ) : (
-        <div className="bg-white w-[92vw] sm:w-[400px] h-[580px] max-h-[85vh] rounded-3xl shadow-2xl border border-neutral-200/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+        <div className="bg-white w-[90vw] sm:w-[400px] h-[580px] rounded-3xl shadow-2xl border border-neutral-200/80 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-neutral-900 text-white px-5 py-4 flex items-center justify-between border-b border-neutral-800 shrink-0">
             <div className="flex items-center gap-2.5">
@@ -91,7 +91,7 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
               </div>
               <div>
                 <h3 className="text-xs font-bold tracking-wider uppercase text-white">MY EYES Studio</h3>
-                <p className="text-[10px] text-neutral-400 font-light">Interactive Gemini Consultation</p>
+                <p className="text-[10px] text-neutral-400 font-light">Interactive Optical Consultation</p>
               </div>
             </div>
             <button
@@ -103,10 +103,10 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
           </div>
 
           {/* Body */}
-          <div className="flex-1 p-5 overflow-y-auto space-y-4 text-xs bg-neutral-50/50 scrollbar-none">
+          <div className="flex-1 p-5 overflow-y-auto space-y-4 text-xs bg-neutral-50/50">
             <div className="flex gap-3 items-start">
-              <div className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                AI
+              <div className="w-6 h-6 rounded-full bg-neutral-900 text-amber-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 border border-neutral-800">
+                ME
               </div>
               <div className="bg-white p-3.5 rounded-2xl rounded-tl-none border border-neutral-200/80 text-neutral-800 shadow-2xs leading-relaxed font-medium">
                 Welcome to our luxury consultation. Let&apos;s find your bespoke frame match. What is your face shape?
@@ -133,9 +133,8 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
 
             {faceShape && (
               <div className="flex justify-end pl-9">
-                <div className="bg-neutral-900 text-white px-4 py-2 rounded-2xl rounded-tr-none font-medium shadow-sm flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{faceShape} Face Shape</span>
+                <div className="bg-neutral-900 text-white px-4 py-2.5 rounded-2xl rounded-tr-none font-medium shadow-sm">
+                  {faceShape} Face Shape
                 </div>
               </div>
             )}
@@ -143,8 +142,8 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
             {step === "LIFESTYLE" && (
               <>
                 <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                    AI
+                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-amber-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 border border-neutral-800">
+                    ME
                   </div>
                   <div className="bg-white p-3.5 rounded-2xl rounded-tl-none border border-neutral-200/80 text-neutral-800 shadow-2xs leading-relaxed font-medium">
                     Excellent proportion. What is your primary daily optical requirement?
@@ -174,9 +173,8 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
 
             {lifestyle && (
               <div className="flex justify-end pl-9">
-                <div className="bg-neutral-900 text-white px-4 py-2 rounded-2xl rounded-tr-none font-medium shadow-sm flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{lifestyle}</span>
+                <div className="bg-neutral-900 text-white px-4 py-2.5 rounded-2xl rounded-tr-none font-medium shadow-sm">
+                  {lifestyle}
                 </div>
               </div>
             )}
@@ -184,8 +182,8 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
             {step === "BUDGET" && (
               <>
                 <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                    AI
+                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-amber-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 border border-neutral-800">
+                    ME
                   </div>
                   <div className="bg-white p-3.5 rounded-2xl rounded-tl-none border border-neutral-200/80 text-neutral-800 shadow-2xs leading-relaxed font-medium">
                     Almost complete. What is your preferred budget range?
@@ -212,21 +210,20 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
             )}
 
             {step === "LOADING" && (
-              <div className="py-16 text-center space-y-3 bg-white rounded-2xl border border-neutral-200/80 p-6 mx-2">
-                <Loader2 className="w-7 h-7 text-amber-500 animate-spin mx-auto" />
-                <p className="text-neutral-700 font-bold text-xs">Consulting Gemini AI Optical Engine...</p>
-                <p className="text-neutral-500 text-[11px]">Analyzing facial ergonomics and catalog inventory</p>
+              <div className="py-20 text-center space-y-3 bg-white rounded-2xl border border-neutral-200/80 p-6 mx-4">
+                <Loader2 className="w-6 h-6 text-amber-500 animate-spin mx-auto" />
+                <p className="text-neutral-600 font-medium text-xs">Curating your bespoke frame matches...</p>
               </div>
             )}
 
             {step === "RESULTS" && (
               <>
                 <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                    AI
+                  <div className="w-6 h-6 rounded-full bg-neutral-900 text-amber-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 border border-neutral-800">
+                    ME
                   </div>
                   <div className="bg-white p-3.5 rounded-2xl rounded-tl-none border border-neutral-200/80 text-neutral-800 shadow-2xs leading-relaxed font-medium">
-                    ✨ Here are your bespoke frame recommendations curated by Gemini:
+                    ✨ Here are your top tailored recommendations curated by MY EYES Studio:
                   </div>
                 </div>
 
@@ -250,8 +247,8 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-neutral-900 truncate text-xs">{product.name}</h4>
-                          <p className="text-xs font-semibold text-amber-700">Rs. {product.price}/-</p>
+                          <h4 className="font-bold text-neutral-900 truncate">{product.name}</h4>
+                          <p className="text-xs font-semibold text-neutral-900">Rs. {product.price}/-</p>
                         </div>
                         <span className="text-[10px] bg-neutral-900 text-white px-2.5 py-1.5 rounded-xl font-bold group-hover:bg-amber-500 transition-colors shrink-0">
                           View
@@ -270,10 +267,10 @@ export default function GeminiFrameStylist({ products, onSelectProduct }: Gemini
                     setFaceShape("");
                     setLifestyle("");
                   }}
-                  className="w-full mt-3 text-center text-xs font-bold text-neutral-400 hover:text-neutral-900 transition-colors py-1.5 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full mt-4 text-center text-xs font-bold text-neutral-400 hover:text-neutral-900 transition-colors py-1 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Start New Consultation</span>
+                  <span>Start Over</span>
                 </button>
               </>
             )}
