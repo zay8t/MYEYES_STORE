@@ -23,28 +23,28 @@ A customer is asking: "${message}"
 Here is our active store product inventory:
 ${JSON.stringify((products || []).map((p: { id?: string; name?: string; price?: number; category?: string; description?: string }) => ({ id: p.id, name: p.name, price: p.price, category: p.category })))}
 
-Provide a helpful, polite, and detailed answer regarding frame fit, face shapes, lens types, or prices. Keep it conversational, warm, and professional in clear English.`;
+Provide a helpful, polite, and detailed answer regarding frame fit, face shapes, lens types, or prices. Keep it conversational and professional.`;
 
-    let responseText = "";
-    const modelCandidates = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash"];
+    let replyText = "";
+    const modelsToTry = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
 
-    for (const model of modelCandidates) {
+    for (const model of modelsToTry) {
       try {
         const response = await ai.models.generateContent({
           model,
           contents: prompt,
         });
+
         if (response && response.text) {
-          responseText = response.text;
+          replyText = response.text.trim();
           break;
         }
-      } catch {
-        // Continue to fallback model if candidate is deprecated/unavailable
+      } catch (err) {
+        console.warn(`Attempt with ${model} encountered an issue, checking fallback...`);
       }
     }
 
-    const reply = responseText || "How else can I assist you with your eyewear today?";
-
+    const reply = replyText || "How else can I assist you with your eyewear today?";
     return NextResponse.json({ reply });
   } catch (error) {
     console.error("Chat AI Error:", error);
