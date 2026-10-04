@@ -96,37 +96,37 @@ export default function HomePage() {
               Great-looking glasses made with clear, high-quality lenses. Take our quick 1-minute quiz or browse all styles.
             </p>
 
-            {/* Single line flex with responsive padding & text sizing */}
-            <div className="pt-3 flex flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+            {/* 4 buttons with uniform size and equal spacing */}
+            <div className="pt-4 flex flex-row items-center justify-center gap-3 w-full max-w-2xl mx-auto">
               <Link
                 href="/quiz"
-                className="h-[40px] px-4 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1 font-bold text-xs whitespace-nowrap shadow-sm"
+                className="flex-1 h-[44px] rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sparkles className="w-3 h-3 text-white" />
-                <span>Quiz</span>
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span>Take 1-Min Quiz</span>
               </Link>
 
               <Link
                 href="/eyeglasses"
-                className="h-[40px] px-4 rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1 font-bold text-xs whitespace-nowrap"
+                className="flex-1 h-[44px] rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap"
               >
-                <Glasses className="w-3 h-3 text-[#0B132B]" />
+                <Glasses className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>Eyeglasses</span>
               </Link>
 
               <Link
                 href="/sunglasses"
-                className="h-[40px] px-4 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1 font-bold text-xs whitespace-nowrap shadow-sm"
+                className="flex-1 h-[44px] rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Sun className="w-3 h-3 text-white" />
+                <Sun className="w-3.5 h-3.5 text-white" />
                 <span>Sunglasses</span>
               </Link>
 
               <Link
                 href="/lens-pricing"
-                className="h-[40px] px-4 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1 font-bold text-xs whitespace-nowrap shadow-sm"
+                className="flex-1 h-[44px] rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
-                <Calculator className="w-3 h-3 text-[#0B132B]" />
+                <Calculator className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>Lens Prices</span>
               </Link>
             </div>
