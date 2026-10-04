@@ -182,46 +182,6 @@ export default function Frame3DCanvasWrapper() {
             aria-label="Drag left or right to rotate eyewear frame"
           />
         )}
-
-        {/* Floating Quick Action Badge */}
-        <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-white/80 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-slate-200/60 shadow-xs">
-          <button
-            type="button"
-            onClick={handleTakeSnapshot}
-            disabled={isExporting}
-            className="p-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
-            title="Export HD Studio Snapshot"
-          >
-            {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-800" /> : <Camera className="w-3.5 h-3.5" />}
-          </button>
-          <div className="w-[1px] h-3 bg-slate-200" />
-          <button
-            type="button"
-            onClick={handleRecordShowcase}
-            disabled={isRecording}
-            className={`p-1.5 rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
-              isRecording ? 'text-rose-600 bg-rose-50 animate-pulse' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-            title="Record 360 Video Showcase"
-          >
-            <Video className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Status Toast Overlay */}
-        <AnimatePresence>
-          {exportNotice && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="absolute top-12 right-2 z-30 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{exportNotice}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* ─── UI Customization Dock ───────────────────────────────────────────── */}

@@ -95,10 +95,10 @@ export default function HomePage() {
               Great-looking glasses made with clear, high-quality lenses. Take our quick 1-minute quiz or browse all styles.
             </p>
 
-            <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+            <div className="pt-3 flex flex-row flex-nowrap items-center justify-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-1">
               <Link
                 href="/quiz"
-                className="h-[42px] px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
+                className="h-[42px] px-4 sm:px-6 rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shrink-0"
               >
                 <Sparkles className="w-3.5 h-3.5 text-white" />
                 <span>Take 1-Min Quiz</span>
@@ -106,7 +106,7 @@ export default function HomePage() {
 
               <Link
                 href="/eyeglasses"
-                className="h-[42px] px-6 rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm"
+                className="h-[42px] px-4 sm:px-6 rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0"
               >
                 <Glasses className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>Shop Eyeglasses</span>
@@ -114,7 +114,7 @@ export default function HomePage() {
 
               <Link
                 href="/sunglasses"
-                className="h-[42px] px-6 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
+                className="h-[42px] px-4 sm:px-6 rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shrink-0"
               >
                 <Sun className="w-3.5 h-3.5 text-white" />
                 <span>Shop Sunglasses</span>
@@ -122,7 +122,7 @@ export default function HomePage() {
 
               <Link
                 href="/lens-pricing"
-                className="h-[42px] px-6 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm shadow-sm"
+                className="h-[42px] px-4 sm:px-6 rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm shrink-0"
               >
                 <Calculator className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>See Lens Prices</span>
