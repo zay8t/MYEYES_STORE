@@ -26,8 +26,7 @@ ${JSON.stringify((products || []).map((p: { id?: string; name?: string; price?: 
 Provide a helpful, polite, and detailed answer regarding frame fit, face shapes, lens types, or prices. Keep it conversational, warm, and professional in clear English.`;
 
     let responseText = "";
-    // Try latest models supported by Google GenAI
-    const modelCandidates = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
+    const modelCandidates = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash"];
 
     for (const model of modelCandidates) {
       try {
@@ -39,8 +38,8 @@ Provide a helpful, polite, and detailed answer regarding frame fit, face shapes,
           responseText = response.text;
           break;
         }
-      } catch (err) {
-        console.warn(`Model ${model} attempt error, checking next candidate...`);
+      } catch {
+        // Continue to fallback model if candidate is deprecated/unavailable
       }
     }
 
