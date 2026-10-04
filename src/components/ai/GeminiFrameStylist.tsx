@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   Sparkles,
   X,
-  ArrowRight,
+  Send,
   RotateCcw,
+  ArrowRight,
   Glasses,
-  ShieldCheck,
-  Eye,
-  SlidersHorizontal,
-  ChevronRight,
+  Bot,
+  User,
+  CornerDownLeft,
 } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
 import { formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
@@ -21,16 +21,22 @@ interface GeminiFrameStylistProps {
   onSelectProduct: (product: SafeProduct) => void;
   isOpen: boolean;
   onClose: () => void;
-  isModal?: boolean;
 }
 
-type StepType = "FACE" | "FINISH" | "PRESCRIPTION" | "LIFESTYLE" | "BUDGET" | "LOADING" | "RESULTS";
-
-interface RecommendationItem {
-  product: SafeProduct;
-  reason: string;
-  opticalFit?: string;
+interface Message {
+  id: string;
+  role: "assistant" | "user";
+  content: string;
+  productIds?: string[];
+  suggestedQuestions?: string[];
 }
+
+const DEFAULT_SUGGESTIONS = [
+  "What frames look best on a round face?",
+  "Which lenses are best for long screen time?",
+  "What are the best frames for high prescription?",
+  "How does nationwide delivery work in Pakistan?",
+];
 
 export default function GeminiFrameStylist({
   products,
@@ -38,104 +44,103 @@ export default function GeminiFrameStylist({
   isOpen,
   onClose,
 }: GeminiFrameStylistProps) {
-  const [step, setStep] = useState<StepType>("FACE");
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome-1",
+      role: "assistant",
+      content:
+        "Hello! I am your MY EYES optical assistant. How can I help you today? You can ask me for frame recommendations based on your face shape, lens guidance for prescription needs, or general styling advice.",
+      suggestedQuestions: DEFAULT_SUGGESTIONS,
+    },
+  ]);
 
-  // Selection states
-  const [faceShape, setFaceShape] = useState("Oval");
-  const [metalPreference, setMetalPreference] = useState("Classic Matte Black");
-  const [prescriptionType, setPrescriptionType] = useState("Single Vision Everyday");
-  const [lifestyle, setLifestyle] = useState("Heavy Screen Time (8+ hrs)");
-  const [budget, setBudget] = useState(5000);
+  const [inputQuery, setInputQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [recommendedItems, setRecommendedItems] = useState<RecommendationItem[]>([]);
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-
-  const loadingMessages = [
-    "Analyzing your face shape and proportions...",
-    "Matching your frame finish and style preference...",
-    "Checking lens thickness and frame fit...",
-    "Selecting your best frame matches...",
-  ];
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (step === "LOADING") {
-      setLoadingMessageIndex(0);
-      interval = setInterval(() => {
-        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
-      }, 1200);
+    if (isOpen) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        scrollToBottom();
+      }, 150);
     }
-    return () => clearInterval(interval);
-  }, [step]);
+  }, [isOpen, messages]);
 
-  const handleFetchRecommendations = async (selectedBudget: number) => {
-    setStep("LOADING");
+  const handleSendMessage = async (textToSend?: string) => {
+    const query = (textToSend || inputQuery).trim();
+    if (!query || isLoading) return;
+
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: query,
+    };
+
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInputQuery("");
+    setIsLoading(true);
+
     try {
       const res = await fetch("/api/ai-stylist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          faceShape,
-          metalPreference,
-          prescriptionType,
-          lifestyle,
-          budget: selectedBudget,
+          message: query,
+          messages: updatedMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
           products,
         }),
       });
 
       const data = await res.json();
 
-      if (data.recommendations && data.recommendations.length > 0) {
-        const mapped: RecommendationItem[] = data.recommendations
-          .map((rec: { id: string; reason: string; opticalFit?: string }) => {
-            const prod = products.find((p) => p.id === rec.id);
-            if (!prod) return null;
-            return {
-              product: prod,
-              reason: rec.reason,
-              opticalFit: rec.opticalFit,
-            };
-          })
-          .filter(Boolean) as RecommendationItem[];
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content:
+          data.reply ||
+          "I'm here to help you select the finest frames and lenses for your vision profile.",
+        productIds: data.recommendedProductIds || [],
+        suggestedQuestions: data.suggestedQuestions || [],
+      };
 
-        if (mapped.length > 0) {
-          setRecommendedItems(mapped);
-          setStep("RESULTS");
-          return;
-        }
-      }
-
-      fallbackToSampleProducts();
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
-      console.error("Stylist fetch error:", err);
-      fallbackToSampleProducts();
+      console.error("Chat error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content:
+            "I'm currently unable to reach the optical server. Please browse our frame collection or try again shortly.",
+          suggestedQuestions: DEFAULT_SUGGESTIONS,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fallbackToSampleProducts = () => {
-    const fallback = products.slice(0, 3).map((p, idx) => ({
-      product: p,
-      reason:
-        idx === 0
-          ? `Selected to balance ${faceShape} facial proportions with comfortable ${metalPreference.toLowerCase()} styling.`
-          : idx === 1
-          ? `Lightweight, balanced frame ideal for ${lifestyle.toLowerCase()} and ${prescriptionType.toLowerCase()}.`
-          : `Versatile classic frame designed for everyday comfort and clean fit.`,
-      opticalFit: `Ideal for ${faceShape} face shape`,
-    }));
-    setRecommendedItems(fallback);
-    setStep("RESULTS");
-  };
-
-  const handleReset = () => {
-    setStep("FACE");
-    setFaceShape("Oval");
-    setMetalPreference("Classic Matte Black");
-    setPrescriptionType("Single Vision Everyday");
-    setLifestyle("Heavy Screen Time (8+ hrs)");
-    setBudget(5000);
-    setRecommendedItems([]);
+  const handleResetChat = () => {
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        role: "assistant",
+        content:
+          "Hello! I am your MY EYES optical assistant. How can I help you today? You can ask me for frame recommendations based on your face shape, lens guidance for prescription needs, or general styling advice.",
+        suggestedQuestions: DEFAULT_SUGGESTIONS,
+      },
+    ]);
   };
 
   const getProductImage = (product: SafeProduct): string => {
@@ -148,472 +153,207 @@ export default function GeminiFrameStylist({
     return "/placeholder-frame.png";
   };
 
-  const stepNumbers = {
-    FACE: 1,
-    FINISH: 2,
-    PRESCRIPTION: 3,
-    LIFESTYLE: 4,
-    BUDGET: 5,
-    LOADING: 5,
-    RESULTS: 5,
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl transform transition-all">
-        <div className="bg-white w-full h-[620px] rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden text-slate-900">
-          {/* Header */}
-          <div className="bg-[#0B132B] text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30 text-amber-400">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold tracking-wide uppercase text-white">MY EYES Assistant</h3>
-                <p className="text-[11px] text-slate-400">Personalized Frame & Lens Consultation</p>
-              </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl h-[90vh] max-h-[700px] bg-white rounded-3xl shadow-2xl border border-amber-200/80 flex flex-col overflow-hidden text-slate-900">
+        {/* ============================================================ */}
+        {/* HEADER: WHITE & AMBER BRAND THEME                            */}
+        {/* ============================================================ */}
+        <div className="bg-white border-b border-amber-100 px-5 sm:px-6 py-4 flex items-center justify-between shrink-0 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#F59E0B] shadow-2xs">
+              <Sparkles className="w-5 h-5" />
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black tracking-tight text-slate-900 uppercase">
+                  MY EYES <span className="text-[#F59E0B]">AI ASSISTANT</span>
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Live Optical Guidance & Frame Consultation
+              </p>
+            </div>
+          </div>
 
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetChat}
+              title="Reset Chat"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
             <button
               onClick={onClose}
               aria-label="Close Assistant"
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
 
-          {/* Progress Bar & Step Tracker */}
-          {step !== "RESULTS" && step !== "LOADING" && (
-            <div className="bg-slate-50 border-b border-slate-100 px-6 py-2.5 flex items-center justify-between text-xs text-slate-500 font-semibold shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-[#0B132B] text-amber-400 text-[10px] font-bold flex items-center justify-center">
-                  {stepNumbers[step]}
-                </span>
-                <span className="text-slate-800">
-                  {step === "FACE" && "Step 1: Face Shape"}
-                  {step === "FINISH" && "Step 2: Frame Finish"}
-                  {step === "PRESCRIPTION" && "Step 3: Lens Type"}
-                  {step === "LIFESTYLE" && "Step 4: Daily Lifestyle"}
-                  {step === "BUDGET" && "Step 5: Budget Range"}
-                </span>
-              </div>
+        {/* ============================================================ */}
+        {/* CHAT MESSAGES STREAM                                         */}
+        {/* ============================================================ */}
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/60">
+          {messages.map((msg) => {
+            const isUser = msg.role === "user";
+            const recommendedProducts = (msg.productIds || [])
+              .map((id) => products.find((p) => p.id === id))
+              .filter(Boolean) as SafeProduct[];
 
-              <div className="flex items-center gap-1.5">
-                {[1, 2, 3, 4, 5].map((s) => (
+            return (
+              <div
+                key={msg.id}
+                className={`flex gap-3 items-start ${isUser ? "justify-end" : "justify-start"}`}
+              >
+                {!isUser && (
+                  <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1 shadow-2xs">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                )}
+
+                <div
+                  className={`max-w-[85%] sm:max-w-[78%] space-y-3 ${
+                    isUser ? "items-end text-right" : "items-start text-left"
+                  }`}
+                >
+                  {/* Message Bubble */}
                   <div
-                    key={s}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      s <= stepNumbers[step] ? "w-6 bg-[#F59E0B]" : "w-2.5 bg-slate-200"
+                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs font-normal ${
+                      isUser
+                        ? "bg-[#0F172A] text-white rounded-tr-none ml-auto"
+                        : "bg-white text-slate-800 border border-amber-100 rounded-tl-none"
                     }`}
-                  />
-                ))}
+                  >
+                    {msg.content}
+                  </div>
+
+                  {/* Recommended Frame Cards */}
+                  {!isUser && recommendedProducts.length > 0 && (
+                    <div className="space-y-2.5 pt-1">
+                      <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">
+                        Recommended Frames
+                      </span>
+                      <div className="grid grid-cols-1 gap-2">
+                        {recommendedProducts.map((prod) => (
+                          <div
+                            key={prod.id}
+                            onClick={() => {
+                              onSelectProduct(prod);
+                              onClose();
+                            }}
+                            className="bg-white p-3 rounded-2xl border border-amber-200/80 hover:border-amber-500 hover:shadow-md transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                          >
+                            <div className="relative w-16 h-12 bg-slate-50 rounded-xl p-1 shrink-0 overflow-hidden flex items-center justify-center border border-slate-100">
+                              <Image
+                                src={getProductImage(prod)}
+                                alt={prod.name}
+                                fill
+                                className="object-contain p-0.5 group-hover:scale-105 transition-transform"
+                              />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-xs font-bold text-slate-900 group-hover:text-amber-600 truncate">
+                                {prod.name}
+                              </h5>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px]">
+                                <span className="font-extrabold text-[#F59E0B]">
+                                  {formatPrice(prod.price)}
+                                </span>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-slate-500 truncate">
+                                  {formatFrameShape(prod.frameShape)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button className="text-[11px] bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-xl transition-colors shrink-0 shadow-2xs flex items-center gap-1">
+                              <span>View</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Suggested Question Chips */}
+                  {!isUser && msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {msg.suggestedQuestions.map((q, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleSendMessage(q)}
+                          className="text-[11px] bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-amber-200/70 hover:border-amber-400 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium shadow-2xs text-left"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {isUser && (
+                  <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Typing Indicator */}
+          {isLoading && (
+            <div className="flex gap-3 items-start justify-start">
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1 shadow-2xs">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="bg-white border border-amber-100 p-3.5 rounded-2xl rounded-tl-none shadow-2xs flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           )}
 
-          {/* Scrollable Area */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-5 bg-slate-50/50">
-            {/* STEP 1: FACE SHAPE */}
-            {step === "FACE" && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <h4 className="text-sm font-bold text-slate-900">What is your face shape?</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Select your face shape to find frames with the most flattering proportions.
-                  </p>
-                </div>
+          <div ref={messagesEndRef} />
+        </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {[
-                    { shape: "Oval", desc: "Balanced proportions and softly rounded curves" },
-                    { shape: "Round", desc: "Similar width and length with soft cheekbones" },
-                    { shape: "Square", desc: "Strong, defined jawline and broad forehead" },
-                    { shape: "Heart", desc: "Wider forehead tapering to a narrower chin" },
-                    { shape: "Diamond", desc: "Defined cheekbones with narrower forehead and chin" },
-                    { shape: "Oblong", desc: "Longer face profile with straight cheek lines" },
-                  ].map(({ shape, desc }) => (
-                    <button
-                      key={shape}
-                      onClick={() => {
-                        setFaceShape(shape);
-                        setStep("FINISH");
-                      }}
-                      className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-[#0B132B] hover:shadow-md transition-all text-left group cursor-pointer flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                          {shape}
-                        </div>
-                        <div className="text-[11px] text-slate-500">{desc}</div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* ============================================================ */}
+        {/* INPUT BAR: WHITE AND AMBER                                  */}
+        {/* ============================================================ */}
+        <div className="p-3 sm:p-4 bg-white border-t border-amber-100 shrink-0">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
+              placeholder="Ask anything about frames, face shapes, or lenses..."
+              className="flex-1 bg-slate-50 border border-slate-200 focus:border-amber-500 focus:bg-white focus:outline-none px-4 py-3 rounded-2xl text-xs sm:text-sm text-slate-900 transition-all"
+              disabled={isLoading}
+            />
 
-            {/* STEP 2: FRAME FINISH */}
-            {step === "FINISH" && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <h4 className="text-sm font-bold text-slate-900">Which frame finish do you prefer?</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Choose the color and material tone that best matches your personal style.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2.5">
-                  {[
-                    {
-                      label: "Classic Matte Black",
-                      desc: "Versatile, high-contrast, timeless look",
-                      colorCode: "bg-slate-900",
-                    },
-                    {
-                      label: "Warm Gold & Champagne",
-                      desc: "Rich, polished metallic finish with warm tones",
-                      colorCode: "bg-amber-400",
-                    },
-                    {
-                      label: "Cool Silver & Gunmetal",
-                      desc: "Modern, minimal, understated finish",
-                      colorCode: "bg-slate-400",
-                    },
-                    {
-                      label: "Tortoise Shell & Amber",
-                      desc: "Classic pattern with rich warm depth",
-                      colorCode: "bg-amber-800",
-                    },
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        setMetalPreference(item.label);
-                        setStep("PRESCRIPTION");
-                      }}
-                      className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-[#0B132B] hover:shadow-md transition-all text-left group cursor-pointer flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full ${item.colorCode} border border-slate-200 shadow-2xs shrink-0`} />
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                            {item.label}
-                          </div>
-                          <div className="text-[11px] text-slate-500">{item.desc}</div>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors shrink-0" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setStep("FACE")}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    ← Back to Face Shape
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: LENS TYPE */}
-            {step === "PRESCRIPTION" && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <h4 className="text-sm font-bold text-slate-900">What type of lenses do you need?</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    We ensure recommended frames comfortably support your lens prescription.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2.5">
-                  {[
-                    {
-                      label: "Single Vision (Everyday Glasses)",
-                      desc: "For general distance or reading prescription",
-                      icon: Eye,
-                    },
-                    {
-                      label: "Blue Light Screen Protection",
-                      desc: "Anti-glare lenses designed for long hours at computers",
-                      icon: Glasses,
-                    },
-                    {
-                      label: "High Index Thin Lenses",
-                      desc: "For stronger prescriptions requiring slim, sturdy frame rims",
-                      icon: ShieldCheck,
-                    },
-                    {
-                      label: "Progressive / Bifocal",
-                      desc: "Comfortable corridor height for near and far vision",
-                      icon: SlidersHorizontal,
-                    },
-                    {
-                      label: "Polarized Sunglasses",
-                      desc: "Full UV protection and outdoor glare reduction",
-                      icon: Sparkles,
-                    },
-                  ].map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <button
-                        key={item.label}
-                        onClick={() => {
-                          setPrescriptionType(item.label);
-                          setStep("LIFESTYLE");
-                        }}
-                        className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-[#0B132B] hover:shadow-md transition-all text-left group cursor-pointer flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:bg-amber-500/10 group-hover:text-amber-600 transition-colors">
-                            <IconComponent className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                              {item.label}
-                            </div>
-                            <div className="text-[11px] text-slate-500">{item.desc}</div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors shrink-0" />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setStep("FINISH")}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    ← Back to Frame Finish
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: LIFESTYLE */}
-            {step === "LIFESTYLE" && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <h4 className="text-sm font-bold text-slate-900">What is your daily use?</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    We select lightweight and durable frames matched to your routine.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2.5">
-                  {[
-                    {
-                      label: "💻 Heavy Computer / Screen Use",
-                      desc: "Lightweight and pressure-free for all-day focus",
-                    },
-                    {
-                      label: "☀ Outdoor, Travel & Commuting",
-                      desc: "Secure grip, durable hinges, and sturdy construction",
-                    },
-                    {
-                      label: "👔 Office & Formal Wear",
-                      desc: "Clean, professional, and elegant design",
-                    },
-                    {
-                      label: "🎨 Casual & Everyday Fashion",
-                      desc: "Comfortable, stylish frames for daily wear",
-                    },
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        setLifestyle(item.label);
-                        setStep("BUDGET");
-                      }}
-                      className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-[#0B132B] hover:shadow-md transition-all text-left group cursor-pointer flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                          {item.label}
-                        </div>
-                        <div className="text-[11px] text-slate-500">{item.desc}</div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-900 transition-colors shrink-0" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setStep("PRESCRIPTION")}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    ← Back to Lens Type
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 5: BUDGET */}
-            {step === "BUDGET" && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <h4 className="text-sm font-bold text-slate-900">What is your budget?</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Select your preferred price range.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {[
-                    { label: "Under Rs. 2,500", val: 2500 },
-                    { label: "Rs. 2,500 – Rs. 4,500", val: 4500 },
-                    { label: "Rs. 4,500 – Rs. 8,000", val: 8000 },
-                    { label: "All Prices", val: 15000 },
-                  ].map((b) => (
-                    <button
-                      key={b.val}
-                      onClick={() => {
-                        setBudget(b.val);
-                        handleFetchRecommendations(b.val);
-                      }}
-                      className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-[#0B132B] hover:shadow-md transition-all text-center group cursor-pointer"
-                    >
-                      <div className="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                        {b.label}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setStep("LIFESTYLE")}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    ← Back to Lifestyle
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* LOADING STATE */}
-            {step === "LOADING" && (
-              <div className="h-full flex flex-col items-center justify-center py-16 text-center space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-[#F59E0B] animate-pulse">
-                  <Sparkles className="w-7 h-7 animate-spin" style={{ animationDuration: "5s" }} />
-                </div>
-
-                <div className="space-y-1.5 max-w-sm px-4">
-                  <h4 className="text-sm font-bold text-slate-900 min-h-[24px]">
-                    {loadingMessages[loadingMessageIndex]}
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    Finding the best frame matches for your {faceShape} face shape.
-                  </p>
-                </div>
-
-                <div className="w-40 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#F59E0B] rounded-full animate-pulse w-3/4" />
-                </div>
-              </div>
-            )}
-
-            {/* RESULTS */}
-            {step === "RESULTS" && (
-              <div className="space-y-4">
-                <div className="bg-[#0B132B] text-white p-4 rounded-2xl border border-slate-800">
-                  <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Your Recommended Frames</span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Top 3 matches selected for your <strong className="text-white">{faceShape}</strong> face shape and <strong className="text-white">{metalPreference}</strong> preference.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {recommendedItems.map(({ product, reason, opticalFit }, idx) => (
-                    <div
-                      key={product.id || idx}
-                      onClick={() => {
-                        onSelectProduct(product);
-                        onClose();
-                      }}
-                      className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-[#0B132B] hover:shadow-md transition-all cursor-pointer group space-y-2.5"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-20 h-16 bg-slate-50 rounded-xl border border-slate-100 p-1 shrink-0 overflow-hidden flex items-center justify-center">
-                          <Image
-                            src={getProductImage(product)}
-                            alt={product.name}
-                            fill
-                            className="object-contain p-1 group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
-                              Match #{idx + 1}
-                            </span>
-                            {opticalFit && (
-                              <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md truncate max-w-[150px]">
-                                {opticalFit}
-                              </span>
-                            )}
-                          </div>
-
-                          <h4 className="font-bold text-sm text-slate-900 truncate mt-1 group-hover:text-amber-600 transition-colors">
-                            {product.name}
-                          </h4>
-
-                          <div className="flex items-center gap-3 mt-1 text-xs">
-                            <span className="font-extrabold text-slate-900">
-                              {formatPrice(product.price)}
-                            </span>
-                            <span className="text-slate-400">•</span>
-                            <span className="text-slate-500 font-medium">
-                              {formatFrameShape(product.frameShape)} / {formatMaterial(product.material)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button className="text-xs bg-[#0B132B] text-white font-bold px-3.5 py-2 rounded-xl group-hover:bg-[#F59E0B] transition-colors shrink-0 shadow-xs flex items-center gap-1">
-                          <span>View</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] text-slate-700 leading-relaxed">
-                        &ldquo;{reason}&rdquo;
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-                  <button
-                    onClick={handleReset}
-                    className="text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer py-2"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Start Over</span>
-                  </button>
-
-                  <button
-                    onClick={onClose}
-                    className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            <button
+              type="submit"
+              disabled={!inputQuery.trim() || isLoading}
+              className="w-11 h-11 rounded-2xl bg-[#F59E0B] hover:bg-[#D97706] disabled:bg-slate-200 text-white flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-sm shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
         </div>
       </div>
     </div>
