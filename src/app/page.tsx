@@ -218,9 +218,9 @@ export default function HomePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-[340px] bg-slate-50 rounded-2xl border border-slate-100 animate-pulse" />
+              <div key={i} className="min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start shrink-0 md:shrink h-[340px] bg-slate-50 rounded-2xl border border-slate-100 animate-pulse" />
             ))}
           </div>
         ) : products.length === 0 ? (
@@ -228,24 +228,25 @@ export default function HomePage() {
             No frames currently in catalog. Check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             {products.slice(0, 6).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddLenses={(p) => {
-                  setSelectedProduct(p as unknown as SafeProduct);
-                  setRxModalOpen(true);
-                }}
-                onAddToCart={(p) => {
-                  addItem({
-                    productId: p.id,
-                    name: `${p.name} (Standard Sun Lenses)`,
-                    price: p.price,
-                    image: p.images[0] || "",
-                  });
-                }}
-              />
+              <div key={product.id} className="min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start shrink-0 md:shrink w-[280px] sm:w-[320px] md:w-auto">
+                <ProductCard
+                  product={product}
+                  onAddLenses={(p) => {
+                    setSelectedProduct(p as unknown as SafeProduct);
+                    setRxModalOpen(true);
+                  }}
+                  onAddToCart={(p) => {
+                    addItem({
+                      productId: p.id,
+                      name: `${p.name} (Standard Sun Lenses)`,
+                      price: p.price,
+                      image: p.images[0] || "",
+                    });
+                  }}
+                />
+              </div>
             ))}
           </div>
         )}

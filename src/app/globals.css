@@ -56,6 +56,15 @@ body {
   color: #ffffff;
 }
 
+/* Utility to hide scrollbars */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================================ */
 /*  ANIMATIONS & TACTILE INTERACTION SYSTEM                     */
 /* ============================================================ */
