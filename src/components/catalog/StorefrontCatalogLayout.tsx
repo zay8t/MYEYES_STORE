@@ -66,30 +66,28 @@ export default function StorefrontCatalogLayout({
 
 
   return (
-    <div className="min-h-screen bg-white py-8 sm:py-12">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-100 pb-6 mb-6 gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-widest font-bold text-slate-500">
-                {categoryTag}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mt-1">
+    <div className="min-h-screen bg-white text-slate-900">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 sm:pt-12 pb-16">
+        {/* Page Header with balanced breathing room */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-100 pb-8 mb-8 gap-6">
+          <div className="space-y-2">
+            <span className="inline-block text-[11px] font-bold tracking-widest text-amber-700 uppercase bg-amber-50 px-3 py-1 rounded-full border border-amber-200/60">
+              {categoryTag}
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
               {title}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mt-1.5 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium leading-relaxed">
               {subtitle}
             </p>
           </div>
 
           {/* Mobile Filter Drawer Trigger + Quiz link */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-start md:self-end">
             <MobileFilterDrawer facets={facets} totalResults={filteredProducts.length} />
             <Link
               href="/quiz"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-2xs cursor-pointer shrink-0"
             >
               <Sparkles className="w-3.5 h-3.5 fill-current" />
               <span>Style Quiz</span>
@@ -97,15 +95,15 @@ export default function StorefrontCatalogLayout({
           </div>
         </div>
 
-        {/* 2-Column Split: Sticky Filter Sidebar (Desktop) + Product Grid */}
-        <div className="flex items-start">
-          {/* Desktop Collapsible Rail */}
-          <div className="hidden lg:block">
+        {/* 2-Column Split: Sticky Filter Sidebar (Desktop) + Product Grid with clean gap spacing */}
+        <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-10">
+          {/* Desktop Filter Sidebar */}
+          <aside className="hidden lg:block w-72 shrink-0">
             <FilterSidebar facets={facets} totalProducts={filteredProducts.length} />
-          </div>
+          </aside>
 
           {/* Main Content Area */}
-          <div className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 w-full">
             {/* Active Filter Chips & Sort Selector */}
             <ActiveFilterRibbon totalResults={filteredProducts.length} />
 
@@ -168,7 +166,7 @@ export default function StorefrontCatalogLayout({
                 ))}
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
 
