@@ -15,6 +15,7 @@ import PopularFramesSection from "@/components/home/PopularFramesSection";
 import CategorySpotlight from "@/components/home/CategorySpotlight";
 import ProductDrawer from "@/components/ProductDrawer";
 import GeminiFrameStylist from "@/components/ai/GeminiFrameStylist";
+import VirtualAssistantBanner from "@/components/ai/VirtualAssistantBanner";
 
 const Frame3DCanvasWrapper = dynamic(
   () => import("@/components/3d/Frame3DCanvasWrapper"),
@@ -183,6 +184,17 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ============================================================ */}
+      {/* VIRTUAL ASSISTANT BANNER: BESPOKE OPTICAL AI STYLIST         */}
+      {/* ============================================================ */}
+      <VirtualAssistantBanner
+        products={products}
+        onSelectProduct={(product) => {
+          setDrawerProduct(product);
+          setDrawerOpen(true);
+        }}
+      />
 
       {/* ============================================================ */}
       {/* FIND BY FACE SHAPE: PRECISION FIT MATCHER                    */}
