@@ -76,41 +76,56 @@ export default function GeminiFrameStylist({
     const userText = (textToSend || inputQuery).trim();
     if (!userText || isLoading) return;
 
+    // 1. Append user message to state immediately
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
       content: userText,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputQuery("");
     setIsLoading(true);
 
     try {
+      // 2. Call backend API route
       const res = await fetch("/api/ai-stylist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, products }),
       });
+
       const data = await res.json();
 
-      if (data.reply) {
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: data.reply,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
+      // 3. Append Gemini's actual reply to state
+      if (data && data.reply) {
+        setMessages([
+          ...newMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: data.reply,
+          },
+        ]);
+      } else {
+        setMessages([
+          ...newMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: "I'm here to help you find the right frames and lenses!",
+          },
+        ]);
       }
-    } catch (err) {
-      console.error("Failed to send message", err);
-      setMessages((prev) => [
-        ...prev,
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages([
+        ...newMessages,
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content:
-            "I'm currently unable to reach the optical server. Please browse our frame collection or try again shortly.",
+          content: "Sorry, I ran into a connection error. Please try again!",
         },
       ]);
     } finally {
