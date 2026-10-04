@@ -96,11 +96,11 @@ export default function HomePage() {
               Great-looking glasses made with clear, high-quality lenses. Take our quick 1-minute quiz or browse all styles.
             </p>
 
-            {/* 4 buttons with uniform size and equal spacing */}
-            <div className="pt-4 flex flex-row items-center justify-center gap-3 w-full max-w-2xl mx-auto">
+            {/* 4 buttons: 2x2 grid on mobile, uniform flex row on sm+ */}
+            <div className="pt-4 grid grid-cols-2 sm:flex sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-2xl mx-auto">
               <Link
                 href="/quiz"
-                className="flex-1 h-[44px] rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="w-full sm:flex-1 h-[44px] rounded-full bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Sparkles className="w-3.5 h-3.5 text-white" />
                 <span>Take 1-Min Quiz</span>
@@ -108,7 +108,7 @@ export default function HomePage() {
 
               <Link
                 href="/eyeglasses"
-                className="flex-1 h-[44px] rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap"
+                className="w-full sm:flex-1 h-[44px] rounded-full bg-white text-[#0B132B] shadow-sm hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap"
               >
                 <Glasses className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>Eyeglasses</span>
@@ -116,7 +116,7 @@ export default function HomePage() {
 
               <Link
                 href="/sunglasses"
-                className="flex-1 h-[44px] rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="w-full sm:flex-1 h-[44px] rounded-full bg-[#0B132B] text-white hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Sun className="w-3.5 h-3.5 text-white" />
                 <span>Sunglasses</span>
@@ -124,7 +124,7 @@ export default function HomePage() {
 
               <Link
                 href="/lens-pricing"
-                className="flex-1 h-[44px] rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+                className="w-full sm:flex-1 h-[44px] rounded-full bg-transparent text-[#0B132B] border-2 border-[#0B132B] hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm"
               >
                 <Calculator className="w-3.5 h-3.5 text-[#0B132B]" />
                 <span>Lens Prices</span>

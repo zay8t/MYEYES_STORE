@@ -177,12 +177,12 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
         )}
       </div>
 
-      {/* Content Container with isolated padding */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 space-y-3">
+      {/* Content Container with responsive padding for 2-col mobile */}
+      <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 space-y-2 sm:space-y-3">
         {/* Shape / Material Row */}
-        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-          <span>{formatFrameShape(product.frameShape)}</span>
-          <span>{formatMaterial(product.material)}</span>
+        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 font-medium">
+          <span className="truncate">{formatFrameShape(product.frameShape)}</span>
+          <span className="truncate">{formatMaterial(product.material)}</span>
         </div>
 
         {/* Title & Description */}
@@ -196,16 +196,16 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
               }
             }}
           >
-            <h3 className="text-base font-bold text-slate-900 line-clamp-1 group-hover:underline cursor-pointer">
+            <h3 className="text-xs sm:text-base font-bold text-slate-900 line-clamp-1 group-hover:underline cursor-pointer">
               {product.name}
             </h3>
           </Link>
-          <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{product.description}</p>
+          <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1 mt-0.5">{product.description}</p>
         </div>
 
         {/* Interactive In-Card Color Swatch Dots */}
         {colorsList && colorsList.length > 0 && (
-          <div className="flex items-center gap-1.5 pt-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 pt-0.5">
             {colorsList.map((c, i) => {
               const hex = COLOR_MAP[c.toLowerCase()] || c;
               const isSelected = selectedVariantIdx === i;
@@ -220,7 +220,7 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
                     setSelectedVariantIdx(i % imagesList.length);
                   }}
                   className={cn(
-                    "w-3.5 h-3.5 rounded-full border shadow-2xs transition-all cursor-pointer",
+                    "w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border shadow-2xs transition-all cursor-pointer",
                     isSelected
                       ? "ring-2 ring-slate-900 ring-offset-1 scale-110 border-black/30"
                       : "border-black/15 hover:scale-110"
@@ -234,13 +234,13 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
         )}
 
         {/* Price & Add Lenses CTA Button */}
-        <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
-          <div className="flex items-baseline gap-2">
-            <span className="text-neutral-900 font-bold text-sm sm:text-base">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+            <span className="text-neutral-900 font-bold text-xs sm:text-base">
               {pricing.formattedFinalPrice}
             </span>
             {pricing.hasDiscount && pricing.formattedOriginalPrice && (
-              <span className="text-neutral-400 text-xs line-through">
+              <span className="text-neutral-400 text-[10px] sm:text-xs line-through">
                 {pricing.formattedOriginalPrice}
               </span>
             )}
@@ -249,24 +249,26 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
           {product.stock <= 0 ? (
             <button
               disabled
-              className="h-[36px] px-4 rounded-full bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed border border-slate-200"
+              className="h-[30px] sm:h-[36px] px-2.5 sm:px-4 rounded-full bg-slate-100 text-slate-400 text-[10px] sm:text-xs font-bold cursor-not-allowed border border-slate-200 shrink-0"
             >
               Out of Stock
             </button>
           ) : product.category === "EYEGLASSES" || !product.category ? (
             <button
               onClick={() => onAddLenses && onAddLenses(product)}
-              className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="h-[30px] sm:h-[36px] px-2.5 sm:px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[10px] sm:text-xs font-bold transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
             >
-              <Glasses className="w-3.5 h-3.5" />
-              <span>Add Lenses</span>
+              <Glasses className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline sm:inline">Add Lenses</span>
+              <span className="xs:hidden sm:hidden">Lenses</span>
             </button>
           ) : (
             <button
               onClick={() => onAddToCart && onAddToCart(product)}
-              className="h-[36px] px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="h-[30px] sm:h-[36px] px-2.5 sm:px-4 rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white text-[10px] sm:text-xs font-bold transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
             >
-              <span>Add to Cart</span>
+              <span className="hidden xs:inline sm:inline">Add to Cart</span>
+              <span className="xs:hidden sm:hidden">Add</span>
             </button>
           )}
         </div>
