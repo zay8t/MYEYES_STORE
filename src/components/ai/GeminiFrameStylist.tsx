@@ -38,14 +38,121 @@ const DEFAULT_SUGGESTIONS = [
   "How does nationwide delivery work in Pakistan?",
 ];
 
-function renderInlineBold(line: string) {
-  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+type MarkdownBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] }
+  | { type: "heading"; level: number; text: string };
+
+function parseMarkdownBlocks(rawText: string): MarkdownBlock[] {
+  const lines = rawText.split("\n");
+  const blocks: MarkdownBlock[] = [];
+  let currentList: { type: "ul" | "ol"; items: string[] } | null = null;
+  let currentParagraphLines: string[] = [];
+
+  const flushParagraph = () => {
+    if (currentParagraphLines.length > 0) {
+      blocks.push({
+        type: "paragraph",
+        text: currentParagraphLines.join(" "),
+      });
+      currentParagraphLines = [];
+    }
+  };
+
+  const flushList = () => {
+    if (currentList) {
+      blocks.push(currentList);
+      currentList = null;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // Blank line indicates separation between blocks
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    // Heading (# , ## , ### )
+    const headingMatch = rawLine.match(/^(#{1,4})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        type: "heading",
+        level: headingMatch[1].length,
+        text: headingMatch[2].trim(),
+      });
+      continue;
+    }
+
+    // Unordered bullet item (* , - , + , • )
+    const bulletMatch = rawLine.match(/^(\s*)[\*\-\+•]\s+(.*)$/);
+    if (bulletMatch) {
+      flushParagraph();
+      if (!currentList || currentList.type !== "ul") {
+        flushList();
+        currentList = { type: "ul", items: [] };
+      }
+      currentList.items.push(bulletMatch[2].trim());
+      continue;
+    }
+
+    // Ordered numbered item (1. , 2. )
+    const orderedMatch = rawLine.match(/^(\s*)\d+[\.\)]\s+(.*)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (!currentList || currentList.type !== "ol") {
+        flushList();
+        currentList = { type: "ol", items: [] };
+      }
+      currentList.items.push(orderedMatch[2].trim());
+      continue;
+    }
+
+    // Normal paragraph line
+    flushList();
+    currentParagraphLines.push(trimmed);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
+}
+
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+  const parts = text.split(tokenRegex);
+
   return parts.map((part, idx) => {
-    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
       return (
         <strong key={idx} className="font-bold text-slate-900">
           {part.slice(2, -2)}
         </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return (
+        <code
+          key={idx}
+          className="px-1.5 py-0.5 rounded bg-slate-100 text-amber-800 text-[11px] font-mono border border-slate-200"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) {
+      return (
+        <em key={idx} className="italic text-slate-800">
+          {part.slice(1, -1)}
+        </em>
       );
     }
     return <span key={idx}>{part}</span>;
@@ -53,37 +160,57 @@ function renderInlineBold(line: string) {
 }
 
 function FormattedAssistantMessage({ text }: { text: string }) {
-  const paragraphs = text.split(/\n\s*\n/);
+  const blocks = parseMarkdownBlocks(text);
 
   return (
-    <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800">
-      {paragraphs.map((para, pIdx) => {
-        const lines = para.split("\n").filter((l) => l.trim().length > 0);
-        const isBulletList = lines.length > 0 && lines.every((l) => /^\s*[\*\-•]\s+/.test(l));
-
-        if (isBulletList) {
+    <div className="space-y-2.5 text-xs sm:text-sm leading-relaxed text-slate-800">
+      {blocks.map((block, bIdx) => {
+        if (block.type === "heading") {
+          if (block.level <= 2) {
+            return (
+              <h4 key={bIdx} className="font-bold text-slate-900 text-sm tracking-tight pt-1">
+                {renderInlineMarkdown(block.text)}
+              </h4>
+            );
+          }
           return (
-            <ul key={pIdx} className="space-y-1.5 pl-1 my-1">
-              {lines.map((line, lIdx) => {
-                const cleaned = line.replace(/^\s*[\*\-•]\s+/, "");
-                return (
-                  <li key={lIdx} className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                    <span>{renderInlineBold(cleaned)}</span>
-                  </li>
-                );
-              })}
+            <h5 key={bIdx} className="font-bold text-amber-900 text-xs tracking-wide uppercase pt-0.5">
+              {renderInlineMarkdown(block.text)}
+            </h5>
+          );
+        }
+
+        if (block.type === "ul") {
+          return (
+            <ul key={bIdx} className="space-y-1.5 my-2 pl-0.5">
+              {block.items.map((item, iIdx) => (
+                <li key={iIdx} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 shrink-0 shadow-xs" />
+                  <span className="flex-1 leading-relaxed">{renderInlineMarkdown(item)}</span>
+                </li>
+              ))}
             </ul>
           );
         }
 
+        if (block.type === "ol") {
+          return (
+            <ol key={bIdx} className="space-y-1.5 my-2 pl-0.5">
+              {block.items.map((item, iIdx) => (
+                <li key={iIdx} className="flex items-start gap-2">
+                  <span className="text-[11px] font-bold text-amber-600 min-w-4 text-right shrink-0 mt-0.5">
+                    {iIdx + 1}.
+                  </span>
+                  <span className="flex-1 leading-relaxed">{renderInlineMarkdown(item)}</span>
+                </li>
+              ))}
+            </ol>
+          );
+        }
+
         return (
-          <p key={pIdx} className="space-y-1">
-            {lines.map((line, lIdx) => (
-              <span key={lIdx} className={lines.length > 1 ? "block" : "inline"}>
-                {renderInlineBold(line)}
-              </span>
-            ))}
+          <p key={bIdx} className="leading-relaxed">
+            {renderInlineMarkdown(block.text)}
           </p>
         );
       })}
