@@ -110,9 +110,35 @@ export default function ProductModal({
   const [price, setPrice] = useState(product?.price ? String(product.price) : "");
   const [stock, setStock] = useState(product?.stock ? String(product.stock) : "10");
   const [category, setCategory] = useState<Category>(product?.category || "EYEGLASSES");
-  const [frameShape, setFrameShape] = useState<FrameShape>(product?.frameShape || "NILL");
-  const [material, setMaterial] = useState<Material>(product?.material || "NILL");
   const [gender, setGender] = useState(product?.gender || "Unisex");
+  const [shapes, setShapes] = useState<string[]>(() => {
+    if (!product) return [];
+    const prod = product as Record<string, unknown>;
+    if (Array.isArray(prod.shapes)) {
+      return (prod.shapes as string[]).map(String).filter((s) => s && s !== "NILL");
+    }
+    if (typeof prod.shapes === "string") {
+      return prod.shapes.split(",").map((s) => s.trim()).filter((s) => s && s !== "NILL");
+    }
+    if (product.frameShape && product.frameShape !== "NILL") {
+      return [product.frameShape];
+    }
+    return [];
+  });
+  const [materials, setMaterials] = useState<string[]>(() => {
+    if (!product) return [];
+    const prod = product as Record<string, unknown>;
+    if (Array.isArray(prod.materials)) {
+      return (prod.materials as string[]).map(String).filter((m) => m && m !== "NILL");
+    }
+    if (typeof prod.materials === "string") {
+      return prod.materials.split(",").map((s) => s.trim()).filter((s) => s && s !== "NILL");
+    }
+    if (product.material && product.material !== "NILL") {
+      return [product.material];
+    }
+    return [];
+  });
   const [selectedColors, setSelectedColors] = useState<string[]>(() => {
     if (!product) return [];
     const prod = product as Record<string, unknown>;
@@ -162,8 +188,10 @@ export default function ProductModal({
       price: parseFloat(price),
       stock: parseInt(stock, 10) || 0,
       category,
-      frameShape,
-      material,
+      shapes,
+      materials,
+      frameShape: (shapes.length > 0 ? shapes[0] : "NILL") as FrameShape,
+      material: (materials.length > 0 ? materials[0] : "NILL") as Material,
       gender,
       colors: selectedColors,
       images,
@@ -313,7 +341,7 @@ export default function ProductModal({
               <Tag className="w-4 h-4 text-amber-600" /> Frame Variants & Optical Specs
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                   Category *
@@ -347,39 +375,103 @@ export default function ProductModal({
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div className="space-y-1">
+            {/* Multi-Select Frame Shapes */}
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Frame Shape
+                  Frame Shapes ({shapes.length} selected)
                 </label>
-                <select
-                  value={frameShape}
-                  onChange={(e) => setFrameShape(e.target.value as FrameShape)}
-                  className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
-                >
-                  {FRAME_SHAPES_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                {shapes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShapes([])}
+                    className="text-[10px] font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                )}
               </div>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {FRAME_SHAPES_OPTIONS.filter((opt) => opt.value !== "NILL").map((opt) => {
+                  const isSelected = shapes.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`flex items-center gap-2 p-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer select-none ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-50/50 text-amber-950 ring-1 ring-amber-400/40"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50/50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setShapes((prev) =>
+                            prev.includes(opt.value)
+                              ? prev.filter((v) => v !== opt.value)
+                              : [...prev, opt.value]
+                          );
+                        }}
+                        className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer shrink-0"
+                      />
+                      <span className="truncate" title={opt.label}>
+                        {opt.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
 
-              <div className="space-y-1">
+            {/* Multi-Select Frame Materials */}
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Material
+                  Frame Materials ({materials.length} selected)
                 </label>
-                <select
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value as Material)}
-                  className="w-full px-3 py-2 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
-                >
-                  {MATERIALS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                {materials.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setMaterials([])}
+                    className="text-[10px] font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {MATERIALS_OPTIONS.filter((opt) => opt.value !== "NILL").map((opt) => {
+                  const isSelected = materials.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`flex items-center gap-2 p-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer select-none ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-50/50 text-amber-950 ring-1 ring-amber-400/40"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50/50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setMaterials((prev) =>
+                            prev.includes(opt.value)
+                              ? prev.filter((v) => v !== opt.value)
+                              : [...prev, opt.value]
+                          );
+                        }}
+                        className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer shrink-0"
+                      />
+                      <span className="truncate" title={opt.label}>
+                        {opt.label}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 

@@ -33,8 +33,17 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.featured !== undefined) updateData.featured = body.featured;
     if (body.category !== undefined) updateData.category = body.category;
-    if (body.frameShape !== undefined) updateData.frameShape = body.frameShape;
-    if (body.material !== undefined) updateData.material = body.material;
+    if (body.shapes !== undefined) {
+      updateData.frameShape = Array.isArray(body.shapes) && body.shapes.length > 0 ? body.shapes[0] : "NILL";
+    } else if (body.frameShape !== undefined) {
+      updateData.frameShape = body.frameShape;
+    }
+
+    if (body.materials !== undefined) {
+      updateData.material = Array.isArray(body.materials) && body.materials.length > 0 ? body.materials[0] : "NILL";
+    } else if (body.material !== undefined) {
+      updateData.material = body.material;
+    }
     if (body.gender !== undefined) updateData.gender = body.gender;
     if (body.modelGlbUrl !== undefined) updateData.modelGlbUrl = body.modelGlbUrl;
     if (body.colors !== undefined) {
