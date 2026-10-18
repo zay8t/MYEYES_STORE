@@ -15,6 +15,7 @@ import {
   Eye,
   CreditCard,
   TicketPercent,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,12 @@ const ALL_NAV_CATEGORIES: NavCategory[] = [
       { name: "Lens Pricing", label: "Lens Pricing", href: "/admin/lens-pricing", icon: Tag },
       { name: "Presbyopia (+40) Pricing", label: "Presbyopia (+40) Pricing", href: "/admin/presbyopia-pricing", icon: Eye },
       { name: "Discounts & Offers", label: "Discounts & Offers", href: "/admin/discounts", icon: TicketPercent },
+    ],
+  },
+  {
+    title: "6. CONTENT & REVIEWS",
+    items: [
+      { name: "Review Queue", label: "Review Queue", href: "/admin/reviews", icon: MessageSquare, showPendingBadge: false },
     ],
   },
 ];

@@ -223,9 +223,30 @@ model Product {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   items       OrderItem[]
+  reviews     Review[]
   image_url           String?
   image_public_id     String?
   modelGlbUrl         String?
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Review & Moderation Model
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int      // 1 to 5 stars
+  comment    String   @db.Text
+  userName   String
+  userEmail  String?
+  isApproved Boolean  @default(false) // Requires admin moderation before going live
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@index([isApproved])
+  @@map("reviews")
 }
 
 model Order {
