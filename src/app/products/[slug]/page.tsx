@@ -7,14 +7,16 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getProductBySlug(slug: string) {
+async function getProductBySlug(slugOrId: string) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug },
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ slug: slugOrId }, { id: slugOrId }],
+      },
     });
     return product;
   } catch (error) {
-    console.error("Error fetching product by slug:", error);
+    console.error("Error fetching product by slug or id:", error);
     return null;
   }
 }

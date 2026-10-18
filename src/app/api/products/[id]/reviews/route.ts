@@ -11,10 +11,20 @@ interface RouteContext {
 // GET: Public — only return approved reviews for storefront visitors
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
-    const { id: productId } = await context.params;
+    const { id: paramId } = await context.params;
+
+    // Resolve actual productId whether param is CUID or slug
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id: paramId }, { slug: paramId }],
+      },
+      select: { id: true },
+    });
+
+    const targetProductId = product ? product.id : paramId;
 
     const reviews = await prisma.review.findMany({
-      where: { productId, isApproved: true },
+      where: { productId: targetProductId, isApproved: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -42,7 +52,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 // POST: Customers submit a review — defaults to isApproved: false (pending moderation)
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
-    const { id: productId } = await context.params;
+    const { id: paramId } = await context.params;
     const body = await req.json();
     const { rating, comment, userName, userEmail } = body;
 
@@ -61,8 +71,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
       );
     }
 
-    // Verify the product exists
-    const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true } });
+    // Verify the product exists (by id or slug)
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id: paramId }, { slug: paramId }],
+      },
+      select: { id: true },
+    });
+
     if (!product) {
       return NextResponse.json(
         { success: false, error: "Product not found." },
@@ -76,7 +92,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
         comment: String(comment).trim(),
         userName: String(userName).trim(),
         userEmail: userEmail ? String(userEmail).trim() : null,
-        productId,
+        productId: product.id,
         isApproved: false, // Requires admin moderation before going live
       },
     });
