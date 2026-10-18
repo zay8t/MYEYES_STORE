@@ -264,10 +264,10 @@ export default function ProductReviewSection({ productId }: { productId: string 
           ) : reviews.length === 0 ? (
             <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-10 text-center space-y-2">
               <p className="text-sm font-semibold text-slate-700">
-                No approved reviews yet for this frame.
+                No approved reviews yet.
               </p>
               <p className="text-xs text-slate-400">
-                Be the first customer to share your experience with this design!
+                Be the first customer to share your experience with MY EYES!
               </p>
             </div>
           ) : (

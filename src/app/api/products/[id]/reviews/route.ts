@@ -8,23 +8,12 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-// GET: Public — only return approved reviews for storefront visitors
-export async function GET(_req: NextRequest, context: RouteContext) {
+// GET: Public — return all approved reviews globally across the entire store
+export async function GET(_req: NextRequest, _context: RouteContext) {
   try {
-    const { id: paramId } = await context.params;
-
-    // Resolve actual productId whether param is CUID or slug
-    const product = await prisma.product.findFirst({
-      where: {
-        OR: [{ id: paramId }, { slug: paramId }],
-      },
-      select: { id: true },
-    });
-
-    const targetProductId = product ? product.id : paramId;
-
+    // Fetch ALL approved reviews globally across the store
     const reviews = await prisma.review.findMany({
-      where: { productId: targetProductId, isApproved: true },
+      where: { isApproved: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -32,16 +21,23 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const averageRating =
       totalReviews > 0
         ? Number(
-            (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+            (
+              reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+            ).toFixed(1)
           )
-        : 0;
+        : 5.0;
 
     return NextResponse.json(
-      { success: true, averageRating, totalReviews, reviews },
+      {
+        success: true,
+        reviews,
+        averageRating,
+        totalReviews,
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error("GET /api/products/[id]/reviews error:", error);
+    console.error("Failed to fetch global reviews:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch reviews" },
       { status: 500 }
