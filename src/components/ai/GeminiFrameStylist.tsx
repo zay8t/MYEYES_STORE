@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   X,
   Send,
   RotateCcw,
   ArrowRight,
-  Glasses,
   Bot,
   User,
-  CornerDownLeft,
 } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
-import { formatPrice, formatFrameShape, formatMaterial } from "@/lib/utils";
+import { formatPrice, formatFrameShape } from "@/lib/utils";
 
 interface GeminiFrameStylistProps {
-  products: SafeProduct[];
-  onSelectProduct: (product: SafeProduct) => void;
+  products?: SafeProduct[];
+  onSelectProduct?: (product: SafeProduct) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -28,6 +27,7 @@ interface Message {
   role: "assistant" | "user";
   content: string;
   productIds?: string[];
+  recommendedProducts?: SafeProduct[];
   suggestedQuestions?: string[];
 }
 
@@ -38,12 +38,68 @@ const DEFAULT_SUGGESTIONS = [
   "How does nationwide delivery work in Pakistan?",
 ];
 
+function renderInlineBold(line: string) {
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <strong key={idx} className="font-bold text-slate-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return <span key={idx}>{part}</span>;
+  });
+}
+
+function FormattedAssistantMessage({ text }: { text: string }) {
+  const paragraphs = text.split(/\n\s*\n/);
+
+  return (
+    <div className="space-y-2 text-xs sm:text-sm leading-relaxed text-slate-800">
+      {paragraphs.map((para, pIdx) => {
+        const lines = para.split("\n").filter((l) => l.trim().length > 0);
+        const isBulletList = lines.length > 0 && lines.every((l) => /^\s*[\*\-•]\s+/.test(l));
+
+        if (isBulletList) {
+          return (
+            <ul key={pIdx} className="space-y-1.5 pl-1 my-1">
+              {lines.map((line, lIdx) => {
+                const cleaned = line.replace(/^\s*[\*\-•]\s+/, "");
+                return (
+                  <li key={lIdx} className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                    <span>{renderInlineBold(cleaned)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={pIdx} className="space-y-1">
+            {lines.map((line, lIdx) => (
+              <span key={lIdx} className={lines.length > 1 ? "block" : "inline"}>
+                {renderInlineBold(line)}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function GeminiFrameStylist({
-  products,
+  products = [],
   onSelectProduct,
   isOpen,
   onClose,
 }: GeminiFrameStylistProps) {
+  const router = useRouter();
+  const [catalog, setCatalog] = useState<SafeProduct[]>(products);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome-1",
@@ -59,18 +115,46 @@ export default function GeminiFrameStylist({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
+  // Sync or fetch catalog when empty
+  useEffect(() => {
+    if (products && products.length > 0) {
+      setCatalog(products);
+    } else {
+      fetch("/api/products", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setCatalog(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [products]);
+
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus();
         scrollToBottom();
       }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, messages]);
+  }, [isOpen, messages, scrollToBottom]);
+
+  // Keyboard shortcut: Escape to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleSendMessage = async (textToSend?: string) => {
     const userText = (textToSend || inputQuery).trim();
@@ -89,16 +173,33 @@ export default function GeminiFrameStylist({
     setIsLoading(true);
 
     try {
-      // 2. Call backend API route
+      // 2. Call backend API route with conversation history and catalog summary
       const res = await fetch("/api/ai-stylist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, products }),
+        body: JSON.stringify({
+          message: userText,
+          history: newMessages.slice(-6).map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          products: catalog.slice(0, 30).map((p) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            category: p.category,
+            frameShape: p.frameShape,
+            material: p.material,
+            gender: p.gender,
+            slug: (p as any).slug,
+            images: p.images,
+          })),
+        }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      // 3. Append Gemini's actual reply to state
+      // 3. Append Gemini's actual reply to state with recommended frames and suggested questions
       if (data && data.reply) {
         setMessages([
           ...newMessages,
@@ -106,6 +207,13 @@ export default function GeminiFrameStylist({
             id: `assistant-${Date.now()}`,
             role: "assistant",
             content: data.reply,
+            productIds: Array.isArray(data.productIds) ? data.productIds : [],
+            recommendedProducts: Array.isArray(data.recommendedProducts)
+              ? data.recommendedProducts
+              : undefined,
+            suggestedQuestions: Array.isArray(data.suggestedQuestions)
+              ? data.suggestedQuestions
+              : DEFAULT_SUGGESTIONS,
           },
         ]);
       } else {
@@ -114,7 +222,9 @@ export default function GeminiFrameStylist({
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: "I'm here to help you find the right frames and lenses!",
+            content:
+              "I'm here to help you find the right frames and lenses! How can I assist you with your eyewear today?",
+            suggestedQuestions: DEFAULT_SUGGESTIONS,
           },
         ]);
       }
@@ -125,7 +235,9 @@ export default function GeminiFrameStylist({
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: "Sorry, I ran into a connection error. Please try again!",
+          content:
+            "I'm currently assisting multiple customers. You can browse our collection or ask me about frame shapes, prescription types, or flat-rate delivery across Pakistan!",
+          suggestedQuestions: DEFAULT_SUGGESTIONS,
         },
       ]);
     } finally {
@@ -155,10 +267,24 @@ export default function GeminiFrameStylist({
     return "/placeholder-frame.png";
   };
 
+  const handleFrameClick = (prod: SafeProduct) => {
+    if (onSelectProduct) {
+      onSelectProduct(prod);
+    } else {
+      router.push(`/products/${(prod as any).slug || prod.id}`);
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
+    >
       <div className="relative w-full max-w-2xl h-[90vh] max-h-[700px] bg-white rounded-3xl shadow-2xl border border-amber-200/80 flex flex-col overflow-hidden text-slate-900">
         {/* ============================================================ */}
         {/* HEADER: WHITE & AMBER BRAND THEME                            */}
@@ -175,7 +301,7 @@ export default function GeminiFrameStylist({
                 </h3>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                Live Optical Guidance & Frame Consultation
+                Powered by Gemini • Live Optical Guidance & Styling
               </p>
             </div>
           </div>
@@ -204,9 +330,14 @@ export default function GeminiFrameStylist({
         <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/60">
           {messages.map((msg) => {
             const isUser = msg.role === "user";
-            const recommendedProducts = (msg.productIds || [])
-              .map((id) => products.find((p) => p.id === id))
-              .filter(Boolean) as SafeProduct[];
+
+            // Resolve recommended products from explicit payload or catalog lookup
+            const recommendedProducts =
+              msg.recommendedProducts && msg.recommendedProducts.length > 0
+                ? msg.recommendedProducts
+                : (msg.productIds || [])
+                    .map((id) => catalog.find((p) => p.id === id || (p as any).slug === id))
+                    .filter(Boolean) as SafeProduct[];
 
             return (
               <div
@@ -220,35 +351,36 @@ export default function GeminiFrameStylist({
                 )}
 
                 <div
-                  className={`max-w-[85%] sm:max-w-[78%] space-y-3 ${
+                  className={`max-w-[88%] sm:max-w-[80%] space-y-3 ${
                     isUser ? "items-end text-right" : "items-start text-left"
                   }`}
                 >
                   {/* Message Bubble */}
                   <div
-                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs font-normal ${
+                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
                       isUser
                         ? "bg-[#0F172A] text-white rounded-tr-none ml-auto"
                         : "bg-white text-slate-800 border border-amber-100 rounded-tl-none"
                     }`}
                   >
-                    {msg.content}
+                    {isUser ? (
+                      msg.content
+                    ) : (
+                      <FormattedAssistantMessage text={msg.content} />
+                    )}
                   </div>
 
                   {/* Recommended Frame Cards */}
                   {!isUser && recommendedProducts.length > 0 && (
                     <div className="space-y-2.5 pt-1">
                       <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">
-                        Recommended Frames
+                        Recommended Frames For You
                       </span>
                       <div className="grid grid-cols-1 gap-2">
                         {recommendedProducts.map((prod) => (
                           <div
                             key={prod.id}
-                            onClick={() => {
-                              onSelectProduct(prod);
-                              onClose();
-                            }}
+                            onClick={() => handleFrameClick(prod)}
                             className="bg-white p-3 rounded-2xl border border-amber-200/80 hover:border-amber-500 hover:shadow-md transition-all cursor-pointer flex items-center justify-between gap-3 group"
                           >
                             <div className="relative w-16 h-12 bg-slate-50 rounded-xl p-1 shrink-0 overflow-hidden flex items-center justify-center border border-slate-100">
