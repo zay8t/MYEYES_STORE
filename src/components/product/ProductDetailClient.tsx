@@ -9,6 +9,7 @@ import LensConfiguratorModal from "@/components/configurator/LensConfiguratorMod
 import ProductGallery from "@/components/product/ProductGallery";
 import LogoLoader from "@/components/ui/LogoLoader";
 import LensThicknessSimulator from "@/components/pricing/LensThicknessSimulator";
+import ProductReviewSection from "@/components/product/ProductReviewSection";
 import { useDiscount } from "@/hooks/useDiscount";
 
 export interface ProductData {
@@ -370,6 +371,9 @@ export default function ProductDetailClient({
             </div>
           </div>
         </div>
+
+        {/* Customer Reviews & Ratings */}
+        <ProductReviewSection productId={product.id} />
       </div>
 
       {/* 4-Step Lens Configurator (Eyeglasses only — direct checkout handoff) */}
