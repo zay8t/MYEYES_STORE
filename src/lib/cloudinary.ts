@@ -119,3 +119,6 @@ export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
     return false;
   }
 }
+
+export { applyWatermark } from "./watermark";
+

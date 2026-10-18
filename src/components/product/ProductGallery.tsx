@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { applyWatermark } from '@/lib/watermark';
 
 interface ProductGalleryProps {
   images: string[];
@@ -89,7 +90,7 @@ export default function ProductGallery({
               className="w-full shrink-0 snap-center aspect-square md:aspect-[4/3] relative bg-neutral-50 flex items-center justify-center p-4 md:p-8"
             >
               <Image
-                src={src}
+                src={applyWatermark(src, 'lg')}
                 alt={`${productName} view ${index + 1}`}
                 fill
                 priority={index === 0}

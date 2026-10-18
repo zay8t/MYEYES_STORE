@@ -8,6 +8,7 @@ import { Glasses } from "lucide-react";
 import { SafeProduct } from "@/lib/data-guards";
 import LikeButton from "@/components/products/LikeButton";
 import { useDiscount } from "@/hooks/useDiscount";
+import { applyWatermark } from "@/lib/watermark";
 
 const COLOR_MAP: Record<string, string> = {
   black: "#18181B",
@@ -137,7 +138,7 @@ export default function ProductCard({ product, onAddLenses, onAddToCart, onCardC
           className="block absolute inset-0 w-full h-full cursor-pointer"
         >
           <Image
-            src={activeImageUrl || "/placeholder-frame.png"}
+            src={applyWatermark(activeImageUrl || "/placeholder-frame.png", "sm")}
             alt={product.name}
             fill
             quality={90}

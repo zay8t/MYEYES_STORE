@@ -9,6 +9,7 @@ import { Product } from "@/components/products/ProductCard";
 import { formatFrameShape, formatMaterial, cn } from "@/lib/utils";
 import { useDiscount } from "@/hooks/useDiscount";
 import LikeButton from "@/components/products/LikeButton";
+import { applyWatermark } from "@/lib/watermark";
 
 const COLOR_MAP: Record<string, string> = {
   black: "#18181B",
@@ -192,7 +193,7 @@ export default function ProductDrawer({
           <div className="space-y-3">
             <div className="relative aspect-[4/3] w-full bg-neutral-50 rounded-2xl border border-neutral-200/70 p-4 flex items-center justify-center overflow-hidden group">
               <Image
-                src={activeImage}
+                src={applyWatermark(activeImage, "md")}
                 alt={product.name}
                 fill
                 quality={95}
