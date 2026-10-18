@@ -12,7 +12,6 @@ import RealtimeSyncProvider from "@/components/RealtimeSyncProvider";
 import StandaloneBodyManager from "@/components/StandaloneBodyManager";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { AuthProvider } from "@/components/AuthProvider";
-import GlobalAIAssistant from "@/components/ai/GlobalAIAssistant";
 
 import "./globals.css";
 
@@ -192,8 +191,6 @@ export default function RootLayout({
             <PWAInstallBanner />
             {/* MobileBottomNav renders fixed on mobile viewports */}
             <MobileBottomNav />
-            {/* Global MY EYES AI Optical Stylist Assistant */}
-            <GlobalAIAssistant />
           </RealtimeSyncProvider>
         </AuthProvider>
       </body>
