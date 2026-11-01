@@ -8,18 +8,38 @@ class CartProvider extends ChangeNotifier {
   final List<CartItem> _items = [];
   static const String studioWhatsAppNumber = '+923390103262';
 
-  List<CartItem> get items => List.unmodifiable(_items);
+  String? _couponCode;
+  double _discountPercentage = 0.0;
+  String? _couponError;
 
+  List<CartItem> get items => List.unmodifiable(_items);
   int get itemCount => _items.fold(0, (sum, item) => sum + item.quantity);
 
   double get subtotal => _items.fold(0.0, (sum, item) => sum + item.totalLinePrice);
 
-  double get shippingFee => _items.isEmpty ? 0.0 : 250.0; // Flat 250 PKR Delivery anywhere in Pakistan
+  String? get couponCode => _couponCode;
+  String? get couponError => _couponError;
+  double get discountAmount => (subtotal * _discountPercentage);
 
-  double get total => subtotal + shippingFee;
+  // Free shipping on orders over Rs. 3000 or with FREESHIP coupon
+  double get shippingFee {
+    if (_items.isEmpty) return 0.0;
+    if (_couponCode == 'FREESHIP') return 0.0;
+    if (subtotal >= 3000) return 0.0;
+    return 250.0; // Flat 250 PKR Delivery anywhere in Pakistan
+  }
 
-  String get formattedSubtotal {
-    final rounded = subtotal.round();
+  double get total => (subtotal - discountAmount + shippingFee).clamp(0.0, double.infinity);
+
+  bool get isFreeShipping => shippingFee == 0.0 && _items.isNotEmpty;
+
+  String get formattedSubtotal => _formatPrice(subtotal);
+  String get formattedDiscount => _formatPrice(discountAmount);
+  String get formattedShipping => shippingFee == 0.0 ? 'FREE' : 'Rs. ${shippingFee.round()}';
+  String get formattedTotal => _formatPrice(total);
+
+  static String _formatPrice(double amount) {
+    final rounded = amount.round();
     final formatted = rounded.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]},',
@@ -27,13 +47,37 @@ class CartProvider extends ChangeNotifier {
     return 'Rs. $formatted';
   }
 
-  String get formattedTotal {
-    final rounded = total.round();
-    final formatted = rounded.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
-    return 'Rs. $formatted';
+  bool applyCoupon(String rawCode) {
+    final code = rawCode.trim().toUpperCase();
+    _couponError = null;
+
+    if (code == 'MYEYES10' || code == 'WELCOME10') {
+      _couponCode = code;
+      _discountPercentage = 0.10;
+      notifyListeners();
+      return true;
+    } else if (code == 'MYEYES20' || code == 'SAVE20') {
+      _couponCode = code;
+      _discountPercentage = 0.20;
+      notifyListeners();
+      return true;
+    } else if (code == 'FREESHIP') {
+      _couponCode = code;
+      _discountPercentage = 0.0;
+      notifyListeners();
+      return true;
+    } else {
+      _couponError = 'Invalid coupon code. Try MYEYES10 or FREESHIP';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void removeCoupon() {
+    _couponCode = null;
+    _discountPercentage = 0.0;
+    _couponError = null;
+    notifyListeners();
   }
 
   void addItem({
@@ -97,6 +141,9 @@ class CartProvider extends ChangeNotifier {
 
   void clearCart() {
     _items.clear();
+    _couponCode = null;
+    _discountPercentage = 0.0;
+    _couponError = null;
     notifyListeners();
   }
 
@@ -106,17 +153,22 @@ class CartProvider extends ChangeNotifier {
     required String customerPhone,
     String? shippingAddress,
     String? city,
+    String? paymentMethod = 'Cash on Delivery (COD)',
   }) async {
     if (_items.isEmpty) return false;
 
+    final orderId = 'MYEYES-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
     final buffer = StringBuffer();
     buffer.writeln('👓 *NEW PRESCRIPTION ORDER — MY EYES OPTICAL LAB*');
+    buffer.writeln('📋 *Order Ref:* #$orderId');
     buffer.writeln('──────────────────────────────');
     buffer.writeln('👤 *Customer:* $customerName');
     buffer.writeln('📱 *Phone:* $customerPhone');
     if (shippingAddress != null && shippingAddress.isNotEmpty) {
       buffer.writeln('📍 *Address:* $shippingAddress, ${city ?? ""}');
     }
+    buffer.writeln('💳 *Payment:* $paymentMethod');
     buffer.writeln('──────────────────────────────');
     buffer.writeln('🛍️ *ORDER ITEMS:*');
 
@@ -148,10 +200,13 @@ class CartProvider extends ChangeNotifier {
 
     buffer.writeln('\n──────────────────────────────');
     buffer.writeln('💵 *Subtotal:* $formattedSubtotal');
-    buffer.writeln('🚚 *Delivery Fee:* Rs. ${shippingFee.round()} (Flat Rate)');
+    if (_couponCode != null) {
+      buffer.writeln('🏷️ *Coupon ($_couponCode):* -$formattedDiscount');
+    }
+    buffer.writeln('🚚 *Delivery Fee:* $formattedShipping');
     buffer.writeln('💰 *Total Payable:* $formattedTotal');
     buffer.writeln('──────────────────────────────');
-    buffer.writeln('Please confirm my order and share payment instructions (EasyPaisa/JazzCash/Bank/COD).');
+    buffer.writeln('Please confirm my optical order and schedule lab glazing & dispatch.');
 
     final cleanNumber = studioWhatsAppNumber.replaceAll(RegExp(r'[^\d]'), '');
     final encodedText = Uri.encodeComponent(buffer.toString());

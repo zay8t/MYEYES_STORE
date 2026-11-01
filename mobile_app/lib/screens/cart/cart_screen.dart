@@ -20,6 +20,9 @@ class _CartScreenState extends State<CartScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _cityController = TextEditingController(text: 'Karachi');
+  final TextEditingController _couponController = TextEditingController();
+
+  String _paymentMethod = 'Cash on Delivery (COD)';
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _CartScreenState extends State<CartScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _cityController.dispose();
+    _couponController.dispose();
     super.dispose();
   }
 
@@ -53,6 +57,7 @@ class _CartScreenState extends State<CartScreen> {
       customerPhone: phone,
       shippingAddress: _addressController.text.trim(),
       city: _cityController.text.trim(),
+      paymentMethod: _paymentMethod,
     );
   }
 
@@ -61,8 +66,9 @@ class _CartScreenState extends State<CartScreen> {
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
+      backgroundColor: AppColors.slate50,
       appBar: AppBar(
-        title: const Text('Shopping Bag'),
+        title: Text('Shopping Bag (${cart.itemCount})'),
         actions: [
           if (cart.items.isNotEmpty)
             TextButton(
@@ -107,6 +113,52 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Free Shipping Progress Banner
+                  if (cart.subtotal < 3000)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.slate200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(LucideIcons.truck, color: AppColors.primary, size: 16),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Add Rs. ${(3000 - cart.subtotal).round()} more to get FREE Delivery anywhere in Pakistan!',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate800),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.successBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(LucideIcons.checkCircle2, color: AppColors.success, size: 16),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'You have unlocked FREE Delivery anywhere in Pakistan!',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.success),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // Items List
                   ListView.separated(
                     physics: const NeverScrollableScrollPhysics(),
@@ -122,9 +174,84 @@ class _CartScreenState extends State<CartScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
-                  // Quick Shipping Details Card
+                  // Coupon / Promo Voucher Box
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.slate200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(LucideIcons.tag, size: 16, color: AppColors.primary),
+                            SizedBox(width: 8),
+                            Text('Have a Promo Code?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (cart.couponCode == null)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _couponController,
+                                  textCapitalization: TextCapitalization.characters,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Try MYEYES10 or FREESHIP',
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.slate900,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                onPressed: () {
+                                  cart.applyCoupon(_couponController.text);
+                                },
+                                child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.check, color: AppColors.success, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Coupon Applied: ${cart.couponCode}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              TextButton(
+                                onPressed: cart.removeCoupon,
+                                child: const Text('Remove', style: TextStyle(color: AppColors.error, fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        if (cart.couponError != null) ...[
+                          const SizedBox(height: 6),
+                          Text(cart.couponError!, style: const TextStyle(color: AppColors.error, fontSize: 11)),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Delivery Information Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -181,13 +308,33 @@ class _CartScreenState extends State<CartScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+
+                  // Payment Method Selector
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.slate200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 10),
+                        _buildPaymentRadio('Cash on Delivery (COD)', 'Pay cash to rider upon optical delivery'),
+                        _buildPaymentRadio('Bank Transfer / JazzCash / EasyPaisa', 'Direct lab transfer details sent on WhatsApp'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Order Summary Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.slate50,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.slate200),
                     ),
@@ -200,8 +347,12 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         const SizedBox(height: 12),
                         _buildSummaryLine('Subtotal (${cart.itemCount} items)', cart.formattedSubtotal),
+                        if (cart.discountAmount > 0) ...[
+                          const SizedBox(height: 6),
+                          _buildSummaryLine('Coupon Discount', '-${cart.formattedDiscount}', color: AppColors.success),
+                        ],
                         const SizedBox(height: 6),
-                        _buildSummaryLine('Delivery Anywhere in Pakistan', 'Rs. 250 (Flat)'),
+                        _buildSummaryLine('Delivery Fee', cart.formattedShipping),
                         const Divider(height: 20, color: AppColors.slate200),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,7 +367,7 @@ class _CartScreenState extends State<CartScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 100), // Bottom padding for sticky button
+                  const SizedBox(height: 100), // Bottom padding
                 ],
               ),
             ),
@@ -237,7 +388,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               child: SafeArea(
                 child: BrandButton(
-                  label: 'Order via WhatsApp (${cart.formattedTotal})',
+                  label: 'Confirm Order via WhatsApp (${cart.formattedTotal})',
                   icon: LucideIcons.messageSquare,
                   onPressed: _triggerWhatsAppCheckout,
                 ),
@@ -246,12 +397,47 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildSummaryLine(String label, String value) {
+  Widget _buildPaymentRadio(String title, String desc) {
+    final isSelected = _paymentMethod == title;
+    return GestureDetector(
+      onTap: () => setState(() => _paymentMethod = title),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primarySubtle : AppColors.slate50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.slate200),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+              size: 16,
+              color: isSelected ? AppColors.primary : AppColors.slate400,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? AppColors.primaryDark : AppColors.slate800)),
+                  Text(desc, style: const TextStyle(fontSize: 10, color: AppColors.slate500)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryLine(String label, String value, {Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: AppColors.slate600)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.slate900)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color ?? AppColors.slate900)),
       ],
     );
   }

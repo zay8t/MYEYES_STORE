@@ -1,0 +1,123 @@
+[
+  {
+    "id": "sv-167-shmc",
+    "name": "MY EYES Ultra Thin Index",
+    "description": "Ultra thin & lightweight high-index design engineered for high prescriptions",
+    "price": 1950,
+    "pricePlus40": 2350,
+    "type": "single_vision",
+    "index": "1.67",
+    "isConfiguratorVisible": true,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-156-hc",
+    "name": "MY EYES 1.56 Diamond Hard Coat (Lab Only)",
+    "description": "Standard scratch-resistant clear lab rate",
+    "price": 300,
+    "pricePlus40": 700,
+    "type": "single_vision",
+    "index": "1.56",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-156-hmc",
+    "name": "MY EYES 1.56 HMC Anti-Reflective (Lab Only)",
+    "description": "Anti-reflective coating clear lab rate",
+    "price": 480,
+    "pricePlus40": 880,
+    "type": "single_vision",
+    "index": "1.56",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-159-pc",
+    "name": "MY EYES 1.59 Polycarbonate Impact Safe (Lab Only)",
+    "description": "Shatterproof polycarbonate clear lab rate",
+    "price": 700,
+    "pricePlus40": 1100,
+    "type": "single_vision",
+    "index": "1.59",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-159-pc-bluecut",
+    "name": "MY EYES 1.59 Polycarbonate Blue Cut (Lab Only)",
+    "description": "Shatterproof polycarbonate blue cut lab rate",
+    "price": 1200,
+    "pricePlus40": 1600,
+    "type": "single_vision",
+    "index": "1.59",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "bifocal-round-top",
+    "name": "MY EYES 1.56 Round Top Bifocal (Lab Only)",
+    "description": "Lined round top bifocal lab rate",
+    "price": 450,
+    "pricePlus40": 850,
+    "type": "bifocal",
+    "index": "1.56",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "bifocal-flat-top",
+    "name": "MY EYES 1.56 Flat Top Bifocal (Lab Only)",
+    "description": "Lined flat top bifocal lab rate",
+    "price": 600,
+    "pricePlus40": 1000,
+    "type": "bifocal",
+    "index": "1.56",
+    "isConfiguratorVisible": false,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "progressive-freeform",
+    "name": "MY EYES CR Hard Crystal Coat",
+    "description": "No-line seamless transition between distance, mid & reading vision",
+    "price": 850,
+    "pricePlus40": 2250,
+    "type": "progressive",
+    "index": "1.56",
+    "isConfiguratorVisible": true,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-156-bluecut",
+    "name": "MY EYES Blue Light Filter + UV Protection HMC",
+    "description": "Digital screen protection blocking harmful blue light & UV rays",
+    "price": 1850,
+    "pricePlus40": 2550,
+    "type": "single_vision",
+    "index": "1.56",
+    "isConfiguratorVisible": true,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-156-photogrey",
+    "name": "MY EYES Sun Adaptive Photochromic HMC",
+    "description": "Intelligent photochromic tint darkens outdoors in sunlight & clears indoors",
+    "price": 1950,
+    "pricePlus40": 2950,
+    "type": "single_vision",
+    "index": "1.56",
+    "isConfiguratorVisible": true,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  },
+  {
+    "id": "sv-156-photogrey-bluecut",
+    "name": "MY EYES Dual Shield - Blue Light & Photochromic HMC",
+    "description": "Dual protection combining photochromic tint with screen blue light filter",
+    "price": 3250,
+    "pricePlus40": 3850,
+    "type": "single_vision",
+    "index": "1.56",
+    "isConfiguratorVisible": true,
+    "createdAt": "2026-08-17T04:57:55.295Z"
+  }
+]

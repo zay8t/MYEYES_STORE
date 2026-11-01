@@ -1,0 +1,67 @@
+{
+  "exportVersion": "1.0.0",
+  "exportedAt": "2026-10-26T13:18:04.171Z",
+  "database": "postgresql://***@ep-square-dew-auyoi5lx-pooler.c-10.us-east-1.aws.neon.tech/neondb",
+  "readOnly": true,
+  "excludedTables": [
+    "User",
+    "Order",
+    "OrderItem",
+    "Prescription",
+    "saved_prescriptions",
+    "addresses",
+    "reviews",
+    "PaymentAuditLog",
+    "Lead",
+    "admin_push_subscriptions",
+    "order_sequences",
+    "OrderSequence"
+  ],
+  "tables": {
+    "Product": {
+      "status": "SUCCESS",
+      "sourceTable": "Product",
+      "rowCount": 149,
+      "file": "Product.json",
+      "sizeBytes": 200654,
+      "sha256": "f82fb9779b347ca23e300b3ce0c66aea90b5b3a97115e7723a7f217f50c64748",
+      "description": "All products with media IDs, model URLs, colors, stock, and pricing"
+    },
+    "LensOption": {
+      "status": "SUCCESS",
+      "sourceTable": "LensOption",
+      "rowCount": 11,
+      "file": "LensOption.json",
+      "sizeBytes": 3758,
+      "sha256": "b26a0fd63e611e70a34ec44d615fa4c7f67597b69bb1437c9e2c491e79146d2c",
+      "description": "Lens options including hidden/lab-only options and pricePlus40 values"
+    },
+    "LensPrice": {
+      "status": "SUCCESS",
+      "sourceTable": "LensPrice",
+      "rowCount": 0,
+      "file": "LensPrice.json",
+      "sizeBytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "description": "Lens pricing matrix across categories and refractive indices"
+    },
+    "BasePriceSetting": {
+      "status": "SUCCESS",
+      "sourceTable": "BasePriceSetting",
+      "rowCount": 13,
+      "file": "BasePriceSetting.json",
+      "sizeBytes": 1183,
+      "sha256": "5e576f57e36f927f1ab40a3dea611399af0774d909dd2601705104003073e418",
+      "description": "Base price settings (P1-P4, tier-two keys, raw settings)"
+    },
+    "DiscountCode": {
+      "status": "SUCCESS",
+      "sourceTable": "discount_codes",
+      "rowCount": 1,
+      "file": "DiscountCode.json",
+      "sizeBytes": 683,
+      "sha256": "8300701f349e09348f4cfb31d938d040ee67b81b9dbd60d88b1a66819fdaca75",
+      "description": "Discount rules, promo codes, inactive/scheduled campaigns, and badge settings"
+    }
+  }
+}

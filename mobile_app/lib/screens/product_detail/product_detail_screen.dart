@@ -5,6 +5,8 @@ import '../../theme.dart';
 import '../../models/product.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/configurator_provider.dart';
+import '../../providers/wishlist_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../widgets/common/price_tag.dart';
 import '../../widgets/common/brand_button.dart';
 import '../catalog/widgets/color_swatch_row.dart';
@@ -30,8 +32,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
+    final wishlist = context.watch<WishlistProvider>();
+    final cart = context.watch<CartProvider>();
+    final isFav = wishlist.isFavorite(product.id);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -41,13 +47,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.share2, color: AppColors.slate700),
-            onPressed: () {},
+            icon: Icon(
+              LucideIcons.heart,
+              color: isFav ? AppColors.error : AppColors.slate700,
+            ),
+            onPressed: () {
+              wishlist.toggleFavorite(product);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isFav ? 'Removed from saved frames' : 'Saved to your wishlist!'),
+                  duration: const Duration(seconds: 1),
+                  backgroundColor: AppColors.slate900,
+                ),
+              );
+            },
           ),
           IconButton(
-            icon: const Icon(LucideIcons.heart, color: AppColors.slate700),
-            onPressed: () {},
+            icon: Badge(
+              isLabelVisible: cart.itemCount > 0,
+              label: Text('${cart.itemCount}'),
+              backgroundColor: AppColors.primary,
+              child: const Icon(LucideIcons.shoppingBag, color: AppColors.slate700),
+            ),
+            onPressed: () => Navigator.pop(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -101,7 +125,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  product.stock > 0 ? 'In Stock (${product.stock} left)' : 'Backorder Available',
+                                  product.stock > 0 ? 'In Stock (${product.stock} available)' : 'Backorder Available',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -155,7 +179,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         // Technical Specs Badges
                         const Text(
-                          'Optical Specifications',
+                          'Frame Optical Specifications',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -168,7 +192,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         // Description
                         const Text(
-                          'Product Overview',
+                          'Frame Overview & Material',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
@@ -211,7 +235,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'Free anti-reflective & UV400 coating included. Upgrade to Blue Shield or Transitions in the configurator.',
+                                      'Free anti-reflective & UV400 coating included with every frame. Upgrade to Blue Shield or Transitions in the configurator.',
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: AppColors.slate500,
@@ -220,6 +244,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     ),
                                   ],
                                 ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Delivery & Lab Guarantee Strip
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.slate200),
+                          ),
+                          child: const Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.truck, size: 16, color: AppColors.primary),
+                                  SizedBox(width: 8),
+                                  Text('Flat Rs. 250 Delivery (FREE over Rs. 3,000)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.shieldCheck, size: 16, color: AppColors.success),
+                                  SizedBox(width: 8),
+                                  Text('100% Prescription Accuracy Guarantee', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                ],
                               ),
                             ],
                           ),
@@ -233,9 +287,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
 
-          // 2. Sticky Bottom Surface
+          // 2. Sticky Bottom Surface with Dual Actions
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               border: const Border(top: BorderSide(color: AppColors.slate200)),
@@ -250,25 +304,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: SafeArea(
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Total Frame Price',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.slate400,
+                  // Frame Only Button
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      side: const BorderSide(color: AppColors.slate300),
+                    ),
+                    onPressed: () {
+                      final selectedColor = product.colors.isNotEmpty
+                          ? product.colors[_selectedColorIndex]
+                          : null;
+                      cart.addItem(
+                        product: product,
+                        selectedColor: selectedColor,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${product.name} (Frame Only) added to Bag!'),
+                          backgroundColor: AppColors.slate900,
+                          duration: const Duration(seconds: 2),
                         ),
-                      ),
-                      PriceTag(price: product.price, fontSize: 18),
-                    ],
+                      );
+                    },
+                    child: const Text('Frame Only', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.slate800)),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 10),
+                  // Configure Lenses (Primary Action)
                   Expanded(
                     child: BrandButton(
-                      label: 'Configure Lenses',
+                      label: 'Select Lenses & Rx',
                       icon: LucideIcons.glasses,
                       onPressed: () {
                         final defaultColor = product.colors.isNotEmpty

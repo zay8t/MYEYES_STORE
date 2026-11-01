@@ -5,11 +5,13 @@ import '../../theme.dart';
 import '../../models/product.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/configurator_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'widgets/product_card.dart';
 import 'widgets/filter_sheet.dart';
 import '../product_detail/product_detail_screen.dart';
 import '../configurator/lens_configurator_modal.dart';
+import '../wishlist/wishlist_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -40,8 +42,28 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final catalog = context.watch<CatalogProvider>();
     final products = catalog.filteredProducts;
 
+    final wishlist = context.watch<WishlistProvider>();
+
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: CustomAppBar(
+        actions: [
+          IconButton(
+            icon: Badge(
+              isLabelVisible: wishlist.count > 0,
+              label: Text('${wishlist.count}'),
+              backgroundColor: AppColors.primary,
+              child: const Icon(LucideIcons.heart, size: 20, color: AppColors.slate700),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WishlistScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () => catalog.fetchProducts(forceRefresh: true),
         color: AppColors.primary,

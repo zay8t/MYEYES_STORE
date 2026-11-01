@@ -1,0 +1,24 @@
+[
+  {
+    "id": "0d268a4d-3e71-4b42-96d2-60bc074cbfa8",
+    "code": "100",
+    "title": "Opening Offer for first 100 customers ",
+    "type": "percentage",
+    "amount": 20,
+    "minCartTotal": 0,
+    "maxDiscountLimit": null,
+    "usageLimitTotal": null,
+    "timesUsed": 0,
+    "startsAt": "2026-09-18T19:00:00.000Z",
+    "endsAt": "2026-09-29T19:00:00.000Z",
+    "isActive": true,
+    "showAnnouncementBanner": true,
+    "bannerText": "Opening Offer for first 100 customers",
+    "bannerTheme": "dark",
+    "createdAt": "2026-09-19T02:56:50.239Z",
+    "updatedAt": "2026-09-19T09:18:31.761Z",
+    "badgeLabel": "",
+    "badgeType": "percentage",
+    "showProductBadge": true
+  }
+]

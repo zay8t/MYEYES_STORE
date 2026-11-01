@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../theme.dart';
 import '../../../models/product.dart';
 import '../../../providers/catalog_provider.dart';
+import '../../../providers/wishlist_provider.dart';
 import '../../../widgets/common/price_tag.dart';
 import 'color_swatch_row.dart';
 
@@ -23,6 +24,8 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
+    final wishlist = context.watch<WishlistProvider>();
+    final isFav = wishlist.isFavorite(product.id);
     final activeSwatchIndex = catalog.getActiveSwatchIndex(product.id);
 
     // Get active display image based on active swatch index
@@ -50,7 +53,7 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Frame Image Container with Swatch Overlay
+            // Frame Image Container with Swatch Overlay & Wishlist Icon
             Expanded(
               child: Stack(
                 children: [
@@ -92,27 +95,32 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Material Badge
-                  if (product.material != 'NILL')
-                    Positioned(
-                      top: 8,
-                      right: 8,
+                  // Favorite / Wishlist Heart Button
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: GestureDetector(
+                      onTap: () => wishlist.toggleFavorite(product),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppColors.slate900.withOpacity(0.85),
-                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.white.withOpacity(0.9),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          product.formattedMaterial,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                        child: Icon(
+                          LucideIcons.heart,
+                          size: 14,
+                          color: isFav ? AppColors.error : AppColors.slate400,
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
