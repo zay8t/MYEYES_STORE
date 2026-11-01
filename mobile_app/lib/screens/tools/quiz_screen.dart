@@ -228,19 +228,19 @@ class _QuizScreenState extends State<QuizScreen> {
                     Icon(LucideIcons.sparkles, color: AppColors.primaryLight, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'AI OPTICAL LAB MATCH',
+                      'YOUR FRAME MATCH',
                       style: TextStyle(color: AppColors.primaryLight, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 1),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Geometric Balance for $_faceShape Shape',
+                  'Best Frames for $_faceShape Shape',
                   style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Based on your preference for ${_style ?? "modern"} styling and ${_opticalNeed ?? "screen protection"}, our opticians recommend medium-width frames equipped with Blue Cut or Anti-Reflective coatings.',
+                  'Based on your ${_style ?? "modern"} style and ${_opticalNeed ?? "screen protection"} needs, our opticians suggest medium-width frames with Blue Cut or Anti-Reflective lenses.',
                   style: const TextStyle(color: AppColors.slate300, fontSize: 12, height: 1.4),
                 ),
               ],

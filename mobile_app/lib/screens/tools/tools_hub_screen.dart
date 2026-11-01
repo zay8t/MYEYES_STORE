@@ -5,7 +5,7 @@ import '../../models/face_shape.dart';
 import 'lens_simulator_screen.dart';
 import 'pd_measurement_screen.dart';
 import 'quiz_screen.dart';
-import '../ai/gemini_ai_stylist_screen.dart';
+import '../ai/my_eyes_ai_screen.dart';
 
 class ToolsHubScreen extends StatefulWidget {
   final Function(String shape)? onFilterByShape;
@@ -78,12 +78,12 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with SingleTickerProvid
           ),
           const SizedBox(height: 4),
           const Text(
-            'Face Shape Diagnostic & Matcher',
+            'Face Shape & Frame Matcher',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.slate900),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Select your face geometry below to see which frame silhouettes create natural optical harmony.',
+            'Pick your face shape below to see which frames look best on you.',
             style: TextStyle(fontSize: 13, color: AppColors.slate600),
           ),
           const SizedBox(height: 16),
@@ -205,14 +205,14 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with SingleTickerProvid
       children: [
         _buildDirectoryCard(
           icon: LucideIcons.sparkles,
-          title: 'Gemini AI Frame & Lens Stylist',
-          subtitle: 'Real-time AI optical consultation for face shape geometry, lens coatings, and prescription advice.',
-          badge: 'Gemini AI',
-          color: const Color(0xFF7C3AED),
+          title: 'Ask MY EYES',
+          subtitle: 'Not sure what frames suit you? Ask us — we will help you find the right pair.',
+          badge: 'Style Guide',
+          color: AppColors.primary,
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const GeminiAiStylistScreen()),
+              MaterialPageRoute(builder: (_) => const MyEyesAiScreen()),
             );
           },
         ),

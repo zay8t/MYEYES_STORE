@@ -15,7 +15,7 @@ import '../wishlist/wishlist_screen.dart';
 import '../tools/lens_simulator_screen.dart';
 import '../tools/quiz_screen.dart';
 import '../tools/pd_measurement_screen.dart';
-import '../ai/gemini_ai_stylist_screen.dart';
+import '../ai/my_eyes_ai_screen.dart';
 import '../../main.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -238,42 +238,36 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // Gemini AI Frame Stylist Banner
+              // Ask MY EYES Banner
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const GeminiAiStylistScreen()),
+                      MaterialPageRoute(builder: (_) => const MyEyesAiScreen()),
                     );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFFF59E0B)],
+                        colors: [Color(0xFF0F172A), Color(0xFF334155)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF7C3AED).withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 22),
+                          child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
                         ),
                         const SizedBox(width: 14),
                         const Expanded(
@@ -281,30 +275,24 @@ class HomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Ask Gemini AI Frame Stylist',
+                                'Ask MY EYES',
                                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Instant optical advice on face shapes, blue cut lenses & sizing',
-                                style: TextStyle(color: Colors.white70, fontSize: 11),
+                                'Not sure what frames suit you? Just ask us.',
+                                style: TextStyle(color: AppColors.slate300, fontSize: 11),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Row(
-                            children: [
-                              Text('Chat', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF7C3AED))),
-                              SizedBox(width: 4),
-                              Icon(LucideIcons.arrowRight, size: 12, color: Color(0xFF7C3AED)),
-                            ],
-                          ),
+                          child: const Text('Chat', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Colors.white)),
                         ),
                       ],
                     ),
@@ -434,7 +422,7 @@ class HomeScreen extends StatelessWidget {
                       title: 'Face Shape Match',
                       desc: 'Discover best frame geometry',
                       icon: LucideIcons.scanFace,
-                      badge: 'AI Guide',
+                      badge: 'Style Guide',
                       badgeColor: const Color(0xFF6366F1),
                       onTap: () => onNavigateTab(2), // Switch to Tools/Face Fit tab
                     ),
@@ -739,19 +727,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const GeminiAiStylistScreen()),
-          );
-        },
-        backgroundColor: AppColors.slate900,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        icon: const Icon(LucideIcons.sparkles, size: 16, color: AppColors.primaryLight),
-        label: const Text('AI Stylist', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       ),
     );
   }

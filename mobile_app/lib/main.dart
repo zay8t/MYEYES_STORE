@@ -15,7 +15,7 @@ import 'screens/tools/pd_measurement_screen.dart';
 import 'screens/wishlist/wishlist_screen.dart';
 import 'screens/orders/order_tracking_screen.dart';
 import 'screens/pricing_guide/lens_pricing_screen.dart';
-import 'screens/ai/gemini_ai_stylist_screen.dart';
+import 'screens/ai/my_eyes_ai_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -231,12 +231,12 @@ class AccountScreen extends StatelessWidget {
                 const Divider(height: 1, indent: 56, color: AppColors.slate100),
                 _AccountTile(
                   icon: LucideIcons.sparkles,
-                  title: 'Consult Gemini AI Frame & Lens Stylist',
-                  badge: 'AI',
+                  title: 'Ask MY EYES',
+                  badge: 'Chat',
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const GeminiAiStylistScreen()),
+                      MaterialPageRoute(builder: (_) => const MyEyesAiScreen()),
                     );
                   },
                 ),
