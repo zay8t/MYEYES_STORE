@@ -5,6 +5,7 @@ import '../../models/face_shape.dart';
 import 'lens_simulator_screen.dart';
 import 'pd_measurement_screen.dart';
 import 'quiz_screen.dart';
+import '../ai/gemini_ai_stylist_screen.dart';
 
 class ToolsHubScreen extends StatefulWidget {
   final Function(String shape)? onFilterByShape;
@@ -202,6 +203,20 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with SingleTickerProvid
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _buildDirectoryCard(
+          icon: LucideIcons.sparkles,
+          title: 'Gemini AI Frame & Lens Stylist',
+          subtitle: 'Real-time AI optical consultation for face shape geometry, lens coatings, and prescription advice.',
+          badge: 'Gemini AI',
+          color: const Color(0xFF7C3AED),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GeminiAiStylistScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
         _buildDirectoryCard(
           icon: LucideIcons.eye,
           title: 'Optical Lens Coating Simulator',

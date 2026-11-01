@@ -52,6 +52,13 @@ A clean, premium Flutter mobile application for **MY EYES** — Pakistan's First
 - **Transparent Optical Lens Matrix:** Comprehensive price list and coating benefits for Pakistan.
 - **Direct WhatsApp Laboratory Optician Support.**
 
+### 9. Gemini AI Optical Stylist (`lib/screens/ai/gemini_ai_stylist_screen.dart`)
+- **Real-Time Gemini AI Chat:** Conversational optical stylist recommending frames and lens coatings for Pakistan customers.
+- **Embedded Recommendation Carousel:** Interactive product cards embedded right inside AI responses with 1-tap view & configure actions.
+- **Suggested Follow-Up Prompts:** Dynamic chips guiding users through face shape matching, blue light protection, and high prescriptions.
+- **Offline Resilient:** Features an embedded optical rules engine that provides expert optometrist advice even if the server is offline.
+- **Direct Human Escalation:** Seamless 1-tap handover to human lab opticians on WhatsApp.
+
 ---
 
 ## 🎨 Design Tokens & UI Aesthetics (`lib/theme.dart`)
